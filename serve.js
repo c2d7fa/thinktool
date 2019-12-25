@@ -25,7 +25,7 @@ http.createServer((request, response) => {
     response.writeHead(404, {"Content-Type": "text/plain"});
     response.end("404 Not found", "utf-8");
   }
-}).listen(8080);
+}).listen(80);
 
-console.log("Listening on http://localhost:8080/");
+console.log("Listening on http://localhost:80/");
 
