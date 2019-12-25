@@ -2,4 +2,18 @@
     max-width: 80ex;
     padding: 1em;
     background-color: #f8f8f8;
+    margin: 0 auto;
+}
+
+ul.outline-tree {
+    list-style: disc inside;
+    padding-left: 1.5em;
+}
+
+li.outline-root-item > .content {
+    font-weight: bold;
+}
+
+ul.outline-root-tree {
+    padding-left: 0;
 }
