@@ -15,12 +15,43 @@ const respondFile = (path, contentType, response) => {
 }
 
 http.createServer((request, response) => {
+  console.log("%s %s %s", request.socket.remoteAddress, request.method, request.url);
+
   if (request.url == "" || request.url == "/") {
     respondFile("./app/index.html", "text/html", response);
   } else if (request.url == "/bundle.js") {
     respondFile("./app/bundle.js", "text/javascript", response);
   } else if (request.url == "/style.css") {
     respondFile("./app/style.css", "text/css", response);
+  } else if (request.url == "/data.json") {
+    if (request.method === "PUT") {
+
+      // Read body
+      let body = "";
+      request.setEncoding("utf-8");
+      request.on("data", (chunk) => { body += chunk });
+
+      request.on("end", () => {
+        console.log("%s %s %s %s", request.socket.remoteAddress, request.method, request.url, JSON.stringify(body));
+        try {
+          const json = JSON.parse(body);
+          fs.writeFile("./data/data.json", JSON.stringify(json), (err) => {});
+        } catch (e) {
+          console.warn("Invalid JSON: %o", body);
+        }
+        response.statusCode = 200;
+        response.end();
+      });
+    } else {
+      fs.readFile("./data/data.json", (err, content) => {
+        response.writeHead(200, {"Content-Type": "application/json"});
+        if (err) {
+          response.end("{}");
+        } else {
+          response.end(content);
+        }
+      });
+    }
   } else {
     response.writeHead(404, {"Content-Type": "text/plain"});
     response.end("404 Not found", "utf-8");
