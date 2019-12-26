@@ -29,7 +29,7 @@ function handle(update: Update): void {
   }
 }
 
-const events: Events = (() => {
+const events: Events & {debug(): void} = (() => {
   let i = 0;
 
   const listeners: {[k: string]: {[s: number]: () => void}} = {};
@@ -46,7 +46,7 @@ const events: Events = (() => {
 
   function unsubscribe(subscription: number): void {
     for (const topic in listeners)
-      listeners[topic][subscription] = () => { return };  // TODO
+      delete listeners[topic][subscription];
   }
 
   function update(payload: Update): void {
@@ -56,7 +56,17 @@ const events: Events = (() => {
         listeners[payload.topic][k]();
   }
 
-  return {subscribe, unsubscribe, update};
+  function debug(): void {
+    console.group("Subscriptions");
+    for (const topic in listeners) {
+      let size = 0;
+      for (const _ in listeners[topic]) size++;
+      console.log("%o in %s", size, topic);
+    }
+    console.groupEnd();
+  }
+
+  return {subscribe, unsubscribe, update, debug};
 })();
 
 function content(thing: number): Component {
@@ -99,13 +109,21 @@ function expandableItem(thing: number): Component {
 
   // TODO: This is pretty rough. We need to make sure that our children are
   // cleaned up, and we also want to be able to collapse a subtree.
+  let subtree_: Component = null;
+
   const button = document.createElement("button");
-  button.textContent = "expand";
+  button.textContent = "toggle";
   element.appendChild(button);
   button.onclick = () => {
-    const subtree_ = subtree(thing);
-    element.appendChild(subtree_.element);
-    subtree_.start();
+    if (subtree_ === null) {
+      subtree_ = subtree(thing);
+      element.appendChild(subtree_.element);
+      subtree_.start();
+    } else {
+      subtree_.stop();
+      element.removeChild(subtree_.element);
+      subtree_ = null;
+    }
   };
 
   function start(): void {
@@ -114,6 +132,8 @@ function expandableItem(thing: number): Component {
 
   function stop(): void {
     component.stop();
+    if (subtree_ !== null)
+      subtree_.stop();
   }
 
   return {element, start, stop};
@@ -171,11 +191,12 @@ async function install(): Promise<void> {
   const app = document.querySelector("#app");
 
   state = await server.getData() as Things;
-  console.log(state);
 
   const outline_ = outline(5);
   app.appendChild(outline_.element);
   outline_.start();
 }
+
+(window as any).debugSubscriptions = () => { events.debug() };
 
 install();
