@@ -24,9 +24,9 @@ http.createServer((request, response) => {
   } else if (request.url == "/style.css") {
     respondFile("./app/style.css", "text/css", response);
   } else if (request.url == "/bullet-collapsed.svg") {
-    respondFile("./bullet-collapsed.svg", "image/svg+xml", response);
+    respondFile("./app/bullet-collapsed.svg", "image/svg+xml", response);
   } else if (request.url == "/bullet-expanded.svg") {
-    respondFile("./bullet-expanded.svg", "image/svg+xml", response);
+    respondFile("./app/bullet-expanded.svg", "image/svg+xml", response);
   } else if (request.url == "/data.json") {
     if (request.method === "PUT") {
 
