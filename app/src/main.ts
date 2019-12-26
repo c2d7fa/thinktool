@@ -82,7 +82,7 @@ function content(thing: number): Component {
   function update(): void {
     if (element.value !== data.content(state, thing))
       element.value = data.content(state, thing);
-    element.size = element.value.length;   // Basic auto-scaling; not perfect with variable pitch font
+    element.size = element.value.length || 1;   // Basic auto-scaling; not perfect with variable pitch font
   }
 
   function start(): void {
