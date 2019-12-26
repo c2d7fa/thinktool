@@ -148,43 +148,20 @@ function subtree(parent: number): Component {
 }
 
 function outline(thing: number): Component {
-  const subcomponents: Component[] = [];
-
-  function registeredItem(thing: number): Element {
-    const li = document.createElement("li");
-    li.className = "outline-item";
-
-    const component = content(thing);
-    subcomponents.push(component);
-    li.appendChild(component.element);
-
-    const children = data.children(state, thing);
-    if (children.length !== 0) {
-      const ul = document.createElement("ul");
-      ul.className = "outline-tree";
-      for (const child of data.children(state, thing)) {
-        ul.appendChild(registeredItem(child));
-      }
-      li.appendChild(ul);
-    }
-
-    return li;
-  }
-
   const element = document.createElement("ul");
   element.className = "outline-tree outline-root-tree";
-  const li = registeredItem(thing);
-  li.className = `${li.className} outline-root-item`;
-  element.appendChild(li);
+
+  const root = expandableItem(thing);
+  root.element.className = `${root.element.className} outline-root-item`;
+
+  element.appendChild(root.element);
 
   function start(): void {
-    for (const subcomponent of subcomponents)
-      subcomponent.start();
+    root.start();
   }
 
   function stop(): void {
-    for (const subcomponent of subcomponents)
-      subcomponent.stop();
+    root.stop();
   }
 
   return {element, start, stop};
@@ -196,7 +173,7 @@ async function install(): Promise<void> {
   state = await server.getData() as Things;
   console.log(state);
 
-  const outline_ = subtree(5);
+  const outline_ = outline(5);
   app.appendChild(outline_.element);
   outline_.start();
 }
