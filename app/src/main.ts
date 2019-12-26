@@ -1,5 +1,6 @@
 import {Things} from "./data";
 import * as data from "./data";
+import {Update, initialize as initializeEvents} from "./events";
 import * as server from "./server-api";
 
 interface Component {
@@ -8,66 +9,16 @@ interface Component {
   stop(): void;    // Unsubscribe from events
 }
 
-type Update =
-  {topic: "none"} |
-  {topic: "content-changed"; thing: number; newContent: string};
-
-interface Events {
-  subscribe(topic: "none" | "content-changed", notify: () => void): number;
-  unsubscribe(subscription: number): void;
-  update(payload: Update): void;
-}
-
 let state: Things = {};
 
-function handle(update: Update): void {
+const events = initializeEvents((update: Update) => {
   if (update.topic === "content-changed") {
     data.setContent(state, update.thing, update.newContent);
     server.putData(state);
   } else {
     throw `Invalid update: ${update}`;
   }
-}
-
-const events: Events & {debug(): void} = (() => {
-  let i = 0;
-
-  const listeners: {[k: string]: {[s: number]: () => void}} = {};
-
-  function subscribe(topic: string, notify: () => void): number {
-    const j = i++;
-
-    if (!listeners[topic])
-      listeners[topic] = [];
-    listeners[topic][j] = notify;
-
-    return j;
-  }
-
-  function unsubscribe(subscription: number): void {
-    for (const topic in listeners)
-      delete listeners[topic][subscription];
-  }
-
-  function update(payload: Update): void {
-    handle(payload);
-    if (listeners[payload.topic])
-      for (const k in listeners[payload.topic])
-        listeners[payload.topic][k]();
-  }
-
-  function debug(): void {
-    console.group("Subscriptions");
-    for (const topic in listeners) {
-      let size = 0;
-      for (const _ in listeners[topic]) size++;
-      console.log("%o in %s", size, topic);
-    }
-    console.groupEnd();
-  }
-
-  return {subscribe, unsubscribe, update, debug};
-})();
+});
 
 function content(thing: number): Component {
   const element = document.createElement("input");
@@ -197,6 +148,6 @@ async function install(): Promise<void> {
   outline_.start();
 }
 
-(window as any).debugSubscriptions = () => { events.debug() };
+(window as any).debugSubscriptions = () => { events.debug() }; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 install();
