@@ -23,12 +23,12 @@ ul.outline-tree {
     vertical-align: middle;
 }
 
-li.outline-item > .bullet.expanded:before {
-    content: "·";
+.bullet.collapsed {
+    background-image: url(/bullet-collapsed.svg);
 }
 
-li.outline-item > .bullet.collapsed:before {
-    content: "•";
+.bullet.expanded {
+    background-image: url(/bullet-expanded.svg);
 }
 
 li.outline-item > * {
