@@ -11,18 +11,24 @@ ul.outline-tree {
 }
 
 .bullet {
+    user-select: none;
     display: inline-block;
     width: 1.35ex;
     height: 1.35ex;
+    padding: 0.5ex;
     margin-right: 0.65ex;
+    cursor: pointer;
+
+    text-align: center;
+    vertical-align: middle;
 }
 
 li.outline-item > .bullet.expanded:before {
-    content: ".";
+    content: "·";
 }
 
 li.outline-item > .bullet.collapsed:before {
-    content: "*";
+    content: "•";
 }
 
 li.outline-item > * {

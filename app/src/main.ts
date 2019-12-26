@@ -62,18 +62,27 @@ function expandableItem(thing: number): Component {
   const component = content(thing);
   element.appendChild(component.element);
 
-  // TODO: This is pretty rough. We need to make sure that our children are
-  // cleaned up, and we also want to be able to collapse a subtree.
   let subtree_: Component = null;
+
+  function expand(): void {
+    subtree_ = subtree(thing);
+    element.appendChild(subtree_.element);
+    subtree_.start();
+    bullet.classList.remove("collapsed");
+    bullet.classList.add("expanded");
+  }
+
+  if (data.children(state, thing).length === 0) expand(); // Items with no children are always expanded
 
   bullet.onclick = () => {
     if (subtree_ === null) {
-      subtree_ = subtree(thing);
-      element.appendChild(subtree_.element);
-      subtree_.start();
-      bullet.classList.remove("collapsed");
-      bullet.classList.add("expanded");
+      expand();
     } else {
+      if (data.children(state, thing).length === 0) {
+        // Can't collapse tree with no children
+        return;
+      }
+
       subtree_.stop();
       element.removeChild(subtree_.element);
       subtree_ = null;
