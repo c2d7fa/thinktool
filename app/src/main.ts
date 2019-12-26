@@ -18,6 +18,17 @@ interface Events {
   update(payload: Update): void;
 }
 
+let state: Things = {};
+
+function handle(update: Update): void {
+  if (update.topic === "content-changed") {
+    data.setContent(state, update.thing, update.newContent);
+    server.putData(state);
+  } else {
+    throw `Invalid update: ${update}`;
+  }
+}
+
 const events: Events = (() => {
   let i = 0;
 
@@ -25,8 +36,6 @@ const events: Events = (() => {
 
   function subscribe(topic: string, notify: () => void): number {
     const j = i++;
-
-    console.log("subscribe(%o, %o) -> ", topic, notify, j);
 
     if (!listeners[topic])
       listeners[topic] = [];
@@ -36,14 +45,12 @@ const events: Events = (() => {
   }
 
   function unsubscribe(subscription: number): void {
-    console.log("unsubscribe(%o)", subscription);
-
     for (const topic in listeners)
       listeners[topic][subscription] = () => { return };  // TODO
   }
 
   function update(payload: Update): void {
-    console.log("update(%o)", payload);
+    handle(payload);
     if (listeners[payload.topic])
       for (const k in listeners[payload.topic])
         listeners[payload.topic][k]();
@@ -52,30 +59,25 @@ const events: Events = (() => {
   return {subscribe, unsubscribe, update};
 })();
 
-(window as any).events = events;
-
-/*
-const testData: data.Things = {
-  5: {content: "Five", children: [1, 2, 4]},
-  1: {content: "One", children: [2]},
-  2: {content: "Two", children: [4]},
-  4: {content: "Four", children: []},
-};
-*/
-
-function content(things: Things, thing: number): Component {
-  const element = document.createElement("span");
+function content(thing: number): Component {
+  const element = document.createElement("input");
   element.className = "content";
+
+  element.oninput = () => {
+    events.update({topic: "content-changed", thing, newContent: element.value});
+  };
 
   let subscription: number = null;
 
   function update(): void {
-    element.textContent = data.content(things, thing);
+    if (element.value !== data.content(state, thing))
+      element.value = data.content(state, thing);
+    element.size = element.value.length;   // Basic auto-scaling; not perfect with variable pitch font
   }
 
   function start(): void {
     stop();
-    subscription = events.subscribe("content-changed", () => { console.log("content(..., %o) received update", thing) });
+    subscription = events.subscribe("content-changed", update);
     update();
   }
 
@@ -88,23 +90,23 @@ function content(things: Things, thing: number): Component {
   return {element, start, stop};
 }
 
-function outline(things: Things, thing: number): Component {
+function outline(thing: number): Component {
   const subcomponents: Component[] = [];
 
-  function registeredItem(things: Things, thing: number): Element {
+  function registeredItem(thing: number): Element {
     const li = document.createElement("li");
     li.className = "outline-item";
 
-    const component = content(things, thing);
+    const component = content(thing);
     subcomponents.push(component);
     li.appendChild(component.element);
 
-    const children = data.children(things, thing);
+    const children = data.children(state, thing);
     if (children.length !== 0) {
       const ul = document.createElement("ul");
       ul.className = "outline-tree";
-      for (const child of data.children(things, thing)) {
-        ul.appendChild(registeredItem(things, child));
+      for (const child of data.children(state, thing)) {
+        ul.appendChild(registeredItem(child));
       }
       li.appendChild(ul);
     }
@@ -114,7 +116,7 @@ function outline(things: Things, thing: number): Component {
 
   const element = document.createElement("ul");
   element.className = "outline-tree outline-root-tree";
-  const li = registeredItem(things, thing);
+  const li = registeredItem(thing);
   li.className = `${li.className} outline-root-item`;
   element.appendChild(li);
 
@@ -133,14 +135,13 @@ function outline(things: Things, thing: number): Component {
 
 async function install(): Promise<void> {
   const app = document.querySelector("#app");
-  const things = await server.getData() as Things;
 
-  const outline_ = outline(things, 5);
-  (window as any).outline = outline_;
+  state = await server.getData() as Things;
+  console.log(state);
+
+  const outline_ = outline(5);
   app.appendChild(outline_.element);
   outline_.start();
-
-  console.log(things);
 }
 
 install();

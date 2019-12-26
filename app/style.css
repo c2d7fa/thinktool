@@ -17,3 +17,15 @@ li.outline-root-item > .content {
 ul.outline-root-tree {
     padding-left: 0;
 }
+
+input.content {
+    border: none;
+    background-color: inherit;
+    border-bottom: 1px dotted #dcdcdc;
+    outline: none !important;
+}
+
+input.content:focus {
+    outline: none;
+    border-bottom: 1px solid #d0d0d0;
+}
