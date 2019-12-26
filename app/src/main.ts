@@ -55,6 +55,10 @@ function expandableItem(thing: number): Component {
   const element = document.createElement("li");
   element.className = "outline-item";
 
+  const bullet = document.createElement("span");
+  bullet.className = "bullet collapsed";
+  element.appendChild(bullet);
+
   const component = content(thing);
   element.appendChild(component.element);
 
@@ -62,18 +66,19 @@ function expandableItem(thing: number): Component {
   // cleaned up, and we also want to be able to collapse a subtree.
   let subtree_: Component = null;
 
-  const button = document.createElement("button");
-  button.textContent = "toggle";
-  element.appendChild(button);
-  button.onclick = () => {
+  bullet.onclick = () => {
     if (subtree_ === null) {
       subtree_ = subtree(thing);
       element.appendChild(subtree_.element);
       subtree_.start();
+      bullet.classList.remove("collapsed");
+      bullet.classList.add("expanded");
     } else {
       subtree_.stop();
       element.removeChild(subtree_.element);
       subtree_ = null;
+      bullet.classList.remove("expanded");
+      bullet.classList.add("collapsed");
     }
   };
 

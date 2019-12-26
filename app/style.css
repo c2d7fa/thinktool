@@ -6,8 +6,29 @@
 }
 
 ul.outline-tree {
-    list-style: disc inside;
+    list-style: none;
     padding-left: 1.5em;
+}
+
+.bullet {
+    display: inline-block;
+    width: 1.35ex;
+    height: 1.35ex;
+    margin-right: 0.65ex;
+}
+
+li.outline-item > .bullet.expanded:before {
+    content: ".";
+}
+
+li.outline-item > .bullet.collapsed:before {
+    content: "*";
+}
+
+li.outline-item > * {
+    vertical-align: middle;
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
 li.outline-root-item > .content {
