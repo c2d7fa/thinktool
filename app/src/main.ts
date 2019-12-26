@@ -90,6 +90,63 @@ function content(thing: number): Component {
   return {element, start, stop};
 }
 
+function expandableItem(thing: number): Component {
+  const element = document.createElement("li");
+  element.className = "outline-item";
+
+  const component = content(thing);
+  element.appendChild(component.element);
+
+  // TODO: This is pretty rough. We need to make sure that our children are
+  // cleaned up, and we also want to be able to collapse a subtree.
+  const button = document.createElement("button");
+  button.textContent = "expand";
+  element.appendChild(button);
+  button.onclick = () => {
+    const subtree_ = subtree(thing);
+    element.appendChild(subtree_.element);
+    subtree_.start();
+  };
+
+  function start(): void {
+    component.start();
+  }
+
+  function stop(): void {
+    component.stop();
+  }
+
+  return {element, start, stop};
+}
+
+// Subtree, not including the parent itself.
+function subtree(parent: number): Component {
+  const children = data.children(state, parent);
+
+  const subcomponents: Component[] = [];
+
+  const element = document.createElement("ul");
+
+  if (children.length !== 0) {
+    element.className = "outline-tree";
+    for (const child of children) {
+      const item = expandableItem(child);
+      subcomponents.push(item);
+      element.appendChild(item.element);
+    }
+  }
+
+  function start(): void {
+    subcomponents.forEach(s => s.start());
+  }
+
+  function stop(): void {
+    subcomponents.forEach(s => s.stop());
+  }
+
+  return {element, start, stop};
+}
+
 function outline(thing: number): Component {
   const subcomponents: Component[] = [];
 
@@ -139,7 +196,7 @@ async function install(): Promise<void> {
   state = await server.getData() as Things;
   console.log(state);
 
-  const outline_ = outline(5);
+  const outline_ = subtree(5);
   app.appendChild(outline_.element);
   outline_.start();
 }
