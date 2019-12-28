@@ -22,32 +22,38 @@ export function setContent(things: Things, thing: number, newContent: string): v
 
 // Copying, removing and moving items
 
-// TODO: This interface is pretty messy.
+// TODO: I should think more about this interface. How can we better represent
+// the tree as a value?
 
-// Represents a thing in its exact location. We store the state, because
-// {parent, index} would be invalidated whenever the state changes.
-type ThingInTree = {state: Things; parent: number; index: number};
-type LocationInTree = {parent: number; index: number};
+// Represents a thing in its exact location. This is invalidated whenever parent
+// has its list of children modified.
+export type LocationInTree = {parent: number; index: number};
 
-// TODO: Weird interface. We are passing State twice, but I don't think we want
-// to modify the state that we get from source, right?
-function copy(state: Things, source: ThingInTree, target: LocationInTree): void {
+export function copy(state: Things, source: LocationInTree, target: LocationInTree): void {
   state[target.parent].children.splice(target.index, 0, state[source.parent].children[source.index]);
 }
 
-function remove(state: Things, item: ThingInTree): void {
+export function remove(state: Things, item: LocationInTree): void {
   state[item.parent].children.splice(item.index, 1);
 }
 
-function move(state: Things, source: ThingInTree, target: LocationInTree): void {
+export function move(state: Things, source: LocationInTree, target: LocationInTree): void {
   copy(state, source, target);
   if (source.parent === target.parent) {
     if (target.index <= source.index) {
-      remove(state, {state, parent: source.parent, index: source.index + 1});
+      remove(state, {parent: source.parent, index: source.index + 1});
     } else {
       remove(state, source);
     }
   } else {
     remove(state, source);
   }
+}
+
+export function moveUp(state: Things, item: LocationInTree): void {
+  move(state, item, {parent: item.parent, index: Math.max(0, item.index - 1)});
+}
+
+export function moveDown(state: Things, item: LocationInTree): void {
+  move(state, item, {parent: item.parent, index: item.index + 1});
 }

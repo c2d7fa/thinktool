@@ -1,4 +1,4 @@
-import {Things} from "./data";
+import {Things, LocationInTree} from "./data";
 import * as data from "./data";
 import {Update, initialize as initializeEvents} from "./events";
 import * as server from "./server-api";
@@ -14,13 +14,21 @@ let state: Things = {};
 const events = initializeEvents((update: Update) => {
   if (update.topic === "content-changed") {
     data.setContent(state, update.thing, update.newContent);
-    server.putData(state);
+  } else if (update.topic === "move") {
+    if (update.direction === "up") data.moveUp(state, update.item);
+    else if (update.direction === "down") data.moveDown(state, update.item);
+    else throw `Invalid update: ${update}`;
   } else {
     throw `Invalid update: ${update}`;
   }
+
+  server.putData(state);
 });
 
-function content(thing: number): Component {
+function content(thing: number, location: LocationInTree): Component {
+  const parent = location?.parent;
+  let index = location?.index;
+
   const element = document.createElement("input");
   element.className = "content";
 
@@ -28,30 +36,55 @@ function content(thing: number): Component {
     events.update({topic: "content-changed", thing, newContent: element.value});
   };
 
-  let subscription: number = null;
+  let contentSubscription: number = null;
+  let moveSubscription: number = null;
 
   function update(): void {
+    // Update content
     if (element.value !== data.content(state, thing))
       element.value = data.content(state, thing);
     element.size = element.value.length || 1;   // Basic auto-scaling; not perfect with variable pitch font
   }
 
+  function updateAction(): void {
+    element.onkeydown = (ev) => {
+      if (ev.altKey && ev.key === "ArrowUp") {
+        events.update({topic: "move", direction: "up", item: {parent, index}});
+      } else if (ev.altKey && ev.key === "ArrowDown") {
+        events.update({topic: "move", direction: "down", item: {parent, index}});
+      }
+    };
+  }
+
   function start(): void {
     stop();
-    subscription = events.subscribe("content-changed", update);
+    contentSubscription = events.subscribe("content-changed", update);
+    moveSubscription = events.subscribe("move", (payload: Update) => {
+      if (payload.topic === "move" && payload.item.parent === parent && payload.item.index === index) {
+        // TODO: We are calculating the same thing here as we are doing in a
+        // bunch of other places. Surely this can be done in a smarter way!
+        if (payload.direction === "up") index--;
+        else if (payload.direction === "down") index++;
+        else throw null;
+        updateAction();
+      }
+    });
     update();
+    updateAction();
   }
 
   function stop(): void {
-    if (subscription !== null)
-      events.unsubscribe(subscription);
-    subscription = null;
+    if (contentSubscription !== null) events.unsubscribe(contentSubscription);
+    contentSubscription = null;
+
+    if (moveSubscription !== null) events.unsubscribe(moveSubscription);
+    moveSubscription = null;
   }
 
   return {element, start, stop};
 }
 
-function expandableItem(thing: number): Component {
+function expandableItem(thing: number, location: LocationInTree | null): Component {
   const element = document.createElement("li");
   element.className = "outline-item";
 
@@ -59,7 +92,7 @@ function expandableItem(thing: number): Component {
   bullet.className = "bullet collapsed";
   element.appendChild(bullet);
 
-  const component = content(thing);
+  const component = content(thing, location);
   element.appendChild(component.element);
 
   let subtree_: Component = null;
@@ -109,13 +142,14 @@ function subtree(parent: number): Component {
   const children = data.children(state, parent);
 
   const subcomponents: Component[] = [];
+  let moveSubscription: number = null;
 
   const element = document.createElement("ul");
 
   if (children.length !== 0) {
     element.className = "outline-tree";
-    for (const child of children) {
-      const item = expandableItem(child);
+    for (let i = 0; i < children.length; ++i) {
+      const item = expandableItem(children[i], {parent, index: i});
       subcomponents.push(item);
       element.appendChild(item.element);
     }
@@ -123,10 +157,25 @@ function subtree(parent: number): Component {
 
   function start(): void {
     subcomponents.forEach(s => s.start());
+
+    moveSubscription = events.subscribe("move", (ev) => {
+      if (ev.topic === "move" && ev.item.parent === parent) {
+        const active = document.activeElement as HTMLElement;
+        if (ev.direction === "up") {
+          element.insertBefore(element.children[ev.item.index], element.children[ev.item.index - 1]);
+        } else {
+          element.insertBefore(element.children[ev.item.index], element.children[ev.item.index + 2]);
+        }
+        active.focus();
+      }
+    });
   }
 
   function stop(): void {
     subcomponents.forEach(s => s.stop());
+
+    if (moveSubscription !== null) events.unsubscribe(moveSubscription);
+    moveSubscription = null;
   }
 
   return {element, start, stop};
@@ -136,7 +185,7 @@ function outline(thing: number): Component {
   const element = document.createElement("ul");
   element.className = "outline-tree outline-root-tree";
 
-  const root = expandableItem(thing);
+  const root = expandableItem(thing, null);
   root.element.className = `${root.element.className} outline-root-item`;
 
   element.appendChild(root.element);
