@@ -55,5 +55,7 @@ export function moveUp(state: Things, item: LocationInTree): void {
 }
 
 export function moveDown(state: Things, item: LocationInTree): void {
-  move(state, item, {parent: item.parent, index: item.index + 1});
+  console.log("Moving down: %o, %o", state, item);
+  move(state, item, {parent: item.parent, index: item.index + 2});
+  // TODO: I don't understand why this works.
 }
