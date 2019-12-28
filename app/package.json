@@ -9,6 +9,11 @@
         "ts-loader": "latest",
         "typescript": "latest",
         "webpack": "latest",
-        "webpack-cli": "latest"
+        "webpack-cli": "latest",
+        "react": "latest",
+        "react-dom": "latest",
+        "@types/react": "latest",
+        "@types/react-dom": "latest",
+        "eslint-plugin-react": "latest"
     }
 }

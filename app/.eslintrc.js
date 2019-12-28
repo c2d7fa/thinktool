@@ -7,9 +7,13 @@ module.exports = {
   ],
   extends: [
     'eslint:recommended',
+    'plugin:react/recommended',
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
   ],
+  parserOptions: {
+    jsx: true,
+  },
   rules: {
     "@typescript-eslint/explicit-function-return-type": ["warn", {"allowExpressions": true}],
     "@typescript-eslint/indent": ["error", 2],
@@ -18,5 +22,10 @@ module.exports = {
     "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/semi": ["error", "always", {"omitLastInOneLineBlock": true}],
     "comma-dangle": ["error", "always-multiline"],
+  },
+  settings: {
+    react: {
+      version: "detect",
+    },
   },
 };
