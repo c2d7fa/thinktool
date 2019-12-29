@@ -1,4 +1,4 @@
-import {Things} from "./data";
+import {Things, LocationInTree} from "./data";
 import * as data from "./data";
 import * as server from "./server-api";
 
@@ -7,28 +7,40 @@ import * as ReactDOM from "react-dom";
 
 type SetContent = (thing: number, newContent: string) => void;
 
-class Content extends React.Component<{state: Things; thing: number; setContent: SetContent}, {}> {
+class Content extends React.Component<{state: Things; thing: number; setContent: SetContent; location: LocationInTree; moveUp(location: LocationInTree): void; moveDown(location: LocationInTree): void}, {}> {
   private content(): string {
     return data.content(this.props.state, this.props.thing);
+  }
+
+  private onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
+    if (ev.altKey && ev.key === "ArrowUp") {
+      this.props.moveUp(this.props.location);
+    } else if (ev.altKey && ev.key === "ArrowDown") {
+      this.props.moveDown(this.props.location);
+    }
   }
 
   render(): React.ReactNode {
     return <input
       className="content"
       value={this.content()}
+      onKeyDown={this.onKeyDown.bind(this)}
       onChange={(ev: React.ChangeEvent<HTMLInputElement>) => this.props.setContent(this.props.thing, ev.target.value)}/>;
   }
 }
 
 // Subtree, not including the parent itself.
-class Subtree extends React.Component<{state: Things; parent: number; setContent: SetContent}, {}> {
+class Subtree extends React.Component<{state: Things; parent: number; setContent: SetContent; moveUp(): void; moveDown(): void}, {}> {
   render(): React.ReactNode {
     let i = 0;
     const children = data.children(this.props.state, this.props.parent).map(child => {
       return <ExpandableItem
-        key={i++}
+        key={child}
         state={this.props.state}
         thing={child}
+        location={{parent: this.props.parent, index: i++}}
+        moveUp={this.props.moveUp}
+        moveDown={this.props.moveDown}
         setContent={this.props.setContent}/>;
     });
     return <ul className="outline-tree">{children}</ul>;
@@ -47,8 +59,8 @@ class Bullet extends React.Component<{expanded: boolean; setExpanded(expanded: b
   }
 }
 
-class ExpandableItem extends React.Component<{state: Things; thing: number; setContent: SetContent}, {expanded: boolean}> {
-  constructor(props: {state: Things; thing: number; setContent: SetContent}) {
+class ExpandableItem extends React.Component<{state: Things; thing: number; setContent: SetContent; location: LocationInTree; moveUp(): void; moveDown(): void}, {expanded: boolean}> {
+  constructor(props: {state: Things; thing: number; setContent: SetContent; location: LocationInTree; moveUp(): void; moveDown(): void}) {
     super(props);
     this.state = {expanded: false};
   }
@@ -58,6 +70,8 @@ class ExpandableItem extends React.Component<{state: Things; thing: number; setC
       <Subtree
         state={this.props.state}
         parent={this.props.thing}
+        moveUp={this.props.moveUp}
+        moveDown={this.props.moveDown}
         setContent={this.props.setContent}/>;
 
     return <li className="outline-item">
@@ -65,18 +79,24 @@ class ExpandableItem extends React.Component<{state: Things; thing: number; setC
       <Content
         state={this.props.state}
         thing={this.props.thing}
+        location={this.props.location}
+        moveUp={this.props.moveUp}
+        moveDown={this.props.moveDown}
         setContent={this.props.setContent}/>
       { (() => { if (this.state.expanded) return subtree; })() }
     </li>;
   }
 }
 
-class Outline extends React.Component<{state: Things; root: number; setContent: SetContent}, {}> {
+class Outline extends React.Component<{state: Things; root: number; setContent: SetContent; moveUp(): void; moveDown(): void}, {}> {
   render(): React.ReactNode {
     return <ul className="outline-tree outline-root-tree">
       <ExpandableItem
         state={this.props.state}
         thing={this.props.root}
+        location={null}
+        moveUp={this.props.moveUp}
+        moveDown={this.props.moveDown}
         setContent={this.props.setContent}/>
     </ul>;
   }
@@ -96,11 +116,33 @@ class App extends React.Component<{initialState: Things}, {state: Things}> {
     await server.putData(this.state.state);
   }
 
+  private async moveUp(location: LocationInTree): Promise<void> {
+    if (location === null) return;
+
+    data.moveUp(this.state.state, location);
+    this.setState({state: this.state.state});
+    await server.putData(this.state.state);
+  }
+
+  private async moveDown(location: LocationInTree): Promise<void> {
+    if (location === null) return;
+
+    console.log("Move down: %o", location);
+
+    data.moveDown(this.state.state, location);
+    console.log(this.state.state);
+    this.setState({state: this.state.state});
+    console.log(this.state.state);
+    await server.putData(this.state.state);
+  }
+
   render(): React.ReactNode {
     return <div>
       <Outline
         state={this.state.state}
         root={5}
+        moveUp={this.moveUp.bind(this)}
+        moveDown={this.moveDown.bind(this)}
         setContent={this.setContent.bind(this)}/>
     </div>;
   }
