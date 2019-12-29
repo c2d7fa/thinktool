@@ -8,16 +8,16 @@ import * as ReactDOM from "react-dom";
 
 type SetContent = (thing: number, newContent: string) => void;
 
-class Content extends React.Component<{state: Things; thing: number; setContent: SetContent; location: tree.Place; moveUp(location: tree.Place): void; moveDown(location: tree.Place): void}, {}> {
+class Content extends React.Component<{state: Things; thing: number; setContent: SetContent; id: number; moveUp(id: number): void; moveDown(id: number): void}, {}> {
   private content(): string {
     return data.content(this.props.state, this.props.thing);
   }
 
   private onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
     if (ev.altKey && ev.key === "ArrowUp") {
-      this.props.moveUp(this.props.location);
+      this.props.moveUp(this.props.id);
     } else if (ev.altKey && ev.key === "ArrowDown") {
-      this.props.moveDown(this.props.location);
+      this.props.moveDown(this.props.id);
     }
   }
 
@@ -31,15 +31,16 @@ class Content extends React.Component<{state: Things; thing: number; setContent:
 }
 
 // Subtree, not including the parent itself.
-class Subtree extends React.Component<{state: Things; parent: number; setContent: SetContent; moveUp(): void; moveDown(): void}, {}> {
+class Subtree extends React.Component<{state: Things; parent: number; setContent: SetContent; moveUp(id: number): void; moveDown(id: number): void}, {}> {
   render(): React.ReactNode {
     let i = 0;
+    // TODO: Use children in *tree*, not state.
     const children = data.children(this.props.state, this.props.parent).map(child => {
       return <ExpandableItem
         key={child}
         state={this.props.state}
         thing={child}
-        location={{parent: this.props.parent, index: i++}}
+        id={i++}  // TODO: Placeholder value
         moveUp={this.props.moveUp}
         moveDown={this.props.moveDown}
         setContent={this.props.setContent}/>;
@@ -60,8 +61,8 @@ class Bullet extends React.Component<{expanded: boolean; setExpanded(expanded: b
   }
 }
 
-class ExpandableItem extends React.Component<{state: Things; thing: number; setContent: SetContent; location: tree.Place; moveUp(): void; moveDown(): void}, {expanded: boolean}> {
-  constructor(props: {state: Things; thing: number; setContent: SetContent; location: tree.Place; moveUp(): void; moveDown(): void}) {
+class ExpandableItem extends React.Component<{state: Things; thing: number; setContent: SetContent; id: number; moveUp(id: number): void; moveDown(id: number): void}, {expanded: boolean}> {
+  constructor(props: {state: Things; thing: number; setContent: SetContent; id: number; moveUp(id: number): void; moveDown(id: number): void}) {
     super(props);
     this.state = {expanded: false};
   }
@@ -80,7 +81,7 @@ class ExpandableItem extends React.Component<{state: Things; thing: number; setC
       <Content
         state={this.props.state}
         thing={this.props.thing}
-        location={this.props.location}
+        id={this.props.id}
         moveUp={this.props.moveUp}
         moveDown={this.props.moveDown}
         setContent={this.props.setContent}/>
@@ -95,7 +96,7 @@ class Outline extends React.Component<{state: Things; root: number; setContent: 
       <ExpandableItem
         state={this.props.state}
         thing={this.props.root}
-        location={null}
+        id={0}  // TODO: Placeholder value
         moveUp={this.props.moveUp}
         moveDown={this.props.moveDown}
         setContent={this.props.setContent}/>
@@ -117,18 +118,18 @@ class App extends React.Component<{initialState: Things}, {state: Things}> {
     await server.putData(this.state.state);
   }
 
-  private async moveUp(location: tree.Place): Promise<void> {
+  private async moveUp(id: number): Promise<void> {
     if (location === null) return;
 
-    tree.moveUp(this.state.state, location);
+    tree.moveUp(this.state.state, null as tree.Tree /* TODO: Placeholder value */, id);
     this.setState({state: this.state.state});
     await server.putData(this.state.state);
   }
 
-  private async moveDown(location: tree.Place): Promise<void> {
+  private async moveDown(id: number): Promise<void> {
     if (location === null) return;
 
-    tree.moveDown(this.state.state, location);
+    tree.moveDown(this.state.state, null as tree.Tree /* TODO: Placeholder value */, id);
     this.setState({state: this.state.state});
     await server.putData(this.state.state);
   }

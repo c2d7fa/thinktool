@@ -1,40 +1,50 @@
 import {Things} from "./data";
 
-// Copying, removing and moving items
+// To represent the entire state of the application, we need two modules.
+//
+// The 'data' module keeps track of the actual data itself, such as what the
+// things are, what qualities they have and how they connect together.
+//
+// The 'tree' module more closely represents what the user actually sees on the
+// screen. We usually want to show related nodes in a tree structure, and the
+// 'tree' module can describe this structure with support for folding, moving
+// nodes, etc.
 
-// TODO: I should think more about this interface. How can we better represent
-// the tree as a value?
-
-// Represents a thing in its exact location. This is invalidated whenever parent
-// has its list of children modified.
-export type Place = {parent: number; index: number};
-
-export function copy(state: Things, source: Place, target: Place): void {
-  state[target.parent].children.splice(target.index, 0, state[source.parent].children[source.index]);
+export interface Tree {
+  id: number;
+  thing: number;
+  expanded: boolean;
+  children: Tree[];
 }
 
-export function remove(state: Things, item: Place): void {
-  state[item.parent].children.splice(item.index, 1);
+export type Destination = {parent: number /* Thing */; index: number};
+
+export function toggle(state: Things, tree: Tree, id: number): Tree {
+  console.log("toggle(%o, %o, %o)", state, tree, id);
+  return tree;
 }
 
-export function move(state: Things, source: Place, target: Place): void {
-  copy(state, source, target);
-  if (source.parent === target.parent) {
-    if (target.index <= source.index) {
-      remove(state, {parent: source.parent, index: source.index + 1});
-    } else {
-      remove(state, source);
-    }
-  } else {
-    remove(state, source);
-  }
+export function copy(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree] {
+  console.log("copy(%o, %o, %o, %o)", state, tree, id, destination);
+  return [state, tree];
 }
 
-export function moveUp(state: Things, item: Place): void {
-  move(state, item, {parent: item.parent, index: Math.max(0, item.index - 1)});
+export function remove(state: Things, tree: Tree, id: number): [Things, Tree] {
+  console.log("remove(%o, %o, %o)", state, tree, id);
+  return [state, tree];
 }
 
-export function moveDown(state: Things, item: Place): void {
-  // TODO: I don't understand why this works.
-  move(state, item, {parent: item.parent, index: item.index + 2});
+export function move(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree] {
+  console.log("move(%o, %o, %o, %o)", state, tree, id, destination);
+  return [state, tree];
+}
+
+export function moveUp(state: Things, tree: Tree, id: number): [Things, Tree] {
+  console.log("moveUp(%o, %o, %o)", state, tree, id);
+  return [state, tree];
+}
+
+export function moveDown(state: Things, tree: Tree, id: number): [Things, Tree] {
+  console.log("moveDown(%o, %o, %o)", state, tree, id);
+  return [state, tree];
 }
