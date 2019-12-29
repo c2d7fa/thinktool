@@ -32,13 +32,16 @@ export function fromRoot(state: Things, thing: number): Tree {
   };
 }
 
-export function thing(state: Things, tree: Tree, id: number): number {
+export function thing(tree: Tree, id: number): number {
   return tree.nodes[id].thing;
 }
 
-export function toggle(state: Things, tree: Tree, id: number): Tree {
-  console.log("toggle(%o, %o, %o)", state, tree, id);
-  return tree;
+export function expanded(tree: Tree, id: number): boolean {
+  return tree.nodes[id].expanded;
+}
+
+export function toggle(tree: Tree, id: number): Tree {
+  return {...tree, nodes: {...tree.nodes, [id]: {...tree.nodes[id], expanded: !tree.nodes[id].expanded}}};
 }
 
 export function copy(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree] {
