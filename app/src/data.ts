@@ -18,3 +18,7 @@ export function content(things: Things, thing: number): string {
 export function setContent(things: Things, thing: number, newContent: string): Things {
   return {...things, [thing]: {...things[thing], content: newContent}};
 }
+
+export function hasChildren(things: Things, thing: number): boolean {
+  return children(things, thing).length !== 0;
+}

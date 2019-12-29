@@ -39,11 +39,23 @@ function Outline(p: {context: TreeContext}) {
 function ExpandableItem(p: {context: TreeContext; id: number}) {
   const {tree, setTree, state, setState} = p.context;
 
+  function toggle() {
+    // Can't collapse item without children
+    if (Data.hasChildren(state, T.thing(tree, p.id)))
+      setTree(T.toggle(state, tree, p.id));
+  }
+
   const expanded = T.expanded(tree, p.id);
 
+  const subtree =
+    <Subtree
+      context={p.context}
+      parent={p.id}/>;
+
   return <li className="outline-item">
-    <Bullet expanded={T.expanded(tree, p.id)} toggle={() => setTree(T.toggle(tree, p.id))}/>
+    <Bullet expanded={T.expanded(tree, p.id)} toggle={toggle}/>
     <Content tree={tree} state={state} setState={setState} id={p.id}/>
+    { expanded && subtree }
   </li>;
 }
 
@@ -66,6 +78,14 @@ function Content(p: {tree: Tree; state: Things; setState: (state: Things) => voi
       value={Data.content(p.state, T.thing(p.tree, p.id))}
       onChange={setContent}/>
   );
+}
+
+function Subtree(p: {context: TreeContext; parent: number}) {
+  const children = T.children(p.context.tree, p.parent).map(child => {
+    return <ExpandableItem key={child} id={child} context={p.context}/>;
+  });
+
+  return <ul className="outline-tree">{children}</ul>;
 }
 
 // ==

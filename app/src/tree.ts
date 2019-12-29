@@ -1,4 +1,5 @@
 import {Things} from "./data";
+import * as D from "./data";
 
 // To represent the entire state of the application, we need two modules.
 //
@@ -13,7 +14,7 @@ import {Things} from "./data";
 export interface Node {
   thing: number;
   expanded: boolean;
-  children: Node[];
+  children: number[];
 }
 
 export interface Tree {
@@ -40,8 +41,45 @@ export function expanded(tree: Tree, id: number): boolean {
   return tree.nodes[id].expanded;
 }
 
-export function toggle(tree: Tree, id: number): Tree {
-  return {...tree, nodes: {...tree.nodes, [id]: {...tree.nodes[id], expanded: !tree.nodes[id].expanded}}};
+export function toggle(state: Things, tree: Tree, id: number): Tree {
+  const expanded = !tree.nodes[id].expanded;
+
+  // Update expanded status
+  let result = {...tree, nodes: {...tree.nodes, [id]: {...tree.nodes[id], expanded}}};
+
+  // Load children from state if necessary
+  //
+  // TODO: This won't work if state changes! In fact, I'm not sure how to handle
+  // that in general.
+  if (expanded && result.nodes[id].children.length === 0) {
+    for (const childThing of D.children(state, thing(tree, id))) {
+      const [newChild, newResult] = load(state, result, childThing);
+      result = newResult;
+      result.nodes[id].children = [...result.nodes[id].children, newChild];
+    }
+  }
+
+  return result;
+}
+
+export function load(state: Things, tree: Tree, thing: number): [number, Tree] {
+  const id = tree.next;
+
+  // Update next ID
+  let result = {...tree, next: tree.next + 1};
+
+  // Add node
+  result = {...result, nodes: {...result.nodes, [id]: {thing, expanded: false, children: []}}};
+
+  // If the child has no children, it should be expanded by default
+  if (!D.hasChildren(state, thing))
+    result.nodes[id].expanded = true;
+
+  return [id, result];
+}
+
+export function children(tree: Tree, parent: number): number[] {
+  return tree.nodes[parent].children;
 }
 
 export function copy(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree] {
