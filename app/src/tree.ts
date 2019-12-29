@@ -10,14 +10,31 @@ import {Things} from "./data";
 // 'tree' module can describe this structure with support for folding, moving
 // nodes, etc.
 
-export interface Tree {
-  id: number;
+export interface Node {
   thing: number;
   expanded: boolean;
-  children: Tree[];
+  children: Node[];
+}
+
+export interface Tree {
+  next: number; // Next ID to be created
+  root: number;
+  nodes: {[id: number]: Node};
 }
 
 export type Destination = {parent: number /* Thing */; index: number};
+
+export function fromRoot(state: Things, thing: number): Tree {
+  return {
+    next: 1,
+    root: 0,
+    nodes: {0: {thing, expanded: false, children: []}},
+  };
+}
+
+export function thing(state: Things, tree: Tree, id: number): number {
+  return tree.nodes[id].thing;
+}
 
 export function toggle(state: Things, tree: Tree, id: number): Tree {
   console.log("toggle(%o, %o, %o)", state, tree, id);

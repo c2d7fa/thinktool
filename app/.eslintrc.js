@@ -15,7 +15,7 @@ module.exports = {
     jsx: true,
   },
   rules: {
-    "@typescript-eslint/explicit-function-return-type": ["warn", {"allowExpressions": true}],
+    "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/indent": ["error", 2],
     "@typescript-eslint/member-delimiter-style": ["error"],
     "@typescript-eslint/no-unused-vars": ["warn", {"varsIgnorePattern": "^_$"}],
