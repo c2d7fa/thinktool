@@ -4,6 +4,8 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   plugins: [
     '@typescript-eslint',
+    'react',
+    'react-hooks'
   ],
   extends: [
     'eslint:recommended',
@@ -22,6 +24,8 @@ module.exports = {
     "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/semi": ["error", "always", {"omitLastInOneLineBlock": true}],
     "comma-dangle": ["error", "always-multiline"],
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
   },
   settings: {
     react: {
