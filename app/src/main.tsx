@@ -1,5 +1,6 @@
-import {Things, LocationInTree} from "./data";
+import {Things} from "./data";
 import * as data from "./data";
+import * as tree from "./tree";
 import * as server from "./server-api";
 
 import * as React from "react";
@@ -7,7 +8,7 @@ import * as ReactDOM from "react-dom";
 
 type SetContent = (thing: number, newContent: string) => void;
 
-class Content extends React.Component<{state: Things; thing: number; setContent: SetContent; location: LocationInTree; moveUp(location: LocationInTree): void; moveDown(location: LocationInTree): void}, {}> {
+class Content extends React.Component<{state: Things; thing: number; setContent: SetContent; location: tree.Place; moveUp(location: tree.Place): void; moveDown(location: tree.Place): void}, {}> {
   private content(): string {
     return data.content(this.props.state, this.props.thing);
   }
@@ -59,8 +60,8 @@ class Bullet extends React.Component<{expanded: boolean; setExpanded(expanded: b
   }
 }
 
-class ExpandableItem extends React.Component<{state: Things; thing: number; setContent: SetContent; location: LocationInTree; moveUp(): void; moveDown(): void}, {expanded: boolean}> {
-  constructor(props: {state: Things; thing: number; setContent: SetContent; location: LocationInTree; moveUp(): void; moveDown(): void}) {
+class ExpandableItem extends React.Component<{state: Things; thing: number; setContent: SetContent; location: tree.Place; moveUp(): void; moveDown(): void}, {expanded: boolean}> {
+  constructor(props: {state: Things; thing: number; setContent: SetContent; location: tree.Place; moveUp(): void; moveDown(): void}) {
     super(props);
     this.state = {expanded: false};
   }
@@ -116,23 +117,19 @@ class App extends React.Component<{initialState: Things}, {state: Things}> {
     await server.putData(this.state.state);
   }
 
-  private async moveUp(location: LocationInTree): Promise<void> {
+  private async moveUp(location: tree.Place): Promise<void> {
     if (location === null) return;
 
-    data.moveUp(this.state.state, location);
+    tree.moveUp(this.state.state, location);
     this.setState({state: this.state.state});
     await server.putData(this.state.state);
   }
 
-  private async moveDown(location: LocationInTree): Promise<void> {
+  private async moveDown(location: tree.Place): Promise<void> {
     if (location === null) return;
 
-    console.log("Move down: %o", location);
-
-    data.moveDown(this.state.state, location);
-    console.log(this.state.state);
+    tree.moveDown(this.state.state, location);
     this.setState({state: this.state.state});
-    console.log(this.state.state);
     await server.putData(this.state.state);
   }
 
