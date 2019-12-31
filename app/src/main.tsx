@@ -95,13 +95,28 @@ function Content(p: {context: TreeContext; id: number}) {
     } else if (ev.key === "Tab") {
       p.context.setTree(T.toggle(p.context.state, p.context.tree, p.id));
       ev.preventDefault();
+    } else if (ev.key === "ArrowUp") {
+      p.context.setTree(T.focusUp(p.context.tree));
+      ev.preventDefault();
+    } else if (ev.key === "ArrowDown") {
+      p.context.setTree(T.focusDown(p.context.tree));
+      ev.preventDefault();
     }
   }
 
+  const inputRef: React.MutableRefObject<HTMLInputElement> = React.useRef(null);
+
+  React.useEffect(() => {
+    if (T.hasFocus(p.context.tree, p.id))
+      inputRef.current.focus();
+  }, [inputRef, p.context.tree]);
+
   return (
     <input
+      ref={inputRef}
       className="content"
       value={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
+      onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.id)) }}
       onChange={setContent}
       onKeyDown={onKeyDown}/>
   );

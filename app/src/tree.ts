@@ -21,6 +21,7 @@ export interface Tree {
   next: number; // Next ID to be created
   root: number;
   nodes: {[id: number]: Node};
+  focus: null | number;
 }
 
 export type Destination = {parent: number /* Thing */; index: number};
@@ -30,6 +31,7 @@ export function fromRoot(state: Things, thing: number): Tree {
     next: 1,
     root: 0,
     nodes: {0: {thing, expanded: false, children: []}},
+    focus: null,
   };
 }
 
@@ -39,6 +41,64 @@ export function thing(tree: Tree, id: number): number {
 
 export function expanded(tree: Tree, id: number): boolean {
   return tree.nodes[id].expanded;
+}
+
+export function hasFocus(tree: Tree, id: number): boolean {
+  return tree.focus === id;
+}
+
+export function focus(tree: Tree, id: number): Tree {
+  return {...tree, focus: id};
+}
+
+export function unfocus(tree: Tree): Tree {
+  return {...tree, focus: null};
+}
+
+function previousSibling(tree: Tree, id: number): number {
+  return children(tree, parent(tree, id))[childIndex(tree, parent(tree, id), id) - 1];
+}
+
+function nextSibling(tree: Tree, id: number): number {
+  if (childIndex(tree, parent(tree, id), id) === children(tree, parent(tree, id)).length - 1)
+    return null;
+  return children(tree, parent(tree, id))[childIndex(tree, parent(tree, id), id) + 1];
+}
+
+function previousVisibleItem(tree: Tree, id: number): number {
+  if (parent(tree, id) === undefined)
+    return id;
+
+  if (childIndex(tree, parent(tree, id), id) === 0)
+    return parent(tree, id);
+
+  let result = previousSibling(tree, id);
+  while (children(tree, result).length !== 0) {
+    result = children(tree, result)[children(tree, result).length - 1];
+  }
+  return result;
+}
+
+function nextVisibleItem(tree: Tree, id: number): number {
+  if (children(tree, id).length !== 0)
+    return children(tree, id)[0];
+
+  // Recursively traverse tree upwards until we hit a parent with a sibling
+  let nparent = id;
+  while (nparent !== tree.root) {
+    if (nextSibling(tree, nparent) !== null)
+      return nextSibling(tree, nparent);
+    nparent = parent(tree, nparent);
+  }
+  return nparent;
+}
+
+export function focusUp(tree: Tree): Tree {
+  return {...tree, focus: previousVisibleItem(tree, tree.focus)};
+}
+
+export function focusDown(tree: Tree): Tree {
+  return {...tree, focus: nextVisibleItem(tree, tree.focus)};
 }
 
 function refreshChildren(state: Things, tree: Tree, parent: number): Tree {
