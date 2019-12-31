@@ -60,7 +60,6 @@ function refreshChildren(state: Things, tree: Tree, parent: number): Tree {
     return tree;
 
   if (stateChildren.length === treeChildren.length + 1) {
-    console.log("Assuming inserted child for id=%o, thing=%o", parent, thing(tree, parent));
     // Assume new child was inserted
 
     // Copy children so we can mutate it for convencience
@@ -98,6 +97,13 @@ function refreshChildren(state: Things, tree: Tree, parent: number): Tree {
 
     return result;
   }
+}
+
+export function expand(state: Things, tree: Tree, id: number): Tree {
+  if (!expanded(tree, id))
+    return toggle(state, tree, id);
+  else
+    return tree;
 }
 
 export function toggle(state: Things, tree: Tree, id: number): Tree {
@@ -141,6 +147,34 @@ export function refresh(tree: Tree, state: Things): Tree {
   for (const id in tree.nodes)
     result = refreshChildren(state, result, +id);
   return result;
+}
+
+export function indent(state: Things, tree: Tree, id: number): [Things, Tree] {
+  const parent_ = parent(tree, id);
+  const index = childIndex(tree, parent_, id);
+  const newState = D.indent(state, thing(tree, parent_), index);
+
+  let newTree: Tree = {...tree, nodes: {...tree.nodes, [parent_]: {...tree.nodes[parent_], children: [...tree.nodes[parent_].children]}}};
+  newTree.nodes[parent_].children.splice(index, 1);
+
+  const newParent = tree.nodes[parent_].children[index - 1];
+  newTree = {...newTree, nodes: {...newTree.nodes, [newParent]: {...tree.nodes[newParent], children: [...tree.nodes[newParent].children]}}};
+  newTree.nodes[newParent].children.push(id);
+
+  newTree = expand(newState, newTree, newParent);
+
+  return [newState, refresh(newTree, newState)];
+}
+
+function parent(tree: Tree, child: number): number {
+  for (const parent in tree.nodes)
+    if (children(tree, +parent).includes(child))
+      return +parent;
+  return undefined;
+}
+
+function childIndex(tree: Tree, parent: number, child: number): number {
+  return children(tree, parent).indexOf(child);
 }
 
 export function copy(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree] {

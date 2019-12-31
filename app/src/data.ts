@@ -26,3 +26,13 @@ export function hasChildren(things: Things, thing: number): boolean {
 export function addChild(things: Things, parent: number, child: number): Things {
   return {...things, [parent]: {...things[parent], children: [...things[parent].children, child]}};
 }
+
+// Make the given child a child of its previous sibling.
+export function indent(things: Things, parent: number, index: number): Things {
+  const result: Things = {...things, [parent]: {...things[parent], children: [...things[parent].children]}};
+  result[parent].children.splice(index, 1);
+
+  const newParent = things[parent].children[index - 1];
+  const child = things[parent].children[index];
+  return addChild(result, newParent, child);
+}

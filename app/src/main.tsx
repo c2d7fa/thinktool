@@ -27,7 +27,6 @@ function App({initialState}: {initialState: Things}) {
   }
 
   return <>
-    <button onClick={() => { setState_(Data.addChild(state, 5, 2)) }}>Test Update</button>
     <Outline state={state} setState={setState} thing={5}/>
     <Outline state={state} setState={setState} thing={5}/>
     <Outline state={state} setState={setState} thing={2}/>
@@ -66,7 +65,7 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
 
   return <li className="outline-item">
     <Bullet expanded={T.expanded(tree, p.id)} toggle={toggle}/>
-    <Content tree={tree} state={state} setState={setState} id={p.id}/>
+    <Content context={p.context} id={p.id}/>
     { expanded && subtree }
   </li>;
 }
@@ -79,16 +78,25 @@ function Bullet(p: {expanded: boolean; toggle: () => void}) {
   );
 }
 
-function Content(p: {tree: Tree; state: Things; setState: (state: Things) => void; id: number}) {
+function Content(p: {context: TreeContext; id: number}) {
   function setContent(ev: React.ChangeEvent<HTMLInputElement>): void {
-    p.setState(Data.setContent(p.state, T.thing(p.tree, p.id), ev.target.value));
+    p.context.setState(Data.setContent(p.context.state, T.thing(p.context.tree, p.id), ev.target.value));
+  }
+
+  function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
+    if (ev.key === "ArrowRight" && ev.altKey) {
+      const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.id);
+      p.context.setState(newState);
+      p.context.setTree(newTree);
+    }
   }
 
   return (
     <input
       className="content"
-      value={Data.content(p.state, T.thing(p.tree, p.id))}
-      onChange={setContent}/>
+      value={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
+      onChange={setContent}
+      onKeyDown={onKeyDown}/>
   );
 }
 
