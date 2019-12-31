@@ -25,29 +25,26 @@ function App({initialState}: {initialState: Things}) {
     Server.putData(newState);
     setState_(newState);
   }
-  const [tree, setTree] = React.useState(T.fromRoot(initialState, 5));
-
-  React.useEffect(() => {
-    setTree(T.refresh(tree, state));
-    setTree2(T.refresh(tree, state));
-  }, [state]);
-
-  const [tree2, setTree2] = React.useState(T.fromRoot(initialState, 5));
 
   return <>
     <button onClick={() => { setState_(Data.addChild(state, 5, 2)) }}>Test Update</button>
-    <h1>Tree 1</h1>
-    <Outline context={{state, setState, tree, setTree}}/>
-    <h1>Tree 2</h1>
-    <Outline context={{state, setState, tree: tree2, setTree: setTree2}}/>
-    <h1>Tree 1 (copy)</h1>
-    <Outline context={{state, setState, tree, setTree}}/>
+    <Outline state={state} setState={setState} thing={5}/>
+    <Outline state={state} setState={setState} thing={5}/>
+    <Outline state={state} setState={setState} thing={2}/>
   </>;
 }
 
-function Outline(p: {context: TreeContext}) {
+function Outline(p: {state: Things; setState(value: Things): void; thing: number}) {
+  const [tree, setTree] = React.useState(T.fromRoot(p.state, p.thing));
+
+  React.useEffect(() => {
+    setTree(T.refresh(tree, p.state));
+  }, [p.state]);
+
+  const context: TreeContext = {state: p.state, setState: p.setState, tree, setTree};
+
   return <ul className="outline-tree outline-root-tree">
-    <ExpandableItem context={p.context} id={p.context.tree.root}/>
+    <ExpandableItem context={context} id={context.tree.root}/>
   </ul>;
 }
 
