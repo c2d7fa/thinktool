@@ -41,6 +41,65 @@ export function expanded(tree: Tree, id: number): boolean {
   return tree.nodes[id].expanded;
 }
 
+function refreshChildren(state: Things, tree: Tree, parent: number): Tree {
+  function arrayEqual<T>(a: T[], b: T[]): boolean {
+    if (a.length !== b.length)
+      return false;
+    for (let i = 0; i < a.length; i++)
+      if (a[i] !== b[i])
+        return false;
+    return true;
+  }
+
+  const stateChildren = D.children(state, thing(tree, parent));
+  const treeChildren = children(tree, parent).map(ch => thing(tree, ch));
+
+  if (!expanded(tree, parent))
+    return tree;
+  if (arrayEqual(stateChildren, treeChildren))
+    return tree;
+
+  if (stateChildren.length === treeChildren.length + 1) {
+    console.log("Assuming inserted child for id=%o, thing=%o", parent, thing(tree, parent));
+    // Assume new child was inserted
+
+    // Copy children so we can mutate it for convencience
+    let result: Tree = {...tree, nodes: {...tree.nodes, [parent]: {...tree.nodes[parent], children: [...tree.nodes[parent].children]}}};
+
+    for (let i = 0; i < stateChildren.length; i++) {
+      if (children(result, parent)[i] === undefined) {
+        const [newChild, newResult] = load(state, result, stateChildren[i]);
+        result = newResult;
+        result.nodes[parent].children.splice(i, 0, newChild);
+      } else {
+        if (thing(result, children(result, parent)[i]) === stateChildren[i])
+          continue;
+        const [newChild, newResult] = load(state, result, stateChildren[i]);
+        result = newResult;
+        result.nodes[parent].children.splice(i, 0, newChild, children(result, parent)[i]);
+      }
+    }
+
+    // In case our assumption was wrong, truncate any extra elements that were inserted.
+    result.nodes[parent].children.splice(stateChildren.length);
+
+    return result;
+  } else {
+    // We can't make any assumptions; just recreate the entire children array
+
+    // TODO: Clean up removed children.
+    let result: Tree = {...tree, nodes: {...tree.nodes, [parent]: {...tree.nodes[parent], children: []}}};
+
+    for (const childThing of D.children(state, thing(tree, parent))) {
+      const [newChild, newResult] = load(state, result, childThing);
+      result = newResult;
+      result.nodes[parent].children = [...result.nodes[parent].children, newChild];
+    }
+
+    return result;
+  }
+}
+
 export function toggle(state: Things, tree: Tree, id: number): Tree {
   const expanded = !tree.nodes[id].expanded;
 
@@ -48,16 +107,8 @@ export function toggle(state: Things, tree: Tree, id: number): Tree {
   let result = {...tree, nodes: {...tree.nodes, [id]: {...tree.nodes[id], expanded}}};
 
   // Load children from state if necessary
-  //
-  // TODO: This won't work if state changes! In fact, I'm not sure how to handle
-  // that in general.
-  if (expanded && result.nodes[id].children.length === 0) {
-    for (const childThing of D.children(state, thing(tree, id))) {
-      const [newChild, newResult] = load(state, result, childThing);
-      result = newResult;
-      result.nodes[id].children = [...result.nodes[id].children, newChild];
-    }
-  }
+  if (result.nodes[id].children.length === 0)
+    result = refreshChildren(state, result, id);
 
   return result;
 }
@@ -80,6 +131,16 @@ export function load(state: Things, tree: Tree, thing: number): [number, Tree] {
 
 export function children(tree: Tree, parent: number): number[] {
   return tree.nodes[parent].children;
+}
+
+// Refresh the nodes of a tree based on the state, such that relevant changes in
+// the state are reflected in the tree.
+export function refresh(tree: Tree, state: Things): Tree {
+
+  let result = tree;
+  for (const id in tree.nodes)
+    result = refreshChildren(state, result, +id);
+  return result;
 }
 
 export function copy(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree] {

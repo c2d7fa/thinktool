@@ -22,3 +22,7 @@ export function setContent(things: Things, thing: number, newContent: string): T
 export function hasChildren(things: Things, thing: number): boolean {
   return children(things, thing).length !== 0;
 }
+
+export function addChild(things: Things, parent: number, child: number): Things {
+  return {...things, [parent]: {...things[parent], children: [...things[parent].children, child]}};
+}

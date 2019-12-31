@@ -25,7 +25,6 @@ module.exports = {
     "@typescript-eslint/semi": ["error", "always", {"omitLastInOneLineBlock": true}],
     "comma-dangle": ["error", "always-multiline"],
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
   },
   settings: {
     react: {

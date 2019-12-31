@@ -27,7 +27,22 @@ function App({initialState}: {initialState: Things}) {
   }
   const [tree, setTree] = React.useState(T.fromRoot(initialState, 5));
 
-  return <Outline context={{state, setState, tree, setTree}}/>;
+  React.useEffect(() => {
+    setTree(T.refresh(tree, state));
+    setTree2(T.refresh(tree, state));
+  }, [state]);
+
+  const [tree2, setTree2] = React.useState(T.fromRoot(initialState, 5));
+
+  return <>
+    <button onClick={() => { setState_(Data.addChild(state, 5, 2)) }}>Test Update</button>
+    <h1>Tree 1</h1>
+    <Outline context={{state, setState, tree, setTree}}/>
+    <h1>Tree 2</h1>
+    <Outline context={{state, setState, tree: tree2, setTree: setTree2}}/>
+    <h1>Tree 1 (copy)</h1>
+    <Outline context={{state, setState, tree, setTree}}/>
+  </>;
 }
 
 function Outline(p: {context: TreeContext}) {
