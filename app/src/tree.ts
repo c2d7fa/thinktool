@@ -150,9 +150,19 @@ export function refresh(tree: Tree, state: Things): Tree {
 }
 
 export function indent(state: Things, tree: Tree, id: number): [Things, Tree] {
+  if (tree.root === id)
+    return [state, tree];
+
   const parent_ = parent(tree, id);
   const index = childIndex(tree, parent_, id);
+
+  if (index === 0)
+    return [state, tree];
+
   const newState = D.indent(state, thing(tree, parent_), index);
+
+  // TODO: A lot of this logic is similar to Data.indent, but I'm not sure if we
+  // can express one in terms of the other.
 
   let newTree: Tree = {...tree, nodes: {...tree.nodes, [parent_]: {...tree.nodes[parent_], children: [...tree.nodes[parent_].children]}}};
   newTree.nodes[parent_].children.splice(index, 1);
