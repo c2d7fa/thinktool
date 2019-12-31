@@ -51,9 +51,7 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
   const {tree, setTree, state, setState} = p.context;
 
   function toggle() {
-    // Can't collapse item without children
-    if (Data.hasChildren(state, T.thing(tree, p.id)))
-      setTree(T.toggle(state, tree, p.id));
+    setTree(T.toggle(state, tree, p.id));
   }
 
   const expanded = T.expanded(tree, p.id);
@@ -93,6 +91,9 @@ function Content(p: {context: TreeContext; id: number}) {
       const [newState, newTree] = T.unindent(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(newTree);
+      ev.preventDefault();
+    } else if (ev.key === "Tab") {
+      p.context.setTree(T.toggle(p.context.state, p.context.tree, p.id));
       ev.preventDefault();
     }
   }

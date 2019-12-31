@@ -107,7 +107,12 @@ export function expand(state: Things, tree: Tree, id: number): Tree {
 }
 
 export function toggle(state: Things, tree: Tree, id: number): Tree {
-  const expanded = !tree.nodes[id].expanded;
+  let expanded = !tree.nodes[id].expanded;
+
+  if (!D.hasChildren(state, thing(tree, id))) {
+    // Items without children are always expanded
+    expanded = true;
+  }
 
   // Update expanded status
   let result = {...tree, nodes: {...tree.nodes, [id]: {...tree.nodes[id], expanded}}};
