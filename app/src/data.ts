@@ -52,3 +52,15 @@ export function unindent(things: Things, grandparent: number, parentIndex: numbe
 
   return result;
 }
+
+export function removeChild(state: Things, parent: number, index: number) {
+  const result = {...state, [parent]: {...state[parent], children: [...state[parent].children]}};
+  result[parent].children.splice(index, 1);
+  return result;
+}
+
+export function insertChild(state: Things, parent: number, child: number, index: number) {
+  const result = {...state, [parent]: {...state[parent], children: [...state[parent].children]}};
+  result[parent].children.splice(index, 0, child);
+  return result;
+}

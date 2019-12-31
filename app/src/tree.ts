@@ -250,6 +250,17 @@ export function unindent(state: Things, tree: Tree, id: number): [Things, Tree] 
   if (grandparent === undefined)
     return [state, tree];
 
+  return move(state, tree, id, {parent: grandparent, index: childIndex(tree, grandparent, parent_) + 1});
+
+  /*
+  const parent_ = parent(tree, id);
+  if (parent_ === undefined)
+    return [state, tree];
+
+  const grandparent = parent(tree, parent_);
+  if (grandparent === undefined)
+    return [state, tree];
+
   const parentIndex = childIndex(tree, grandparent, parent_);
   const index = childIndex(tree, parent_, id);
 
@@ -257,6 +268,7 @@ export function unindent(state: Things, tree: Tree, id: number): [Things, Tree] 
   const newTree = refresh(tree, newState);  // TODO: Could be improved
 
   return [newState, newTree];
+  */
 }
 
 function parent(tree: Tree, child: number): number {
@@ -281,8 +293,16 @@ export function remove(state: Things, tree: Tree, id: number): [Things, Tree] {
 }
 
 export function move(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree] {
-  console.log("move(%o, %o, %o, %o)", state, tree, id, destination);
-  return [state, tree];
+  let newState = D.removeChild(state, thing(tree, parent(tree, id)), childIndex(tree, parent(tree, id), id));
+  newState = D.insertChild(newState, thing(tree, destination.parent), thing(tree, id), destination.index);
+
+  let newTree = refresh(tree, newState);  // TODO: Could be improved
+
+  // Keep focus
+  if (tree.focus === id)
+    newTree = {...newTree, focus: children(newTree, destination.parent)[destination.index]};
+
+  return [newState, newTree];
 }
 
 export function moveUp(state: Things, tree: Tree, id: number): [Things, Tree] {
