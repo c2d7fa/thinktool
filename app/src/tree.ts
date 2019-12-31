@@ -251,24 +251,6 @@ export function unindent(state: Things, tree: Tree, id: number): [Things, Tree] 
     return [state, tree];
 
   return move(state, tree, id, {parent: grandparent, index: childIndex(tree, grandparent, parent_) + 1});
-
-  /*
-  const parent_ = parent(tree, id);
-  if (parent_ === undefined)
-    return [state, tree];
-
-  const grandparent = parent(tree, parent_);
-  if (grandparent === undefined)
-    return [state, tree];
-
-  const parentIndex = childIndex(tree, grandparent, parent_);
-  const index = childIndex(tree, parent_, id);
-
-  const newState = D.unindent(state, thing(tree, grandparent), parentIndex, index);
-  const newTree = refresh(tree, newState);  // TODO: Could be improved
-
-  return [newState, newTree];
-  */
 }
 
 function parent(tree: Tree, child: number): number {
@@ -282,16 +264,6 @@ function childIndex(tree: Tree, parent: number, child: number): number {
   return children(tree, parent).indexOf(child);
 }
 
-export function copy(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree] {
-  console.log("copy(%o, %o, %o, %o)", state, tree, id, destination);
-  return [state, tree];
-}
-
-export function remove(state: Things, tree: Tree, id: number): [Things, Tree] {
-  console.log("remove(%o, %o, %o)", state, tree, id);
-  return [state, tree];
-}
-
 export function move(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree] {
   let newState = D.removeChild(state, thing(tree, parent(tree, id)), childIndex(tree, parent(tree, id), id));
   newState = D.insertChild(newState, thing(tree, destination.parent), thing(tree, id), destination.index);
@@ -303,14 +275,4 @@ export function move(state: Things, tree: Tree, id: number, destination: Destina
     newTree = {...newTree, focus: children(newTree, destination.parent)[destination.index]};
 
   return [newState, newTree];
-}
-
-export function moveUp(state: Things, tree: Tree, id: number): [Things, Tree] {
-  console.log("moveUp(%o, %o, %o)", state, tree, id);
-  return [state, tree];
-}
-
-export function moveDown(state: Things, tree: Tree, id: number): [Things, Tree] {
-  console.log("moveDown(%o, %o, %o)", state, tree, id);
-  return [state, tree];
 }
