@@ -176,6 +176,24 @@ export function indent(state: Things, tree: Tree, id: number): [Things, Tree] {
   return [newState, refresh(newTree, newState)];
 }
 
+export function unindent(state: Things, tree: Tree, id: number): [Things, Tree] {
+  const parent_ = parent(tree, id);
+  if (parent_ === undefined)
+    return [state, tree];
+
+  const grandparent = parent(tree, parent_);
+  if (grandparent === undefined)
+    return [state, tree];
+
+  const parentIndex = childIndex(tree, grandparent, parent_);
+  const index = childIndex(tree, parent_, id);
+
+  const newState = D.unindent(state, thing(tree, grandparent), parentIndex, index);
+  const newTree = refresh(tree, newState);  // TODO: Could be improved
+
+  return [newState, newTree];
+}
+
 function parent(tree: Tree, child: number): number {
   for (const parent in tree.nodes)
     if (children(tree, +parent).includes(child))

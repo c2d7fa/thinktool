@@ -84,10 +84,16 @@ function Content(p: {context: TreeContext; id: number}) {
   }
 
   function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
-    if (ev.key === "ArrowRight" && ev.altKey) {
+    if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(newTree);
+      ev.preventDefault();
+    } else if (ev.key === "ArrowLeft" && ev.altKey && ev.ctrlKey) {
+      const [newState, newTree] = T.unindent(p.context.state, p.context.tree, p.id);
+      p.context.setState(newState);
+      p.context.setTree(newTree);
+      ev.preventDefault();
     }
   }
 

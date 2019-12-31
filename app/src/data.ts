@@ -36,3 +36,19 @@ export function indent(things: Things, parent: number, index: number): Things {
   const child = things[parent].children[index];
   return addChild(result, newParent, child);
 }
+
+// Make the given child a sibling of its parent.
+export function unindent(things: Things, grandparent: number, parentIndex: number, index: number): Things {
+  const thing = children(things, children(things, grandparent)[parentIndex])[index];
+
+  // Remove the child from its parent
+  const parent = children(things, grandparent)[parentIndex];
+  let result: Things = {...things, [parent]: {...things[parent], children: [...things[parent].children]}};
+  result[parent].children.splice(index, 1);
+
+  // Make it a child of the grandparent following the parent
+  result = {...result, [grandparent]: {...things[grandparent], children: [...things[grandparent].children]}};
+  result[grandparent].children.splice(parentIndex + 1, 0, thing);
+
+  return result;
+}
