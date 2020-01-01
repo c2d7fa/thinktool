@@ -26,11 +26,7 @@ function App({initialState}: {initialState: Things}) {
     setState_(newState);
   }
 
-  return <>
-    <Outline state={state} setState={setState} thing={5}/>
-    <Outline state={state} setState={setState} thing={5}/>
-    <Outline state={state} setState={setState} thing={2}/>
-  </>;
+  return <Outline state={state} setState={setState} thing={5}/>;
 }
 
 function Outline(p: {state: Things; setState(value: Things): void; thing: number}) {
