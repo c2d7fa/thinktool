@@ -101,6 +101,11 @@ function Content(p: {context: TreeContext; id: number}) {
     } else if (ev.key === "ArrowDown") {
       p.context.setTree(T.focusDown(p.context.tree));
       ev.preventDefault();
+    } else if (ev.key === "Enter") {
+      const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.id);
+      p.context.setState(newState);
+      p.context.setTree(T.focus(newTree, newId));
+      ev.preventDefault();
     }
   }
 

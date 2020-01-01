@@ -276,3 +276,25 @@ export function move(state: Things, tree: Tree, id: number, destination: Destina
 
   return [newState, newTree];
 }
+
+export function createSiblingAfter(state: Things, tree: Tree, id: number): [Things, Tree, number, number] {
+  let newState = state;
+
+  const [newState_, newThing] = D.create(newState);
+  newState = newState_;
+
+  const parent_ = thing(tree, parent(tree, id));
+  const index = childIndex(tree, parent(tree, id), id) + 1;
+
+  newState = D.insertChild(newState, parent_, newThing, index);
+
+  let newTree = tree;
+  const [newId, newTree_] = load(newState, tree, newThing);
+  newTree = newTree_;
+  newTree = {...newTree, nodes: {...newTree.nodes, [parent(tree, id)]: {...newTree.nodes[parent(tree, id)], children: [...newTree.nodes[parent(tree, id)].children]}}};
+  newTree.nodes[parent(tree, id)].children.splice(index, 0, newId);
+
+  newTree = refresh(newTree, newState);
+
+  return [newState, newTree, newThing, newId];
+}
