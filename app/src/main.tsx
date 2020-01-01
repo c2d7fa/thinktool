@@ -86,6 +86,16 @@ function Content(p: {context: TreeContext; id: number}) {
       p.context.setState(newState);
       p.context.setTree(newTree);
       ev.preventDefault();
+    } else if (ev.key === "ArrowDown" && ev.altKey && ev.ctrlKey) {
+      const [newState, newTree] = T.moveDown(p.context.state, p.context.tree, p.id);
+      p.context.setState(newState);
+      p.context.setTree(newTree);
+      ev.preventDefault();
+    } else if (ev.key === "ArrowUp" && ev.altKey && ev.ctrlKey) {
+      const [newState, newTree] = T.moveUp(p.context.state, p.context.tree, p.id);
+      p.context.setState(newState);
+      p.context.setTree(newTree);
+      ev.preventDefault();
     } else if (ev.key === "Tab") {
       p.context.setTree(T.toggle(p.context.state, p.context.tree, p.id));
       ev.preventDefault();

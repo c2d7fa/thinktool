@@ -56,6 +56,8 @@ export function unfocus(tree: Tree): Tree {
 }
 
 function previousSibling(tree: Tree, id: number): number {
+  if (childIndex(tree, parent(tree, id), id) === 0)
+    return null;
   return children(tree, parent(tree, id))[childIndex(tree, parent(tree, id), id) - 1];
 }
 
@@ -275,6 +277,18 @@ export function move(state: Things, tree: Tree, id: number, destination: Destina
     newTree = {...newTree, focus: children(newTree, destination.parent)[destination.index]};
 
   return [newState, newTree];
+}
+
+export function moveUp(state: Things, tree: Tree, id: number): [Things, Tree] {
+  if (parent(tree, id) === undefined || childIndex(tree, parent(tree, id), id) === 0)
+    return [state, tree];
+  return move(state, tree, id, {parent: parent(tree, id), index: childIndex(tree, parent(tree, id), id) - 1});
+}
+
+export function moveDown(state: Things, tree: Tree, id: number): [Things, Tree] {
+  if (parent(tree, id) === undefined || childIndex(tree, parent(tree, id), id) === children(tree, parent(tree, id)).length - 1)
+    return [state, tree];
+  return move(state, tree, id, {parent: parent(tree, id), index: childIndex(tree, parent(tree, id), id) + 1});
 }
 
 export function createSiblingAfter(state: Things, tree: Tree, id: number): [Things, Tree, number, number] {
