@@ -69,5 +69,5 @@ export function create(state: Things): [Things, number] {
   const last = Object.keys(state).sort()[Object.keys(state).length - 1];
   const next = +last + 1;
 
-  return [{...state, [next]: {content: "New Item", children: []}}, next];
+  return [{...state, [next]: {content: "", children: []}}, next];
 }
