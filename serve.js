@@ -1,17 +1,16 @@
 const http = require("http");
 const fs = require("fs");
-const path = require("path");
 
 const respondFile = (path, contentType, response) => {
-    fs.readFile(path, (err, content) => {
-      if (err) {
-        console.error(err);
-        process.exit(1);
-      }
+  fs.readFile(path, (err, content) => {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
 
-      response.writeHead(200, {"Content-Type": contentType});
-      response.end(content, "utf-8");
-    });
+    response.writeHead(200, {"Content-Type": contentType, "Content-Length": content.byteLength});
+    response.end(content, "utf-8");
+  });
 }
 
 http.createServer((request, response) => {
@@ -29,7 +28,6 @@ http.createServer((request, response) => {
     respondFile("./app/bullet-expanded.svg", "image/svg+xml", response);
   } else if (request.url == "/data.json") {
     if (request.method === "PUT") {
-
       // Read body
       let body = "";
       request.setEncoding("utf-8");
