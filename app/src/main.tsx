@@ -1,156 +1,141 @@
-import {Things, LocationInTree} from "./data";
-import * as data from "./data";
-import * as server from "./server-api";
+import {Things} from "./data";
+import {Tree} from "./tree";
+
+import * as Data from "./data";
+import * as T from "./tree";
+import * as Server from "./server-api";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-type SetContent = (thing: number, newContent: string) => void;
+// ==
 
-class Content extends React.Component<{state: Things; thing: number; setContent: SetContent; location: LocationInTree; moveUp(location: LocationInTree): void; moveDown(location: LocationInTree): void}, {}> {
-  private content(): string {
-    return data.content(this.props.state, this.props.thing);
+interface TreeContext {
+  tree: Tree;
+  setTree(value: Tree): void;
+  state: Things;
+  setState(value: Things): void;
+}
+
+// == Components ==
+
+function App({initialState}: {initialState: Things}) {
+  const [state, setState_] = React.useState(initialState);
+  function setState(newState: Things): void {
+    Server.putData(newState);
+    setState_(newState);
   }
 
-  private onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
-    if (ev.altKey && ev.key === "ArrowUp") {
-      this.props.moveUp(this.props.location);
-    } else if (ev.altKey && ev.key === "ArrowDown") {
-      this.props.moveDown(this.props.location);
+  return <Outline state={state} setState={setState} thing={5}/>;
+}
+
+function Outline(p: {state: Things; setState(value: Things): void; thing: number}) {
+  const [tree, setTree] = React.useState(T.fromRoot(p.state, p.thing));
+
+  React.useEffect(() => {
+    setTree(T.refresh(tree, p.state));
+  }, [p.state]);
+
+  const context: TreeContext = {state: p.state, setState: p.setState, tree, setTree};
+
+  return <ul className="outline-tree outline-root-tree">
+    <ExpandableItem context={context} id={context.tree.root}/>
+  </ul>;
+}
+
+function ExpandableItem(p: {context: TreeContext; id: number}) {
+  const {tree, setTree, state, setState} = p.context;
+
+  function toggle() {
+    setTree(T.toggle(state, tree, p.id));
+  }
+
+  const expanded = T.expanded(tree, p.id);
+
+  const subtree =
+    <Subtree
+      context={p.context}
+      parent={p.id}/>;
+
+  return <li className="outline-item">
+    <Bullet expanded={T.expanded(tree, p.id)} toggle={toggle}/>
+    <Content context={p.context} id={p.id}/>
+    { expanded && subtree }
+  </li>;
+}
+
+function Bullet(p: {expanded: boolean; toggle: () => void}) {
+  return (
+    <span
+      className={`bullet ${p.expanded ? "expanded" : "collapsed"}`}
+      onClick={() => p.toggle()}/>
+  );
+}
+
+function Content(p: {context: TreeContext; id: number}) {
+  function setContent(ev: React.ChangeEvent<HTMLInputElement>): void {
+    p.context.setState(Data.setContent(p.context.state, T.thing(p.context.tree, p.id), ev.target.value));
+  }
+
+  function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
+    if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
+      const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.id);
+      p.context.setState(newState);
+      p.context.setTree(newTree);
+      ev.preventDefault();
+    } else if (ev.key === "ArrowLeft" && ev.altKey && ev.ctrlKey) {
+      const [newState, newTree] = T.unindent(p.context.state, p.context.tree, p.id);
+      p.context.setState(newState);
+      p.context.setTree(newTree);
+      ev.preventDefault();
+    } else if (ev.key === "Tab") {
+      p.context.setTree(T.toggle(p.context.state, p.context.tree, p.id));
+      ev.preventDefault();
+    } else if (ev.key === "ArrowUp") {
+      p.context.setTree(T.focusUp(p.context.tree));
+      ev.preventDefault();
+    } else if (ev.key === "ArrowDown") {
+      p.context.setTree(T.focusDown(p.context.tree));
+      ev.preventDefault();
+    } else if (ev.key === "Enter") {
+      const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.id);
+      p.context.setState(newState);
+      p.context.setTree(T.focus(newTree, newId));
+      ev.preventDefault();
     }
   }
 
-  render(): React.ReactNode {
-    return <input
+  const inputRef: React.MutableRefObject<HTMLInputElement> = React.useRef(null);
+
+  React.useEffect(() => {
+    if (T.hasFocus(p.context.tree, p.id))
+      inputRef.current.focus();
+  }, [inputRef, p.context.tree]);
+
+  return (
+    <input
+      ref={inputRef}
       className="content"
-      value={this.content()}
-      onKeyDown={this.onKeyDown.bind(this)}
-      onChange={(ev: React.ChangeEvent<HTMLInputElement>) => this.props.setContent(this.props.thing, ev.target.value)}/>;
-  }
+      value={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
+      onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.id)) }}
+      onChange={setContent}
+      onKeyDown={onKeyDown}/>
+  );
 }
 
-// Subtree, not including the parent itself.
-class Subtree extends React.Component<{state: Things; parent: number; setContent: SetContent; moveUp(): void; moveDown(): void}, {}> {
-  render(): React.ReactNode {
-    let i = 0;
-    const children = data.children(this.props.state, this.props.parent).map(child => {
-      return <ExpandableItem
-        key={child}
-        state={this.props.state}
-        thing={child}
-        location={{parent: this.props.parent, index: i++}}
-        moveUp={this.props.moveUp}
-        moveDown={this.props.moveDown}
-        setContent={this.props.setContent}/>;
-    });
-    return <ul className="outline-tree">{children}</ul>;
-  }
+function Subtree(p: {context: TreeContext; parent: number}) {
+  const children = T.children(p.context.tree, p.parent).map(child => {
+    return <ExpandableItem key={child} id={child} context={p.context}/>;
+  });
+
+  return <ul className="outline-tree">{children}</ul>;
 }
 
-class Bullet extends React.Component<{expanded: boolean; setExpanded(expanded: boolean): void}, {}> {
-  private toggle(): void {
-    this.props.setExpanded(!this.props.expanded);
-  }
-
-  render(): React.ReactNode {
-    return <span
-      className={`bullet ${this.props.expanded ? "expanded" : "collapsed"}`}
-      onClick={this.toggle.bind(this)}/>;
-  }
-}
-
-class ExpandableItem extends React.Component<{state: Things; thing: number; setContent: SetContent; location: LocationInTree; moveUp(): void; moveDown(): void}, {expanded: boolean}> {
-  constructor(props: {state: Things; thing: number; setContent: SetContent; location: LocationInTree; moveUp(): void; moveDown(): void}) {
-    super(props);
-    this.state = {expanded: false};
-  }
-
-  render(): React.ReactNode {
-    const subtree =
-      <Subtree
-        state={this.props.state}
-        parent={this.props.thing}
-        moveUp={this.props.moveUp}
-        moveDown={this.props.moveDown}
-        setContent={this.props.setContent}/>;
-
-    return <li className="outline-item">
-      <Bullet expanded={this.state.expanded} setExpanded={(expanded: boolean) => this.setState({expanded}) }/>
-      <Content
-        state={this.props.state}
-        thing={this.props.thing}
-        location={this.props.location}
-        moveUp={this.props.moveUp}
-        moveDown={this.props.moveDown}
-        setContent={this.props.setContent}/>
-      { (() => { if (this.state.expanded) return subtree; })() }
-    </li>;
-  }
-}
-
-class Outline extends React.Component<{state: Things; root: number; setContent: SetContent; moveUp(): void; moveDown(): void}, {}> {
-  render(): React.ReactNode {
-    return <ul className="outline-tree outline-root-tree">
-      <ExpandableItem
-        state={this.props.state}
-        thing={this.props.root}
-        location={null}
-        moveUp={this.props.moveUp}
-        moveDown={this.props.moveDown}
-        setContent={this.props.setContent}/>
-    </ul>;
-  }
-}
-
-class App extends React.Component<{initialState: Things}, {state: Things}> {
-  constructor(props: {initialState: Things}) {
-    super(props);
-
-    this.state = {state: this.props.initialState};
-  }
-
-  private async setContent(thing: number, newContent: string): Promise<void> {
-    // TODO: We should make 'data' module use immutable data structures, which we want to do anyway.
-    data.setContent(this.state.state, thing, newContent);
-    this.setState({state: this.state.state});
-    await server.putData(this.state.state);
-  }
-
-  private async moveUp(location: LocationInTree): Promise<void> {
-    if (location === null) return;
-
-    data.moveUp(this.state.state, location);
-    this.setState({state: this.state.state});
-    await server.putData(this.state.state);
-  }
-
-  private async moveDown(location: LocationInTree): Promise<void> {
-    if (location === null) return;
-
-    console.log("Move down: %o", location);
-
-    data.moveDown(this.state.state, location);
-    console.log(this.state.state);
-    this.setState({state: this.state.state});
-    console.log(this.state.state);
-    await server.putData(this.state.state);
-  }
-
-  render(): React.ReactNode {
-    return <div>
-      <Outline
-        state={this.state.state}
-        root={5}
-        moveUp={this.moveUp.bind(this)}
-        moveDown={this.moveDown.bind(this)}
-        setContent={this.setContent.bind(this)}/>
-    </div>;
-  }
-}
+// ==
 
 async function start(): Promise<void> {
   ReactDOM.render(
-    <App initialState={await server.getData() as Things}/>,
+    <App initialState={await Server.getData() as Things}/>,
     document.querySelector("#app")
   );
 }
