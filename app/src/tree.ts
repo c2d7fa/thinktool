@@ -298,3 +298,13 @@ export function createSiblingAfter(state: Things, tree: Tree, id: number): [Thin
 
   return [newState, newTree, newThing, newId];
 }
+
+export function remove(state: Things, tree: Tree, id: number): [Things, Tree] {
+  if (parent(tree, id) === undefined)
+    return [state, tree];
+
+  const newState = D.removeChild(state, thing(tree, parent(tree, id)), childIndex(tree, parent(tree, id), id));
+  const newTree = focus(tree, previousVisibleItem(tree, id));
+
+  return [newState, refresh(newTree, newState)];
+}

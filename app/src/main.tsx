@@ -102,6 +102,11 @@ function Content(p: {context: TreeContext; id: number}) {
       p.context.setState(newState);
       p.context.setTree(T.focus(newTree, newId));
       ev.preventDefault();
+    } else if (ev.key === "Backspace" && ev.altKey) {
+      const [newState, newTree] = T.remove(p.context.state, p.context.tree, p.id);
+      p.context.setState(newState);
+      p.context.setTree(newTree);
+      ev.preventDefault();
     }
   }
 
