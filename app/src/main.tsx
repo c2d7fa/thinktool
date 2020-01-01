@@ -133,6 +133,7 @@ function Content(p: {context: TreeContext; id: number}) {
   return (
     <input
       ref={inputRef}
+      size={Data.content(p.context.state, T.thing(p.context.tree, p.id)).length + 1}
       className="content"
       value={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
       onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.id)) }}
