@@ -299,6 +299,20 @@ export function createSiblingAfter(state: Things, tree: Tree, id: number): [Thin
   return [newState, newTree, newThing, newId];
 }
 
+export function createChild(state: Things, tree: Tree, id: number): [Things, Tree, number, number] {
+  // Create item as child
+  const [state1, childThing] = D.create(state);
+  const state2 = D.addChild(state1, thing(tree, id), childThing);
+
+  // Load it into the tree
+  const tree1 = expand(state, tree, id);
+  const [childId, tree2] = load(state2, tree1, childThing);
+  const tree3 = {...tree2, nodes: {...tree2.nodes, [id]: {...tree2.nodes[id], children: [...tree2.nodes[id].children, childId]}}};
+  const tree4 = focus(tree3, childId);
+
+  return [state2, tree4, childThing, childId];
+}
+
 export function remove(state: Things, tree: Tree, id: number): [Things, Tree] {
   if (parent(tree, id) === undefined)
     return [state, tree];

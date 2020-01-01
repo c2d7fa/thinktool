@@ -44,13 +44,11 @@ function Outline(p: {state: Things; setState(value: Things): void; thing: number
 }
 
 function ExpandableItem(p: {context: TreeContext; id: number}) {
-  const {tree, setTree, state, setState} = p.context;
-
   function toggle() {
-    setTree(T.toggle(state, tree, p.id));
+    p.context.setTree(T.toggle(p.context.state, p.context.tree, p.id));
   }
 
-  const expanded = T.expanded(tree, p.id);
+  const expanded = T.expanded(p.context.tree, p.id);
 
   const subtree =
     <Subtree
@@ -58,7 +56,7 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
       parent={p.id}/>;
 
   return <li className="outline-item">
-    <Bullet expanded={T.expanded(tree, p.id)} toggle={toggle}/>
+    <Bullet expanded={T.expanded(p.context.tree, p.id)} toggle={toggle}/>
     <Content context={p.context} id={p.id}/>
     { expanded && subtree }
   </li>;
@@ -96,6 +94,11 @@ function Content(p: {context: TreeContext; id: number}) {
       ev.preventDefault();
     } else if (ev.key === "ArrowDown") {
       p.context.setTree(T.focusDown(p.context.tree));
+      ev.preventDefault();
+    } else if (ev.key === "Enter" && ev.shiftKey) {
+      const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, p.id);
+      p.context.setState(newState);
+      p.context.setTree(T.focus(newTree, newId));
       ev.preventDefault();
     } else if (ev.key === "Enter") {
       const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.id);
