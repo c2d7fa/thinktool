@@ -10,11 +10,20 @@ import * as ReactDOM from "react-dom";
 
 // ==
 
+interface DragContext {
+  current: number | null;
+  target: number | null;
+}
+
 interface TreeContext {
   tree: Tree;
   setTree(value: Tree): void;
   state: Things;
   setState(value: Things): void;
+
+  // Drag and drop
+  drag: DragContext;
+  setDrag(value: DragContext): void;
 }
 
 // == Components ==
@@ -36,7 +45,9 @@ function Outline(p: {state: Things; setState(value: Things): void; thing: number
     setTree(T.refresh(tree, p.state));
   }, [p.state]);
 
-  const context: TreeContext = {state: p.state, setState: p.setState, tree, setTree};
+  const [drag, setDrag] = React.useState({current: null, target: null});
+
+  const context: TreeContext = {state: p.state, setState: p.setState, tree, setTree, drag, setDrag};
 
   return <ul className="outline-tree outline-root-tree">
     <ExpandableItem context={context} id={context.tree.root}/>
@@ -50,22 +61,62 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
 
   const expanded = T.expanded(p.context.tree, p.id);
 
+  function beginDrag() {
+    p.context.setDrag({current: p.id, target: null});
+  }
+
+  function onMouseUp(ev: React.MouseEvent<HTMLElement>): void {
+    if (p.context.drag.current !== null && p.context.drag.current !== p.id) {
+      if (ev.ctrlKey) {
+        console.log("Copy: %o -> %o", p.context.drag.current, p.id);
+      } else {
+        console.log("Move: %o -> %o", p.context.drag.current, p.id);
+      }
+    }
+
+    ev.preventDefault();
+    p.context.drag.current = null;
+  }
+
+  window.addEventListener("mouseup", () => {p.context.drag.current = null}, {once: true});
+
+  function onMouseEnter(ev: React.MouseEvent<HTMLElement>): void {
+    if (p.context.drag.current === p.id) {
+      p.context.setDrag({...p.context.drag, target: null});
+    } else {
+      p.context.setDrag({...p.context.drag, target: p.id});
+    }
+    ev.stopPropagation();
+  }
+
+  let className = "item-line";
+  if (p.context.drag.current !== null && p.context.drag.target === p.id)
+    className += " drop-target";
+  if (p.context.drag.current === p.id)
+    className += " drag-source"; 
+
   const subtree =
     <Subtree
       context={p.context}
       parent={p.id}/>;
 
-  return <li className="outline-item">
-    <Bullet expanded={T.expanded(p.context.tree, p.id)} toggle={toggle}/>
-    <Content context={p.context} id={p.id}/>
-    { expanded && subtree }
-  </li>;
+  return (
+    <li className="outline-item" onMouseOver={onMouseEnter} onMouseUp={onMouseUp}>
+      <span className={className}>
+        <Bullet beginDrag={beginDrag} expanded={T.expanded(p.context.tree, p.id)} toggle={toggle}/>
+        <Content context={p.context} id={p.id}/>
+      </span>
+      { expanded && subtree }
+    </li>
+  );
 }
 
-function Bullet(p: {expanded: boolean; toggle: () => void}) {
+function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void}) {
+
   return (
     <span
       className={`bullet ${p.expanded ? "expanded" : "collapsed"}`}
+      onMouseDown={p.beginDrag}
       onClick={() => p.toggle()}/>
   );
 }

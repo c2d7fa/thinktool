@@ -52,11 +52,20 @@ ul.outline-root-tree {
 input.content {
     border: none;
     background-color: inherit;
-    border-bottom: 1px dotted #dcdcdc;
-    outline: none !important;
+    outline: none;
 }
 
 input.content:focus {
     outline: none;
-    border-bottom: 1px solid #d0d0d0;
+    border-bottom: 1px dotted #d0d0d0;
+}
+
+.item-line.drop-target {
+    border-top: 3px solid #d0d0d0;
+}
+
+.item-line.drag-source {
+    padding: 3px;
+    margin: -3px;
+    background-color: #eee;
 }
