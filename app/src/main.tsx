@@ -92,7 +92,7 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
   let className = "item-line";
   if (p.context.drag.current !== null && p.context.drag.target === p.id)
     className += " drop-target";
-  if (p.context.drag.current === p.id)
+  if (p.context.drag.current === p.id && p.context.drag.target !== null)
     className += " drag-source"; 
 
   const subtree =
