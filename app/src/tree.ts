@@ -279,6 +279,12 @@ export function move(state: Things, tree: Tree, id: number, destination: Destina
   return [newState, newTree];
 }
 
+export function moveToAbove(state: Things, tree: Tree, sourceId: number, destinationId: number): [Things, Tree] {
+  if (parent(tree, destinationId) === undefined)
+    return [state, tree];
+  return move(state, tree, sourceId, {parent: parent(tree, destinationId), index: childIndex(tree, parent(tree, destinationId), destinationId)});
+}
+
 export function moveUp(state: Things, tree: Tree, id: number): [Things, Tree] {
   if (parent(tree, id) === undefined || childIndex(tree, parent(tree, id), id) === 0)
     return [state, tree];
@@ -289,6 +295,18 @@ export function moveDown(state: Things, tree: Tree, id: number): [Things, Tree] 
   if (parent(tree, id) === undefined || childIndex(tree, parent(tree, id), id) === children(tree, parent(tree, id)).length - 1)
     return [state, tree];
   return move(state, tree, id, {parent: parent(tree, id), index: childIndex(tree, parent(tree, id), id) + 1});
+}
+
+export function copy(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree, number] {
+  const newState = D.insertChild(state, thing(tree, destination.parent), thing(tree, id), destination.index);
+  const newTree = refreshChildren(newState, tree, destination.parent);
+  return [newState, newTree, children(newTree, destination.parent)[destination.index]];
+}
+
+export function copyToAbove(state: Things, tree: Tree, sourceId: number, destinationId: number): [Things, Tree, number] {
+  if (parent(tree, destinationId) === undefined)
+    return [state, tree, sourceId];
+  return copy(state, tree, sourceId, {parent: parent(tree, destinationId), index: childIndex(tree, parent(tree, destinationId), destinationId)});
 }
 
 export function createSiblingAfter(state: Things, tree: Tree, id: number): [Things, Tree, number, number] {

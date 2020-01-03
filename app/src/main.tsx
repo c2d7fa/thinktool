@@ -69,8 +69,14 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
     if (p.context.drag.current !== null && p.context.drag.current !== p.id) {
       if (ev.ctrlKey) {
         console.log("Copy: %o -> %o", p.context.drag.current, p.id);
+        const [newState, newTree, newId] = T.copyToAbove(p.context.state, p.context.tree, p.context.drag.current, p.context.drag.target);
+        p.context.setState(newState);
+        p.context.setTree(T.focus(newTree, newId));
       } else {
-        console.log("Move: %o -> %o", p.context.drag.current, p.id);
+        console.log("Move: %o -> %o", p.context.drag.current, p.context.drag.target);
+        const [newState, newTree] = T.moveToAbove(p.context.state, p.context.tree, p.context.drag.current, p.context.drag.target);
+        p.context.setState(newState);
+        p.context.setTree(newTree);
       }
     }
 
