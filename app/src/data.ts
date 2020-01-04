@@ -9,11 +9,12 @@ export interface Things {
 }
 
 export function children(things: Things, thing: number): number[] {
+  if (!exists(things, thing)) return [];
   return things.things[thing].children;
 }
 
 export function content(things: Things, thing: number): string {
-  if (!exists(things, thing)) return `THING ${thing} DOES NOT EXIST`;
+  if (!exists(things, thing)) return "";
   return things.things[thing].content;
 }
 
@@ -84,4 +85,23 @@ export function remove(state: Things, removedThing: number): Things {
 
 export function exists(state: Things, thing: number): boolean {
   return typeof state.things[thing] === "object";
+}
+
+// Remove things that are not referred to anywhere.
+export function cleanGarbage(state: Things, root: number): Things {
+  const seen: {[k: number]: boolean} = {};
+  function mark(root: number): void {
+    seen[root] = true;
+    for (const child of children(state, root))
+      mark(child);
+  }
+  mark(root);
+
+  const result = {...state, things: {...state.things}};
+
+  for (const thing in state.things)
+    if (!seen[+thing] || !exists(state, +thing))
+      delete result.things[+thing];
+
+  return result;
 }

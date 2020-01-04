@@ -28,21 +28,21 @@ interface TreeContext {
 
 // == Components ==
 
-function App({initialState}: {initialState: Things}) {
+function App({initialState, root}: {initialState: Things; root: number}) {
   const [state, setState_] = React.useState(initialState);
   function setState(newState: Things): void {
     Server.putData(newState);
     setState_(newState);
   }
 
-  return <Outline state={state} setState={setState}/>;
+  return <Outline state={state} setState={setState} root={root}/>;
 }
 
-function Outline(p: {state: Things; setState(value: Things): void}) {
-  // To simulate multiple top-level items, we just assume that thing #0 is the
-  // root, and that its children should be used as the top-level items. This is
-  // a bit of a hack. We should probably do something smarter.
-  const [tree, setTree] = React.useState(T.expand(p.state, T.fromRoot(p.state, 0), 0));
+function Outline(p: {state: Things; setState(value: Things): void; root: number}) {
+  // To simulate multiple top-level items, we just assign a thing as the root,
+  // and use its children as the top-level items. This is a bit of a hack. We
+  // should probably do something smarter.
+  const [tree, setTree] = React.useState(T.expand(p.state, T.fromRoot(p.state, p.root), 0));
 
   React.useEffect(() => {
     setTree(T.refresh(tree, p.state));
@@ -54,7 +54,7 @@ function Outline(p: {state: Things; setState(value: Things): void}) {
 
   return (
     <Subtree context={context} parent={0}>
-      { T.children(tree, 0).length === 0 && <PlaceholderItem context={context} parent={0}/> }
+      { T.children(tree, p.root).length === 0 && <PlaceholderItem context={context} parent={0}/> }
     </Subtree>
   );
 }
@@ -237,7 +237,7 @@ function Subtree(p: {context: TreeContext; parent: number; children?: React.Reac
 
 async function start(): Promise<void> {
   ReactDOM.render(
-    <App initialState={await Server.getData() as Things}/>,
+    <App initialState={Data.cleanGarbage(await Server.getData() as Things, 0)} root={0}/>,
     document.querySelector("#app")
   );
 }
