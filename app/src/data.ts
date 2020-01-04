@@ -91,6 +91,7 @@ export function exists(state: Things, thing: number): boolean {
 export function cleanGarbage(state: Things, root: number): Things {
   const seen: {[k: number]: boolean} = {};
   function mark(root: number): void {
+    if (seen[root]) return;
     seen[root] = true;
     for (const child of children(state, root))
       mark(child);
