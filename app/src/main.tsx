@@ -32,27 +32,49 @@ interface TreeContext extends StateContext {
 
 // == Components ==
 
-function App({initialState, root}: {initialState: Things; root: number}) {
+function extractThingFromURL(): number {
+  if (window.location.hash.length > 0) {
+    const thing = Number(window.location.hash.slice(1))
+    return thing
+  } else {
+    // By default, use thing #0. We should probably do something smarter here,
+    // like allow the user to set a deafult thing.
+    return 0;
+  }
+}
+
+function App({initialState}: {initialState: Things}) {
+  const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
+  function setSelectedThing(thing: number): void {
+    // TODO: Update title?
+    setSelectedThing_(thing)
+    window.history.pushState(undefined, document.title, `#${thing}`)
+  }
+
+  // TODO: We should manage this in a cleaner way, in case anyone else also
+  // wants to set onpopstate.
+  window.onpopstate = (ev) => {
+    setSelectedThing_(extractThingFromURL())
+  }
+
   const [state, setState_] = React.useState(initialState);
   function setState(newState: Things): void {
     Server.putData(newState);
     setState_(newState);
   }
 
-  return <ThingOverview context={{state, setState}} initialThing={root}/>;
+  return <ThingOverview context={{state, setState}} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>;
 }
 
-function ThingOverview(p: {context: StateContext; initialThing: number}) {
-  const [selectedThing, setSelectedThing] = React.useState(p.initialThing);
-
+function ThingOverview(p: {context: StateContext; selectedThing: number, setSelectedThing(value: number): void}) {
   return (
     <div className="overview">
-      <h1>{Data.content(p.context.state, selectedThing)}</h1>
+      <h1>{Data.content(p.context.state, p.selectedThing)}</h1>
       <p>
-        You are currently looking at the thing called <strong>{Data.content(p.context.state, selectedThing)}</strong>,
-        which has ID <strong>{selectedThing}</strong>. The following is a list of its children:
+        You are currently looking at the thing called <strong>{Data.content(p.context.state, p.selectedThing)}</strong>,
+        which has ID <strong>{p.selectedThing}</strong>. The following is a list of its children:
       </p>
-      <Outline context={p.context} root={selectedThing} setSelectedThing={setSelectedThing}/>
+      <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
     </div>);
 }
 
@@ -270,7 +292,7 @@ function Subtree(p: {context: TreeContext; parent: number; children?: React.Reac
 
 async function start(): Promise<void> {
   ReactDOM.render(
-    <App initialState={Data.cleanGarbage(await Server.getData() as Things, 0)} root={0}/>,
+    <App initialState={Data.cleanGarbage(await Server.getData() as Things, 0)}/>,
     document.querySelector("#app")
   );
 }
