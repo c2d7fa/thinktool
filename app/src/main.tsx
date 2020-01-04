@@ -69,6 +69,7 @@ function App({initialState}: {initialState: Things}) {
 function ThingOverview(p: {context: StateContext; selectedThing: number, setSelectedThing(value: number): void}) {
   return (
     <div className="overview">
+      <ParentsOutline context={p.context} child={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
       <input
         size={Data.content(p.context.state, p.selectedThing).length + 1}
         className="selected-content"
@@ -80,6 +81,17 @@ function ThingOverview(p: {context: StateContext; selectedThing: number, setSele
       </p>
       <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
     </div>);
+}
+
+function ParentsOutline(p: {context: StateContext, child: number, setSelectedThing: SetSelectedThing}) {
+  let parentLinks = Data.parents(p.context.state, p.child).map((parent: number) => {
+    return <a key={parent} className="thing-link" href={`#${parent}`}>{Data.content(p.context.state, parent)}</a>
+  })
+
+  if (parentLinks.length === 0)
+    parentLinks = [<span key={"none"} className="label no-parents">&mdash;</span>]
+
+  return <span className="parents"><span className="label">Parents:</span>{parentLinks}</span>
 }
 
 function Outline(p: {context: StateContext; root: number; setSelectedThing: SetSelectedThing}) {

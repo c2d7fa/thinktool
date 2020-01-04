@@ -106,3 +106,16 @@ export function cleanGarbage(state: Things, root: number): Things {
 
   return result;
 }
+
+export function parents(state: Things, child: number): number[] {
+  const result: number[] = [];
+
+  for (const thing in state.things) {
+    if (!exists(state, +thing))
+      continue;
+    if (children(state, +thing).includes(child))
+      result.push(+thing);
+  }
+
+  return result;
+}
