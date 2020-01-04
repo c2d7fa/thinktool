@@ -1,21 +1,19 @@
 {
-    "name": "diaform",
-    "private": true,
-    "devDependencies": {
-        "@typescript-eslint/eslint-plugin": "latest",
-        "@typescript-eslint/parser": "latest",
-        "eslint": "latest",
-        "eslint-loader": "latest",
-        "ts-loader": "latest",
-        "typescript": "latest",
-        "webpack": "latest",
-        "webpack-cli": "latest",
-        "react": "latest",
-        "react-dom": "latest",
-        "@types/react": "latest",
-        "@types/react-dom": "latest",
-        "eslint-plugin-react": "latest",
-        "eslint-plugin-react-hooks": "latest",
-        "@types/node": "latest"
-    }
+  "name": "diaform",
+  "private": true,
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react-dom": "latest",
+    "@types/react": "latest",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "eslint-plugin-react-hooks": "latest",
+    "eslint-plugin-react": "latest",
+    "eslint": "latest",
+    "react-dom": "latest",
+    "react": "latest",
+    "typescript": "latest",
+    "webpack-cli": "latest",
+    "webpack": "latest"
+  }
 }
