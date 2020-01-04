@@ -60,8 +60,14 @@ input.content:focus {
     border-bottom: 1px dotted #d0d0d0;
 }
 
+.item-line {
+    display: inline-block;
+    width: 100%;
+}
+
 .item-line.drop-target {
     border-top: 3px solid #d0d0d0;
+    margin-top: -3px;
 }
 
 .item-line.drag-source {
