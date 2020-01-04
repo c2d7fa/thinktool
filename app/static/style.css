@@ -74,3 +74,35 @@ input.content:focus {
     margin: -3px;
     background-color: #eee;
 }
+
+.selected-content {
+    font-weight: bold;
+}
+
+input.selected-content {
+    font-size: inherit;
+    background-color: inherit;
+    border: none;
+    outline: none;
+}
+
+.parents {
+    font-size: 0.8em;
+    color: #aaa;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.parents.label {
+    margin: 0
+}
+
+a.thing-link {
+    text-decoration: none;
+    color: #444;
+    background-color: #f0f0f0;
+}
+
+.parents a.thing-link, .parents .no-parents {
+    margin-left: 1ex;
+}
