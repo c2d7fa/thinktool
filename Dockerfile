@@ -4,9 +4,13 @@ RUN mkdir /app
 WORKDIR /app
 
 COPY ./app ./app
-COPY ./serve.js ./serve.js
 
-RUN cd ./app && npm ci && npx webpack
+WORKDIR ./app
+RUN npm ci
+RUN npx eslint . --ext .ts --fix
+RUN npx tsc
+RUN npx webpack
 
+WORKDIR ./build
 EXPOSE 80
-CMD node ./serve.js
+CMD node server.js

@@ -15,6 +15,7 @@ module.exports = {
   ],
   parserOptions: {
     jsx: true,
+    sourceType: "module",
   },
   rules: {
     "@typescript-eslint/explicit-function-return-type": "off",
