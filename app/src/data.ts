@@ -67,6 +67,5 @@ export function insertChild(state: Things, parent: number, child: number, index:
 }
 
 export function create(state: Things): [Things, number] {
-  const next = state.next + 1;
-  return [{...state, next: next + 1, things: {...state.things, [next]: {content: "", children: []}}}, next];
+  return [{...state, next: state.next + 1, things: {...state.things, [state.next]: {content: "", children: []}}}, state.next];
 }
