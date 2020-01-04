@@ -35,11 +35,14 @@ function App({initialState}: {initialState: Things}) {
     setState_(newState);
   }
 
-  return <Outline state={state} setState={setState} thing={5}/>;
+  return <Outline state={state} setState={setState}/>;
 }
 
-function Outline(p: {state: Things; setState(value: Things): void; thing: number}) {
-  const [tree, setTree] = React.useState(T.fromRoot(p.state, p.thing));
+function Outline(p: {state: Things; setState(value: Things): void}) {
+  // To simulate multiple top-level items, we just assume that thing #0 is the
+  // root, and that its children should be used as the top-level items. This is
+  // a bit of a hack. We should probably do something smarter.
+  const [tree, setTree] = React.useState(T.expand(p.state, T.fromRoot(p.state, 0), 0));
 
   React.useEffect(() => {
     setTree(T.refresh(tree, p.state));
@@ -49,9 +52,30 @@ function Outline(p: {state: Things; setState(value: Things): void; thing: number
 
   const context: TreeContext = {state: p.state, setState: p.setState, tree, setTree, drag, setDrag};
 
-  return <ul className="outline-tree outline-root-tree">
-    <ExpandableItem context={context} id={context.tree.root}/>
-  </ul>;
+  return (
+    <Subtree context={context} parent={0}>
+      { T.children(tree, 0).length === 0 && <PlaceholderItem context={context} parent={0}/> }
+    </Subtree>
+  );
+}
+
+function PlaceholderItem(p: {context: TreeContext; parent: number}) {
+  function onFocus(ev: React.FocusEvent<HTMLInputElement>): void {
+    const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, 0);
+    p.context.setState(newState);
+    p.context.setTree(T.focus(newTree, newId));
+    ev.stopPropagation();
+    ev.preventDefault();
+  }
+
+  return (
+    <li className="outline-item">
+      <span className="item-line">
+        <Bullet beginDrag={() => { return }} expanded={true} toggle={() => { return }}/>
+        <input className="content" value={""} readOnly placeholder={"New Item"} onFocus={onFocus}/>
+      </span>
+    </li>
+  );
 }
 
 function ExpandableItem(p: {context: TreeContext; id: number}) {
@@ -197,12 +221,12 @@ function Content(p: {context: TreeContext; id: number}) {
   );
 }
 
-function Subtree(p: {context: TreeContext; parent: number}) {
+function Subtree(p: {context: TreeContext; parent: number; children?: React.ReactNode[] | React.ReactNode}) {
   const children = T.children(p.context.tree, p.parent).map(child => {
     return <ExpandableItem key={child} id={child} context={p.context}/>;
   });
 
-  return <ul className="outline-tree">{children}</ul>;
+  return <ul className="outline-tree">{children}{p.children}</ul>;
 }
 
 // ==
