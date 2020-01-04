@@ -69,7 +69,11 @@ function App({initialState}: {initialState: Things}) {
 function ThingOverview(p: {context: StateContext; selectedThing: number, setSelectedThing(value: number): void}) {
   return (
     <div className="overview">
-      <h1>{Data.content(p.context.state, p.selectedThing)}</h1>
+      <input
+        size={Data.content(p.context.state, p.selectedThing).length + 1}
+        className="selected-content"
+        value={Data.content(p.context.state, p.selectedThing)}
+        onChange={(ev) => { p.context.setState(Data.setContent(p.context.state, p.selectedThing, ev.target.value)) }}/>
       <p>
         You are currently looking at the thing called <strong>{Data.content(p.context.state, p.selectedThing)}</strong>,
         which has ID <strong>{p.selectedThing}</strong>. The following is a list of its children:

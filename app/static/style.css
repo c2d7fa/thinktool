@@ -74,3 +74,14 @@ input.content:focus {
     margin: -3px;
     background-color: #eee;
 }
+
+.selected-content {
+    font-weight: bold;
+}
+
+input.selected-content {
+    font-size: inherit;
+    background-color: inherit;
+    border: none;
+    outline: none;
+}
