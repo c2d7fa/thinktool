@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 
 cd app
-npx tsc -w
+cd build
+node server.js

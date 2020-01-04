@@ -1,7 +1,7 @@
 import * as http from "http";
 import * as fs from "fs";
 
-const respondFile = (path, contentType, response) => {
+const respondFile = (path: string, contentType: string, response: http.ServerResponse) => {
   fs.readFile(path, (err, content) => {
     if (err) {
       console.error(err);
