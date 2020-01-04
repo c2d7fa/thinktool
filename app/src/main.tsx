@@ -199,6 +199,10 @@ function Content(p: {context: TreeContext; id: number}) {
       p.context.setState(newState);
       p.context.setTree(newTree);
       ev.preventDefault();
+    } else if (ev.key === "Delete" && ev.altKey) {
+      const newState = Data.remove(p.context.state, T.thing(p.context.tree, p.id));
+      p.context.setState(newState);
+      ev.preventDefault();
     }
   }
 

@@ -209,10 +209,12 @@ export function children(tree: Tree, parent: number): number[] {
 // Refresh the nodes of a tree based on the state, such that relevant changes in
 // the state are reflected in the tree.
 export function refresh(tree: Tree, state: Things): Tree {
-
   let result = tree;
-  for (const id in tree.nodes)
-    result = refreshChildren(state, result, +id);
+  for (const id in tree.nodes) {
+    if (D.exists(state, thing(tree, +id)))
+      result = refreshChildren(state, result, +id);
+    // Otherwise, it will be removed from its parents in refreshChildren.
+  }
   return result;
 }
 

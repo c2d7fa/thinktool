@@ -13,6 +13,7 @@ export function children(things: Things, thing: number): number[] {
 }
 
 export function content(things: Things, thing: number): string {
+  if (!exists(things, thing)) return `THING ${thing} DOES NOT EXIST`;
   return things.things[thing].content;
 }
 
@@ -68,4 +69,19 @@ export function insertChild(state: Things, parent: number, child: number, index:
 
 export function create(state: Things): [Things, number] {
   return [{...state, next: state.next + 1, things: {...state.things, [state.next]: {content: "", children: []}}}, state.next];
+}
+
+export function remove(state: Things, removedThing: number): Things {
+  let newState = state;
+  for (const thing in state.things) {
+    if (state.things[thing] === undefined) continue;
+    const newChildren = state.things[thing].children.filter(child => child !== removedThing);
+    newState = {...newState, things: {...newState.things, [thing]: {...newState.things[thing], children: newChildren}}};
+  }
+  newState = {...newState, things: {...newState.things, [removedThing]: undefined}};
+  return newState;
+}
+
+export function exists(state: Things, thing: number): boolean {
+  return typeof state.things[thing] === "object";
 }
