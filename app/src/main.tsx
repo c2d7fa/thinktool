@@ -75,10 +75,6 @@ function ThingOverview(p: {context: StateContext; selectedThing: number, setSele
         className="selected-content"
         value={Data.content(p.context.state, p.selectedThing)}
         onChange={(ev) => { p.context.setState(Data.setContent(p.context.state, p.selectedThing, ev.target.value)) }}/>
-      <p>
-        You are currently looking at the thing called <strong>{Data.content(p.context.state, p.selectedThing)}</strong>,
-        which has ID <strong>{p.selectedThing}</strong>. The following is a list of its children:
-      </p>
       <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
     </div>);
 }
