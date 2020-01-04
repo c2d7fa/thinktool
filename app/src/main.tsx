@@ -10,20 +10,24 @@ import * as ReactDOM from "react-dom";
 
 // ==
 
-interface DragContext {
+interface DragInfo {
   current: number | null;
   target: number | null;
 }
 
-interface TreeContext {
-  tree: Tree;
-  setTree(value: Tree): void;
+interface StateContext {
   state: Things;
   setState(value: Things): void;
+}
 
-  // Drag and drop
-  drag: DragContext;
-  setDrag(value: DragContext): void;
+type SetSelectedThing = (value: number) => void;
+
+interface TreeContext extends StateContext {
+  tree: Tree;
+  setTree(value: Tree): void;
+  drag: DragInfo;
+  setDrag(value: DragInfo): void;
+  setSelectedThing: SetSelectedThing;
 }
 
 // == Components ==
@@ -35,26 +39,44 @@ function App({initialState, root}: {initialState: Things; root: number}) {
     setState_(newState);
   }
 
-  return <Outline state={state} setState={setState} root={root}/>;
+  return <ThingOverview context={{state, setState}} initialThing={root}/>;
 }
 
-function Outline(p: {state: Things; setState(value: Things): void; root: number}) {
+function ThingOverview(p: {context: StateContext; initialThing: number}) {
+  const [selectedThing, setSelectedThing] = React.useState(p.initialThing);
+
+  return (
+    <div className="overview">
+      <h1>{Data.content(p.context.state, selectedThing)}</h1>
+      <p>
+        You are currently looking at the thing called <strong>{Data.content(p.context.state, selectedThing)}</strong>,
+        which has ID <strong>{selectedThing}</strong>. The following is a list of its children:
+      </p>
+      <Outline context={p.context} root={selectedThing} setSelectedThing={setSelectedThing}/>
+    </div>);
+}
+
+function Outline(p: {context: StateContext; root: number; setSelectedThing: SetSelectedThing}) {
   // To simulate multiple top-level items, we just assign a thing as the root,
   // and use its children as the top-level items. This is a bit of a hack. We
   // should probably do something smarter.
-  const [tree, setTree] = React.useState(T.expand(p.state, T.fromRoot(p.state, p.root), 0));
+  const [tree, setTree] = React.useState(T.expand(p.context.state, T.fromRoot(p.context.state, p.root), 0));
 
   React.useEffect(() => {
-    setTree(T.refresh(tree, p.state));
-  }, [p.state]);
+    setTree(T.refresh(tree, p.context.state));
+  }, [p.context.state]);
+
+  React.useEffect(() => {
+    setTree(T.expand(p.context.state, T.fromRoot(p.context.state, p.root), 0));
+  }, [p.root]);
 
   const [drag, setDrag] = React.useState({current: null, target: null});
 
-  const context: TreeContext = {state: p.state, setState: p.setState, tree, setTree, drag, setDrag};
+  const context: TreeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
 
   return (
     <Subtree context={context} parent={0}>
-      { T.children(tree, p.root).length === 0 && <PlaceholderItem context={context} parent={0}/> }
+      { T.children(tree, 0).length === 0 && <PlaceholderItem context={context} parent={0}/> }
     </Subtree>
   );
 }
@@ -121,7 +143,7 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
   if (p.context.drag.current !== null && p.context.drag.target === p.id)
     className += " drop-target";
   if (p.context.drag.current === p.id && p.context.drag.target !== null)
-    className += " drag-source"; 
+    className += " drag-source";
 
   const subtree =
     <Subtree
@@ -131,7 +153,11 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
   return (
     <li className="outline-item" onMouseOver={onMouseEnter} onMouseUp={onMouseUp}>
       <span className={className}>
-        <Bullet beginDrag={beginDrag} expanded={T.expanded(p.context.tree, p.id)} toggle={toggle}/>
+        <Bullet
+          beginDrag={beginDrag}
+          expanded={T.expanded(p.context.tree, p.id)}
+          toggle={toggle}
+          onMiddleClick={() => { p.context.setSelectedThing(T.thing(p.context.tree, p.id)) }}/>
         <Content context={p.context} id={p.id}/>
       </span>
       { expanded && subtree }
@@ -139,13 +165,20 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
   );
 }
 
-function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void}) {
+function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void; onMiddleClick?(): void}) {
+  function onAuxClick(ev: React.MouseEvent<never>): void {
+    if (ev.button === 1) { // Middle click
+      if (p.onMiddleClick !== undefined)
+        p.onMiddleClick();
+    }
+  }
 
   return (
     <span
       className={`bullet ${p.expanded ? "expanded" : "collapsed"}`}
       onMouseDown={p.beginDrag}
-      onClick={() => p.toggle()}/>
+      onClick={() => p.toggle()}
+      onAuxClick={onAuxClick}/>
   );
 }
 
