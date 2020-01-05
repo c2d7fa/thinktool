@@ -5,14 +5,18 @@
     <link rel="stylesheet" href="/style.css">
   </head>
   <body>
-    Please log in
-    <form action="/" method="POST">
-      <label>Username:</label>
-      <input name="user" required/>
-      <label>Password:</label>
-      <input type="password" name="password" required/>
-      <input type="submit" value="Log in"/>
-    </form>
-    </form>
+    <div id="login">
+      <form action="/" method="POST">
+        <div class="entry">
+          <label>Username:</label>
+          <input name="user" required/>
+        </div>
+        <div class="entry">
+          <label for="password">Password:</label>
+          <input id="password" type="password" name="password" required/>
+        </div>
+        <input type="submit" value="Log in"/>
+      </form>
+    </div>
   </body>
 </html>
