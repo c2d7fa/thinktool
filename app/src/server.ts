@@ -2,6 +2,34 @@ import * as http from "http";
 import * as fs from "fs";
 import * as crypto from "crypto";
 
+import {Things} from "./data";
+
+const data = (() => {
+  async function get(userId: number): Promise<Things> {
+    // TODO: Handle cases:
+    // * File does not exist
+    // * File does not parse as JSON
+    // * JSON is not a valid Things
+    return new Promise((resolve, reject) => {
+      fs.readFile(`../../data/data${userId}.json`, (err, content) => {
+        if (err) reject(err);
+        resolve(JSON.parse(content.toString()) as Things);
+      });
+    });
+  }
+
+  async function put(userId: number, data: Things): Promise<void> {
+    return new Promise((resolve, reject) => {
+      fs.writeFile(`../../data/data${userId}.json`, JSON.stringify(data), (err) => {
+        if (err) reject(err);
+        resolve();
+      });
+    });
+  }
+
+  return {get, put};
+})();
+
 const session = (() => {
   interface SessionData {
     userId: number;
@@ -36,20 +64,21 @@ const session = (() => {
 })();
 
 const authentication = (() => {
-  const passwords: {[user: string]: string} = {
-    "user1": "password1",
-    "user2": "password2",
+  const users: {[user: string]: {password: string; id: number}} = {
+    "user1": {password: "password1", id: 1},
+    "user2": {password: "password2", id: 2},
   };
 
-  function check(user: string, password: string): boolean {
-    if (!passwords[user]) {
-      console.warn("Unknown user: %o", user);
-      return false;
-    }
-    return passwords[user] === password;
+  // Check password and return user ID.
+  function userId(user: string, password: string): number | null {
+    if (!users[user])
+      return null;
+    if (users[user].password !== password)
+      return null;
+    return users[user].id;
   }
 
-  return {check};
+  return {userId};
 })();
 
 const respondFile = (path: string, contentType: string, response: http.ServerResponse) => {
@@ -94,10 +123,9 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
       request.on("data", (chunk) => { body += chunk });
       request.on("end", async () => {
         const {user, password} = parseLogInRequest(body);
-        console.log("user=%o password=%o", user, password);
-        console.log(authentication.check(user, password));
-        if (authentication.check(user, password)) {
-          sessionId = await session.create(0);
+        const userId = authentication.userId(user, password);
+        if (userId !== null) {
+          sessionId = await session.create(userId);
           response.writeHead(303, {"Set-Cookie": `DiaformSession=${sessionId}`, "Location": "/"});
           response.end();
         } else {
@@ -125,6 +153,7 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
       response.writeHead(401, {"Content-Type": "text/plain"});
       response.end("401 Unauthorized");
     }
+    const userId = session.user(sessionId);
 
     if (request.method === "PUT") {
       // Read body
@@ -137,7 +166,7 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
         console.log("%s %s %s %s", request.socket.remoteAddress, request.method, request.url, JSON.stringify(body));
         try {
           const json = JSON.parse(body);
-          fs.writeFile("../../data/data.json", JSON.stringify(json), (err) => {});
+          data.put(userId, json);  // TODO: Check that it is actually valid data
         } catch (e) {
           console.warn("Invalid JSON: %o", body);
         }
@@ -145,14 +174,9 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
         response.end();
       });
     } else {
-      fs.readFile("../../data/data.json", (err, content) => {
-        response.writeHead(200, {"Content-Type": "application/json"});
-        if (err) {
-          response.end("{}");
-        } else {
-          response.end(content);
-        }
-      });
+      const value = await data.get(userId);
+      response.writeHead(200, {"Content-Type": "application/json"});
+      response.end(JSON.stringify(value));
     }
   } else {
     response.writeHead(404, {"Content-Type": "text/plain"});
