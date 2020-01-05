@@ -64,18 +64,26 @@ const session = (() => {
 })();
 
 const authentication = (() => {
-  const users: {[user: string]: {password: string; id: number}} = {
-    "user1": {password: "password1", id: 1},
-    "user2": {password: "password2", id: 2},
-  };
+  async function getUser(user: string): Promise<{password: string; id: number} | null> {
+    return new Promise((resolve, reject) => {
+      fs.readFile(`../../data/users.json`, (err, content) => {
+        if (err) reject(err);
+        const json = JSON.parse(content.toString());
+        if (json[user] === undefined)
+          resolve(null);
+        resolve(json[user]);
+      });
+    });
+  }
 
   // Check password and return user ID.
-  function userId(user: string, password: string): number | null {
-    if (!users[user])
+  async function userId(user: string, password: string): Promise<number | null> {
+    const userData = await getUser(user);
+    if (userData === null)
       return null;
-    if (users[user].password !== password)
+    if (userData.password !== password)
       return null;
-    return users[user].id;
+    return userData.id;
   }
 
   return {userId};
@@ -123,7 +131,7 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
       request.on("data", (chunk) => { body += chunk });
       request.on("end", async () => {
         const {user, password} = parseLogInRequest(body);
-        const userId = authentication.userId(user, password);
+        const userId = await authentication.userId(user, password);
         if (userId !== null) {
           sessionId = await session.create(userId);
           response.writeHead(303, {"Set-Cookie": `DiaformSession=${sessionId}`, "Location": "/"});
@@ -133,12 +141,12 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
           response.end("Invalid username and password combination. Please try again.");
         }
       });
-    }
-
-    if (session.validId(sessionId)) {
-      respondFile("../static/index.html", "text/html", response);
     } else {
-      respondFile("../static/login.html", "text/html", response);
+      if (session.validId(sessionId)) {
+        respondFile("../static/index.html", "text/html", response);
+      } else {
+        respondFile("../static/login.html", "text/html", response);
+      }
     }
   } else if (request.url == "/bundle.js") {
     respondFile("./bundle.js", "text/javascript", response);
