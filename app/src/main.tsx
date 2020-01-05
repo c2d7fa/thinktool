@@ -43,7 +43,7 @@ function extractThingFromURL(): number {
   }
 }
 
-function App({initialState}: {initialState: Things}) {
+function App({initialState, username}: {initialState: Things, username: string}) {
   const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
   function setSelectedThing(thing: number): void {
     // TODO: Update title?
@@ -63,7 +63,10 @@ function App({initialState}: {initialState: Things}) {
     setState_(newState);
   }
 
-  return <ThingOverview context={{state, setState}} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>;
+  return <>
+    <div id="header"><span className="username">{username}</span> (<a className="log-out" href="/logout">log out</a>)</div>
+    <ThingOverview context={{state, setState}} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
+  </>
 }
 
 function ThingOverview(p: {context: StateContext; selectedThing: number, setSelectedThing(value: number): void}) {
@@ -304,7 +307,7 @@ function Subtree(p: {context: TreeContext; parent: number; children?: React.Reac
 
 async function start(): Promise<void> {
   ReactDOM.render(
-    <App initialState={Data.cleanGarbage(await Server.getData() as Things, 0)}/>,
+    <App initialState={Data.cleanGarbage(await Server.getData() as Things, 0)} username={await Server.getUsername()}/>,
     document.querySelector("#app")
   );
 }

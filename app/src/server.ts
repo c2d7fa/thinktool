@@ -64,16 +64,21 @@ const session = (() => {
 })();
 
 const authentication = (() => {
-  async function getUser(user: string): Promise<{password: string; id: number} | null> {
+  async function getUsers(): Promise<{[name: string]: {password: string; id: number}}> {
     return new Promise((resolve, reject) => {
       fs.readFile(`../../data/users.json`, (err, content) => {
         if (err) reject(err);
         const json = JSON.parse(content.toString());
-        if (json[user] === undefined)
-          resolve(null);
-        resolve(json[user]);
+        resolve(json);
       });
     });
+  }
+
+  async function getUser(user: string): Promise<{password: string; id: number} | null> {
+    const userData = await getUsers();
+    if (userData[user] === undefined)
+      return null;
+    return userData[user];
   }
 
   // Check password and return user ID.
@@ -86,7 +91,15 @@ const authentication = (() => {
     return userData.id;
   }
 
-  return {userId};
+  async function userName(userId: number): Promise<string | null> {
+    const users = await getUsers();
+    for (const name in users)
+      if (users[name].id === userId)
+        return name;
+    return null;
+  }
+
+  return {userId, userName};
 })();
 
 const respondFile = (path: string, contentType: string, response: http.ServerResponse) => {
@@ -186,6 +199,17 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
       response.writeHead(200, {"Content-Type": "application/json"});
       response.end(JSON.stringify(value));
     }
+  } else if (request.url === "/api/username") {
+    if (!session.validId(sessionId)) {
+      response.writeHead(401, {"Content-Type": "text/plain"});
+      response.end("401 Unauthorized");
+    } else {
+      response.writeHead(200, {"Content-Type": "application/json"});
+      response.end(JSON.stringify(await authentication.userName(session.user(sessionId))));
+    }
+  } else if (request.url === "/logout") {
+    response.writeHead(303, {"Set-Cookie": `DiaformSession=; Max-Age=0`, "Location": "/"});
+    response.end();
   } else {
     response.writeHead(404, {"Content-Type": "text/plain"});
     response.end("404 Not found", "utf-8");

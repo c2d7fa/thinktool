@@ -1,8 +1,9 @@
 body {
+    margin: 0;
     font-family: sans-serif;
 }
 
-#app, #login {
+.overview, #login {
     max-width: 80ex;
     padding: 1em;
     background-color: #f8f8f8;
@@ -105,6 +106,32 @@ a.thing-link {
 
 .parents a.thing-link, .parents .no-parents {
     margin-left: 1ex;
+}
+
+#header {
+    margin: 0;
+    font-size: 0.8em;
+    width: calc(100% - 2 * 1em);
+    background-color: #f8f8f8;
+    border-bottom: 1px solid #f0f0f0;
+    color: #c0c0c0;
+    margin-bottom: 1em;
+    padding: 3px 1em;
+    text-align: right;
+}
+
+#header .username {
+    font-weight: bold;
+    color: #a0a0a0;
+}
+
+#header a.log-out {
+    color: inherit;
+    text-decoration: none;
+}
+
+#header a.log-out:hover {
+    text-decoration: underline;
 }
 
 /* Login page */
