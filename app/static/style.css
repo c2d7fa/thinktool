@@ -2,7 +2,7 @@ body {
     font-family: sans-serif;
 }
 
-#app {
+#app, #login {
     max-width: 80ex;
     padding: 1em;
     background-color: #f8f8f8;
@@ -105,4 +105,50 @@ a.thing-link {
 
 .parents a.thing-link, .parents .no-parents {
     margin-left: 1ex;
+}
+
+/* Login page */
+/* TODO: Move this to separate file */
+#login form {
+    margin: 0;
+    padding: 0;
+    display: table;
+}
+
+#login .entry {
+    display: table-row;
+}
+
+#login .entry > * {
+    display: table-cell;
+}
+
+#login label {
+    font-weight: bold;
+    padding-bottom: 1em;
+    padding-right: 1em;
+}
+
+#login input {
+    padding: 6px;
+    background-color: inherit;
+    border: 1px solid #d0d0d0;
+}
+
+#login input:focus {
+    outline: none;
+}
+
+#login input[type="submit"] {
+    border: none;
+    font-weight: bold;
+    background-color: #eee;
+    border: 1px solid #d0d0d0;
+    margin: 0;
+    padding: 0.5ex 1em;
+    cursor: pointer;
+}
+
+#login input[type="submit"]:hover {
+    background-color: #e8e8e8;
 }
