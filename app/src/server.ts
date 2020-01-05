@@ -2,22 +2,19 @@ import * as http from "http";
 import * as fs from "fs";
 import * as crypto from "crypto";
 
-
 const session = (() => {
   interface SessionData {
     userId: number;
   }
 
-  let i = 0;
-
   const sessions: {[id: string]: SessionData} = {};
 
-  async function create(): Promise<string> {
+  async function create(userId: number): Promise<string> {
     return new Promise((resolve, reject) => {
       crypto.randomBytes(24, (err, buffer) => {
         if (err) reject(err);
         const id = buffer.toString("base64");
-        sessions[id] = {userId: i++};
+        sessions[id] = {userId};
         resolve(id);
       });
     });
@@ -29,7 +26,30 @@ const session = (() => {
     return sessions[sessionId].userId;
   }
 
-  return {create, user};
+  function validId(sessionId: string | null): boolean {
+    if (typeof sessionId !== "string")
+      return false;
+    return user(sessionId) !== null;
+  }
+
+  return {create, user, validId};
+})();
+
+const authentication = (() => {
+  const passwords: {[user: string]: string} = {
+    "user1": "password1",
+    "user2": "password2",
+  };
+
+  function check(user: string, password: string): boolean {
+    if (!passwords[user]) {
+      console.warn("Unknown user: %o", user);
+      return false;
+    }
+    return passwords[user] === password;
+  }
+
+  return {check};
 })();
 
 const respondFile = (path: string, contentType: string, response: http.ServerResponse) => {
@@ -44,7 +64,6 @@ const respondFile = (path: string, contentType: string, response: http.ServerRes
   });
 };
 
-
 function getCookie(cookies: string | undefined, key: string): string | null {
   // TODO: This seems like a really horrible way of doing this.
   if (cookies === undefined)
@@ -55,17 +74,44 @@ function getCookie(cookies: string | undefined, key: string): string | null {
   return null;
 }
 
+function parseLogInRequest(body: string): {user: string; password: string} {
+  const result = body.match(new RegExp(`^user=([^&]*)&password=([^&]*)$`));
+  if (result && typeof result[1] === "string" && typeof result[2] === "string")
+    return {user: result[1], password: result[2]};
+  return null;
+}
+
 http.createServer(async (request: http.IncomingMessage, response: http.ServerResponse) => {
   console.log("%s %s %s", request.socket.remoteAddress, request.method, request.url);
 
   let sessionId = getCookie(request.headers.cookie, "DiaformSession");
-  if (sessionId === null || session.user(sessionId) === null) {
-    sessionId = await session.create();
-    response.setHeader("Set-Cookie", `DiaformSession=${sessionId}`);
-  }
 
   if (request.url == "" || request.url == "/") {
-    respondFile("../static/index.html", "text/html", response);
+    if (request.method === "POST") {
+      // User is logging in
+      // TODO: We should do something about too large requests
+      let body = "";
+      request.on("data", (chunk) => { body += chunk });
+      request.on("end", async () => {
+        const {user, password} = parseLogInRequest(body);
+        console.log("user=%o password=%o", user, password);
+        console.log(authentication.check(user, password));
+        if (authentication.check(user, password)) {
+          sessionId = await session.create(0);
+          response.writeHead(303, {"Set-Cookie": `DiaformSession=${sessionId}`, "Location": "/"});
+          response.end();
+        } else {
+          response.writeHead(401, {"Content-Type": "text/plain"});
+          response.end("Invalid username and password combination. Please try again.");
+        }
+      });
+    }
+
+    if (session.validId(sessionId)) {
+      respondFile("../static/index.html", "text/html", response);
+    } else {
+      respondFile("../static/login.html", "text/html", response);
+    }
   } else if (request.url == "/bundle.js") {
     respondFile("./bundle.js", "text/javascript", response);
   } else if (request.url == "/style.css") {
@@ -75,10 +121,14 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
   } else if (request.url == "/bullet-expanded.svg") {
     respondFile("../static/bullet-expanded.svg", "image/svg+xml", response);
   } else if (request.url == "/data.json") {
-    console.log("User: %o", session.user(sessionId));
+    if (!session.validId(sessionId)) {
+      response.writeHead(401, {"Content-Type": "text/plain"});
+      response.end("401 Unauthorized");
+    }
 
     if (request.method === "PUT") {
       // Read body
+      // TODO: We should do something about very large requests
       let body = "";
       request.setEncoding("utf-8");
       request.on("data", (chunk) => { body += chunk });
