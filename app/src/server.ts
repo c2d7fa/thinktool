@@ -124,7 +124,7 @@ function getCookie(cookies: string | undefined, key: string): string | null {
   return null;
 }
 
-function parseLogInRequest(body: string): {user: string; password: string} {
+function parseLogInRequest(body: string): {user: string; password: string} | null {
   const result = body.match(new RegExp(`^user=([^&]*)&password=([^&]*)$`));
   if (result && typeof result[1] === "string" && typeof result[2] === "string")
     return {user: result[1], password: result[2]};
@@ -143,15 +143,20 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
       let body = "";
       request.on("data", (chunk) => { body += chunk });
       request.on("end", async () => {
-        const {user, password} = parseLogInRequest(body);
-        const userId = await authentication.userId(user, password);
-        if (userId !== null) {
-          sessionId = await session.create(userId);
-          response.writeHead(303, {"Set-Cookie": `DiaformSession=${sessionId}`, "Location": "/"});
-          response.end();
+        const login = parseLogInRequest(body);
+        if (login !== null) {
+          const userId = await authentication.userId(login.user, login.password);
+          if (userId !== null) {
+            sessionId = await session.create(userId);
+            response.writeHead(303, {"Set-Cookie": `DiaformSession=${sessionId}`, "Location": "/"});
+            response.end();
+          } else {
+            response.writeHead(401, {"Content-Type": "text/plain"});
+            response.end("Invalid username and password combination. Please try again.");
+          }
         } else {
-          response.writeHead(401, {"Content-Type": "text/plain"});
-          response.end("Invalid username and password combination. Please try again.");
+          response.writeHead(400, {"Content-Type": "text/plain"});
+          response.end("400 Bad Request");
         }
       });
     } else {
