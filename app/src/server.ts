@@ -5,12 +5,18 @@ import * as crypto from "crypto";
 import {Things, empty as emptyThings} from "./data";
 
 const myfs = (() => {
-  async function readFile(path: string): Promise<string> {
+  async function readFile(path: string): Promise<string | undefined> {
     return new Promise((resolve, reject) => {
       fs.readFile(path, (err, content) => {
-        if (err)
-          reject(err);
-        resolve(content.toString());
+        if (err) {
+          if (err.code === "ENOENT") {
+            resolve(undefined);
+          } else {
+            reject(err);
+          }
+        } else {
+          resolve(content.toString());
+        }
       });
     });
   }
@@ -18,9 +24,11 @@ const myfs = (() => {
   async function writeFile(path: string, content: string): Promise<void> {
     return new Promise((resolve, reject) => {
       fs.writeFile(path, content, (err) => {
-        if (err)
+        if (err) {
           reject(err);
-        resolve();
+        } else {
+          resolve();
+        }
       });
     });
   }
@@ -94,13 +102,12 @@ const authentication = (() => {
   }
 
   async function getUsers(): Promise<Users> {
-    return new Promise((resolve, reject) => {
-      fs.readFile(`../../data/users.json`, (err, content) => {
-        if (err) reject(err);
-        const json = JSON.parse(content.toString());
-        resolve(json);
-      });
-    });
+    const content = await myfs.readFile(`../../data/users.json`);
+    if (content === undefined) {
+      return {nextId: 0, users: {}};
+    } else {
+      return JSON.parse(content.toString());
+    }
   }
 
   async function getUser(user: string): Promise<{password: string; id: number} | null> {
@@ -176,6 +183,8 @@ function parseLogInOrSignUpRequest(body: string): {type: "login" | "signup"; use
   }
   return null;
 }
+
+fs.mkdirSync("../../data", {recursive: true});
 
 http.createServer(async (request: http.IncomingMessage, response: http.ServerResponse) => {
   console.log("%s %s %s", request.socket.remoteAddress, request.method, request.url);
