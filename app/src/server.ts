@@ -2,7 +2,31 @@ import * as http from "http";
 import * as fs from "fs";
 import * as crypto from "crypto";
 
-import {Things} from "./data";
+import {Things, empty as emptyThings} from "./data";
+
+const myfs = (() => {
+  async function readFile(path: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      fs.readFile(path, (err, content) => {
+        if (err)
+          reject(err);
+        resolve(content.toString());
+      });
+    });
+  }
+
+  async function writeFile(path: string, content: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      fs.writeFile(path, content, (err) => {
+        if (err)
+          reject(err);
+        resolve();
+      });
+    });
+  }
+
+  return {readFile, writeFile};
+})();
 
 const data = (() => {
   async function get(userId: number): Promise<Things> {
@@ -64,7 +88,12 @@ const session = (() => {
 })();
 
 const authentication = (() => {
-  async function getUsers(): Promise<{[name: string]: {password: string; id: number}}> {
+  interface Users {
+    nextId: number;
+    users: {[name: string]: {password: string; id: number}};
+  }
+
+  async function getUsers(): Promise<Users> {
     return new Promise((resolve, reject) => {
       fs.readFile(`../../data/users.json`, (err, content) => {
         if (err) reject(err);
@@ -76,9 +105,9 @@ const authentication = (() => {
 
   async function getUser(user: string): Promise<{password: string; id: number} | null> {
     const userData = await getUsers();
-    if (userData[user] === undefined)
+    if (userData.users[user] === undefined)
       return null;
-    return userData[user];
+    return userData.users[user];
   }
 
   // Check password and return user ID.
@@ -93,13 +122,25 @@ const authentication = (() => {
 
   async function userName(userId: number): Promise<string | null> {
     const users = await getUsers();
-    for (const name in users)
-      if (users[name].id === userId)
+    for (const name in users.users)
+      if (users.users[name].id === userId)
         return name;
     return null;
   }
 
-  return {userId, userName};
+  // TODO: What happens if this gets called from multiple locations at the same
+  // time?
+  async function createUser(user: string, password: string): Promise<{type: "success"; userId: number} | {type: "error"; error: "user-exists"}> {
+    const users = await getUsers();
+    if (users.users[user] !== undefined)
+      return {type: "error", error: "user-exists"};
+    const newUsers = {...users, nextId: users.nextId + 1, users: {...users.users, [user]: {id: users.nextId, password}}};
+    await myfs.writeFile("../../data/users.json", JSON.stringify(newUsers));
+    await myfs.writeFile(`../../data/data${users.nextId}.json`, JSON.stringify(emptyThings));
+    return {type: "success", userId: users.nextId};
+  }
+
+  return {userId, userName, createUser};
 })();
 
 const respondFile = (path: string, contentType: string, response: http.ServerResponse) => {
@@ -124,10 +165,15 @@ function getCookie(cookies: string | undefined, key: string): string | null {
   return null;
 }
 
-function parseLogInRequest(body: string): {user: string; password: string} | null {
-  const result = body.match(new RegExp(`^user=([^&]*)&password=([^&]*)$`));
-  if (result && typeof result[1] === "string" && typeof result[2] === "string")
-    return {user: result[1], password: result[2]};
+function parseLogInOrSignUpRequest(body: string): {type: "login" | "signup"; user: string; password: string} | null {
+  const result = body.match(new RegExp(`^user=([^&]*)&password=([^&]*)&(login|signup)=[^&]*$`));
+  if (result && typeof result[1] === "string" && typeof result[2] === "string" && typeof result[3] === "string") {
+    let type;
+    if (result[3] === "login") type = "login";
+    else if (result[3] === "signup") type = "signup";
+    else return null;
+    return {type, user: result[1], password: result[2]};
+  }
   return null;
 }
 
@@ -143,9 +189,14 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
       let body = "";
       request.on("data", (chunk) => { body += chunk });
       request.on("end", async () => {
-        const login = parseLogInRequest(body);
-        if (login !== null) {
-          const userId = await authentication.userId(login.user, login.password);
+        const loginOrSignupRequest = parseLogInOrSignUpRequest(body);
+
+        if (loginOrSignupRequest === null) {
+          response.writeHead(400, {"Content-Type": "text/plain"});
+          response.end("400 Bad Request");
+        } else if (loginOrSignupRequest.type === "login") {
+          const {user, password} = loginOrSignupRequest;
+          const userId = await authentication.userId(user, password);
           if (userId !== null) {
             sessionId = await session.create(userId);
             response.writeHead(303, {"Set-Cookie": `DiaformSession=${sessionId}`, "Location": "/"});
@@ -154,9 +205,19 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
             response.writeHead(401, {"Content-Type": "text/plain"});
             response.end("Invalid username and password combination. Please try again.");
           }
-        } else {
-          response.writeHead(400, {"Content-Type": "text/plain"});
-          response.end("400 Bad Request");
+        } else if (loginOrSignupRequest.type === "signup") {
+          const {user, password} = loginOrSignupRequest;
+          const result = await authentication.createUser(user, password);
+          if (result.type === "error") {
+            response.writeHead(409, {"Content-Type": "text/plain"});
+            response.end(`Unable to create user: The user "${user}" already exists.`);
+          } else {
+            const {userId} = result;
+            const sessionId = await session.create(userId);
+            response.writeHead(303, {"Set-Cookie": `DiaformSession=${sessionId}`, "Location": "/"});
+            response.end();
+          }
+
         }
       });
     } else {

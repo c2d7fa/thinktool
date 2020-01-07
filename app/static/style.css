@@ -139,6 +139,9 @@ a.thing-link {
 #login form {
     margin: 0;
     padding: 0;
+}
+
+#login form .form-table {
     display: table;
 }
 

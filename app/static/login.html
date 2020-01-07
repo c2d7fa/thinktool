@@ -7,15 +7,18 @@
   <body>
     <div id="login">
       <form action="/" method="POST">
-        <div class="entry">
-          <label>Username:</label>
-          <input name="user" required/>
+        <div class="form-table">
+          <div class="entry">
+            <label>Username:</label>
+            <input name="user" required/>
+          </div>
+          <div class="entry">
+            <label for="password">Password:</label>
+            <input id="password" type="password" name="password" required/>
+          </div>
         </div>
-        <div class="entry">
-          <label for="password">Password:</label>
-          <input id="password" type="password" name="password" required/>
-        </div>
-        <input type="submit" value="Log in"/>
+        <input type="submit" name="login" value="Log in"/>
+        <input type="submit" name="signup" value="Sign up"/>
       </form>
     </div>
   </body>

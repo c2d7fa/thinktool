@@ -119,3 +119,5 @@ export function parents(state: Things, child: number): number[] {
 
   return result;
 }
+
+export const empty: Things = {next: 1, things: {0: {content: "root", children: []}}};
