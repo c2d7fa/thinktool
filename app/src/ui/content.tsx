@@ -29,8 +29,14 @@ export const PlainText = React.forwardRef((props: {text: string; setText(text: s
       props.setText(newText);
 
       ev.preventDefault();
+    } else if (ev.key === "Enter") {
+      // Don't let the browser mess up the HTML, but relay the event.
+      ev.preventDefault();
+      if (props.onKeyDown !== undefined)
+        props.onKeyDown(ev);
     } else {
-      props.onKeyDown(ev);
+      if (props.onKeyDown !== undefined)
+        props.onKeyDown(ev);
     }
   }
 
