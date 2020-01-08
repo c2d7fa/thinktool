@@ -23,6 +23,7 @@ ul.outline-tree {
     padding: 0.5ex;
     margin-right: 0.65ex;
     cursor: pointer;
+    background-repeat: no-repeat;
 
     text-align: center;
     vertical-align: middle;
@@ -42,27 +43,8 @@ li.outline-item > * {
     margin-bottom: auto;
 }
 
-li.outline-root-item > .content {
-    font-weight: bold;
-}
-
 ul.outline-root-tree {
     padding-left: 0;
-}
-
-input.content {
-    border: none;
-    background-color: inherit;
-    outline: none;
-}
-
-input.content:focus {
-    outline: none;
-}
-
-.item-line {
-    display: inline-block;
-    width: 100%;
 }
 
 .item-line.drop-target {
@@ -74,6 +56,20 @@ input.content:focus {
     padding: 3px;
     margin: -3px;
     background-color: #eee;
+}
+
+.item-line {
+    display: inline-flex;
+    width: 100%;
+}
+
+.item-line .content {
+    width: 100%;
+    margin-bottom: 1ex;
+}
+
+.item-line .bullet {
+    flex-shrink: 0;
 }
 
 .selected-content {
