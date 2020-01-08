@@ -80,10 +80,7 @@ input.content:focus {
     font-weight: bold;
 }
 
-input.selected-content {
-    font-size: inherit;
-    background-color: inherit;
-    border: none;
+.content-editable-plain-text {
     outline: none;
 }
 

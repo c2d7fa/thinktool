@@ -5,6 +5,8 @@ import * as Data from "./data";
 import * as T from "./tree";
 import * as Server from "./server-api";
 
+import {PlainText} from "./ui/content"
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -73,11 +75,10 @@ function ThingOverview(p: {context: StateContext; selectedThing: number, setSele
   return (
     <div className="overview">
       <ParentsOutline context={p.context} child={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
-      <input
-        size={Data.content(p.context.state, p.selectedThing).length + 1}
+      <PlainText
         className="selected-content"
-        value={Data.content(p.context.state, p.selectedThing)}
-        onChange={(ev) => { p.context.setState(Data.setContent(p.context.state, p.selectedThing, ev.target.value)) }}/>
+        text={Data.content(p.context.state, p.selectedThing)}
+        setText={(text) => { p.context.setState(Data.setContent(p.context.state, p.selectedThing, text)) }}/>
       <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
     </div>);
 }
@@ -220,11 +221,11 @@ function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void
 }
 
 function Content(p: {context: TreeContext; id: number}) {
-  function setContent(ev: React.ChangeEvent<HTMLInputElement>): void {
-    p.context.setState(Data.setContent(p.context.state, T.thing(p.context.tree, p.id), ev.target.value));
+  function setContent(text: string): void {
+    p.context.setState(Data.setContent(p.context.state, T.thing(p.context.tree, p.id), text));
   }
 
-  function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
+  function onKeyDown(ev: React.KeyboardEvent<HTMLElement>): void {
     if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
@@ -276,21 +277,20 @@ function Content(p: {context: TreeContext; id: number}) {
     }
   }
 
-  const inputRef: React.MutableRefObject<HTMLInputElement> = React.useRef(null);
+  const ref: React.MutableRefObject<HTMLElement> = React.useRef();
 
   React.useEffect(() => {
     if (T.hasFocus(p.context.tree, p.id))
-      inputRef.current.focus();
-  }, [inputRef, p.context.tree]);
+      ref.current.focus();
+  }, [ref, p.context.tree]);
 
   return (
-    <input
-      ref={inputRef}
-      size={Data.content(p.context.state, T.thing(p.context.tree, p.id)).length + 1}
+    <PlainText
+      ref={ref}
       className="content"
-      value={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
+      text={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
+      setText={setContent}
       onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.id)) }}
-      onChange={setContent}
       onKeyDown={onKeyDown}/>
   );
 }
