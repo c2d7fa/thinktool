@@ -78,6 +78,7 @@ ul.outline-root-tree {
 
 .content-editable-plain-text {
     outline: none;
+    white-space: pre-wrap;
 }
 
 .parents {
