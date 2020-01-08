@@ -5,7 +5,7 @@ import * as Data from "./data";
 import * as T from "./tree";
 import * as Server from "./server-api";
 
-import {PlainText} from "./ui/content"
+import {PlainText} from "./ui/content";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -36,8 +36,8 @@ interface TreeContext extends StateContext {
 
 function extractThingFromURL(): number {
   if (window.location.hash.length > 0) {
-    const thing = Number(window.location.hash.slice(1))
-    return thing
+    const thing = Number(window.location.hash.slice(1));
+    return thing;
   } else {
     // By default, use thing #0. We should probably do something smarter here,
     // like allow the user to set a deafult thing.
@@ -45,19 +45,19 @@ function extractThingFromURL(): number {
   }
 }
 
-function App({initialState, username}: {initialState: Things, username: string}) {
+function App({initialState, username}: {initialState: Things; username: string}) {
   const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
   function setSelectedThing(thing: number): void {
     // TODO: Update title?
-    setSelectedThing_(thing)
-    window.history.pushState(undefined, document.title, `#${thing}`)
+    setSelectedThing_(thing);
+    window.history.pushState(undefined, document.title, `#${thing}`);
   }
 
   // TODO: We should manage this in a cleaner way, in case anyone else also
   // wants to set onpopstate.
   window.onpopstate = (ev) => {
-    setSelectedThing_(extractThingFromURL())
-  }
+    setSelectedThing_(extractThingFromURL());
+  };
 
   const [state, setState_] = React.useState(initialState);
   function setState(newState: Things): void {
@@ -68,10 +68,10 @@ function App({initialState, username}: {initialState: Things, username: string})
   return <>
     <div id="header"><span className="username">{username}</span> (<a className="log-out" href="/logout">log out</a>)</div>
     <ThingOverview context={{state, setState}} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
-  </>
+  </>;
 }
 
-function ThingOverview(p: {context: StateContext; selectedThing: number, setSelectedThing(value: number): void}) {
+function ThingOverview(p: {context: StateContext; selectedThing: number; setSelectedThing(value: number): void}) {
   return (
     <div className="overview">
       <ParentsOutline context={p.context} child={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
@@ -83,15 +83,15 @@ function ThingOverview(p: {context: StateContext; selectedThing: number, setSele
     </div>);
 }
 
-function ParentsOutline(p: {context: StateContext, child: number, setSelectedThing: SetSelectedThing}) {
+function ParentsOutline(p: {context: StateContext; child: number; setSelectedThing: SetSelectedThing}) {
   let parentLinks = Data.parents(p.context.state, p.child).map((parent: number) => {
-    return <a key={parent} className="thing-link" href={`#${parent}`}>{Data.content(p.context.state, parent)}</a>
-  })
+    return <a key={parent} className="thing-link" href={`#${parent}`}>{Data.content(p.context.state, parent)}</a>;
+  });
 
   if (parentLinks.length === 0)
-    parentLinks = [<span key={"none"} className="label no-parents">&mdash;</span>]
+    parentLinks = [<span key={"none"} className="label no-parents">&mdash;</span>];
 
-  return <span className="parents"><span className="label">Parents:</span>{parentLinks}</span>
+  return <span className="parents"><span className="label">Parents:</span>{parentLinks}</span>;
 }
 
 function Outline(p: {context: StateContext; root: number; setSelectedThing: SetSelectedThing}) {
