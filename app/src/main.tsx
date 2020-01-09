@@ -161,7 +161,7 @@ function PlaceholderItem(p: {context: TreeContext; parent: number}) {
   return (
     <li className="outline-item">
       <span className="item-line">
-        <Bullet beginDrag={() => { return }} expanded={true} toggle={() => { return }}/>
+        <Bullet page={false} beginDrag={() => { return }} expanded={true} toggle={() => { return }}/>
         <input className="content" value={""} readOnly placeholder={"New Item"} onFocus={onFocus}/>
       </span>
     </li>
@@ -225,6 +225,7 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
           beginDrag={beginDrag}
           expanded={T.expanded(p.context.tree, p.id)}
           toggle={toggle}
+          page={Data.page(p.context.state, T.thing(p.context.tree, p.id)) !== null}
           onMiddleClick={() => { p.context.setSelectedThing(T.thing(p.context.tree, p.id)) }}/>
         <Content context={p.context} id={p.id}/>
       </span>
@@ -233,7 +234,7 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
   );
 }
 
-function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void; onMiddleClick?(): void}) {
+function Bullet(p: {expanded: boolean; page: boolean; toggle: () => void; beginDrag: () => void; onMiddleClick?(): void}) {
   function onAuxClick(ev: React.MouseEvent<never>): void {
     if (ev.button === 1) { // Middle click
       if (p.onMiddleClick !== undefined)
@@ -243,7 +244,7 @@ function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void
 
   return (
     <span
-      className={`bullet ${p.expanded ? "expanded" : "collapsed"}`}
+      className={`bullet ${p.expanded ? "expanded" : "collapsed"}${p.page ? "-page" : ""}`}
       onMouseDown={p.beginDrag}
       onClick={() => p.toggle()}
       onAuxClick={onAuxClick}/>

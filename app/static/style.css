@@ -37,6 +37,14 @@ ul.outline-tree {
     background-image: url(/bullet-expanded.svg);
 }
 
+.bullet.collapsed-page {
+    background-image: url(/bullet-collapsed-page.svg);
+}
+
+.bullet.expanded-page {
+    background-image: url(/bullet-expanded-page.svg);
+}
+
 li.outline-item > * {
     vertical-align: middle;
     margin-top: auto;
