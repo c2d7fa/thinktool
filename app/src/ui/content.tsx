@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Editor, EditorState, ContentState, getDefaultKeyBinding, getVisibleSelectionRect} from "draft-js";
+import {Editor, EditorState, ContentState, getDefaultKeyBinding, getVisibleSelectionRect, SelectionState} from "draft-js";
 
 // TODO: The entire implementation of this is an absolute hack. The problem is
 // that we want to handle ArrowUp and ArrowDown events differently depending on
@@ -106,6 +106,14 @@ export const PlainText = React.forwardRef(function PlainText(props: {text: strin
     }
   }
 
+  function resetSelection(): void {
+    // TODO: Hack. If we do this immediately, the change is not reflected for some reason.
+    setTimeout(() => {
+      const newState = EditorState.acceptSelection(editorState, SelectionState.createEmpty(editorState.getCurrentContent().getFirstBlock().getKey()));
+      setEditorState(newState);
+    }, 20);
+  }
+
   return <span className={`content-editable-plain-text ${props.className}`}>
     <Editor
       ref={ref as React.RefObject<Editor>}
@@ -113,6 +121,7 @@ export const PlainText = React.forwardRef(function PlainText(props: {text: strin
       onChange={onChange}
       stripPastedStyles={true}
       keyBindingFn={keyBindingFn}
-      onFocus={props.onFocus}/>
+      onFocus={props.onFocus}
+      onBlur={resetSelection}/>
   </span>;
 });
