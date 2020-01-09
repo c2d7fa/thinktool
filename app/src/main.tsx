@@ -79,6 +79,7 @@ function ThingOverview(p: {context: StateContext; selectedThing: number; setSele
         className="selected-content"
         text={Data.content(p.context.state, p.selectedThing)}
         setText={(text) => { p.context.setState(Data.setContent(p.context.state, p.selectedThing, text)) }}/>
+      <PageView context={p.context} thing={p.selectedThing}/>
       <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
     </div>);
 }
@@ -92,6 +93,35 @@ function ParentsOutline(p: {context: StateContext; child: number; setSelectedThi
     parentLinks = [<span key={"none"} className="label no-parents">&mdash;</span>];
 
   return <span className="parents"><span className="label">Parents:</span>{parentLinks}</span>;
+}
+
+function PageView(p: {context: StateContext; thing: number}) {
+  const page = Data.page(p.context.state, p.thing);
+
+  function setPage(page: string): void {
+    p.context.setState(Data.setPage(p.context.state, p.thing, page));
+  }
+
+  if (Data.page(p.context.state, p.thing) === null) {
+    return <button onClick={() => { setPage("") }} className="new-page">Create Page</button>;
+  }
+
+  function onKeyDown(ev: React.KeyboardEvent<{}>): boolean {
+    if (ev.key === "Delete" && ev.altKey) {
+      p.context.setState(Data.removePage(p.context.state, p.thing));
+      return true;
+    }
+
+    return false;
+  }
+
+  return (
+    <PlainText
+      className="page"
+      text={page}
+      setText={setPage}
+      onKeyDown={onKeyDown}/>
+  );
 }
 
 function Outline(p: {context: StateContext; root: number; setSelectedThing: SetSelectedThing}) {

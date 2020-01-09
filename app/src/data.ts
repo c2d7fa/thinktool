@@ -1,6 +1,7 @@
 export interface ThingData {
   content: string;
   children: number[];
+  page?: string;
 }
 
 export interface Things {
@@ -20,6 +21,20 @@ export function content(things: Things, thing: number): string {
 
 export function setContent(things: Things, thing: number, newContent: string): Things {
   return {...things, things: {...things.things, [thing]: {...things.things[thing], content: newContent}}};
+}
+
+export function page(things: Things, thing: number): string | null {
+  if (!exists(things, thing)) return "";
+  if (typeof things.things[thing].page !== "string") return null;
+  return things.things[thing].page;
+}
+
+export function setPage(things: Things, thing: number, page: string): Things {
+  return {...things, things: {...things.things, [thing]: {...things.things[thing], page}}};
+}
+
+export function removePage(things: Things, thing: number): Things {
+  return {...things, things: {...things.things, [thing]: {...things.things[thing], page: undefined}}};
 }
 
 export function hasChildren(things: Things, thing: number): boolean {
