@@ -47,6 +47,12 @@ ul.outline-root-tree {
     padding-left: 0;
 }
 
+input.content {
+    border: none;
+    background-color: inherit;
+    outline: none;
+}
+
 .item-line.drop-target {
     border-top: 3px solid #d0d0d0;
     margin-top: -3px;
@@ -74,11 +80,6 @@ ul.outline-root-tree {
 
 .selected-content {
     font-weight: bold;
-}
-
-.content-editable-plain-text {
-    outline: none;
-    white-space: pre-wrap;
 }
 
 .parents {
