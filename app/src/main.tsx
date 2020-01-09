@@ -225,55 +225,57 @@ function Content(p: {context: TreeContext; id: number}) {
     p.context.setState(Data.setContent(p.context.state, T.thing(p.context.tree, p.id), text));
   }
 
-  function onKeyDown(ev: React.KeyboardEvent<HTMLElement>): void {
+  function onKeyDown(ev: React.KeyboardEvent<{}>): boolean {
     if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(newTree);
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "ArrowLeft" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.unindent(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(newTree);
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "ArrowDown" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.moveDown(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(newTree);
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "ArrowUp" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.moveUp(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(newTree);
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "Tab") {
       p.context.setTree(T.toggle(p.context.state, p.context.tree, p.id));
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "ArrowUp") {
       p.context.setTree(T.focusUp(p.context.tree));
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "ArrowDown") {
       p.context.setTree(T.focusDown(p.context.tree));
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "Enter" && ev.altKey) {
       const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(T.focus(newTree, newId));
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "Enter" && ev.ctrlKey) {
       const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(T.focus(newTree, newId));
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "Backspace" && ev.altKey) {
       const [newState, newTree] = T.remove(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(newTree);
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "Delete" && ev.altKey) {
       const newState = Data.remove(p.context.state, T.thing(p.context.tree, p.id));
       p.context.setState(newState);
-      ev.preventDefault();
+      return true;
+    } else {
+      return false;
     }
   }
 
