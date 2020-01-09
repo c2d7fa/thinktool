@@ -225,7 +225,7 @@ function Content(p: {context: TreeContext; id: number}) {
     p.context.setState(Data.setContent(p.context.state, T.thing(p.context.tree, p.id), text));
   }
 
-  function onKeyDown(ev: React.KeyboardEvent<{}>): boolean {
+  function onKeyDown(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean {
     if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
@@ -265,6 +265,20 @@ function Content(p: {context: TreeContext; id: number}) {
       p.context.setState(newState);
       p.context.setTree(T.focus(newTree, newId));
       return true;
+    } else if (ev.key === "Enter" && !ev.shiftKey) {
+      if (notes.endOfItem) {
+        const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.id);
+        p.context.setState(newState);
+        p.context.setTree(T.focus(newTree, newId));
+        return true;
+      } else if (notes.startOfItem) {
+        const [newState, newTree, _, newId] = T.createSiblingBefore(p.context.state, p.context.tree, p.id);
+        p.context.setState(newState);
+        p.context.setTree(T.focus(newTree, newId));
+        return true;
+      } else {
+        return false;
+      }
     } else if (ev.key === "Backspace" && ev.altKey) {
       const [newState, newTree] = T.remove(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);

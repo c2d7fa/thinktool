@@ -311,6 +311,29 @@ export function copyToAbove(state: Things, tree: Tree, sourceId: number, destina
   return copy(state, tree, sourceId, {parent: parent(tree, destinationId), index: childIndex(tree, parent(tree, destinationId), destinationId)});
 }
 
+export function createSiblingBefore(state: Things, tree: Tree, id: number): [Things, Tree, number, number] {
+  let newState = state;
+
+  const [newState_, newThing] = D.create(newState);
+  newState = newState_;
+
+  const parent_ = thing(tree, parent(tree, id));
+  const index = childIndex(tree, parent(tree, id), id);
+
+  newState = D.insertChild(newState, parent_, newThing, index);
+
+  let newTree = tree;
+  const [newId, newTree_] = load(newState, tree, newThing);
+  newTree = newTree_;
+  newTree = {...newTree, nodes: {...newTree.nodes, [parent(tree, id)]: {...newTree.nodes[parent(tree, id)], children: [...newTree.nodes[parent(tree, id)].children]}}};
+  newTree.nodes[parent(tree, id)].children.splice(index, 0, newId);
+
+  newTree = refresh(newTree, newState);
+
+  return [newState, newTree, newThing, newId];
+}
+
+
 export function createSiblingAfter(state: Things, tree: Tree, id: number): [Things, Tree, number, number] {
   let newState = state;
 

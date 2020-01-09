@@ -69,7 +69,7 @@ function lastLineInBlockSelected(editorState: EditorState): boolean {
   );
 }
 
-export const PlainText = React.forwardRef(function PlainText(props: {text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>): boolean}, ref?: React.RefObject<{focus(): void}>) {
+export const PlainText = React.forwardRef(function PlainText(props: {text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean}, ref?: React.RefObject<{focus(): void}>) {
   const ref_ = React.useRef();
   if (ref === undefined || ref === null)
     ref = ref_;
@@ -99,7 +99,10 @@ export const PlainText = React.forwardRef(function PlainText(props: {text: strin
       return getDefaultKeyBinding(ev);
     }
 
-    if (props.onKeyDown(ev)) {
+    const startOfItem = firstBlockSelected(editorState) && editorState.getSelection().getFocusOffset() === 0;
+    const endOfItem = lastBlockSelected(editorState) && editorState.getSelection().getFocusOffset() === editorState.getCurrentContent().getBlockForKey(editorState.getSelection().getFocusKey()).getLength();
+
+    if (props.onKeyDown(ev, {startOfItem, endOfItem})) {
       return null;
     } else {
       return getDefaultKeyBinding(ev);
