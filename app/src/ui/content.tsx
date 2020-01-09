@@ -102,7 +102,7 @@ export const PlainText = React.forwardRef(function PlainText(props: {text: strin
     const startOfItem = firstBlockSelected(editorState) && editorState.getSelection().getFocusOffset() === 0;
     const endOfItem = lastBlockSelected(editorState) && editorState.getSelection().getFocusOffset() === editorState.getCurrentContent().getBlockForKey(editorState.getSelection().getFocusKey()).getLength();
 
-    if (props.onKeyDown(ev, {startOfItem, endOfItem})) {
+    if (props.onKeyDown !== undefined && props.onKeyDown(ev, {startOfItem, endOfItem})) {
       return null;
     } else {
       return getDefaultKeyBinding(ev);
@@ -124,7 +124,7 @@ export const PlainText = React.forwardRef(function PlainText(props: {text: strin
       onChange={onChange}
       stripPastedStyles={true}
       keyBindingFn={keyBindingFn}
-      onFocus={props.onFocus}
+      onFocus={(ev: React.FocusEvent<{}>) => { props.onFocus !== undefined && props.onFocus(ev) }}
       onBlur={resetSelection}/>
   </span>;
 });
