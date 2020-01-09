@@ -245,11 +245,9 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
   } else if (request.url == "/bullet-expanded.svg") {
     respondFile("../static/bullet-expanded.svg", "image/svg+xml", response);
   } else if (request.url == "/bullet-collapsed-page.svg") {
-    console.log("collapsed-page");
-    //respondFile("../static/bullet-collapsed-page.svg", "image/svg+xml", response);
+    respondFile("../static/bullet-collapsed-page.svg", "image/svg+xml", response);
   } else if (request.url == "/bullet-expanded-page.svg") {
-    console.log("expanded-page");
-    //respondFile("../static/bullet-expanded-page.svg", "image/svg+xml", response);
+    respondFile("../static/bullet-expanded-page.svg", "image/svg+xml", response);
   } else if (request.url == "/data.json") {
     if (!session.validId(sessionId)) {
       response.writeHead(401, {"Content-Type": "text/plain"});
