@@ -2,11 +2,13 @@
   "name": "diaform",
   "private": true,
   "devDependencies": {
+    "@types/draft-js": "latest",
     "@types/node": "latest",
     "@types/react-dom": "latest",
     "@types/react": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
+    "draft-js": "latest",
     "eslint-plugin-react-hooks": "latest",
     "eslint-plugin-react": "latest",
     "eslint": "latest",

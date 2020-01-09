@@ -3,5 +3,5 @@
 
 cd app
 while true; do
-    find src -name "*.ts" | entr -cd npx eslint . --ext .ts --fix
+    find src -name "*.ts" -or -name "*.tsx" | entr -cd npx eslint . --ext .ts,.tsx --fix
 done

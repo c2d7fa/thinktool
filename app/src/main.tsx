@@ -5,6 +5,8 @@ import * as Data from "./data";
 import * as T from "./tree";
 import * as Server from "./server-api";
 
+import {PlainText} from "./ui/content";
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -34,8 +36,8 @@ interface TreeContext extends StateContext {
 
 function extractThingFromURL(): number {
   if (window.location.hash.length > 0) {
-    const thing = Number(window.location.hash.slice(1))
-    return thing
+    const thing = Number(window.location.hash.slice(1));
+    return thing;
   } else {
     // By default, use thing #0. We should probably do something smarter here,
     // like allow the user to set a deafult thing.
@@ -43,19 +45,19 @@ function extractThingFromURL(): number {
   }
 }
 
-function App({initialState, username}: {initialState: Things, username: string}) {
+function App({initialState, username}: {initialState: Things; username: string}) {
   const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
   function setSelectedThing(thing: number): void {
     // TODO: Update title?
-    setSelectedThing_(thing)
-    window.history.pushState(undefined, document.title, `#${thing}`)
+    setSelectedThing_(thing);
+    window.history.pushState(undefined, document.title, `#${thing}`);
   }
 
   // TODO: We should manage this in a cleaner way, in case anyone else also
   // wants to set onpopstate.
   window.onpopstate = (ev) => {
-    setSelectedThing_(extractThingFromURL())
-  }
+    setSelectedThing_(extractThingFromURL());
+  };
 
   const [state, setState_] = React.useState(initialState);
   function setState(newState: Things): void {
@@ -66,31 +68,30 @@ function App({initialState, username}: {initialState: Things, username: string})
   return <>
     <div id="header"><span className="username">{username}</span> (<a className="log-out" href="/logout">log out</a>)</div>
     <ThingOverview context={{state, setState}} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
-  </>
+  </>;
 }
 
-function ThingOverview(p: {context: StateContext; selectedThing: number, setSelectedThing(value: number): void}) {
+function ThingOverview(p: {context: StateContext; selectedThing: number; setSelectedThing(value: number): void}) {
   return (
     <div className="overview">
       <ParentsOutline context={p.context} child={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
-      <input
-        size={Data.content(p.context.state, p.selectedThing).length + 1}
+      <PlainText
         className="selected-content"
-        value={Data.content(p.context.state, p.selectedThing)}
-        onChange={(ev) => { p.context.setState(Data.setContent(p.context.state, p.selectedThing, ev.target.value)) }}/>
+        text={Data.content(p.context.state, p.selectedThing)}
+        setText={(text) => { p.context.setState(Data.setContent(p.context.state, p.selectedThing, text)) }}/>
       <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
     </div>);
 }
 
-function ParentsOutline(p: {context: StateContext, child: number, setSelectedThing: SetSelectedThing}) {
+function ParentsOutline(p: {context: StateContext; child: number; setSelectedThing: SetSelectedThing}) {
   let parentLinks = Data.parents(p.context.state, p.child).map((parent: number) => {
-    return <a key={parent} className="thing-link" href={`#${parent}`}>{Data.content(p.context.state, parent)}</a>
-  })
+    return <a key={parent} className="thing-link" href={`#${parent}`}>{Data.content(p.context.state, parent)}</a>;
+  });
 
   if (parentLinks.length === 0)
-    parentLinks = [<span key={"none"} className="label no-parents">&mdash;</span>]
+    parentLinks = [<span key={"none"} className="label no-parents">&mdash;</span>];
 
-  return <span className="parents"><span className="label">Parents:</span>{parentLinks}</span>
+  return <span className="parents"><span className="label">Parents:</span>{parentLinks}</span>;
 }
 
 function Outline(p: {context: StateContext; root: number; setSelectedThing: SetSelectedThing}) {
@@ -220,77 +221,92 @@ function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void
 }
 
 function Content(p: {context: TreeContext; id: number}) {
-  function setContent(ev: React.ChangeEvent<HTMLInputElement>): void {
-    p.context.setState(Data.setContent(p.context.state, T.thing(p.context.tree, p.id), ev.target.value));
+  function setContent(text: string): void {
+    p.context.setState(Data.setContent(p.context.state, T.thing(p.context.tree, p.id), text));
   }
 
-  function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
+  function onKeyDown(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean {
     if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(newTree);
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "ArrowLeft" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.unindent(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(newTree);
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "ArrowDown" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.moveDown(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(newTree);
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "ArrowUp" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.moveUp(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(newTree);
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "Tab") {
       p.context.setTree(T.toggle(p.context.state, p.context.tree, p.id));
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "ArrowUp") {
       p.context.setTree(T.focusUp(p.context.tree));
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "ArrowDown") {
       p.context.setTree(T.focusDown(p.context.tree));
-      ev.preventDefault();
-    } else if (ev.key === "Enter" && ev.shiftKey) {
+      return true;
+    } else if (ev.key === "Enter" && ev.altKey) {
       const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(T.focus(newTree, newId));
-      ev.preventDefault();
-    } else if (ev.key === "Enter") {
+      return true;
+    } else if (ev.key === "Enter" && ev.ctrlKey) {
       const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(T.focus(newTree, newId));
-      ev.preventDefault();
+      return true;
+    } else if (ev.key === "Enter" && !ev.shiftKey) {
+      if (notes.endOfItem) {
+        const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.id);
+        p.context.setState(newState);
+        p.context.setTree(T.focus(newTree, newId));
+        return true;
+      } else if (notes.startOfItem) {
+        const [newState, newTree, _, newId] = T.createSiblingBefore(p.context.state, p.context.tree, p.id);
+        p.context.setState(newState);
+        p.context.setTree(T.focus(newTree, newId));
+        return true;
+      } else {
+        return false;
+      }
     } else if (ev.key === "Backspace" && ev.altKey) {
       const [newState, newTree] = T.remove(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
       p.context.setTree(newTree);
-      ev.preventDefault();
+      return true;
     } else if (ev.key === "Delete" && ev.altKey) {
       const newState = Data.remove(p.context.state, T.thing(p.context.tree, p.id));
       p.context.setState(newState);
-      ev.preventDefault();
+      return true;
+    } else {
+      return false;
     }
   }
 
-  const inputRef: React.MutableRefObject<HTMLInputElement> = React.useRef(null);
+  const ref: React.MutableRefObject<HTMLElement> = React.useRef();
 
   React.useEffect(() => {
     if (T.hasFocus(p.context.tree, p.id))
-      inputRef.current.focus();
-  }, [inputRef, p.context.tree]);
+      ref.current.focus();
+  }, [ref, p.context.tree]);
 
   return (
-    <input
-      ref={inputRef}
-      size={Data.content(p.context.state, T.thing(p.context.tree, p.id)).length + 1}
+    <PlainText
+      ref={ref}
       className="content"
-      value={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
+      text={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
+      setText={setContent}
       onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.id)) }}
-      onChange={setContent}
       onKeyDown={onKeyDown}/>
   );
 }
