@@ -86,7 +86,9 @@ export const PlainText = React.forwardRef(function PlainText(props: {text: strin
 
   function onChange(newEditorState: EditorState): void {
     setEditorState(newEditorState);
-    props.setText(newEditorState.getCurrentContent().getPlainText());
+    const newText = newEditorState.getCurrentContent().getPlainText();
+    if (newText !== props.text)
+      props.setText(newText);
   }
 
   function keyBindingFn(ev: React.KeyboardEvent<{}>) {
