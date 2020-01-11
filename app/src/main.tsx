@@ -84,7 +84,6 @@ function App({initialState, username}: {initialState: Things; username: string})
     }
   }
 
-
   function setGroupedState(group: string, newState: Things): void {
     if (stateUpdateTimeout.current !== null) {
       window.clearTimeout(stateUpdateTimeout.current);
@@ -116,8 +115,6 @@ function App({initialState, username}: {initialState: Things; username: string})
     }
   }
 
-  // TODO: Group should send even when no edits
-
   document.onkeydown = (ev) => {
     if (ev.key === "z" && ev.ctrlKey) {
       // Undo
@@ -132,6 +129,10 @@ function App({initialState, username}: {initialState: Things; username: string})
       Server.putData(oldState);
       ev.preventDefault();
     }
+  };
+
+  window.onbeforeunload = () => {
+    Server.putData(state);
   };
 
   return <>
