@@ -136,7 +136,7 @@ function App({initialState, username}: {initialState: Things; username: string})
   };
 
   return <>
-    <div id="header"><span className="username">{username}</span> (<a className="log-out" href="/logout">log out</a>)</div>
+    <div id="current-user"><span className="username">{username}</span> (<a className="log-out" href="/logout">log out</a>)</div>
     <ThingOverview context={{state, setState, setGroupedState}} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
   </>;
 }
@@ -150,7 +150,9 @@ function ThingOverview(p: {context: StateContext; selectedThing: number; setSele
         text={Data.content(p.context.state, p.selectedThing)}
         setText={(text) => { p.context.setState(Data.setContent(p.context.state, p.selectedThing, text)) }}/>
       <PageView context={p.context} thing={p.selectedThing}/>
-      <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+      <div className="children">
+        <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+      </div>
     </div>);
 }
 
@@ -188,6 +190,7 @@ function PageView(p: {context: StateContext; thing: number}) {
   return (
     <PlainText
       className="page"
+      placeholder="(Empty page)"
       text={page}
       setText={setPage}
       onKeyDown={onKeyDown}/>
