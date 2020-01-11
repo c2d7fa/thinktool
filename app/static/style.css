@@ -19,8 +19,15 @@ body {
     margin: 0 -6rem;
     margin-bottom: 3rem;
     padding: 1rem 6rem;
+    min-height: calc(1.75ex + 1rem);
 
     background: linear-gradient(0deg, #fafafa 0%, #ffffff calc(min(6rem, 100%)));
+}
+
+.no-parents {
+    cursor: default;
+    color: #c0c0c0;
+    font-size: 0.8em;
 }
 
 .children {
@@ -30,6 +37,7 @@ body {
     background: linear-gradient(180deg, #f8f8f8 0%, #ffffff calc(min(6rem, 100%)));
     border-radius: 6px;
 }
+
 
 ul.outline-tree {
     margin: 0 auto;
@@ -110,20 +118,6 @@ input.content {
 
 .selected-content {
     font-weight: bold;
-}
-
-.parents.label {
-    margin: 0
-}
-
-a.thing-link {
-    text-decoration: none;
-    color: #444;
-    background-color: #f0f0f0;
-}
-
-.parents a.thing-link, .parents .no-parents {
-    margin-left: 1ex;
 }
 
 #current-user {
