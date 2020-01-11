@@ -1,6 +1,9 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto:400,400i,700,700i&display=swap&subset=cyrillic,greek,latin-ext');
+@import url('https://fonts.googleapis.com/css?family=Titillium+Web:400,400i&display=swap');
+
 body {
     margin: 0;
-    font-family: sans-serif;
+    font-family: "Roboto", sans-serif;
     color: #202020;
 }
 
@@ -28,6 +31,8 @@ body {
     cursor: default;
     color: #c0c0c0;
     font-size: 0.8em;
+    font-family: "Titillium Web";
+    text-transform: uppercase;
 }
 
 .children {
@@ -121,27 +126,42 @@ input.content {
 }
 
 #current-user {
+    cursor: default;
     position: absolute;
     top: 0;
     right: 0;
     margin: 1rem;
     font-size: 0.8em;
-    color: #c0c0c0;
+    font-family: "Titillium Web";
+    text-transform: uppercase;
+    color: #b0b0b0;
     text-align: right;
 }
 
 #current-user .username {
     font-weight: bold;
-    color: #a0a0a0;
+    color: #b0b0b0;
 }
 
 #current-user a.log-out {
+    margin-left: 1ex;
     color: inherit;
     text-decoration: none;
+
+    padding: 1ex;
+    border-radius: 6px;
+
+    transition: color 0.3s ease, background-color 0.3s ease;
 }
 
 #current-user a.log-out:hover {
-    text-decoration: underline;
+    color: #808080;
+    background-color: #f8f8f8;
+}
+
+#current-user a.log-out:active {
+    color: #404040;
+    background-color: #f8f8f8;
 }
 
 .selected-content {
@@ -182,6 +202,9 @@ input.content {
 }
 
 .page .public-DraftEditorPlaceholder-root {
+    text-transform: uppercase;
+    font-size: 0.8em;
+    font-family: "Titillium Web";
     position: absolute;
     color: #c0c0c0;
     z-index: -1;
@@ -192,27 +215,30 @@ input.content {
 }
 
 .new-page {
-    margin: -0.5rem;
+    font-size: 0.8em;
+    font-family: "Titillium Web";
+    text-transform: uppercase;
+
+    margin: -1ex;
     margin-top: 1rem;
 
-    padding: 0.5rem;
+    padding: 1ex;
 
     display: block;
     background: none;
     cursor: pointer;
-    color: #d0d0d0;
+    color: #b0b0b0;
     border: none;
+    border-radius: 6px;
 
-    text-decoration-color: rgba(0, 0, 0, 0%);
-
-    transition: color 0.3s ease, text-decoration-color 0.3s ease;
+    transition: color 0.3s ease, background-color 0.3s ease;
 
     outline: none;
 }
 
 .new-page:hover {
     color: #808080;
-    text-decoration: underline;
+    background-color: #f8f8f8;
 }
 
 .new-page:active {

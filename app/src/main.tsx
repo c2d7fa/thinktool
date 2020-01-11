@@ -136,7 +136,7 @@ function App({initialState, username}: {initialState: Things; username: string})
   };
 
   return <>
-    <div id="current-user"><span className="username">{username}</span> (<a className="log-out" href="/logout">log out</a>)</div>
+    <div id="current-user"><span className="username">{username}</span> <a className="log-out" href="/logout">log out</a></div>
     <ThingOverview context={{state, setState, setGroupedState}} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
   </>;
 }
@@ -166,7 +166,7 @@ function ParentsOutline(p: {context: StateContext; child: number; setSelectedThi
   });
 
   if (parentLinks.length === 0) {
-    return <span className="parents"><span className="no-parents">&mdash;</span></span>;
+    return <span className="parents"><span className="no-parents">No parents</span></span>;
   } else {
     return <span className="parents"><ul className="outline-tree">{parentLinks}</ul></span>;
   }
@@ -195,7 +195,7 @@ function PageView(p: {context: StateContext; thing: number}) {
   return (
     <PlainText
       className="page"
-      placeholder="(Empty page)"
+      placeholder="Empty Page"
       text={page}
       setText={setPage}
       onKeyDown={onKeyDown}/>
