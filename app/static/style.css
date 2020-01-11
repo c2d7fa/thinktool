@@ -128,8 +128,8 @@ a.thing-link {
 
 #current-user {
     position: absolute;
-    bottom: 0;
-    left: 0;
+    top: 0;
+    right: 0;
     margin: 1rem;
     font-size: 0.8em;
     color: #c0c0c0;
