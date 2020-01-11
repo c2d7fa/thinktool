@@ -10,6 +10,8 @@ import {PlainText} from "./ui/content";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+import undo from "./undo";
+
 // ==
 
 interface DragInfo {
@@ -20,6 +22,10 @@ interface DragInfo {
 interface StateContext {
   state: Things;
   setState(value: Things): void;
+
+  // Like setState, but won't update undo and server state when setting
+  // consecutive states in the same group within a short time interval.
+  setGroupedState(group: string, value: Things): void;
 }
 
 type SetSelectedThing = (value: number) => void;
@@ -59,15 +65,78 @@ function App({initialState, username}: {initialState: Things; username: string})
     setSelectedThing_(extractThingFromURL());
   };
 
-  const [state, setState_] = React.useState(initialState);
+  const [state, setLocalState] = React.useState(initialState);
+
+  const lastGroup: React.MutableRefObject<string | null> = React.useRef(null);
+  const lastUpdateForGroup: React.MutableRefObject<number | null> = React.useRef(null);
+  const stateUpdateTimeout: React.MutableRefObject<number | null> = React.useRef(null);
+
   function setState(newState: Things): void {
-    Server.putData(newState);
-    setState_(newState);
+    if (stateUpdateTimeout.current !== null) {
+      window.clearTimeout(stateUpdateTimeout.current);
+      stateUpdateTimeout.current = null;
+    }
+
+    if (newState !== state) {
+      undo.pushState(state);
+      Server.putData(newState);
+      setLocalState(newState);
+    }
   }
+
+
+  function setGroupedState(group: string, newState: Things): void {
+    if (stateUpdateTimeout.current !== null) {
+      window.clearTimeout(stateUpdateTimeout.current);
+      stateUpdateTimeout.current = null;
+    }
+
+    if (lastGroup.current !== null && lastGroup.current === group) {
+      // Same as last group, just set local state unless a long time has elapsed
+      if (Date.now() - lastUpdateForGroup.current >= 1000) {
+        // The last time we updated the state for this group was >1s ago, so
+        // update it now.
+        setState(newState);
+        lastUpdateForGroup.current = Date.now();
+      } else {
+        setLocalState(newState);
+
+        // If there are no more writes to this group, we still want to send the
+        // state update eventually.
+        stateUpdateTimeout.current = window.setTimeout(() => {
+          console.log("Setting state due to timeout");
+          setState(newState);
+        }, 10000);
+      }
+    } else {
+      // Changing group, actually update state
+      setState(newState);
+      lastUpdateForGroup.current = Date.now();
+      lastGroup.current = group;
+    }
+  }
+
+  // TODO: Group should send even when no edits
+
+  document.onkeydown = (ev) => {
+    if (ev.key === "z" && ev.ctrlKey) {
+      // Undo
+      console.log("Undoing");
+      const oldState = undo.popState();
+      if (oldState === null) {
+        console.log("Can't undo further");
+        return;
+      }
+      setLocalState(oldState);
+      lastGroup.current = null;
+      Server.putData(oldState);
+      ev.preventDefault();
+    }
+  };
 
   return <>
     <div id="header"><span className="username">{username}</span> (<a className="log-out" href="/logout">log out</a>)</div>
-    <ThingOverview context={{state, setState}} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
+    <ThingOverview context={{state, setState, setGroupedState}} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
   </>;
 }
 
@@ -253,7 +322,8 @@ function Bullet(p: {expanded: boolean; page: boolean; toggle: () => void; beginD
 
 function Content(p: {context: TreeContext; id: number}) {
   function setContent(text: string): void {
-    p.context.setState(Data.setContent(p.context.state, T.thing(p.context.tree, p.id), text));
+    const newState = Data.setContent(p.context.state, T.thing(p.context.tree, p.id), text);
+    p.context.setGroupedState(`content-tree-${p.id}`, newState);
   }
 
   function onKeyDown(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean {
