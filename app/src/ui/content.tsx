@@ -69,7 +69,7 @@ function lastLineInBlockSelected(editorState: EditorState): boolean {
   );
 }
 
-export const PlainText = React.forwardRef(function PlainText(props: {text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean}, ref?: React.RefObject<{focus(): void}>) {
+export const PlainText = React.forwardRef(function PlainText(props: {text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string}, ref?: React.RefObject<{focus(): void}>) {
   const ref_ = React.useRef();
   if (ref === undefined || ref === null)
     ref = ref_;
@@ -122,6 +122,7 @@ export const PlainText = React.forwardRef(function PlainText(props: {text: strin
   return <span className={`content-editable-plain-text ${props.className}`}>
     <Editor
       ref={ref as React.RefObject<Editor>}
+      placeholder={props.placeholder}
       editorState={editorState}
       onChange={onChange}
       stripPastedStyles={true}

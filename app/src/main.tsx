@@ -136,7 +136,7 @@ function App({initialState, username}: {initialState: Things; username: string})
   };
 
   return <>
-    <div id="header"><span className="username">{username}</span> (<a className="log-out" href="/logout">log out</a>)</div>
+    <div id="current-user"><span className="username">{username}</span> <a className="log-out" href="/logout">log out</a></div>
     <ThingOverview context={{state, setState, setGroupedState}} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
   </>;
 }
@@ -150,19 +150,26 @@ function ThingOverview(p: {context: StateContext; selectedThing: number; setSele
         text={Data.content(p.context.state, p.selectedThing)}
         setText={(text) => { p.context.setState(Data.setContent(p.context.state, p.selectedThing, text)) }}/>
       <PageView context={p.context} thing={p.selectedThing}/>
-      <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+      <div className="children">
+        <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+      </div>
     </div>);
 }
 
 function ParentsOutline(p: {context: StateContext; child: number; setSelectedThing: SetSelectedThing}) {
-  let parentLinks = Data.parents(p.context.state, p.child).map((parent: number) => {
+  const parentLinks = Data.parents(p.context.state, p.child).map((parent: number) => {
+    const [tree, setTree] = React.useState(T.fromRoot(p.context.state, parent));
+    const [drag, setDrag] = React.useState({current: null, target: null});
+    const treeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
+    return <ExpandableItem key={parent} id={0} context={treeContext}/>;
     return <a key={parent} className="thing-link" href={`#${parent}`}>{Data.content(p.context.state, parent)}</a>;
   });
 
-  if (parentLinks.length === 0)
-    parentLinks = [<span key={"none"} className="label no-parents">&mdash;</span>];
-
-  return <span className="parents"><span className="label">Parents:</span>{parentLinks}</span>;
+  if (parentLinks.length === 0) {
+    return <span className="parents"><span className="no-parents">No parents</span></span>;
+  } else {
+    return <span className="parents"><ul className="outline-tree">{parentLinks}</ul></span>;
+  }
 }
 
 function PageView(p: {context: StateContext; thing: number}) {
@@ -188,6 +195,7 @@ function PageView(p: {context: StateContext; thing: number}) {
   return (
     <PlainText
       className="page"
+      placeholder="Empty Page"
       text={page}
       setText={setPage}
       onKeyDown={onKeyDown}/>
