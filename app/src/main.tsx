@@ -92,6 +92,7 @@ function App({initialState, username}: {initialState: Things; username: string})
 
     if (lastGroup.current !== null && lastGroup.current === group) {
       // Same as last group, just set local state unless a long time has elapsed
+      if (lastUpdateForGroup.current == null) throw "logic error";
       if (Date.now() - lastUpdateForGroup.current >= 1000) {
         // The last time we updated the state for this group was >1s ago, so
         // update it now.
@@ -159,7 +160,7 @@ function ThingOverview(p: {context: StateContext; selectedThing: number; setSele
 function ParentsOutline(p: {context: StateContext; child: number; setSelectedThing: SetSelectedThing}) {
   const parentLinks = Data.parents(p.context.state, p.child).map((parent: number) => {
     const [tree, setTree] = React.useState(T.fromRoot(p.context.state, parent));
-    const [drag, setDrag] = React.useState({current: null, target: null});
+    const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
     const treeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
     return <ExpandableItem key={parent} id={0} context={treeContext}/>;
     return <a key={parent} className="thing-link" href={`#${parent}`}>{Data.content(p.context.state, parent)}</a>;
@@ -196,7 +197,7 @@ function PageView(p: {context: StateContext; thing: number}) {
     <PlainText
       className="page"
       placeholder="Empty Page"
-      text={page}
+      text={page ?? ""}
       setText={setPage}
       onKeyDown={onKeyDown}/>
   );
@@ -216,7 +217,7 @@ function Outline(p: {context: StateContext; root: number; setSelectedThing: SetS
     setTree(T.expand(p.context.state, T.fromRoot(p.context.state, p.root), 0));
   }, [p.root]);
 
-  const [drag, setDrag] = React.useState({current: null, target: null});
+  const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
 
   const context: TreeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
 
@@ -258,7 +259,7 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
   }
 
   function onMouseUp(ev: React.MouseEvent<HTMLElement>): void {
-    if (p.context.drag.current !== null && p.context.drag.current !== p.id) {
+    if (p.context.drag.current !== null && p.context.drag.target !== null && p.context.drag.current !== p.id) {
       if (ev.ctrlKey) {
         const [newState, newTree, newId] = T.copyToAbove(p.context.state, p.context.tree, p.context.drag.current, p.context.drag.target);
         p.context.setState(newState);
@@ -403,11 +404,11 @@ function Content(p: {context: TreeContext; id: number}) {
     }
   }
 
-  const ref: React.MutableRefObject<HTMLElement> = React.useRef();
+  const ref: React.MutableRefObject<HTMLElement | null> = React.useRef(null);
 
   React.useEffect(() => {
     if (T.hasFocus(p.context.tree, p.id))
-      ref.current.focus();
+      ref.current?.focus();
   }, [ref, p.context.tree]);
 
   return (

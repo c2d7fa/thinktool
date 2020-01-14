@@ -6,6 +6,7 @@
     "noImplicitAny": false,
     "jsx": "react",
     "module": "CommonJS",
-    "outDir": "build"
+    "outDir": "build",
+    "strict": true
   }
 }

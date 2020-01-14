@@ -25,8 +25,7 @@ export function setContent(things: Things, thing: number, newContent: string): T
 
 export function page(things: Things, thing: number): string | null {
   if (!exists(things, thing)) return "";
-  if (typeof things.things[thing].page !== "string") return null;
-  return things.things[thing].page;
+  return things.things[thing].page  ?? null;
 }
 
 export function setPage(things: Things, thing: number, page: string): Things {
@@ -94,7 +93,7 @@ export function remove(state: Things, removedThing: number): Things {
     const newChildren = state.things[thing].children.filter(child => child !== removedThing);
     newState = {...newState, things: {...newState.things, [thing]: {...newState.things[thing], children: newChildren}}};
   }
-  newState = {...newState, things: {...newState.things, [removedThing]: undefined}};
+  delete newState.things[removedThing];
   return newState;
 }
 

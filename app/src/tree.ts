@@ -55,26 +55,37 @@ export function unfocus(tree: Tree): Tree {
   return {...tree, focus: null};
 }
 
-function previousSibling(tree: Tree, id: number): number {
-  if (childIndex(tree, parent(tree, id), id) === 0)
-    return null;
-  return children(tree, parent(tree, id))[childIndex(tree, parent(tree, id), id) - 1];
+function indexInParent(tree: Tree, id: number): number | undefined {
+  const parent_ = parent(tree, id);
+  if (parent_ === undefined)
+    return undefined;
+  return childIndex(tree, parent_, id);
 }
 
-function nextSibling(tree: Tree, id: number): number {
-  if (childIndex(tree, parent(tree, id), id) === children(tree, parent(tree, id)).length - 1)
+function previousSibling(tree: Tree, id: number): number | null {
+  const index = indexInParent(tree, id);
+  if (index === undefined || index === 0)
     return null;
-  return children(tree, parent(tree, id))[childIndex(tree, parent(tree, id), id) + 1];
+  return children(tree, parent(tree, id)!)[index - 1];
+}
+
+function nextSibling(tree: Tree, id: number): number | null {
+  const index = indexInParent(tree, id);
+  if (index === undefined || index === children(tree, parent(tree, id)!).length - 1)
+    return null;
+  return children(tree, parent(tree, id)!)[index + 1];
 }
 
 function previousVisibleItem(tree: Tree, id: number): number {
-  if (parent(tree, id) === undefined)
+  const parent_ = parent(tree, id);
+  if (parent_ === undefined)
     return id;
 
-  if (childIndex(tree, parent(tree, id), id) === 0)
-    return parent(tree, id);
+  if (indexInParent(tree, id) === 0)
+    return parent_;
 
   let result = previousSibling(tree, id);
+  if (result === null) throw "logic error";
   while (children(tree, result).length !== 0) {
     result = children(tree, result)[children(tree, result).length - 1];
   }
@@ -88,18 +99,24 @@ function nextVisibleItem(tree: Tree, id: number): number {
   // Recursively traverse tree upwards until we hit a parent with a sibling
   let nparent = id;
   while (nparent !== tree.root) {
-    if (nextSibling(tree, nparent) !== null)
-      return nextSibling(tree, nparent);
-    nparent = parent(tree, nparent);
+    const nextSibling_ = nextSibling(tree, nparent);
+    if (nextSibling_ !== null)
+      return nextSibling_;
+    nparent = parent(tree, nparent)!;  // Non-null because nparent !== tree.root
   }
   return nparent;
 }
 
 export function focusUp(tree: Tree): Tree {
+  if (tree.focus === null)
+    throw "Cannot move focus because nothing is focused";
   return {...tree, focus: previousVisibleItem(tree, tree.focus)};
 }
 
 export function focusDown(tree: Tree): Tree {
+  if (tree.focus === null)
+    throw "Cannot move focus because nothing is focused";
+
   return {...tree, focus: nextVisibleItem(tree, tree.focus)};
 }
 
@@ -223,9 +240,9 @@ export function indent(state: Things, tree: Tree, id: number): [Things, Tree] {
     return [state, tree];
 
   const parent_ = parent(tree, id);
-  const index = childIndex(tree, parent_, id);
+  const index = indexInParent(tree, id);
 
-  if (index === 0)
+  if (parent_ === undefined || index === undefined || index === 0)
     return [state, tree];
 
   const newState = D.indent(state, thing(tree, parent_), index);
@@ -257,7 +274,7 @@ export function unindent(state: Things, tree: Tree, id: number): [Things, Tree] 
   return move(state, tree, id, {parent: grandparent, index: childIndex(tree, grandparent, parent_) + 1});
 }
 
-function parent(tree: Tree, child: number): number {
+function parent(tree: Tree, child: number): number | undefined {
   for (const parent in tree.nodes)
     if (children(tree, +parent).includes(child))
       return +parent;
@@ -269,7 +286,12 @@ function childIndex(tree: Tree, parent: number, child: number): number {
 }
 
 export function move(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree] {
-  let newState = D.removeChild(state, thing(tree, parent(tree, id)), childIndex(tree, parent(tree, id), id));
+  const parent_ = parent(tree, id);
+
+  if (parent_ === undefined)
+    return [state, tree]; // Can't move root
+
+  let newState = D.removeChild(state, thing(tree, parent_), indexInParent(tree, id)!);
   newState = D.insertChild(newState, thing(tree, destination.parent), thing(tree, id), destination.index);
 
   let newTree = refresh(tree, newState);  // TODO: Could be improved
@@ -282,21 +304,24 @@ export function move(state: Things, tree: Tree, id: number, destination: Destina
 }
 
 export function moveToAbove(state: Things, tree: Tree, sourceId: number, destinationId: number): [Things, Tree] {
-  if (parent(tree, destinationId) === undefined)
+  const parent_ = parent(tree, destinationId);
+  if (parent_ === undefined)
     return [state, tree];
-  return move(state, tree, sourceId, {parent: parent(tree, destinationId), index: childIndex(tree, parent(tree, destinationId), destinationId)});
+  return move(state, tree, sourceId, {parent: parent_, index: childIndex(tree, parent_, destinationId)});
 }
 
 export function moveUp(state: Things, tree: Tree, id: number): [Things, Tree] {
-  if (parent(tree, id) === undefined || childIndex(tree, parent(tree, id), id) === 0)
+  const parent_ = parent(tree, id);
+  if (parent_ === undefined || childIndex(tree, parent_, id) === 0)
     return [state, tree];
-  return move(state, tree, id, {parent: parent(tree, id), index: childIndex(tree, parent(tree, id), id) - 1});
+  return move(state, tree, id, {parent: parent_, index: childIndex(tree, parent_, id) - 1});
 }
 
 export function moveDown(state: Things, tree: Tree, id: number): [Things, Tree] {
-  if (parent(tree, id) === undefined || childIndex(tree, parent(tree, id), id) === children(tree, parent(tree, id)).length - 1)
+  const parent_ = parent(tree, id);
+  if (parent_ === undefined || childIndex(tree, parent_, id) === children(tree, parent_).length - 1)
     return [state, tree];
-  return move(state, tree, id, {parent: parent(tree, id), index: childIndex(tree, parent(tree, id), id) + 1});
+  return move(state, tree, id, {parent: parent_, index: childIndex(tree, parent_, id) + 1});
 }
 
 export function copy(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree, number] {
@@ -306,9 +331,10 @@ export function copy(state: Things, tree: Tree, id: number, destination: Destina
 }
 
 export function copyToAbove(state: Things, tree: Tree, sourceId: number, destinationId: number): [Things, Tree, number] {
-  if (parent(tree, destinationId) === undefined)
+  const parent_ = parent(tree, destinationId);
+  if (parent_ === undefined)
     return [state, tree, sourceId];
-  return copy(state, tree, sourceId, {parent: parent(tree, destinationId), index: childIndex(tree, parent(tree, destinationId), destinationId)});
+  return copy(state, tree, sourceId, {parent: parent_, index: childIndex(tree, parent_, destinationId)});
 }
 
 export function createSiblingBefore(state: Things, tree: Tree, id: number): [Things, Tree, number, number] {
@@ -317,16 +343,20 @@ export function createSiblingBefore(state: Things, tree: Tree, id: number): [Thi
   const [newState_, newThing] = D.create(newState);
   newState = newState_;
 
-  const parent_ = thing(tree, parent(tree, id));
-  const index = childIndex(tree, parent(tree, id), id);
+  const parent_ = parent(tree, id);
+  if (parent_ === undefined)
+    throw "Cannot create sibling before item with no parent";
 
-  newState = D.insertChild(newState, parent_, newThing, index);
+  const parentThing = thing(tree, parent_);
+  const index = childIndex(tree, parent_, id);
+
+  newState = D.insertChild(newState, parentThing, newThing, index);
 
   let newTree = tree;
   const [newId, newTree_] = load(newState, tree, newThing);
   newTree = newTree_;
-  newTree = {...newTree, nodes: {...newTree.nodes, [parent(tree, id)]: {...newTree.nodes[parent(tree, id)], children: [...newTree.nodes[parent(tree, id)].children]}}};
-  newTree.nodes[parent(tree, id)].children.splice(index, 0, newId);
+  newTree = {...newTree, nodes: {...newTree.nodes, [parent_]: {...newTree.nodes[parent_], children: [...newTree.nodes[parent_].children]}}};
+  newTree.nodes[parent_].children.splice(index, 0, newId);
 
   newTree = refresh(newTree, newState);
 
@@ -340,16 +370,20 @@ export function createSiblingAfter(state: Things, tree: Tree, id: number): [Thin
   const [newState_, newThing] = D.create(newState);
   newState = newState_;
 
-  const parent_ = thing(tree, parent(tree, id));
-  const index = childIndex(tree, parent(tree, id), id) + 1;
+  const parent_ = parent(tree, id);
+  if (parent_ === undefined)
+    throw "Cannot create sibling after item with no parent";
 
-  newState = D.insertChild(newState, parent_, newThing, index);
+  const parentThing = thing(tree, parent_);
+  const index = childIndex(tree, parent_, id) + 1;
+
+  newState = D.insertChild(newState, parentThing, newThing, index);
 
   let newTree = tree;
   const [newId, newTree_] = load(newState, tree, newThing);
   newTree = newTree_;
-  newTree = {...newTree, nodes: {...newTree.nodes, [parent(tree, id)]: {...newTree.nodes[parent(tree, id)], children: [...newTree.nodes[parent(tree, id)].children]}}};
-  newTree.nodes[parent(tree, id)].children.splice(index, 0, newId);
+  newTree = {...newTree, nodes: {...newTree.nodes, [parent_]: {...newTree.nodes[parent_], children: [...newTree.nodes[parent_].children]}}};
+  newTree.nodes[parent_].children.splice(index, 0, newId);
 
   newTree = refresh(newTree, newState);
 
@@ -371,10 +405,11 @@ export function createChild(state: Things, tree: Tree, id: number): [Things, Tre
 }
 
 export function remove(state: Things, tree: Tree, id: number): [Things, Tree] {
-  if (parent(tree, id) === undefined)
+  const parent_ = parent(tree, id);
+  if (parent_ === undefined)
     return [state, tree];
 
-  const newState = D.removeChild(state, thing(tree, parent(tree, id)), childIndex(tree, parent(tree, id), id));
+  const newState = D.removeChild(state, thing(tree, parent_), childIndex(tree, parent_, id));
   const newTree = focus(tree, previousVisibleItem(tree, id));
 
   return [newState, refresh(newTree, newState)];

@@ -252,8 +252,12 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
     if (!session.validId(sessionId)) {
       response.writeHead(401, {"Content-Type": "text/plain"});
       response.end("401 Unauthorized");
+      return;
     }
+    if (sessionId === null) throw "logic error"; // sessionId is valid
+
     const userId = session.user(sessionId);
+    if (userId === null) throw "logic error"; // sessionId is valid
 
     if (request.method === "PUT") {
       // Read body
@@ -284,7 +288,10 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
       response.end("401 Unauthorized");
     } else {
       response.writeHead(200, {"Content-Type": "application/json"});
-      response.end(JSON.stringify(await authentication.userName(session.user(sessionId))));
+      if (sessionId === null) throw "logic error";
+      const userId = session.user(sessionId);
+      if (userId === null) throw "logic error";
+      response.end(JSON.stringify(await authentication.userName(userId)));
     }
   } else if (request.url === "/logout") {
     response.writeHead(303, {"Set-Cookie": `DiaformSession=; Max-Age=0`, "Location": "/"});

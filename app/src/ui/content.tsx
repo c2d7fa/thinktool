@@ -16,37 +16,43 @@ function lastBlockSelected(editorState: EditorState): boolean {
 }
 
 function currentSelectionIsOnFirstLineOfSelectedElement(): boolean {
-  const range = window.getSelection().getRangeAt(0);
+  const selection = window.getSelection();
+  if (selection == undefined) return false;
+
+  const range = selection.getRangeAt(0);
   const rect = getVisibleSelectionRect(window);
 
   const testRange = document.createRange();
   testRange.setStart(range.startContainer, 0);
   testRange.collapse();
-  window.getSelection().removeAllRanges();
-  window.getSelection().addRange(testRange);
+  selection.removeAllRanges();
+  selection.addRange(testRange);
 
   const testRect = getVisibleSelectionRect(window);
 
-  window.getSelection().removeAllRanges();
-  window.getSelection().addRange(range);
+  selection.removeAllRanges();
+  selection.addRange(range);
 
   return rect.top === testRect.top;
 }
 
 function currentSelectionIsOnLastLineOfSelectedElement(): boolean {
-  const range = window.getSelection().getRangeAt(0);
+  const selection = window.getSelection();
+  if (selection == undefined) return false;
+
+  const range = selection.getRangeAt(0);
   const rect = getVisibleSelectionRect(window);
 
   const testRange = document.createRange();
   testRange.setStart(range.startContainer, (range.startContainer as Text).length);
   testRange.collapse();
-  window.getSelection().removeAllRanges();
-  window.getSelection().addRange(testRange);
+  selection.removeAllRanges();
+  selection.addRange(testRange);
 
   const testRect = getVisibleSelectionRect(window);
 
-  window.getSelection().removeAllRanges();
-  window.getSelection().addRange(range);
+  selection.removeAllRanges();
+  selection.addRange(range);
 
   return rect.top === testRect.top;
 }
@@ -69,8 +75,8 @@ function lastLineInBlockSelected(editorState: EditorState): boolean {
   );
 }
 
-export const PlainText = React.forwardRef(function PlainText(props: {text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string}, ref?: React.RefObject<{focus(): void}>) {
-  const ref_ = React.useRef();
+export const PlainText = React.forwardRef(function PlainText(props: {text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string}, ref?: React.Ref<{focus(): void}>) {
+  const ref_: React.MutableRefObject<{focus(): void}> = React.useRef({focus: () => {}});
   if (ref === undefined || ref === null)
     ref = ref_;
 

@@ -1,6 +1,6 @@
 import {Things} from "./data";
 
-const stack = [];
+const stack: Things[] = [];
 
 function pushState(state: Things): void {
   stack.push(state);
@@ -9,7 +9,7 @@ function pushState(state: Things): void {
 function popState(): Things | null {
   if (stack.length === 0)
     return null;
-  return stack.pop();
+  return stack?.pop() ?? null;
 }
 
 export const undo = {pushState, popState};

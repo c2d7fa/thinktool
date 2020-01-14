@@ -22,6 +22,7 @@ module.exports = {
     "@typescript-eslint/indent": ["error", 2],
     "@typescript-eslint/member-delimiter-style": ["error"],
     "@typescript-eslint/no-empty-function": ["warn", {"allow": ["arrowFunctions"]}],
+    "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/no-unused-vars": ["warn", {"varsIgnorePattern": "^_$", "args": "none"}],
     "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/semi": ["error", "always", {"omitLastInOneLineBlock": true}],
