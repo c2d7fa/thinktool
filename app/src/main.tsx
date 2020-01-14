@@ -158,12 +158,15 @@ function ThingOverview(p: {context: StateContext; selectedThing: number; setSele
 }
 
 function ParentsOutline(p: {context: StateContext; child: number; setSelectedThing: SetSelectedThing}) {
-  const parentLinks = Data.parents(p.context.state, p.child).map((parent: number) => {
-    const [tree, setTree] = React.useState(T.fromRoot(p.context.state, parent));
+  function ParentItem(p: {context: StateContext; parent: number; setSelectedThing: SetSelectedThing}) {
+    const [tree, setTree] = React.useState(T.fromRoot(p.context.state, p.parent));
     const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
     const treeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
-    return <ExpandableItem key={parent} id={0} context={treeContext}/>;
-    return <a key={parent} className="thing-link" href={`#${parent}`}>{Data.content(p.context.state, parent)}</a>;
+    return <ExpandableItem id={0} context={treeContext}/>;
+  }
+
+  const parentLinks = Data.parents(p.context.state, p.child).map((parent: number) => {
+    return <ParentItem key={parent} context={p.context} parent={parent} setSelectedThing={p.setSelectedThing}/>;
   });
 
   if (parentLinks.length === 0) {
