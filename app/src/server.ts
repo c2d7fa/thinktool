@@ -42,12 +42,15 @@ const data = (() => {
     // * File does not exist
     // * File does not parse as JSON
     // * JSON is not a valid Things
-    return new Promise((resolve, reject) => {
-      fs.readFile(`../../data/data${userId}.json`, (err, content) => {
-        if (err) reject(err);
-        resolve(JSON.parse(content.toString()) as Things);
-      });
-    });
+    const content = await myfs.readFile(`../../data/data${userId}.json`);
+    if (content === undefined)
+      return emptyThings;
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      console.warn("Got error while parsing JSON for user ${userId} (%o): %o", content, e);
+      return emptyThings;
+    }
   }
 
   async function put(userId: number, data: Things): Promise<void> {
@@ -143,7 +146,6 @@ const authentication = (() => {
       return {type: "error", error: "user-exists"};
     const newUsers = {...users, nextId: users.nextId + 1, users: {...users.users, [user]: {id: users.nextId, password}}};
     await myfs.writeFile("../../data/users.json", JSON.stringify(newUsers));
-    await myfs.writeFile(`../../data/data${users.nextId}.json`, JSON.stringify(emptyThings));
     return {type: "success", userId: users.nextId};
   }
 
