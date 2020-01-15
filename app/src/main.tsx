@@ -24,9 +24,9 @@ interface StateContext {
   setState(value: Things): void;
   setLocalState(value: Things): void;
 
-  setContent(thing: number, content: string): Promise<void>;
-  setPage(thing: number, page: string): Promise<void>;
-  removePage(thing: number): Promise<void>;
+  setContent(thing: number, content: string): void;
+  setPage(thing: number, page: string): void;
+  removePage(thing: number): void;
 
   undo(): void;
 }
@@ -54,30 +54,50 @@ function extractThingFromURL(): number {
   }
 }
 
+function useBatched(cooldown: number): {update(key: string, callback: () => void): void} {
+  const timeouts: React.MutableRefObject<{[key: string]: NodeJS.Timeout}> = React.useRef({});
+  const callbacks: React.MutableRefObject<{[key: string]: () => void}> = React.useRef({});
+
+  function update(key: string, callback: () => void): void {
+    if (timeouts.current[key] !== undefined) {
+      clearTimeout(timeouts.current[key]);
+      delete timeouts.current[key];
+    }
+    callbacks.current[key] = callback;
+    timeouts.current[key] = setTimeout(() => {
+      callback();
+      delete callbacks.current[key];
+    }, cooldown);
+    console.log(callbacks.current);
+  }
+
+  window.onbeforeunload = () => {
+    for (const key in callbacks.current) {
+      callbacks.current[key]();
+    }
+  };
+
+  return {update};
+}
+
 function useStateContext(initialState: Things): StateContext {
   const [state, setLocalState] = React.useState(initialState);
 
-  const contentSyncTimeouts: React.MutableRefObject<{[thing: number]: NodeJS.Timeout}> = React.useRef({});
+  const batched = useBatched(200);
 
-  async function setContent(thing: number, content: string): Promise<void> {
+  function setContent(thing: number, content: string): void {
     setLocalState(Data.setContent(state, thing, content));
-
-    if (contentSyncTimeouts.current[thing] !== undefined) {
-      clearTimeout(contentSyncTimeouts.current[thing]);
-      delete contentSyncTimeouts.current[thing];
-    }
-
-    contentSyncTimeouts.current[thing] = setTimeout(() => { Server.setContent(thing, content) }, 200);
+    batched.update(`${thing}/content`, () => { Server.setContent(thing, content) });
   }
 
-  async function setPage(thing: number, page: string): Promise<void> {
+  function setPage(thing: number, page: string): void {
     setLocalState(Data.setPage(state, thing, page));
-    await Server.setPage(thing, page);
+    batched.update(`${thing}/page`, () => { Server.setPage(thing, page) });
   }
 
-  async function removePage(thing: number): Promise<void> {
+  function removePage(thing: number): void {
     setLocalState(Data.removePage(state, thing));
-    await Server.removePage(thing);
+    Server.removePage(thing);
   }
 
   // TODO: setState and undo should override timeouts from setContent.
@@ -125,10 +145,6 @@ function App({initialState, username}: {initialState: Things; username: string})
       context.undo();
       ev.preventDefault();
     }
-  };
-
-  window.onbeforeunload = () => {
-    Server.putData(context.state);
   };
 
   return <>
