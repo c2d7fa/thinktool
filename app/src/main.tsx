@@ -23,7 +23,10 @@ interface StateContext {
   state: Things;
   setState(value: Things): void;
   setLocalState(value: Things): void;
+
   setContent(thing: number, content: string): Promise<void>;
+  setPage(thing: number, page: string): Promise<void>;
+  removePage(thing: number): Promise<void>;
 
   undo(): void;
 }
@@ -67,6 +70,16 @@ function useStateContext(initialState: Things): StateContext {
     contentSyncTimeouts.current[thing] = setTimeout(() => { Server.setContent(thing, content) }, 200);
   }
 
+  async function setPage(thing: number, page: string): Promise<void> {
+    setLocalState(Data.setPage(state, thing, page));
+    await Server.setPage(thing, page);
+  }
+
+  async function removePage(thing: number): Promise<void> {
+    setLocalState(Data.removePage(state, thing));
+    await Server.removePage(thing);
+  }
+
   // TODO: setState and undo should override timeouts from setContent.
 
   function setState(newState: Things): void {
@@ -87,7 +100,7 @@ function useStateContext(initialState: Things): StateContext {
     Server.putData(oldState);
   }
 
-  return {state, setState, setLocalState, setContent, undo: undo_};
+  return {state, setState, setLocalState, setContent, undo: undo_, setPage, removePage};
 }
 
 function App({initialState, username}: {initialState: Things; username: string}) {
@@ -161,20 +174,15 @@ function ParentsOutline(p: {context: StateContext; child: number; setSelectedThi
 function PageView(p: {context: StateContext; thing: number}) {
   const page = Data.page(p.context.state, p.thing);
 
-  function setPage(page: string): void {
-    p.context.setState(Data.setPage(p.context.state, p.thing, page));
-  }
-
   if (Data.page(p.context.state, p.thing) === null) {
-    return <button onClick={() => { setPage("") }} className="new-page">Create Page</button>;
+    return <button onClick={() => { p.context.setPage(p.thing, "") }} className="new-page">Create Page</button>;
   }
 
   function onKeyDown(ev: React.KeyboardEvent<{}>): boolean {
     if (ev.key === "Delete" && ev.altKey) {
-      p.context.setState(Data.removePage(p.context.state, p.thing));
+      p.context.removePage(p.thing);
       return true;
     }
-
     return false;
   }
 
@@ -183,7 +191,7 @@ function PageView(p: {context: StateContext; thing: number}) {
       className="page"
       placeholder="Empty Page"
       text={page ?? ""}
-      setText={setPage}
+      setText={(text) => { p.context.setPage(p.thing, text) }}
       onKeyDown={onKeyDown}/>
   );
 }

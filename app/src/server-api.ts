@@ -13,3 +13,11 @@ export async function getUsername(): Promise<string> {
 export async function setContent(thing: number, content: string): Promise<void> {
   await fetch(`/api/things/${thing}/content`, {method: "put", body: content});
 }
+
+export async function setPage(thing: number, page: string): Promise<void> {
+  await fetch(`/api/things/${thing}/page`, {method: "put", body: page});
+}
+
+export async function removePage(thing: number): Promise<void> {
+  await fetch(`/api/things/${thing}/page`, {method: "delete"});
+}

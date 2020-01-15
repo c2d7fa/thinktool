@@ -266,6 +266,30 @@ app.put("/api/things/:thing/content", requireSession, parseThingExists, async (r
   res.end();
 });
 
+app.get("/api/things/:thing/page", requireSession, parseThingExists, async (req, res) => {
+  const page = Data.page(await data.get(req.user!), res.locals.thing);
+  if (page === null) {
+    res.status(404).end();
+    return;
+  }
+  res.type("text/plain").send(page);
+});
+
+app.put("/api/things/:thing/page", requireSession, parseThingExists, async (req, res) => {
+  if (typeof req.body !== "string") {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    return;
+  }
+
+  data.update(req.user!, (things) => Data.setPage(things, res.locals.thing, req.body));
+  res.end();
+});
+
+app.delete("/api/things/:thing/page", requireSession, parseThingExists, (req, res) => {
+  data.update(req.user!, (things) => Data.removePage(things, res.locals.thing));
+  res.end();
+});
+
 app.get("/logout", async (req, res) => {
   res
     .status(303)
