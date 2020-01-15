@@ -1,9 +1,9 @@
 export async function getData(): Promise<object> {
-  return (await fetch("/data.json")).json();
+  return (await fetch("/api/things")).json();
 }
 
 export async function putData(data: object): Promise<void> {
-  await fetch("/data.json", {method: "put", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)});
+  await fetch("/api/things", {method: "put", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)});
 }
 
 export async function getUsername(): Promise<string> {

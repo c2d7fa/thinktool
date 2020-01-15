@@ -221,11 +221,11 @@ app.get("/", (req, res) => {
   }
 });
 
-app.get("/data.json", requireSession, async (req, res) => {
+app.get("/api/things", requireSession, async (req, res) => {
   res.type("json").send(await data.get(req.user!));
 });
 
-app.put("/data.json", requireSession, async (req, res) => {
+app.put("/api/things", requireSession, async (req, res) => {
   if (typeof req.body !== "object") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
