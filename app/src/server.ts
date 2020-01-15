@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as crypto from "crypto";
 
 import {Things, empty as emptyThings} from "./data";
+import * as Data from "./data";
 
 const myfs = (() => {
   async function readFile(path: string): Promise<string | undefined> {
@@ -62,7 +63,13 @@ const data = (() => {
     });
   }
 
-  return {get, put};
+  async function update(userId: number, update: (data: Things) => Things): Promise<Things> {
+    const newThings = update(await get(userId));
+    await put(userId, newThings);
+    return newThings;
+  }
+
+  return {get, put, update};
 })();
 
 const session = (() => {
@@ -188,6 +195,38 @@ function parseLogInOrSignUpRequest(body: string): {type: "login" | "signup"; use
 
 fs.mkdirSync("../../data", {recursive: true});
 
+function requireSession(sessionId: string | null, response: http.ServerResponse): number | null {
+  if (!session.validId(sessionId)) {
+    response.writeHead(401, {"Content-Type": "text/plain"});
+    response.end("401 Unauthorized");
+    return null;
+  }
+
+  if (sessionId === null) throw "logic error"; // sessionId is valid
+
+  const userId = session.user(sessionId);
+  if (userId === null) throw "logic error"; // sessionId is valid
+
+  return userId;
+}
+
+function endBadRequest(response: http.ServerResponse): void {
+  response.writeHead(400, {"Content-Type": "text/plain"});
+  response.end("400 Bad Request");
+}
+
+async function body(request: http.IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    request.setEncoding("utf-8");
+    request.on("data", (chunk) => { body += chunk });
+
+    request.on("end", () => {
+      resolve(body);
+    });
+  });
+}
+
 http.createServer(async (request: http.IncomingMessage, response: http.ServerResponse) => {
   console.log("%s %s %s", request.socket.remoteAddress, request.method, request.url);
 
@@ -251,15 +290,8 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
   } else if (request.url == "/bullet-expanded-page.svg") {
     respondFile("../static/bullet-expanded-page.svg", "image/svg+xml", response);
   } else if (request.url == "/data.json") {
-    if (!session.validId(sessionId)) {
-      response.writeHead(401, {"Content-Type": "text/plain"});
-      response.end("401 Unauthorized");
-      return;
-    }
-    if (sessionId === null) throw "logic error"; // sessionId is valid
-
-    const userId = session.user(sessionId);
-    if (userId === null) throw "logic error"; // sessionId is valid
+    const userId = requireSession(sessionId, response);
+    if (userId === null) return;
 
     if (request.method === "PUT") {
       // Read body
@@ -285,19 +317,49 @@ http.createServer(async (request: http.IncomingMessage, response: http.ServerRes
       response.end(JSON.stringify(value));
     }
   } else if (request.url === "/api/username") {
-    if (!session.validId(sessionId)) {
-      response.writeHead(401, {"Content-Type": "text/plain"});
-      response.end("401 Unauthorized");
-    } else {
-      response.writeHead(200, {"Content-Type": "application/json"});
-      if (sessionId === null) throw "logic error";
-      const userId = session.user(sessionId);
-      if (userId === null) throw "logic error";
-      response.end(JSON.stringify(await authentication.userName(userId)));
-    }
+    const userId = requireSession(sessionId, response);
+    if (userId === null) return;
+
+    response.writeHead(200, {"Content-Type": "application/json"});
+    response.end(JSON.stringify(await authentication.userName(userId)));
   } else if (request.url === "/logout") {
     response.writeHead(303, {"Set-Cookie": `DiaformSession=; Max-Age=0`, "Location": "/"});
     response.end();
+  } else if (request.url?.match("/api/things/(\\d+)/content")) {
+    const userId = requireSession(sessionId, response);
+    if (userId === null) return;
+
+    const result = request.url.match("/api/things/(\\d+)/content")!;
+    if (result[1] === undefined) throw "logic error";
+    const thing = +result[1];
+    if (!thing && thing !== 0) {
+      endBadRequest(response);
+      return;
+    }
+
+    if (request.method === "GET") {
+      const state = await data.get(userId);
+
+      if (Data.exists(state, thing)) {
+        response.writeHead(200, {"Content-Type": "text/plain"});
+        response.end(Data.content(await data.get(userId), thing));
+      } else {
+        response.writeHead(404, {"Content-Type": "text/plain"});
+        response.end("404 Not Found");
+      }
+    } else if (request.method === "PUT") {
+      const newContent = await body(request);
+
+      console.log(newContent);
+
+      data.update(userId, (things) => Data.setContent(things, +result[1], newContent));
+
+      response.writeHead(200, {"Content-Type": "text/plain"});
+      response.end();
+    } else {
+      response.writeHead(404, {"Content-Type": "text/plain"});
+      response.end("404 Not Found");
+    }
   } else {
     response.writeHead(404, {"Content-Type": "text/plain"});
     response.end("404 Not found", "utf-8");

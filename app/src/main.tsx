@@ -22,6 +22,10 @@ interface DragInfo {
 interface StateContext {
   state: Things;
   setState(value: Things): void;
+  setLocalState(value: Things): void;
+  setContent(thing: number, content: string): Promise<void>;
+
+  undo(): void;
 
   // Like setState, but won't update undo and server state when setting
   // consecutive states in the same group within a short time interval.
@@ -51,21 +55,13 @@ function extractThingFromURL(): number {
   }
 }
 
-function App({initialState, username}: {initialState: Things; username: string}) {
-  const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
-  function setSelectedThing(thing: number): void {
-    // TODO: Update title?
-    setSelectedThing_(thing);
-    window.history.pushState(undefined, document.title, `#${thing}`);
-  }
-
-  // TODO: We should manage this in a cleaner way, in case anyone else also
-  // wants to set onpopstate.
-  window.onpopstate = (ev) => {
-    setSelectedThing_(extractThingFromURL());
-  };
-
+function useStateContext(initialState: Things): StateContext {
   const [state, setLocalState] = React.useState(initialState);
+
+  async function setContent(thing: number, content: string): Promise<void> {
+    setLocalState(Data.setContent(state, thing, content));
+    await Server.setContent(thing, content);
+  }
 
   const lastGroup: React.MutableRefObject<string | null> = React.useRef(null);
   const lastUpdateForGroup: React.MutableRefObject<number | null> = React.useRef(null);
@@ -116,29 +112,52 @@ function App({initialState, username}: {initialState: Things; username: string})
     }
   }
 
+  function undo_(): void {
+    const oldState = undo.popState();
+    if (oldState === null) {
+      console.log("Can't undo further");
+      return;
+    }
+    setLocalState(oldState);
+    lastGroup.current = null;
+    Server.putData(oldState);
+  }
+
+
+  return {state, setState, setLocalState, setGroupedState, setContent, undo: undo_};
+}
+
+function App({initialState, username}: {initialState: Things; username: string}) {
+  const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
+  function setSelectedThing(thing: number): void {
+    // TODO: Update title?
+    setSelectedThing_(thing);
+    window.history.pushState(undefined, document.title, `#${thing}`);
+  }
+
+  // TODO: We should manage this in a cleaner way, in case anyone else also
+  // wants to set onpopstate.
+  window.onpopstate = (ev) => {
+    setSelectedThing_(extractThingFromURL());
+  };
+
+  const context = useStateContext(initialState);
+
   document.onkeydown = (ev) => {
     if (ev.key === "z" && ev.ctrlKey) {
-      // Undo
       console.log("Undoing");
-      const oldState = undo.popState();
-      if (oldState === null) {
-        console.log("Can't undo further");
-        return;
-      }
-      setLocalState(oldState);
-      lastGroup.current = null;
-      Server.putData(oldState);
+      context.undo();
       ev.preventDefault();
     }
   };
 
   window.onbeforeunload = () => {
-    Server.putData(state);
+    Server.putData(context.state);
   };
 
   return <>
     <div id="current-user"><span className="username">{username}</span> <a className="log-out" href="/logout">log out</a></div>
-    <ThingOverview context={{state, setState, setGroupedState}} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
+    <ThingOverview context={context} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
   </>;
 }
 
@@ -149,7 +168,7 @@ function ThingOverview(p: {context: StateContext; selectedThing: number; setSele
       <PlainText
         className="selected-content"
         text={Data.content(p.context.state, p.selectedThing)}
-        setText={(text) => { p.context.setState(Data.setContent(p.context.state, p.selectedThing, text)) }}/>
+        setText={(text) => { p.context.setContent(p.selectedThing, text) }}/>
       <PageView context={p.context} thing={p.selectedThing}/>
       <div className="children">
         <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
@@ -334,11 +353,6 @@ function Bullet(p: {expanded: boolean; page: boolean; toggle: () => void; beginD
 }
 
 function Content(p: {context: TreeContext; id: number}) {
-  function setContent(text: string): void {
-    const newState = Data.setContent(p.context.state, T.thing(p.context.tree, p.id), text);
-    p.context.setGroupedState(`content-tree-${p.id}`, newState);
-  }
-
   function onKeyDown(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean {
     if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.id);
@@ -419,7 +433,7 @@ function Content(p: {context: TreeContext; id: number}) {
       ref={ref}
       className="content"
       text={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
-      setText={setContent}
+      setText={(text) => { p.context.setContent(T.thing(p.context.tree, p.id), text) }}
       onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.id)) }}
       onKeyDown={onKeyDown}/>
   );
