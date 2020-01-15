@@ -3,6 +3,7 @@
   "private": true,
   "devDependencies": {
     "@types/draft-js": "latest",
+    "@types/express": "latest",
     "@types/node": "latest",
     "@types/react-dom": "latest",
     "@types/react": "latest",
@@ -12,6 +13,7 @@
     "eslint-plugin-react-hooks": "latest",
     "eslint-plugin-react": "latest",
     "eslint": "latest",
+    "express": "latest",
     "react-dom": "latest",
     "react": "latest",
     "typescript": "latest",

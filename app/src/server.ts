@@ -1,6 +1,6 @@
-import * as http from "http";
-import * as fs from "fs";
 import * as crypto from "crypto";
+import * as express from "express";
+import * as fs from "fs";
 
 import {Things, empty as emptyThings} from "./data";
 import * as Data from "./data";
@@ -159,18 +159,6 @@ const authentication = (() => {
   return {userId, userName, createUser};
 })();
 
-const respondFile = (path: string, contentType: string, response: http.ServerResponse) => {
-  fs.readFile(path, (err, content) => {
-    if (err) {
-      console.error(err);
-      process.exit(1);
-    }
-
-    response.writeHead(200, {"Content-Type": contentType, "Content-Length": content.byteLength});
-    response.end(content, "utf-8");
-  });
-};
-
 function getCookie(cookies: string | undefined, key: string): string | null {
   // TODO: This seems like a really horrible way of doing this.
   if (cookies === undefined)
@@ -181,189 +169,155 @@ function getCookie(cookies: string | undefined, key: string): string | null {
   return null;
 }
 
-function parseLogInOrSignUpRequest(body: string): {type: "login" | "signup"; user: string; password: string} | null {
-  const result = body.match(new RegExp(`^user=([^&]*)&password=([^&]*)&(login|signup)=[^&]*$`));
-  if (result && typeof result[1] === "string" && typeof result[2] === "string" && typeof result[3] === "string") {
-    let type;
-    if (result[3] === "login") type = "login";
-    else if (result[3] === "signup") type = "signup";
-    else return null;
-    return {type, user: result[1], password: result[2]};
-  }
-  return null;
-}
-
 fs.mkdirSync("../../data", {recursive: true});
 
-function requireSession(sessionId: string | null, response: http.ServerResponse): number | null {
-  if (!session.validId(sessionId)) {
-    response.writeHead(401, {"Content-Type": "text/plain"});
-    response.end("401 Unauthorized");
-    return null;
+declare module "express-serve-static-core" {
+  interface Request {
+    hasSession?: boolean;
+    user?: number;
+  }
+}
+
+function requireSession(req: express.Request, res: express.Response, next: express.NextFunction): void {
+  if (req.user === undefined) {
+    res.status(401).type("text/plain").send("401 Unauthorized");
+    next("route");
+  } else {
+    next();
+  }
+}
+
+const app = express();
+
+// Body
+app.use(express.text());
+app.use(express.json());
+app.use(express.urlencoded({extended: false}));
+
+// Authentication
+app.use((req, res, next) => {
+  const sessionId = getCookie(req.get("Cookie"), "DiaformSession");
+  const userId = sessionId === null ? null : session.user(sessionId);
+  req.user = userId ?? undefined;
+  req.hasSession = userId !== null;
+  next();
+});
+
+// Logging
+app.use((req, res, next) => {
+  console.log("%s %s %s %o", req.ip, req.method, req.url, req.body);
+  next();
+});
+
+function sendStatic(res: express.Response, path: string) {
+  return res.sendFile(path, {root: "../static"});
+}
+
+app.get("/", (req, res) => {
+  if (req.hasSession) {
+    sendStatic(res, "index.html");
+  } else {
+    sendStatic(res, "login.html");
+  }
+});
+
+app.get("/data.json", requireSession, async (req, res) => {
+  res.type("json").send(await data.get(req.user!));
+});
+
+app.put("/data.json", requireSession, async (req, res) => {
+  if (typeof req.body !== "object") {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    return;
+  }
+  await data.put(req.user!, req.body);
+  res.end();
+});
+
+app.get("/api/username", requireSession, async (req, res) => {
+  res.type("json").send(JSON.stringify(await authentication.userName(req.user!)));
+});
+
+async function parseThingExists(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const thing = +req.params.thing;
+  if (!thing && thing !== 0) {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    next("router");
+  }
+  if (!Data.exists(await data.get(req.user!), thing)) {
+    res.type("text/plain").status(404).send("404 Not Found");
+    return;
+  }
+  res.locals.thing = thing;
+  next();
+}
+
+app.get("/api/things/:thing/content", requireSession, parseThingExists, async (req, res) => {
+  res.type("text/plain").send(Data.content(await data.get(req.user!), res.locals.thing));
+});
+
+app.put("/api/things/:thing/content", requireSession, parseThingExists, async (req, res) => {
+  if (typeof req.body !== "string") {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    return;
   }
 
-  if (sessionId === null) throw "logic error"; // sessionId is valid
+  data.update(req.user!, (things) => Data.setContent(things, res.locals.thing, req.body));
+  res.end();
+});
 
-  const userId = session.user(sessionId);
-  if (userId === null) throw "logic error"; // sessionId is valid
+app.get("/logout", async (req, res) => {
+  res
+    .status(303)
+    .header("Set-Cookie", "DiaformSession=; Max-Age=0")
+    .header("Location", "/")
+    .end();
+});
 
-  return userId;
-}
+app.post("/", async (req, res) => {
+  if (typeof req.body !== "object" || typeof req.body.user !== "string" || typeof req.body.password !== "string") {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    return;
+  }
 
-function endBadRequest(response: http.ServerResponse): void {
-  response.writeHead(400, {"Content-Type": "text/plain"});
-  response.end("400 Bad Request");
-}
-
-async function body(request: http.IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let body = "";
-    request.setEncoding("utf-8");
-    request.on("data", (chunk) => { body += chunk });
-
-    request.on("end", () => {
-      resolve(body);
-    });
-  });
-}
-
-http.createServer(async (request: http.IncomingMessage, response: http.ServerResponse) => {
-  console.log("%s %s %s", request.socket.remoteAddress, request.method, request.url);
-
-  let sessionId = getCookie(request.headers.cookie, "DiaformSession");
-
-  if (request.url == "" || request.url == "/") {
-    if (request.method === "POST") {
-      // User is logging in
-      // TODO: We should do something about too large requests
-      let body = "";
-      request.on("data", (chunk) => { body += chunk });
-      request.on("end", async () => {
-        const loginOrSignupRequest = parseLogInOrSignUpRequest(body);
-
-        if (loginOrSignupRequest === null) {
-          response.writeHead(400, {"Content-Type": "text/plain"});
-          response.end("400 Bad Request");
-        } else if (loginOrSignupRequest.type === "login") {
-          const {user, password} = loginOrSignupRequest;
-          const userId = await authentication.userId(user, password);
-          if (userId !== null) {
-            sessionId = await session.create(userId);
-            response.writeHead(303, {"Set-Cookie": `DiaformSession=${sessionId}`, "Location": "/"});
-            response.end();
-          } else {
-            response.writeHead(401, {"Content-Type": "text/plain"});
-            response.end("Invalid username and password combination. Please try again.");
-          }
-        } else if (loginOrSignupRequest.type === "signup") {
-          const {user, password} = loginOrSignupRequest;
-          const result = await authentication.createUser(user, password);
-          if (result.type === "error") {
-            response.writeHead(409, {"Content-Type": "text/plain"});
-            response.end(`Unable to create user: The user "${user}" already exists.`);
-          } else {
-            const {userId} = result;
-            const sessionId = await session.create(userId);
-            response.writeHead(303, {"Set-Cookie": `DiaformSession=${sessionId}`, "Location": "/"});
-            response.end();
-          }
-
-        }
-      });
-    } else {
-      if (session.validId(sessionId)) {
-        respondFile("../static/index.html", "text/html", response);
-      } else {
-        respondFile("../static/login.html", "text/html", response);
-      }
-    }
-  } else if (request.url == "/bundle.js") {
-    respondFile("./bundle.js", "text/javascript", response);
-  } else if (request.url == "/style.css") {
-    respondFile("../static/style.css", "text/css", response);
-  } else if (request.url == "/bullet-collapsed.svg") {
-    respondFile("../static/bullet-collapsed.svg", "image/svg+xml", response);
-  } else if (request.url == "/bullet-expanded.svg") {
-    respondFile("../static/bullet-expanded.svg", "image/svg+xml", response);
-  } else if (request.url == "/bullet-collapsed-page.svg") {
-    respondFile("../static/bullet-collapsed-page.svg", "image/svg+xml", response);
-  } else if (request.url == "/bullet-expanded-page.svg") {
-    respondFile("../static/bullet-expanded-page.svg", "image/svg+xml", response);
-  } else if (request.url == "/data.json") {
-    const userId = requireSession(sessionId, response);
-    if (userId === null) return;
-
-    if (request.method === "PUT") {
-      // Read body
-      // TODO: We should do something about very large requests
-      let body = "";
-      request.setEncoding("utf-8");
-      request.on("data", (chunk) => { body += chunk });
-
-      request.on("end", () => {
-        console.log("%s %s %s %s", request.socket.remoteAddress, request.method, request.url, JSON.stringify(body));
-        try {
-          const json = JSON.parse(body);
-          data.put(userId, json);  // TODO: Check that it is actually valid data
-        } catch (e) {
-          console.warn("Invalid JSON: %o", body);
-        }
-        response.statusCode = 200;
-        response.end();
-      });
-    } else {
-      const value = await data.get(userId);
-      response.writeHead(200, {"Content-Type": "application/json"});
-      response.end(JSON.stringify(value));
-    }
-  } else if (request.url === "/api/username") {
-    const userId = requireSession(sessionId, response);
-    if (userId === null) return;
-
-    response.writeHead(200, {"Content-Type": "application/json"});
-    response.end(JSON.stringify(await authentication.userName(userId)));
-  } else if (request.url === "/logout") {
-    response.writeHead(303, {"Set-Cookie": `DiaformSession=; Max-Age=0`, "Location": "/"});
-    response.end();
-  } else if (request.url?.match("/api/things/(\\d+)/content")) {
-    const userId = requireSession(sessionId, response);
-    if (userId === null) return;
-
-    const result = request.url.match("/api/things/(\\d+)/content")!;
-    if (result[1] === undefined) throw "logic error";
-    const thing = +result[1];
-    if (!thing && thing !== 0) {
-      endBadRequest(response);
+  if (req.body.login) {
+    console.log("logging in");
+    const {user, password} = req.body;
+    const userId = await authentication.userId(user, password);
+    if (userId === null) {
+      res.status(401).type("text/plain").send("Invalid username and password combination. Please try again.");
       return;
     }
-
-    if (request.method === "GET") {
-      const state = await data.get(userId);
-
-      if (Data.exists(state, thing)) {
-        response.writeHead(200, {"Content-Type": "text/plain"});
-        response.end(Data.content(await data.get(userId), thing));
-      } else {
-        response.writeHead(404, {"Content-Type": "text/plain"});
-        response.end("404 Not Found");
-      }
-    } else if (request.method === "PUT") {
-      const newContent = await body(request);
-
-      console.log(newContent);
-
-      data.update(userId, (things) => Data.setContent(things, +result[1], newContent));
-
-      response.writeHead(200, {"Content-Type": "text/plain"});
-      response.end();
+    const sessionId = await session.create(userId);
+    res.status(303).header("Set-Cookie", `DiaformSession=${sessionId}`).header("Location", "/").end();
+  } else if (req.body.signup) {
+    console.log("signing up");
+    const {user, password} = req.body;
+    const result = await authentication.createUser(user, password);
+    if (result.type === "error") {
+      res.status(409).type("text/plain").send(`Unable to create user: The user "${user}" already exists.`);
     } else {
-      response.writeHead(404, {"Content-Type": "text/plain"});
-      response.end("404 Not Found");
+      const {userId} = result;
+      const sessionId = await session.create(userId);
+      res.status(303).header("Set-Cookie", `DiaformSession=${sessionId}`).header("Location", "/").end();
     }
   } else {
-    response.writeHead(404, {"Content-Type": "text/plain"});
-    response.end("404 Not found", "utf-8");
+    res.status(400).type("text/plain").send("400 Bad Request");
   }
-}).listen(80);
+});
 
-console.log("Listening on http://localhost:80/");
+// Static files
+app.get("/bundle.js", (req, res) => { res.sendFile("bundle.js", {root: "."}) });
+app.get("/style.css", (req, res) => { sendStatic(res, "style.css") });
+app.get("/bullet-collapsed.svg", (req, res) => { sendStatic(res, "bullet-collapsed.svg") });
+app.get("/bullet-expanded.svg", (req, res) => { sendStatic(res, "bullet-expanded.svg") });
+app.get("/bullet-collapsed-page.svg", (req, res) => { sendStatic(res, "bullet-collapsed-page.svg") });
+app.get("/bullet-expanded-page.svg", (req, res) => { sendStatic(res, "bullet-expanded-page.svg") });
+
+// Error handling
+app.use((req, res, next) => {
+  if (!res.headersSent)
+    res.type("text/plain").status(404).send("404 Not Found");
+});
+
+app.listen(80, () => { console.log("Listening on http://localhost:80/") });
