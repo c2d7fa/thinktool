@@ -49,7 +49,7 @@ const data = (() => {
     try {
       return JSON.parse(content);
     } catch (e) {
-      console.warn("Got error while parsing JSON for user ${userId} (%o): %o", content, e);
+      console.warn(`Got error while parsing JSON for user ${userId} (%o): %o`, content, e);
       return emptyThings;
     }
   }
