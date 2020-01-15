@@ -68,7 +68,6 @@ function useBatched(cooldown: number): {update(key: string, callback: () => void
       callback();
       delete callbacks.current[key];
     }, cooldown);
-    console.log(callbacks.current);
   }
 
   window.onbeforeunload = () => {
