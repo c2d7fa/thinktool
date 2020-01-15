@@ -26,10 +26,6 @@ interface StateContext {
   setContent(thing: number, content: string): Promise<void>;
 
   undo(): void;
-
-  // Like setState, but won't update undo and server state when setting
-  // consecutive states in the same group within a short time interval.
-  setGroupedState(group: string, value: Things): void;
 }
 
 type SetSelectedThing = (value: number) => void;
@@ -58,57 +54,26 @@ function extractThingFromURL(): number {
 function useStateContext(initialState: Things): StateContext {
   const [state, setLocalState] = React.useState(initialState);
 
+  const contentSyncTimeouts: React.MutableRefObject<{[thing: number]: NodeJS.Timeout}> = React.useRef({});
+
   async function setContent(thing: number, content: string): Promise<void> {
     setLocalState(Data.setContent(state, thing, content));
-    await Server.setContent(thing, content);
-  }
 
-  const lastGroup: React.MutableRefObject<string | null> = React.useRef(null);
-  const lastUpdateForGroup: React.MutableRefObject<number | null> = React.useRef(null);
-  const stateUpdateTimeout: React.MutableRefObject<number | null> = React.useRef(null);
-
-  function setState(newState: Things): void {
-    if (stateUpdateTimeout.current !== null) {
-      window.clearTimeout(stateUpdateTimeout.current);
-      stateUpdateTimeout.current = null;
+    if (contentSyncTimeouts.current[thing] !== undefined) {
+      clearTimeout(contentSyncTimeouts.current[thing]);
+      delete contentSyncTimeouts.current[thing];
     }
 
+    contentSyncTimeouts.current[thing] = setTimeout(() => { Server.setContent(thing, content) }, 200);
+  }
+
+  // TODO: setState and undo should override timeouts from setContent.
+
+  function setState(newState: Things): void {
     if (newState !== state) {
       undo.pushState(state);
       Server.putData(newState);
       setLocalState(newState);
-    }
-  }
-
-  function setGroupedState(group: string, newState: Things): void {
-    if (stateUpdateTimeout.current !== null) {
-      window.clearTimeout(stateUpdateTimeout.current);
-      stateUpdateTimeout.current = null;
-    }
-
-    if (lastGroup.current !== null && lastGroup.current === group) {
-      // Same as last group, just set local state unless a long time has elapsed
-      if (lastUpdateForGroup.current == null) throw "logic error";
-      if (Date.now() - lastUpdateForGroup.current >= 1000) {
-        // The last time we updated the state for this group was >1s ago, so
-        // update it now.
-        setState(newState);
-        lastUpdateForGroup.current = Date.now();
-      } else {
-        setLocalState(newState);
-
-        // If there are no more writes to this group, we still want to send the
-        // state update eventually.
-        stateUpdateTimeout.current = window.setTimeout(() => {
-          console.log("Setting state due to timeout");
-          setState(newState);
-        }, 10000);
-      }
-    } else {
-      // Changing group, actually update state
-      setState(newState);
-      lastUpdateForGroup.current = Date.now();
-      lastGroup.current = group;
     }
   }
 
@@ -119,12 +84,10 @@ function useStateContext(initialState: Things): StateContext {
       return;
     }
     setLocalState(oldState);
-    lastGroup.current = null;
     Server.putData(oldState);
   }
 
-
-  return {state, setState, setLocalState, setGroupedState, setContent, undo: undo_};
+  return {state, setState, setLocalState, setContent, undo: undo_};
 }
 
 function App({initialState, username}: {initialState: Things; username: string}) {
