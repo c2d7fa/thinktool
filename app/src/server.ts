@@ -1,6 +1,7 @@
 import * as crypto from "crypto";
 import * as express from "express";
 import * as fs from "fs";
+import * as lockfile from "lockfile";
 
 import {Things, empty as emptyThings} from "./data";
 import * as Data from "./data";
@@ -38,35 +39,38 @@ const myfs = (() => {
 })();
 
 const data = (() => {
+  // TODO: This lock file system is horrible implementation of a bad idea. We
+  // should probably do something completely different here, but I'm not quite
+  // sure what.
+
   async function get(userId: number): Promise<Things> {
-    // TODO: Handle cases:
-    // * File does not exist
-    // * File does not parse as JSON
-    // * JSON is not a valid Things
-    const content = await myfs.readFile(`../../data/data${userId}.json`);
-    if (content === undefined)
-      return emptyThings;
-    try {
-      return JSON.parse(content);
-    } catch (e) {
-      console.warn(`Got error while parsing JSON for user ${userId} (%o): %o`, content, e);
-      return emptyThings;
-    }
+    return await update(userId, x => x);
   }
 
   async function put(userId: number, data: Things): Promise<void> {
-    return new Promise((resolve, reject) => {
-      fs.writeFile(`../../data/data${userId}.json`, JSON.stringify(data), (err) => {
-        if (err) reject(err);
-        resolve();
-      });
-    });
+    await update(userId, x => data);
   }
 
-  async function update(userId: number, update: (data: Things) => Things): Promise<Things> {
-    const newThings = update(await get(userId));
-    await put(userId, newThings);
-    return newThings;
+  async function update(userId: number, f: (data: Things) => Things): Promise<Things> {
+    // TODO: Detect case where returned JSON parses correctly but is not valid.
+    return new Promise((resolve, reject) => (async () => {  // TODO: Does this even make sense? Seems to work 🤷
+      lockfile.lock(`../../data/.data${userId}.json.lock`, {wait: 100}, async (err) => {
+        if (err) return update(userId, f);  // TODO: Yikes (we do this to avoid EEXIST error)
+        const content = await myfs.readFile(`../../data/data${userId}.json`);
+        let things = emptyThings;
+        if (content !== undefined) {
+          try {
+            things = JSON.parse(content);
+          } catch (e) {
+            console.warn(`Got error while parsing JSON for user ${userId} (%o): %o`, content, e);
+          }
+        }
+        const newThings = f(things);
+        await myfs.writeFile(`../../data/data${userId}.json`, JSON.stringify(newThings));
+        lockfile.unlockSync(`../../data/.data${userId}.json.lock`);
+        resolve(newThings);
+      });
+    })());
   }
 
   return {get, put, update};
@@ -234,6 +238,19 @@ app.put("/api/things", requireSession, async (req, res) => {
   res.end();
 });
 
+app.get("/api/things/next", requireSession, async (req, res) => {
+  res.type("text/plain").send((await data.get(req.user!)).next.toString());
+});
+
+app.put("/api/things/next", requireSession, async (req, res) => {
+  if (typeof req.body !== "string" || (!+req.body && +req.body !== 0)) {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    return;
+  }
+  await data.update(req.user!, (things) => ({...things, next: +req.body}));
+  res.end();
+});
+
 app.get("/api/username", requireSession, async (req, res) => {
   res.type("json").send(JSON.stringify(await authentication.userName(req.user!)));
 });
@@ -251,6 +268,34 @@ async function parseThingExists(req: express.Request, res: express.Response, nex
   res.locals.thing = thing;
   next();
 }
+
+async function parseThing(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const thing = +req.params.thing;
+  if (!thing && thing !== 0) {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    next("router");
+  }
+  res.locals.thing = thing;
+  next();
+}
+
+app.get("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
+  res.type("application/json").send(JSON.stringify((await data.get(req.user!)).things[res.locals.thing]));
+});
+
+app.put("/api/things/:thing", requireSession, parseThing, async (req, res) => {
+  if (typeof req.body !== "object") {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    return;
+  }
+  data.update(req.user!, (things) => ({...things, things: {...things.things, [res.locals.thing]: req.body}}));
+  res.end();
+});
+
+app.delete("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
+  data.update(req.user!, (things) => Data.remove(things, res.locals.thing));
+  res.end();
+});
 
 app.get("/api/things/:thing/content", requireSession, parseThingExists, async (req, res) => {
   res.type("text/plain").send(Data.content(await data.get(req.user!), res.locals.thing));

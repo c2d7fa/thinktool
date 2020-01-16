@@ -79,6 +79,30 @@ function useBatched(cooldown: number): {update(key: string, callback: () => void
   return {update};
 }
 
+function diffState(oldState: Things, newState: Things): {added: number[]; deleted: number[]; changed: number[]} {
+  const added: number[] = [];
+  const deleted: number[] = [];
+  const changed: number[] = [];
+
+  for (const thing in oldState.things) {
+    if (oldState.things[thing] !== newState.things[thing]) {
+      if (newState.things[thing] === undefined) {
+        deleted.push(+thing);
+      } else if (JSON.stringify(oldState.things[thing]) !== JSON.stringify(newState.things[thing])) {
+        changed.push(+thing);
+      }
+    }
+  }
+
+  for (const thing in newState.things) {
+    if (oldState.things[thing] === undefined) {
+      added.push(+thing);
+    }
+  }
+
+  return {added, deleted, changed};
+}
+
 function useStateContext(initialState: Things): StateContext {
   const [state, setLocalState] = React.useState(initialState);
 
@@ -104,8 +128,18 @@ function useStateContext(initialState: Things): StateContext {
   function setState(newState: Things): void {
     if (newState !== state) {
       undo.pushState(state);
-      Server.putData(newState);
       setLocalState(newState);
+
+      const diff = diffState(state, newState);
+      for (const thing of diff.deleted) {
+        Server.deleteThing(thing);
+      }
+      for (const thing of [...diff.added, ...diff.changed]) {
+        Server.putThing(thing, newState.things[thing]);
+      }
+
+      if (newState.next !== state.next)
+        Server.putNext(newState.next);
     }
   }
 

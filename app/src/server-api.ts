@@ -1,3 +1,5 @@
+import * as D from "./data";
+
 export async function getData(): Promise<object> {
   return (await fetch("/api/things")).json();
 }
@@ -20,4 +22,16 @@ export async function setPage(thing: number, page: string): Promise<void> {
 
 export async function removePage(thing: number): Promise<void> {
   await fetch(`/api/things/${thing}/page`, {method: "delete"});
+}
+
+export async function deleteThing(thing: number): Promise<void> {
+  await fetch(`/api/things/${thing}`, {method: "delete"});
+}
+
+export async function putThing(thing: number, data: D.ThingData): Promise<void> {
+  await fetch(`/api/things/${thing}`, {method: "put", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)});
+}
+
+export async function putNext(next: number): Promise<void> {
+  await fetch("/api/things/next", {method: "put", body: next.toString()});
 }
