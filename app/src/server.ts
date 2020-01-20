@@ -2,6 +2,7 @@ import * as crypto from "crypto";
 import * as express from "express";
 import * as fs from "fs";
 import * as lockfile from "lockfile";
+import * as util from "util";
 
 import {Things, empty as emptyThings} from "./data";
 import * as Data from "./data";
@@ -209,7 +210,11 @@ app.use((req, res, next) => {
 
 // Logging
 app.use((req, res, next) => {
-  console.log("%s %s %s %o", req.ip, req.method, req.url, req.body);
+  if (Object.keys(req.body).length > 0) {
+    console.log("%s %s %s %s", req.ip, req.method, req.url, util.inspect(req.body, {colors: true, breakLength: Infinity, compact: true}));
+  } else {
+    console.log("%s %s %s", req.ip, req.method, req.url);
+  }
   next();
 });
 
@@ -350,7 +355,6 @@ app.post("/", async (req, res) => {
   }
 
   if (req.body.login) {
-    console.log("logging in");
     const {user, password} = req.body;
     const userId = await authentication.userId(user, password);
     if (userId === null) {
@@ -360,7 +364,6 @@ app.post("/", async (req, res) => {
     const sessionId = await session.create(userId);
     res.status(303).header("Set-Cookie", `DiaformSession=${sessionId}`).header("Location", "/").end();
   } else if (req.body.signup) {
-    console.log("signing up");
     const {user, password} = req.body;
     const result = await authentication.createUser(user, password);
     if (result.type === "error") {
