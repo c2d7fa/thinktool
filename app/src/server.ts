@@ -44,6 +44,8 @@ const data = (() => {
   // should probably do something completely different here, but I'm not quite
   // sure what.
 
+  const lastUpdates: {[userId: number]: Date | undefined} = {};
+
   async function get(userId: number): Promise<Things> {
     return await update(userId, x => x);
   }
@@ -67,19 +69,27 @@ const data = (() => {
           }
         }
         const newThings = f(things);
-        await myfs.writeFile(`../../data/data${userId}.json`, JSON.stringify(newThings));
+        if (newThings !== things) {
+          await myfs.writeFile(`../../data/data${userId}.json`, JSON.stringify(newThings));
+          lastUpdates[userId] = new Date();
+        }
         lockfile.unlockSync(`../../data/.data${userId}.json.lock`);
         resolve(newThings);
       });
     })());
   }
 
-  return {get, put, update};
+  function lastUpdated(userId: number): Date | null {
+    return lastUpdates[userId] ?? null;
+  }
+
+  return {get, put, update, lastUpdated};
 })();
 
 const session = (() => {
   interface SessionData {
     userId: number;
+    lastPolled: Date | null;
   }
 
   const sessions: {[id: string]: SessionData} = {};
@@ -89,7 +99,7 @@ const session = (() => {
       crypto.randomBytes(24, (err, buffer) => {
         if (err) reject(err);
         const id = buffer.toString("base64");
-        sessions[id] = {userId};
+        sessions[id] = {userId, lastPolled: null};
         resolve(id);
       });
     });
@@ -107,7 +117,21 @@ const session = (() => {
     return user(sessionId) !== null;
   }
 
-  return {create, user, validId};
+  function hasChanges(sessionId: string): boolean {
+    const session = sessions[sessionId];
+    const lastUpdated = data.lastUpdated(user(sessionId)!);
+    if (session.lastPolled === null)
+      return lastUpdated !== null;
+    if (lastUpdated === null)
+      return false;
+    return lastUpdated > session.lastPolled;
+  }
+
+  function sessionPolled(sessionId: string): void {
+    sessions[sessionId].lastPolled = new Date();
+  }
+
+  return {create, user, validId, hasChanges, sessionPolled};
 })();
 
 const authentication = (() => {
@@ -179,6 +203,7 @@ fs.mkdirSync("../../data", {recursive: true});
 declare module "express-serve-static-core" {
   interface Request {
     hasSession?: boolean;
+    session?: string;
     user?: number;
   }
 }
@@ -204,6 +229,7 @@ app.use((req, res, next) => {
   const sessionId = getCookie(req.get("Cookie"), "DiaformSession");
   const userId = sessionId === null ? null : session.user(sessionId);
   req.user = userId ?? undefined;
+  req.session = sessionId ?? undefined;
   req.hasSession = userId !== null;
   next();
 });
@@ -224,10 +250,20 @@ function sendStatic(res: express.Response, path: string) {
 
 app.get("/", (req, res) => {
   if (req.hasSession) {
+    session.sessionPolled(req.session!);
     sendStatic(res, "index.html");
   } else {
     sendStatic(res, "login.html");
   }
+});
+
+app.get("/api/changes", requireSession, async (req, res) => {
+  res.type("json").send(session.hasChanges(req.session!));
+});
+
+app.post("/api/changes", requireSession, async (req, res) => {
+  session.sessionPolled(req.session!);
+  res.end();
 });
 
 app.get("/api/things", requireSession, async (req, res) => {
@@ -293,12 +329,14 @@ app.put("/api/things/:thing", requireSession, parseThing, async (req, res) => {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
-  data.update(req.user!, (things) => ({...things, things: {...things.things, [res.locals.thing]: req.body}}));
+  await data.update(req.user!, (things) => ({...things, things: {...things.things, [res.locals.thing]: req.body}}));
+  session.sessionPolled(req.session!);
   res.end();
 });
 
 app.delete("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
-  data.update(req.user!, (things) => Data.remove(things, res.locals.thing));
+  await data.update(req.user!, (things) => Data.remove(things, res.locals.thing));
+  session.sessionPolled(req.session!);
   res.end();
 });
 
@@ -312,7 +350,8 @@ app.put("/api/things/:thing/content", requireSession, parseThingExists, async (r
     return;
   }
 
-  data.update(req.user!, (things) => Data.setContent(things, res.locals.thing, req.body));
+  await data.update(req.user!, (things) => Data.setContent(things, res.locals.thing, req.body));
+  session.sessionPolled(req.session!);
   res.end();
 });
 
@@ -331,12 +370,14 @@ app.put("/api/things/:thing/page", requireSession, parseThingExists, async (req,
     return;
   }
 
-  data.update(req.user!, (things) => Data.setPage(things, res.locals.thing, req.body));
+  await data.update(req.user!, (things) => Data.setPage(things, res.locals.thing, req.body));
+  session.sessionPolled(req.session!);
   res.end();
 });
 
-app.delete("/api/things/:thing/page", requireSession, parseThingExists, (req, res) => {
-  data.update(req.user!, (things) => Data.removePage(things, res.locals.thing));
+app.delete("/api/things/:thing/page", requireSession, parseThingExists, async (req, res) => {
+  await data.update(req.user!, (things) => Data.removePage(things, res.locals.thing));
+  session.sessionPolled(req.session!);
   res.end();
 });
 
