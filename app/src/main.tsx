@@ -172,6 +172,27 @@ function App({initialState, username}: {initialState: Things; username: string})
 
   const context = useStateContext(initialState);
 
+  // Poll for changes buy running "GET /api/changes". When changes are found,
+  // update the local state. Dynamically adjust polling interval based on
+  // whether or not any changes are found.
+  React.useEffect(() => {
+    let timesSinceLastChange = 0;
+    function callback(ms: number): void {
+      setTimeout(async () => {
+        const hasChanges = await Server.hasChanges();
+        if (hasChanges) {
+          timesSinceLastChange = 0;
+          await Server.polledChanges();
+          context.setLocalState(await Server.getData());
+        } else {
+          timesSinceLastChange++;
+        }
+        callback(Math.min(timesSinceLastChange * 100 + 500, 10000));
+      }, ms);
+    }
+    callback(5000);
+  }, []);
+
   document.onkeydown = (ev) => {
     if (ev.key === "z" && ev.ctrlKey) {
       console.log("Undoing");

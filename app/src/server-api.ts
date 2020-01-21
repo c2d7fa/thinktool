@@ -1,7 +1,8 @@
 import * as D from "./data";
 
-export async function getData(): Promise<object> {
-  return (await fetch("/api/things")).json();
+export async function getData(): Promise<D.Things> {
+  // TODO: Error handling when converting to Things.
+  return (await fetch("/api/things")).json() as Promise<D.Things>;
 }
 
 export async function putData(data: object): Promise<void> {
@@ -34,4 +35,12 @@ export async function putThing(thing: number, data: D.ThingData): Promise<void> 
 
 export async function putNext(next: number): Promise<void> {
   await fetch("/api/things/next", {method: "put", body: next.toString()});
+}
+
+export async function hasChanges(): Promise<boolean> {
+  return (await fetch("/api/changes")).json();
+}
+
+export async function polledChanges(): Promise<void> {
+  await fetch("/api/changes", {method: "post"});
 }

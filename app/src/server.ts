@@ -58,7 +58,8 @@ const data = (() => {
     // TODO: Detect case where returned JSON parses correctly but is not valid.
     return new Promise((resolve, reject) => (async () => {  // TODO: Does this even make sense? Seems to work 🤷
       lockfile.lock(`../../data/.data${userId}.json.lock`, {wait: 100}, async (err) => {
-        if (err) return update(userId, f);  // TODO: Yikes (we do this to avoid EEXIST error)
+        if (err)
+          return resolve(update(userId, f));  // TODO: Yikes (we do this to avoid EEXIST error)
         const content = await myfs.readFile(`../../data/data${userId}.json`);
         let things = emptyThings;
         if (content !== undefined) {
@@ -276,6 +277,7 @@ app.put("/api/things", requireSession, async (req, res) => {
     return;
   }
   await data.put(req.user!, req.body);
+  session.sessionPolled(req.session!);
   res.end();
 });
 
@@ -289,6 +291,7 @@ app.put("/api/things/next", requireSession, async (req, res) => {
     return;
   }
   await data.update(req.user!, (things) => ({...things, next: +req.body}));
+  session.sessionPolled(req.session!);
   res.end();
 });
 
