@@ -44,6 +44,8 @@ const data = (() => {
   // should probably do something completely different here, but I'm not quite
   // sure what.
 
+  const lastUpdates: {[userId: number]: Date | undefined} = {};
+
   async function get(userId: number): Promise<Things> {
     return await update(userId, x => x);
   }
@@ -56,7 +58,8 @@ const data = (() => {
     // TODO: Detect case where returned JSON parses correctly but is not valid.
     return new Promise((resolve, reject) => (async () => {  // TODO: Does this even make sense? Seems to work 🤷
       lockfile.lock(`../../data/.data${userId}.json.lock`, {wait: 100}, async (err) => {
-        if (err) return update(userId, f);  // TODO: Yikes (we do this to avoid EEXIST error)
+        if (err)
+          return resolve(update(userId, f));  // TODO: Yikes (we do this to avoid EEXIST error)
         const content = await myfs.readFile(`../../data/data${userId}.json`);
         let things = emptyThings;
         if (content !== undefined) {
@@ -67,19 +70,27 @@ const data = (() => {
           }
         }
         const newThings = f(things);
-        await myfs.writeFile(`../../data/data${userId}.json`, JSON.stringify(newThings));
+        if (newThings !== things) {
+          await myfs.writeFile(`../../data/data${userId}.json`, JSON.stringify(newThings));
+          lastUpdates[userId] = new Date();
+        }
         lockfile.unlockSync(`../../data/.data${userId}.json.lock`);
         resolve(newThings);
       });
     })());
   }
 
-  return {get, put, update};
+  function lastUpdated(userId: number): Date | null {
+    return lastUpdates[userId] ?? null;
+  }
+
+  return {get, put, update, lastUpdated};
 })();
 
 const session = (() => {
   interface SessionData {
     userId: number;
+    lastPolled: Date | null;
   }
 
   const sessions: {[id: string]: SessionData} = {};
@@ -89,7 +100,7 @@ const session = (() => {
       crypto.randomBytes(24, (err, buffer) => {
         if (err) reject(err);
         const id = buffer.toString("base64");
-        sessions[id] = {userId};
+        sessions[id] = {userId, lastPolled: null};
         resolve(id);
       });
     });
@@ -107,7 +118,21 @@ const session = (() => {
     return user(sessionId) !== null;
   }
 
-  return {create, user, validId};
+  function hasChanges(sessionId: string): boolean {
+    const session = sessions[sessionId];
+    const lastUpdated = data.lastUpdated(user(sessionId)!);
+    if (session.lastPolled === null)
+      return lastUpdated !== null;
+    if (lastUpdated === null)
+      return false;
+    return lastUpdated > session.lastPolled;
+  }
+
+  function sessionPolled(sessionId: string): void {
+    sessions[sessionId].lastPolled = new Date();
+  }
+
+  return {create, user, validId, hasChanges, sessionPolled};
 })();
 
 const authentication = (() => {
@@ -179,6 +204,7 @@ fs.mkdirSync("../../data", {recursive: true});
 declare module "express-serve-static-core" {
   interface Request {
     hasSession?: boolean;
+    session?: string;
     user?: number;
   }
 }
@@ -192,6 +218,18 @@ function requireSession(req: express.Request, res: express.Response, next: expre
   }
 }
 
+const requireUpToDateSession = [requireSession, ((req: express.Request, res: express.Response, next: express.NextFunction): void => {
+  return requireSession(req, res, () => {
+    if (session.hasChanges(req.session!)) {
+      console.log("Denying request because client is unaware of some changes.");
+      res.status(409).type("text/plain").send("I refuse to process your request because there are new changes to the state since you last polled.");
+      next("route");
+    } else {
+      next();
+    }
+  });
+})];
+
 const app = express();
 
 // Body
@@ -204,6 +242,7 @@ app.use((req, res, next) => {
   const sessionId = getCookie(req.get("Cookie"), "DiaformSession");
   const userId = sessionId === null ? null : session.user(sessionId);
   req.user = userId ?? undefined;
+  req.session = sessionId ?? undefined;
   req.hasSession = userId !== null;
   next();
 });
@@ -224,22 +263,33 @@ function sendStatic(res: express.Response, path: string) {
 
 app.get("/", (req, res) => {
   if (req.hasSession) {
+    session.sessionPolled(req.session!);
     sendStatic(res, "index.html");
   } else {
     sendStatic(res, "login.html");
   }
 });
 
+app.get("/api/changes", requireSession, async (req, res) => {
+  res.type("json").send(session.hasChanges(req.session!));
+});
+
+app.post("/api/changes", requireSession, async (req, res) => {
+  session.sessionPolled(req.session!);
+  res.end();
+});
+
 app.get("/api/things", requireSession, async (req, res) => {
   res.type("json").send(await data.get(req.user!));
 });
 
-app.put("/api/things", requireSession, async (req, res) => {
+app.put("/api/things", requireUpToDateSession, async (req, res) => {
   if (typeof req.body !== "object") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
   await data.put(req.user!, req.body);
+  session.sessionPolled(req.session!);
   res.end();
 });
 
@@ -247,12 +297,13 @@ app.get("/api/things/next", requireSession, async (req, res) => {
   res.type("text/plain").send((await data.get(req.user!)).next.toString());
 });
 
-app.put("/api/things/next", requireSession, async (req, res) => {
+app.put("/api/things/next", requireUpToDateSession, async (req, res) => {
   if (typeof req.body !== "string" || (!+req.body && +req.body !== 0)) {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
   await data.update(req.user!, (things) => ({...things, next: +req.body}));
+  session.sessionPolled(req.session!);
   res.end();
 });
 
@@ -288,17 +339,19 @@ app.get("/api/things/:thing", requireSession, parseThingExists, async (req, res)
   res.type("application/json").send(JSON.stringify((await data.get(req.user!)).things[res.locals.thing]));
 });
 
-app.put("/api/things/:thing", requireSession, parseThing, async (req, res) => {
+app.put("/api/things/:thing", requireUpToDateSession, parseThing, async (req, res) => {
   if (typeof req.body !== "object") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
-  data.update(req.user!, (things) => ({...things, things: {...things.things, [res.locals.thing]: req.body}}));
+  await data.update(req.user!, (things) => ({...things, things: {...things.things, [res.locals.thing]: req.body}}));
+  session.sessionPolled(req.session!);
   res.end();
 });
 
-app.delete("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
-  data.update(req.user!, (things) => Data.remove(things, res.locals.thing));
+app.delete("/api/things/:thing", requireUpToDateSession, parseThingExists, async (req, res) => {
+  await data.update(req.user!, (things) => Data.remove(things, res.locals.thing));
+  session.sessionPolled(req.session!);
   res.end();
 });
 
@@ -306,13 +359,14 @@ app.get("/api/things/:thing/content", requireSession, parseThingExists, async (r
   res.type("text/plain").send(Data.content(await data.get(req.user!), res.locals.thing));
 });
 
-app.put("/api/things/:thing/content", requireSession, parseThingExists, async (req, res) => {
+app.put("/api/things/:thing/content", requireUpToDateSession, parseThingExists, async (req, res) => {
   if (typeof req.body !== "string") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
 
-  data.update(req.user!, (things) => Data.setContent(things, res.locals.thing, req.body));
+  await data.update(req.user!, (things) => Data.setContent(things, res.locals.thing, req.body));
+  session.sessionPolled(req.session!);
   res.end();
 });
 
@@ -325,18 +379,20 @@ app.get("/api/things/:thing/page", requireSession, parseThingExists, async (req,
   res.type("text/plain").send(page);
 });
 
-app.put("/api/things/:thing/page", requireSession, parseThingExists, async (req, res) => {
+app.put("/api/things/:thing/page", requireUpToDateSession, parseThingExists, async (req, res) => {
   if (typeof req.body !== "string") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
 
-  data.update(req.user!, (things) => Data.setPage(things, res.locals.thing, req.body));
+  await data.update(req.user!, (things) => Data.setPage(things, res.locals.thing, req.body));
+  session.sessionPolled(req.session!);
   res.end();
 });
 
-app.delete("/api/things/:thing/page", requireSession, parseThingExists, (req, res) => {
-  data.update(req.user!, (things) => Data.removePage(things, res.locals.thing));
+app.delete("/api/things/:thing/page", requireUpToDateSession, parseThingExists, async (req, res) => {
+  await data.update(req.user!, (things) => Data.removePage(things, res.locals.thing));
+  session.sessionPolled(req.session!);
   res.end();
 });
 
