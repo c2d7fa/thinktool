@@ -218,6 +218,18 @@ function requireSession(req: express.Request, res: express.Response, next: expre
   }
 }
 
+const requireUpToDateSession = [requireSession, ((req: express.Request, res: express.Response, next: express.NextFunction): void => {
+  return requireSession(req, res, () => {
+    if (session.hasChanges(req.session!)) {
+      console.log("Denying request because client is unaware of some changes.");
+      res.status(409).type("text/plain").send("I refuse to process your request because there are new changes to the state since you last polled.");
+      next("route");
+    } else {
+      next();
+    }
+  });
+})];
+
 const app = express();
 
 // Body
@@ -271,7 +283,7 @@ app.get("/api/things", requireSession, async (req, res) => {
   res.type("json").send(await data.get(req.user!));
 });
 
-app.put("/api/things", requireSession, async (req, res) => {
+app.put("/api/things", requireUpToDateSession, async (req, res) => {
   if (typeof req.body !== "object") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
@@ -285,7 +297,7 @@ app.get("/api/things/next", requireSession, async (req, res) => {
   res.type("text/plain").send((await data.get(req.user!)).next.toString());
 });
 
-app.put("/api/things/next", requireSession, async (req, res) => {
+app.put("/api/things/next", requireUpToDateSession, async (req, res) => {
   if (typeof req.body !== "string" || (!+req.body && +req.body !== 0)) {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
@@ -327,7 +339,7 @@ app.get("/api/things/:thing", requireSession, parseThingExists, async (req, res)
   res.type("application/json").send(JSON.stringify((await data.get(req.user!)).things[res.locals.thing]));
 });
 
-app.put("/api/things/:thing", requireSession, parseThing, async (req, res) => {
+app.put("/api/things/:thing", requireUpToDateSession, parseThing, async (req, res) => {
   if (typeof req.body !== "object") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
@@ -337,7 +349,7 @@ app.put("/api/things/:thing", requireSession, parseThing, async (req, res) => {
   res.end();
 });
 
-app.delete("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
+app.delete("/api/things/:thing", requireUpToDateSession, parseThingExists, async (req, res) => {
   await data.update(req.user!, (things) => Data.remove(things, res.locals.thing));
   session.sessionPolled(req.session!);
   res.end();
@@ -347,7 +359,7 @@ app.get("/api/things/:thing/content", requireSession, parseThingExists, async (r
   res.type("text/plain").send(Data.content(await data.get(req.user!), res.locals.thing));
 });
 
-app.put("/api/things/:thing/content", requireSession, parseThingExists, async (req, res) => {
+app.put("/api/things/:thing/content", requireUpToDateSession, parseThingExists, async (req, res) => {
   if (typeof req.body !== "string") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
@@ -367,7 +379,7 @@ app.get("/api/things/:thing/page", requireSession, parseThingExists, async (req,
   res.type("text/plain").send(page);
 });
 
-app.put("/api/things/:thing/page", requireSession, parseThingExists, async (req, res) => {
+app.put("/api/things/:thing/page", requireUpToDateSession, parseThingExists, async (req, res) => {
   if (typeof req.body !== "string") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
@@ -378,7 +390,7 @@ app.put("/api/things/:thing/page", requireSession, parseThingExists, async (req,
   res.end();
 });
 
-app.delete("/api/things/:thing/page", requireSession, parseThingExists, async (req, res) => {
+app.delete("/api/things/:thing/page", requireUpToDateSession, parseThingExists, async (req, res) => {
   await data.update(req.user!, (things) => Data.removePage(things, res.locals.thing));
   session.sessionPolled(req.session!);
   res.end();
