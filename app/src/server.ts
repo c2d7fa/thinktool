@@ -1,8 +1,11 @@
-import * as http from "http";
-import * as fs from "fs";
 import * as crypto from "crypto";
+import * as express from "express";
+import * as fs from "fs";
+import * as lockfile from "lockfile";
+import * as util from "util";
 
 import {Things, empty as emptyThings} from "./data";
+import * as Data from "./data";
 
 const myfs = (() => {
   async function readFile(path: string): Promise<string | undefined> {
@@ -37,32 +40,41 @@ const myfs = (() => {
 })();
 
 const data = (() => {
+  // TODO: This lock file system is horrible implementation of a bad idea. We
+  // should probably do something completely different here, but I'm not quite
+  // sure what.
+
   async function get(userId: number): Promise<Things> {
-    // TODO: Handle cases:
-    // * File does not exist
-    // * File does not parse as JSON
-    // * JSON is not a valid Things
-    const content = await myfs.readFile(`../../data/data${userId}.json`);
-    if (content === undefined)
-      return emptyThings;
-    try {
-      return JSON.parse(content);
-    } catch (e) {
-      console.warn("Got error while parsing JSON for user ${userId} (%o): %o", content, e);
-      return emptyThings;
-    }
+    return await update(userId, x => x);
   }
 
   async function put(userId: number, data: Things): Promise<void> {
-    return new Promise((resolve, reject) => {
-      fs.writeFile(`../../data/data${userId}.json`, JSON.stringify(data), (err) => {
-        if (err) reject(err);
-        resolve();
-      });
-    });
+    await update(userId, x => data);
   }
 
-  return {get, put};
+  async function update(userId: number, f: (data: Things) => Things): Promise<Things> {
+    // TODO: Detect case where returned JSON parses correctly but is not valid.
+    return new Promise((resolve, reject) => (async () => {  // TODO: Does this even make sense? Seems to work 🤷
+      lockfile.lock(`../../data/.data${userId}.json.lock`, {wait: 100}, async (err) => {
+        if (err) return update(userId, f);  // TODO: Yikes (we do this to avoid EEXIST error)
+        const content = await myfs.readFile(`../../data/data${userId}.json`);
+        let things = emptyThings;
+        if (content !== undefined) {
+          try {
+            things = JSON.parse(content);
+          } catch (e) {
+            console.warn(`Got error while parsing JSON for user ${userId} (%o): %o`, content, e);
+          }
+        }
+        const newThings = f(things);
+        await myfs.writeFile(`../../data/data${userId}.json`, JSON.stringify(newThings));
+        lockfile.unlockSync(`../../data/.data${userId}.json.lock`);
+        resolve(newThings);
+      });
+    })());
+  }
+
+  return {get, put, update};
 })();
 
 const session = (() => {
@@ -152,18 +164,6 @@ const authentication = (() => {
   return {userId, userName, createUser};
 })();
 
-const respondFile = (path: string, contentType: string, response: http.ServerResponse) => {
-  fs.readFile(path, (err, content) => {
-    if (err) {
-      console.error(err);
-      process.exit(1);
-    }
-
-    response.writeHead(200, {"Content-Type": contentType, "Content-Length": content.byteLength});
-    response.end(content, "utf-8");
-  });
-};
-
 function getCookie(cookies: string | undefined, key: string): string | null {
   // TODO: This seems like a really horrible way of doing this.
   if (cookies === undefined)
@@ -174,134 +174,222 @@ function getCookie(cookies: string | undefined, key: string): string | null {
   return null;
 }
 
-function parseLogInOrSignUpRequest(body: string): {type: "login" | "signup"; user: string; password: string} | null {
-  const result = body.match(new RegExp(`^user=([^&]*)&password=([^&]*)&(login|signup)=[^&]*$`));
-  if (result && typeof result[1] === "string" && typeof result[2] === "string" && typeof result[3] === "string") {
-    let type;
-    if (result[3] === "login") type = "login";
-    else if (result[3] === "signup") type = "signup";
-    else return null;
-    return {type, user: result[1], password: result[2]};
-  }
-  return null;
-}
-
 fs.mkdirSync("../../data", {recursive: true});
 
-http.createServer(async (request: http.IncomingMessage, response: http.ServerResponse) => {
-  console.log("%s %s %s", request.socket.remoteAddress, request.method, request.url);
+declare module "express-serve-static-core" {
+  interface Request {
+    hasSession?: boolean;
+    user?: number;
+  }
+}
 
-  let sessionId = getCookie(request.headers.cookie, "DiaformSession");
+function requireSession(req: express.Request, res: express.Response, next: express.NextFunction): void {
+  if (req.user === undefined) {
+    res.status(401).type("text/plain").send("401 Unauthorized");
+    next("route");
+  } else {
+    next();
+  }
+}
 
-  if (request.url == "" || request.url == "/") {
-    if (request.method === "POST") {
-      // User is logging in
-      // TODO: We should do something about too large requests
-      let body = "";
-      request.on("data", (chunk) => { body += chunk });
-      request.on("end", async () => {
-        const loginOrSignupRequest = parseLogInOrSignUpRequest(body);
+const app = express();
 
-        if (loginOrSignupRequest === null) {
-          response.writeHead(400, {"Content-Type": "text/plain"});
-          response.end("400 Bad Request");
-        } else if (loginOrSignupRequest.type === "login") {
-          const {user, password} = loginOrSignupRequest;
-          const userId = await authentication.userId(user, password);
-          if (userId !== null) {
-            sessionId = await session.create(userId);
-            response.writeHead(303, {"Set-Cookie": `DiaformSession=${sessionId}`, "Location": "/"});
-            response.end();
-          } else {
-            response.writeHead(401, {"Content-Type": "text/plain"});
-            response.end("Invalid username and password combination. Please try again.");
-          }
-        } else if (loginOrSignupRequest.type === "signup") {
-          const {user, password} = loginOrSignupRequest;
-          const result = await authentication.createUser(user, password);
-          if (result.type === "error") {
-            response.writeHead(409, {"Content-Type": "text/plain"});
-            response.end(`Unable to create user: The user "${user}" already exists.`);
-          } else {
-            const {userId} = result;
-            const sessionId = await session.create(userId);
-            response.writeHead(303, {"Set-Cookie": `DiaformSession=${sessionId}`, "Location": "/"});
-            response.end();
-          }
+// Body
+app.use(express.text());
+app.use(express.json());
+app.use(express.urlencoded({extended: false}));
 
-        }
-      });
-    } else {
-      if (session.validId(sessionId)) {
-        respondFile("../static/index.html", "text/html", response);
-      } else {
-        respondFile("../static/login.html", "text/html", response);
-      }
-    }
-  } else if (request.url == "/bundle.js") {
-    respondFile("./bundle.js", "text/javascript", response);
-  } else if (request.url == "/style.css") {
-    respondFile("../static/style.css", "text/css", response);
-  } else if (request.url == "/bullet-collapsed.svg") {
-    respondFile("../static/bullet-collapsed.svg", "image/svg+xml", response);
-  } else if (request.url == "/bullet-expanded.svg") {
-    respondFile("../static/bullet-expanded.svg", "image/svg+xml", response);
-  } else if (request.url == "/bullet-collapsed-page.svg") {
-    respondFile("../static/bullet-collapsed-page.svg", "image/svg+xml", response);
-  } else if (request.url == "/bullet-expanded-page.svg") {
-    respondFile("../static/bullet-expanded-page.svg", "image/svg+xml", response);
-  } else if (request.url == "/data.json") {
-    if (!session.validId(sessionId)) {
-      response.writeHead(401, {"Content-Type": "text/plain"});
-      response.end("401 Unauthorized");
+// Authentication
+app.use((req, res, next) => {
+  const sessionId = getCookie(req.get("Cookie"), "DiaformSession");
+  const userId = sessionId === null ? null : session.user(sessionId);
+  req.user = userId ?? undefined;
+  req.hasSession = userId !== null;
+  next();
+});
+
+// Logging
+app.use((req, res, next) => {
+  if (Object.keys(req.body).length > 0) {
+    console.log("%s %s %s %s", req.ip, req.method, req.url, util.inspect(req.body, {colors: true, breakLength: Infinity, compact: true}));
+  } else {
+    console.log("%s %s %s", req.ip, req.method, req.url);
+  }
+  next();
+});
+
+function sendStatic(res: express.Response, path: string) {
+  return res.sendFile(path, {root: "../static"});
+}
+
+app.get("/", (req, res) => {
+  if (req.hasSession) {
+    sendStatic(res, "index.html");
+  } else {
+    sendStatic(res, "login.html");
+  }
+});
+
+app.get("/api/things", requireSession, async (req, res) => {
+  res.type("json").send(await data.get(req.user!));
+});
+
+app.put("/api/things", requireSession, async (req, res) => {
+  if (typeof req.body !== "object") {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    return;
+  }
+  await data.put(req.user!, req.body);
+  res.end();
+});
+
+app.get("/api/things/next", requireSession, async (req, res) => {
+  res.type("text/plain").send((await data.get(req.user!)).next.toString());
+});
+
+app.put("/api/things/next", requireSession, async (req, res) => {
+  if (typeof req.body !== "string" || (!+req.body && +req.body !== 0)) {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    return;
+  }
+  await data.update(req.user!, (things) => ({...things, next: +req.body}));
+  res.end();
+});
+
+app.get("/api/username", requireSession, async (req, res) => {
+  res.type("json").send(JSON.stringify(await authentication.userName(req.user!)));
+});
+
+async function parseThingExists(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const thing = +req.params.thing;
+  if (!thing && thing !== 0) {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    next("router");
+  }
+  if (!Data.exists(await data.get(req.user!), thing)) {
+    res.type("text/plain").status(404).send("404 Not Found");
+    return;
+  }
+  res.locals.thing = thing;
+  next();
+}
+
+async function parseThing(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const thing = +req.params.thing;
+  if (!thing && thing !== 0) {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    next("router");
+  }
+  res.locals.thing = thing;
+  next();
+}
+
+app.get("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
+  res.type("application/json").send(JSON.stringify((await data.get(req.user!)).things[res.locals.thing]));
+});
+
+app.put("/api/things/:thing", requireSession, parseThing, async (req, res) => {
+  if (typeof req.body !== "object") {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    return;
+  }
+  data.update(req.user!, (things) => ({...things, things: {...things.things, [res.locals.thing]: req.body}}));
+  res.end();
+});
+
+app.delete("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
+  data.update(req.user!, (things) => Data.remove(things, res.locals.thing));
+  res.end();
+});
+
+app.get("/api/things/:thing/content", requireSession, parseThingExists, async (req, res) => {
+  res.type("text/plain").send(Data.content(await data.get(req.user!), res.locals.thing));
+});
+
+app.put("/api/things/:thing/content", requireSession, parseThingExists, async (req, res) => {
+  if (typeof req.body !== "string") {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    return;
+  }
+
+  data.update(req.user!, (things) => Data.setContent(things, res.locals.thing, req.body));
+  res.end();
+});
+
+app.get("/api/things/:thing/page", requireSession, parseThingExists, async (req, res) => {
+  const page = Data.page(await data.get(req.user!), res.locals.thing);
+  if (page === null) {
+    res.status(404).end();
+    return;
+  }
+  res.type("text/plain").send(page);
+});
+
+app.put("/api/things/:thing/page", requireSession, parseThingExists, async (req, res) => {
+  if (typeof req.body !== "string") {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    return;
+  }
+
+  data.update(req.user!, (things) => Data.setPage(things, res.locals.thing, req.body));
+  res.end();
+});
+
+app.delete("/api/things/:thing/page", requireSession, parseThingExists, (req, res) => {
+  data.update(req.user!, (things) => Data.removePage(things, res.locals.thing));
+  res.end();
+});
+
+app.get("/logout", async (req, res) => {
+  res
+    .status(303)
+    .header("Set-Cookie", "DiaformSession=; Max-Age=0")
+    .header("Location", "/")
+    .end();
+});
+
+app.post("/", async (req, res) => {
+  if (typeof req.body !== "object" || typeof req.body.user !== "string" || typeof req.body.password !== "string") {
+    res.status(400).type("text/plain").send("400 Bad Request");
+    return;
+  }
+
+  if (req.body.login) {
+    const {user, password} = req.body;
+    const userId = await authentication.userId(user, password);
+    if (userId === null) {
+      res.status(401).type("text/plain").send("Invalid username and password combination. Please try again.");
       return;
     }
-    if (sessionId === null) throw "logic error"; // sessionId is valid
-
-    const userId = session.user(sessionId);
-    if (userId === null) throw "logic error"; // sessionId is valid
-
-    if (request.method === "PUT") {
-      // Read body
-      // TODO: We should do something about very large requests
-      let body = "";
-      request.setEncoding("utf-8");
-      request.on("data", (chunk) => { body += chunk });
-
-      request.on("end", () => {
-        console.log("%s %s %s %s", request.socket.remoteAddress, request.method, request.url, JSON.stringify(body));
-        try {
-          const json = JSON.parse(body);
-          data.put(userId, json);  // TODO: Check that it is actually valid data
-        } catch (e) {
-          console.warn("Invalid JSON: %o", body);
-        }
-        response.statusCode = 200;
-        response.end();
-      });
+    const sessionId = await session.create(userId);
+    res.status(303).header("Set-Cookie", `DiaformSession=${sessionId}`).header("Location", "/").end();
+  } else if (req.body.signup) {
+    const {user, password} = req.body;
+    const result = await authentication.createUser(user, password);
+    if (result.type === "error") {
+      res.status(409).type("text/plain").send(`Unable to create user: The user "${user}" already exists.`);
     } else {
-      const value = await data.get(userId);
-      response.writeHead(200, {"Content-Type": "application/json"});
-      response.end(JSON.stringify(value));
+      const {userId} = result;
+      const sessionId = await session.create(userId);
+      res.status(303).header("Set-Cookie", `DiaformSession=${sessionId}`).header("Location", "/").end();
     }
-  } else if (request.url === "/api/username") {
-    if (!session.validId(sessionId)) {
-      response.writeHead(401, {"Content-Type": "text/plain"});
-      response.end("401 Unauthorized");
-    } else {
-      response.writeHead(200, {"Content-Type": "application/json"});
-      if (sessionId === null) throw "logic error";
-      const userId = session.user(sessionId);
-      if (userId === null) throw "logic error";
-      response.end(JSON.stringify(await authentication.userName(userId)));
-    }
-  } else if (request.url === "/logout") {
-    response.writeHead(303, {"Set-Cookie": `DiaformSession=; Max-Age=0`, "Location": "/"});
-    response.end();
   } else {
-    response.writeHead(404, {"Content-Type": "text/plain"});
-    response.end("404 Not found", "utf-8");
+    res.status(400).type("text/plain").send("400 Bad Request");
   }
-}).listen(80);
+});
 
-console.log("Listening on http://localhost:80/");
+// Static files
+app.get("/bundle.js", (req, res) => { res.sendFile("bundle.js", {root: "."}) });
+app.get("/style.css", (req, res) => { sendStatic(res, "style.css") });
+app.get("/bullet-collapsed.svg", (req, res) => { sendStatic(res, "bullet-collapsed.svg") });
+app.get("/bullet-expanded.svg", (req, res) => { sendStatic(res, "bullet-expanded.svg") });
+app.get("/bullet-collapsed-page.svg", (req, res) => { sendStatic(res, "bullet-collapsed-page.svg") });
+app.get("/bullet-expanded-page.svg", (req, res) => { sendStatic(res, "bullet-expanded-page.svg") });
+
+// Error handling
+app.use((req, res, next) => {
+  if (!res.headersSent)
+    res.type("text/plain").status(404).send("404 Not Found");
+});
+
+app.listen(80, () => { console.log("Listening on http://localhost:80/") });

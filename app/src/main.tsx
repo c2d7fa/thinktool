@@ -22,10 +22,13 @@ interface DragInfo {
 interface StateContext {
   state: Things;
   setState(value: Things): void;
+  setLocalState(value: Things): void;
 
-  // Like setState, but won't update undo and server state when setting
-  // consecutive states in the same group within a short time interval.
-  setGroupedState(group: string, value: Things): void;
+  setContent(thing: number, content: string): void;
+  setPage(thing: number, page: string): void;
+  removePage(thing: number): void;
+
+  undo(): void;
 }
 
 type SetSelectedThing = (value: number) => void;
@@ -51,6 +54,108 @@ function extractThingFromURL(): number {
   }
 }
 
+function useBatched(cooldown: number): {update(key: string, callback: () => void): void} {
+  const timeouts: React.MutableRefObject<{[key: string]: NodeJS.Timeout}> = React.useRef({});
+  const callbacks: React.MutableRefObject<{[key: string]: () => void}> = React.useRef({});
+
+  function update(key: string, callback: () => void): void {
+    if (timeouts.current[key] !== undefined) {
+      clearTimeout(timeouts.current[key]);
+      delete timeouts.current[key];
+    }
+    callbacks.current[key] = callback;
+    timeouts.current[key] = setTimeout(() => {
+      callback();
+      delete callbacks.current[key];
+    }, cooldown);
+  }
+
+  window.onbeforeunload = () => {
+    for (const key in callbacks.current) {
+      callbacks.current[key]();
+    }
+  };
+
+  return {update};
+}
+
+function diffState(oldState: Things, newState: Things): {added: number[]; deleted: number[]; changed: number[]} {
+  const added: number[] = [];
+  const deleted: number[] = [];
+  const changed: number[] = [];
+
+  for (const thing in oldState.things) {
+    if (oldState.things[thing] !== newState.things[thing]) {
+      if (newState.things[thing] === undefined) {
+        deleted.push(+thing);
+      } else if (JSON.stringify(oldState.things[thing]) !== JSON.stringify(newState.things[thing])) {
+        changed.push(+thing);
+      }
+    }
+  }
+
+  for (const thing in newState.things) {
+    if (oldState.things[thing] === undefined) {
+      added.push(+thing);
+    }
+  }
+
+  return {added, deleted, changed};
+}
+
+function useStateContext(initialState: Things): StateContext {
+  const [state, setLocalState] = React.useState(initialState);
+
+  const batched = useBatched(200);
+
+  function setContent(thing: number, content: string): void {
+    setLocalState(Data.setContent(state, thing, content));
+    batched.update(`${thing}/content`, () => { Server.setContent(thing, content) });
+  }
+
+  function setPage(thing: number, page: string): void {
+    setLocalState(Data.setPage(state, thing, page));
+    batched.update(`${thing}/page`, () => { Server.setPage(thing, page) });
+  }
+
+  function removePage(thing: number): void {
+    setLocalState(Data.removePage(state, thing));
+    Server.removePage(thing);
+  }
+
+  // TODO: setState and undo should override timeouts from setContent.
+
+  function setState(newState: Things): void {
+    if (newState !== state) {
+      undo.pushState(state);
+      setLocalState(newState);
+
+      const diff = diffState(state, newState);
+      for (const thing of diff.deleted) {
+        Server.deleteThing(thing);
+      }
+      for (const thing of [...diff.added, ...diff.changed]) {
+        Server.putThing(thing, newState.things[thing]);
+      }
+
+      if (newState.next !== state.next)
+        Server.putNext(newState.next);
+    }
+  }
+
+  function undo_(): void {
+    const oldState = undo.popState();
+    if (oldState === null) {
+      console.log("Can't undo further");
+      return;
+    }
+    setLocalState(oldState);
+    Server.putData(oldState);
+  }
+
+  return {state, setState, setLocalState, setContent, undo: undo_, setPage, removePage};
+}
+
 function App({initialState, username}: {initialState: Things; username: string}) {
   const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
   function setSelectedThing(thing: number): void {
@@ -65,80 +170,19 @@ function App({initialState, username}: {initialState: Things; username: string})
     setSelectedThing_(extractThingFromURL());
   };
 
-  const [state, setLocalState] = React.useState(initialState);
-
-  const lastGroup: React.MutableRefObject<string | null> = React.useRef(null);
-  const lastUpdateForGroup: React.MutableRefObject<number | null> = React.useRef(null);
-  const stateUpdateTimeout: React.MutableRefObject<number | null> = React.useRef(null);
-
-  function setState(newState: Things): void {
-    if (stateUpdateTimeout.current !== null) {
-      window.clearTimeout(stateUpdateTimeout.current);
-      stateUpdateTimeout.current = null;
-    }
-
-    if (newState !== state) {
-      undo.pushState(state);
-      Server.putData(newState);
-      setLocalState(newState);
-    }
-  }
-
-  function setGroupedState(group: string, newState: Things): void {
-    if (stateUpdateTimeout.current !== null) {
-      window.clearTimeout(stateUpdateTimeout.current);
-      stateUpdateTimeout.current = null;
-    }
-
-    if (lastGroup.current !== null && lastGroup.current === group) {
-      // Same as last group, just set local state unless a long time has elapsed
-      if (lastUpdateForGroup.current == null) throw "logic error";
-      if (Date.now() - lastUpdateForGroup.current >= 1000) {
-        // The last time we updated the state for this group was >1s ago, so
-        // update it now.
-        setState(newState);
-        lastUpdateForGroup.current = Date.now();
-      } else {
-        setLocalState(newState);
-
-        // If there are no more writes to this group, we still want to send the
-        // state update eventually.
-        stateUpdateTimeout.current = window.setTimeout(() => {
-          console.log("Setting state due to timeout");
-          setState(newState);
-        }, 10000);
-      }
-    } else {
-      // Changing group, actually update state
-      setState(newState);
-      lastUpdateForGroup.current = Date.now();
-      lastGroup.current = group;
-    }
-  }
+  const context = useStateContext(initialState);
 
   document.onkeydown = (ev) => {
     if (ev.key === "z" && ev.ctrlKey) {
-      // Undo
       console.log("Undoing");
-      const oldState = undo.popState();
-      if (oldState === null) {
-        console.log("Can't undo further");
-        return;
-      }
-      setLocalState(oldState);
-      lastGroup.current = null;
-      Server.putData(oldState);
+      context.undo();
       ev.preventDefault();
     }
   };
 
-  window.onbeforeunload = () => {
-    Server.putData(state);
-  };
-
   return <>
     <div id="current-user"><span className="username">{username}</span> <a className="log-out" href="/logout">log out</a></div>
-    <ThingOverview context={{state, setState, setGroupedState}} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
+    <ThingOverview context={context} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
   </>;
 }
 
@@ -149,7 +193,7 @@ function ThingOverview(p: {context: StateContext; selectedThing: number; setSele
       <PlainText
         className="selected-content"
         text={Data.content(p.context.state, p.selectedThing)}
-        setText={(text) => { p.context.setState(Data.setContent(p.context.state, p.selectedThing, text)) }}/>
+        setText={(text) => { p.context.setContent(p.selectedThing, text) }}/>
       <PageView context={p.context} thing={p.selectedThing}/>
       <div className="children">
         <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
@@ -179,20 +223,15 @@ function ParentsOutline(p: {context: StateContext; child: number; setSelectedThi
 function PageView(p: {context: StateContext; thing: number}) {
   const page = Data.page(p.context.state, p.thing);
 
-  function setPage(page: string): void {
-    p.context.setState(Data.setPage(p.context.state, p.thing, page));
-  }
-
   if (Data.page(p.context.state, p.thing) === null) {
-    return <button onClick={() => { setPage("") }} className="new-page">Create Page</button>;
+    return <button onClick={() => { p.context.setPage(p.thing, "") }} className="new-page">Create Page</button>;
   }
 
   function onKeyDown(ev: React.KeyboardEvent<{}>): boolean {
     if (ev.key === "Delete" && ev.altKey) {
-      p.context.setState(Data.removePage(p.context.state, p.thing));
+      p.context.removePage(p.thing);
       return true;
     }
-
     return false;
   }
 
@@ -201,7 +240,7 @@ function PageView(p: {context: StateContext; thing: number}) {
       className="page"
       placeholder="Empty Page"
       text={page ?? ""}
-      setText={setPage}
+      setText={(text) => { p.context.setPage(p.thing, text) }}
       onKeyDown={onKeyDown}/>
   );
 }
@@ -334,11 +373,6 @@ function Bullet(p: {expanded: boolean; page: boolean; toggle: () => void; beginD
 }
 
 function Content(p: {context: TreeContext; id: number}) {
-  function setContent(text: string): void {
-    const newState = Data.setContent(p.context.state, T.thing(p.context.tree, p.id), text);
-    p.context.setGroupedState(`content-tree-${p.id}`, newState);
-  }
-
   function onKeyDown(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean {
     if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.id);
@@ -419,7 +453,7 @@ function Content(p: {context: TreeContext; id: number}) {
       ref={ref}
       className="content"
       text={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
-      setText={setContent}
+      setText={(text) => { p.context.setContent(T.thing(p.context.tree, p.id), text) }}
       onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.id)) }}
       onKeyDown={onKeyDown}/>
   );
