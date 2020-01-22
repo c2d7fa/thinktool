@@ -54,6 +54,15 @@ function extractThingFromURL(): number {
   }
 }
 
+// If we notified the server every time the user took an action, we would
+// overload the server with a huge number of requests. Instead we "batch"
+// changes, and only send the data when it makes sense to do so.
+//
+// We only want to batch related actions. For example if the user creates a new
+// item and then starts editing its title, the creation of the new item should
+// be sent immediately, but the editing should be batched such that we don't
+// send a request for each keystroke.
+
 function useBatched(cooldown: number): {update(key: string, callback: () => void): void} {
   const timeouts: React.MutableRefObject<{[key: string]: NodeJS.Timeout}> = React.useRef({});
   const callbacks: React.MutableRefObject<{[key: string]: () => void}> = React.useRef({});
@@ -78,6 +87,18 @@ function useBatched(cooldown: number): {update(key: string, callback: () => void
 
   return {update};
 }
+
+// When the user does something, we need to update both the local state and the
+// state on the server. We can't just send over the entire state to the server
+// each time; instead we use a REST API to make small changes.
+//
+// However, when we use library functions like Tree.moveToAbove (for example),
+// we just get back the new state, not each of the steps needed to bring the old
+// state to the new state. In this case, we have to go through and
+// retrospectively calculate the changes that we need to send to the server.
+//
+// In theory, we would prefer to write our code such that we always know exactly
+// what to send to the server. In practice, we use diffState quite frequently.
 
 function diffState(oldState: Things, newState: Things): {added: number[]; deleted: number[]; changed: number[]} {
   const added: number[] = [];
@@ -172,9 +193,15 @@ function App({initialState, username}: {initialState: Things; username: string})
 
   const context = useStateContext(initialState);
 
-  // Poll for changes buy running "GET /api/changes". When changes are found,
-  // update the local state. Dynamically adjust polling interval based on
-  // whether or not any changes are found.
+  // If the same user is connected through multiple clients, we want to be able
+  // to see changes from other clients on this one.
+  //
+  // The server gives us /api/changes, which returns true when there are pending
+  // changes from another client. We poll for such changes regularly, and when
+  // changes are found, update the local state. The polling interval is
+  // dynamically adjusted to avoid polling very frequently when we don't expect
+  // to see any changes.
+
   React.useEffect(() => {
     let timesSinceLastChange = 0;
     function callback(ms: number): void {
