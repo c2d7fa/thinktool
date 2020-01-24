@@ -316,8 +316,8 @@ function Outline(p: {context: StateContext; root: number; setSelectedThing: SetS
   React.useEffect(() => {
     if (drag.current === null) return;
 
-    function callback(ev: MouseEvent): void {
-      const [x, y] = [ev.clientX, ev.clientY]; // TODO For touch: ev.changedTouches[0].client{X,Y}
+    function mousemove(ev: MouseEvent): void {
+      const [x, y] = [ev.clientX, ev.clientY];
 
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
       while (element && !element.classList.contains("item-line")) {
@@ -330,17 +330,40 @@ function Outline(p: {context: StateContext; root: number; setSelectedThing: SetS
       }
     }
 
-    window.addEventListener("mousemove", callback);
-    return () => window.removeEventListener("mousemove", callback);
+    function touchmove(ev: TouchEvent): void {
+      const [x, y] = [ev.changedTouches[0].clientX, ev.changedTouches[0].clientY];
+
+      let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
+      while (element && !element.classList.contains("item-line")) {
+        element = element?.parentElement;
+      }
+
+      if (element != null) {
+        const target = +element.dataset.id!;
+        setDrag({current: drag.current, target, finished: false});
+      }
+    }
+
+    window.addEventListener("mousemove", mousemove);
+    window.addEventListener("touchmove", touchmove);
+
+    return () => {
+      window.removeEventListener("mousemove", mousemove);
+      window.removeEventListener("touchmove", touchmove);
+    };
   }, [drag.current]);
 
   React.useEffect(() => {
-    function callback(ev: MouseEvent): void {
+    function callback(ev: MouseEvent | TouchEvent): void {
       setDrag({...drag, finished: ev.ctrlKey ? "copy" : true});
     }
 
     window.addEventListener("mouseup", callback);
-    return () => window.removeEventListener("mouseup", callback);
+    window.addEventListener("touchend", callback);
+    return () => {
+      window.removeEventListener("mouseup", callback);
+      window.removeEventListener("touchend", callback);
+    };
   }, [drag]);
 
   const context: TreeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
@@ -439,6 +462,7 @@ function Bullet(p: {expanded: boolean; page: boolean; toggle: () => void; beginD
     <span
       className={`bullet ${p.expanded ? "expanded" : "collapsed"}${p.page ? "-page" : ""}`}
       onMouseDown={p.beginDrag}
+      onTouchStart={p.beginDrag}
       onClick={() => p.toggle()}
       onAuxClick={onAuxClick}/>
   );

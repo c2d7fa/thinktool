@@ -67,6 +67,8 @@ ul.outline-tree {
 
     text-align: center;
     vertical-align: middle;
+
+    touch-action: none;
 }
 
 .bullet.collapsed {
@@ -345,10 +347,6 @@ input.content {
         margin-right: 0;
         padding-left: 0;
         padding-right: 1ex;
-    }
-
-    .parents {
-        /* margin-top: 1rem; */
     }
 
     #current-user {
