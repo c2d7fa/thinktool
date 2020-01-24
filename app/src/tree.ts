@@ -1,15 +1,13 @@
 import {Things} from "./data";
 import * as D from "./data";
 
-// To represent the entire state of the application, we need two modules.
+// The underlying data representation that is stored on the server is like a
+// graph. It is defined in the Data module.
 //
-// The 'data' module keeps track of the actual data itself, such as what the
-// things are, what qualities they have and how they connect together.
-//
-// The 'tree' module more closely represents what the user actually sees on the
-// screen. We usually want to show related nodes in a tree structure, and the
-// 'tree' module can describe this structure with support for folding, moving
-// nodes, etc.
+// However, we want to display the data on screen as a tree-like structure,
+// except the "tree" can actually have the same item in multiple locations. This
+// module defines such a "graph-as-a-tree" datastrcture and implements various
+// operations on it.
 
 export interface Node {
   thing: number;
