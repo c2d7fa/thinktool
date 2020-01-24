@@ -340,7 +340,6 @@ input.content {
     color: #404040;
 }
 
-
 @media screen and (max-width: 120ex) {
     .parents, .children {
         margin-left: 0;
