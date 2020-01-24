@@ -40,7 +40,9 @@ body {
 
 .children {
     margin: 3rem -6rem;
+    margin-bottom: 0;
     padding: 1rem 6rem;
+    padding-bottom: 0;
     color: #404040;
     background: linear-gradient(180deg, #f8f8f8 0%, #ffffff calc(min(6rem, 100%)));
     border-radius: 6px 6px 0 0;
