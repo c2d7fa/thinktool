@@ -17,6 +17,7 @@ import undo from "./undo";
 interface DragInfo {
   current: number | null;
   target: number | null;
+  finished: boolean | "copy";
 }
 
 interface StateContext {
@@ -309,6 +310,62 @@ function Outline(p: {context: StateContext; root: number; setSelectedThing: SetS
 
   const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
 
+  // When dragging items we use the 'data-id' attribute that is set on
+  // ExpandableItems to figure out where the drag ends.
+
+  React.useEffect(() => {
+    if (drag.current === null) return;
+
+    function mousemove(ev: MouseEvent): void {
+      const [x, y] = [ev.clientX, ev.clientY];
+
+      let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
+      while (element && !element.classList.contains("item-line")) {
+        element = element?.parentElement;
+      }
+
+      if (element != null) {
+        const target = +element.dataset.id!;
+        setDrag({current: drag.current, target, finished: false});
+      }
+    }
+
+    function touchmove(ev: TouchEvent): void {
+      const [x, y] = [ev.changedTouches[0].clientX, ev.changedTouches[0].clientY];
+
+      let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
+      while (element && !element.classList.contains("item-line")) {
+        element = element?.parentElement;
+      }
+
+      if (element != null) {
+        const target = +element.dataset.id!;
+        setDrag({current: drag.current, target, finished: false});
+      }
+    }
+
+    window.addEventListener("mousemove", mousemove);
+    window.addEventListener("touchmove", touchmove);
+
+    return () => {
+      window.removeEventListener("mousemove", mousemove);
+      window.removeEventListener("touchmove", touchmove);
+    };
+  }, [drag.current]);
+
+  React.useEffect(() => {
+    function callback(ev: MouseEvent | TouchEvent): void {
+      setDrag({...drag, finished: ev.ctrlKey ? "copy" : true});
+    }
+
+    window.addEventListener("mouseup", callback);
+    window.addEventListener("touchend", callback);
+    return () => {
+      window.removeEventListener("mouseup", callback);
+      window.removeEventListener("touchend", callback);
+    };
+  }, [drag]);
+
   const context: TreeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
 
   return (
@@ -345,12 +402,14 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
   const expanded = T.expanded(p.context.tree, p.id);
 
   function beginDrag() {
-    p.context.setDrag({current: p.id, target: null});
+    p.context.setDrag({current: p.id, target: null, finished: false});
   }
 
-  function onMouseUp(ev: React.MouseEvent<HTMLElement>): void {
+  // TODO: This seems like a hack, but I'm not sure if it's actually as bad as
+  // it looks or if we just need to clean up the code a bit.
+  if (p.context.drag.finished && (p.context.drag.target === p.id || p.context.drag.target === null)) {
     if (p.context.drag.current !== null && p.context.drag.target !== null && p.context.drag.current !== p.id) {
-      if (ev.ctrlKey) {
+      if (p.context.drag.finished === "copy") {
         const [newState, newTree, newId] = T.copyToAbove(p.context.state, p.context.tree, p.context.drag.current, p.context.drag.target);
         p.context.setState(newState);
         p.context.setTree(T.focus(newTree, newId));
@@ -361,19 +420,7 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
       }
     }
 
-    ev.preventDefault();
-    p.context.drag.current = null;
-  }
-
-  window.addEventListener("mouseup", () => {p.context.drag.current = null}, {once: true});
-
-  function onMouseEnter(ev: React.MouseEvent<HTMLElement>): void {
-    if (p.context.drag.current === p.id) {
-      p.context.setDrag({...p.context.drag, target: null});
-    } else {
-      p.context.setDrag({...p.context.drag, target: p.id});
-    }
-    ev.stopPropagation();
+    p.context.setDrag({current: null, target: null, finished: false});
   }
 
   let className = "item-line";
@@ -388,8 +435,8 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
       parent={p.id}/>;
 
   return (
-    <li className="outline-item" onMouseOver={onMouseEnter} onMouseUp={onMouseUp}>
-      <span className={className}>
+    <li className="outline-item">
+      <span className={className} data-id={p.id}> {/* data-id is used for drag and drop. */}
         <Bullet
           beginDrag={beginDrag}
           expanded={T.expanded(p.context.tree, p.id)}
@@ -415,6 +462,7 @@ function Bullet(p: {expanded: boolean; page: boolean; toggle: () => void; beginD
     <span
       className={`bullet ${p.expanded ? "expanded" : "collapsed"}${p.page ? "-page" : ""}`}
       onMouseDown={p.beginDrag}
+      onTouchStart={p.beginDrag}
       onClick={() => p.toggle()}
       onAuxClick={onAuxClick}/>
   );
