@@ -1,91 +1,11 @@
 import * as crypto from "crypto";
 import * as express from "express";
 import * as fs from "fs";
-import * as lockfile from "lockfile";
+import * as myfs from "./server/myfs";
 import * as util from "util";
 
-import {Things, empty as emptyThings} from "./data";
 import * as Data from "./data";
-
-const myfs = (() => {
-  async function readFile(path: string): Promise<string | undefined> {
-    return new Promise((resolve, reject) => {
-      fs.readFile(path, (err, content) => {
-        if (err) {
-          if (err.code === "ENOENT") {
-            resolve(undefined);
-          } else {
-            reject(err);
-          }
-        } else {
-          resolve(content.toString());
-        }
-      });
-    });
-  }
-
-  async function writeFile(path: string, content: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      fs.writeFile(path, content, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-  }
-
-  return {readFile, writeFile};
-})();
-
-const data = (() => {
-  // TODO: This lock file system is horrible implementation of a bad idea. We
-  // should probably do something completely different here, but I'm not quite
-  // sure what.
-
-  const lastUpdates: {[userId: number]: Date | undefined} = {};
-
-  async function get(userId: number): Promise<Things> {
-    return await update(userId, x => x);
-  }
-
-  async function put(userId: number, data: Things): Promise<void> {
-    await update(userId, x => data);
-  }
-
-  async function update(userId: number, f: (data: Things) => Things): Promise<Things> {
-    // TODO: Detect case where returned JSON parses correctly but is not valid.
-    return new Promise((resolve, reject) => (async () => {  // TODO: Does this even make sense? Seems to work 🤷
-      lockfile.lock(`../../data/.data${userId}.json.lock`, {wait: 100}, async (err) => {
-        if (err)
-          return resolve(update(userId, f));  // TODO: Yikes (we do this to avoid EEXIST error)
-        const content = await myfs.readFile(`../../data/data${userId}.json`);
-        let things = emptyThings;
-        if (content !== undefined) {
-          try {
-            things = JSON.parse(content);
-          } catch (e) {
-            console.warn(`Got error while parsing JSON for user ${userId} (%o): %o`, content, e);
-          }
-        }
-        const newThings = f(things);
-        if (newThings !== things) {
-          await myfs.writeFile(`../../data/data${userId}.json`, JSON.stringify(newThings));
-          lastUpdates[userId] = new Date();
-        }
-        lockfile.unlockSync(`../../data/.data${userId}.json.lock`);
-        resolve(newThings);
-      });
-    })());
-  }
-
-  function lastUpdated(userId: number): Date | null {
-    return lastUpdates[userId] ?? null;
-  }
-
-  return {get, put, update, lastUpdated};
-})();
+import * as DB from "./server/database";
 
 const session = (() => {
   interface SessionData {
@@ -120,7 +40,7 @@ const session = (() => {
 
   function hasChanges(sessionId: string): boolean {
     const session = sessions[sessionId];
-    const lastUpdated = data.lastUpdated(user(sessionId)!);
+    const lastUpdated = DB.lastUpdated(user(sessionId)!);
     if (session.lastPolled === null)
       return lastUpdated !== null;
     if (lastUpdated === null)
@@ -280,7 +200,7 @@ app.post("/api/changes", requireSession, async (req, res) => {
 });
 
 app.get("/api/things", requireSession, async (req, res) => {
-  res.type("json").send(await data.get(req.user!));
+  res.type("json").send(await DB.getThings(req.user!));
 });
 
 app.put("/api/things", requireUpToDateSession, async (req, res) => {
@@ -288,13 +208,13 @@ app.put("/api/things", requireUpToDateSession, async (req, res) => {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
-  await data.put(req.user!, req.body);
+  await DB.putThings(req.user!, req.body);
   session.sessionPolled(req.session!);
   res.end();
 });
 
 app.get("/api/things/next", requireSession, async (req, res) => {
-  res.type("text/plain").send((await data.get(req.user!)).next.toString());
+  res.type("text/plain").send((await DB.getThings(req.user!)).next.toString());
 });
 
 app.put("/api/things/next", requireUpToDateSession, async (req, res) => {
@@ -302,7 +222,7 @@ app.put("/api/things/next", requireUpToDateSession, async (req, res) => {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
-  await data.update(req.user!, (things) => ({...things, next: +req.body}));
+  await DB.updateThings(req.user!, (things) => ({...things, next: +req.body}));
   session.sessionPolled(req.session!);
   res.end();
 });
@@ -317,7 +237,7 @@ async function parseThingExists(req: express.Request, res: express.Response, nex
     res.status(400).type("text/plain").send("400 Bad Request");
     next("router");
   }
-  if (!Data.exists(await data.get(req.user!), thing)) {
+  if (!Data.exists(await DB.getThings(req.user!), thing)) {
     res.type("text/plain").status(404).send("404 Not Found");
     return;
   }
@@ -336,7 +256,7 @@ async function parseThing(req: express.Request, res: express.Response, next: exp
 }
 
 app.get("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
-  res.type("application/json").send(JSON.stringify((await data.get(req.user!)).things[res.locals.thing]));
+  res.type("application/json").send(JSON.stringify((await DB.getThings(req.user!)).things[res.locals.thing]));
 });
 
 app.put("/api/things/:thing", requireUpToDateSession, parseThing, async (req, res) => {
@@ -344,19 +264,19 @@ app.put("/api/things/:thing", requireUpToDateSession, parseThing, async (req, re
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
-  await data.update(req.user!, (things) => ({...things, things: {...things.things, [res.locals.thing]: req.body}}));
+  await DB.updateThings(req.user!, (things) => ({...things, things: {...things.things, [res.locals.thing]: req.body}}));
   session.sessionPolled(req.session!);
   res.end();
 });
 
 app.delete("/api/things/:thing", requireUpToDateSession, parseThingExists, async (req, res) => {
-  await data.update(req.user!, (things) => Data.remove(things, res.locals.thing));
+  await DB.updateThings(req.user!, (things) => Data.remove(things, res.locals.thing));
   session.sessionPolled(req.session!);
   res.end();
 });
 
 app.get("/api/things/:thing/content", requireSession, parseThingExists, async (req, res) => {
-  res.type("text/plain").send(Data.content(await data.get(req.user!), res.locals.thing));
+  res.type("text/plain").send(Data.content(await DB.getThings(req.user!), res.locals.thing));
 });
 
 app.put("/api/things/:thing/content", requireUpToDateSession, parseThingExists, async (req, res) => {
@@ -365,13 +285,13 @@ app.put("/api/things/:thing/content", requireUpToDateSession, parseThingExists, 
     return;
   }
 
-  await data.update(req.user!, (things) => Data.setContent(things, res.locals.thing, req.body));
+  await DB.updateThings(req.user!, (things) => Data.setContent(things, res.locals.thing, req.body));
   session.sessionPolled(req.session!);
   res.end();
 });
 
 app.get("/api/things/:thing/page", requireSession, parseThingExists, async (req, res) => {
-  const page = Data.page(await data.get(req.user!), res.locals.thing);
+  const page = Data.page(await DB.getThings(req.user!), res.locals.thing);
   if (page === null) {
     res.status(404).end();
     return;
@@ -385,13 +305,13 @@ app.put("/api/things/:thing/page", requireUpToDateSession, parseThingExists, asy
     return;
   }
 
-  await data.update(req.user!, (things) => Data.setPage(things, res.locals.thing, req.body));
+  await DB.updateThings(req.user!, (things) => Data.setPage(things, res.locals.thing, req.body));
   session.sessionPolled(req.session!);
   res.end();
 });
 
 app.delete("/api/things/:thing/page", requireUpToDateSession, parseThingExists, async (req, res) => {
-  await data.update(req.user!, (things) => Data.removePage(things, res.locals.thing));
+  await DB.updateThings(req.user!, (things) => Data.removePage(things, res.locals.thing));
   session.sessionPolled(req.session!);
   res.end();
 });
