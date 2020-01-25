@@ -7,13 +7,13 @@ import * as DB from "./server/database";
 
 const session = (() => {
   interface SessionData {
-    userId: number;
+    userId: DB.UserId;
     lastPolled: Date | null;
   }
 
   const sessions: {[id: string]: SessionData} = {};
 
-  async function create(userId: number): Promise<string> {
+  async function create(userId: DB.UserId): Promise<string> {
     return new Promise((resolve, reject) => {
       crypto.randomBytes(24, (err, buffer) => {
         if (err) reject(err);
@@ -24,7 +24,7 @@ const session = (() => {
     });
   }
 
-  function user(sessionId: string): number | null {
+  function user(sessionId: string): DB.UserId | null {
     if (sessions[sessionId] === undefined)
       return null;
     return sessions[sessionId].userId;
@@ -67,7 +67,7 @@ declare module "express-serve-static-core" {
   interface Request {
     hasSession?: boolean;
     session?: string;
-    user?: number;
+    user?: DB.UserId;
   }
 }
 
@@ -310,4 +310,9 @@ app.use((req, res, next) => {
     res.type("text/plain").status(404).send("404 Not Found");
 });
 
-app.listen(80, () => { console.log("Listening on http://localhost:80/") });
+// Start app
+
+(async () => {
+  await DB.initialize("mongodb://localhost:27017");
+  app.listen(80, () => { console.log("Listening on http://localhost:80/") });
+})();
