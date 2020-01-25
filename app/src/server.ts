@@ -1,7 +1,5 @@
 import * as crypto from "crypto";
 import * as express from "express";
-import * as fs from "fs";
-import * as myfs from "./server/myfs";
 import * as util from "util";
 
 import * as Data from "./data";
@@ -55,60 +53,6 @@ const session = (() => {
   return {create, user, validId, hasChanges, sessionPolled};
 })();
 
-const authentication = (() => {
-  interface Users {
-    nextId: number;
-    users: {[name: string]: {password: string; id: number}};
-  }
-
-  async function getUsers(): Promise<Users> {
-    const content = await myfs.readFile(`../../data/users.json`);
-    if (content === undefined) {
-      return {nextId: 0, users: {}};
-    } else {
-      return JSON.parse(content.toString());
-    }
-  }
-
-  async function getUser(user: string): Promise<{password: string; id: number} | null> {
-    const userData = await getUsers();
-    if (userData.users[user] === undefined)
-      return null;
-    return userData.users[user];
-  }
-
-  // Check password and return user ID.
-  async function userId(user: string, password: string): Promise<number | null> {
-    const userData = await getUser(user);
-    if (userData === null)
-      return null;
-    if (userData.password !== password)
-      return null;
-    return userData.id;
-  }
-
-  async function userName(userId: number): Promise<string | null> {
-    const users = await getUsers();
-    for (const name in users.users)
-      if (users.users[name].id === userId)
-        return name;
-    return null;
-  }
-
-  // TODO: What happens if this gets called from multiple locations at the same
-  // time?
-  async function createUser(user: string, password: string): Promise<{type: "success"; userId: number} | {type: "error"; error: "user-exists"}> {
-    const users = await getUsers();
-    if (users.users[user] !== undefined)
-      return {type: "error", error: "user-exists"};
-    const newUsers = {...users, nextId: users.nextId + 1, users: {...users.users, [user]: {id: users.nextId, password}}};
-    await myfs.writeFile("../../data/users.json", JSON.stringify(newUsers));
-    return {type: "success", userId: users.nextId};
-  }
-
-  return {userId, userName, createUser};
-})();
-
 function getCookie(cookies: string | undefined, key: string): string | null {
   // TODO: This seems like a really horrible way of doing this.
   if (cookies === undefined)
@@ -118,8 +62,6 @@ function getCookie(cookies: string | undefined, key: string): string | null {
     return result[1];
   return null;
 }
-
-fs.mkdirSync("../../data", {recursive: true});
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -228,7 +170,7 @@ app.put("/api/things/next", requireUpToDateSession, async (req, res) => {
 });
 
 app.get("/api/username", requireSession, async (req, res) => {
-  res.type("json").send(JSON.stringify(await authentication.userName(req.user!)));
+  res.type("json").send(JSON.stringify(await DB.userName(req.user!)));
 });
 
 async function parseThingExists(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -332,7 +274,7 @@ app.post("/", async (req, res) => {
 
   if (req.body.login) {
     const {user, password} = req.body;
-    const userId = await authentication.userId(user, password);
+    const userId = await DB.userId(user, password);
     if (userId === null) {
       res.status(401).type("text/plain").send("Invalid username and password combination. Please try again.");
       return;
@@ -341,7 +283,7 @@ app.post("/", async (req, res) => {
     res.status(303).header("Set-Cookie", `DiaformSession=${sessionId}`).header("Location", "/").end();
   } else if (req.body.signup) {
     const {user, password} = req.body;
-    const result = await authentication.createUser(user, password);
+    const result = await DB.createUser(user, password);
     if (result.type === "error") {
       res.status(409).type("text/plain").send(`Unable to create user: The user "${user}" already exists.`);
     } else {

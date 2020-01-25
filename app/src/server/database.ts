@@ -1,7 +1,60 @@
 import * as lockfile from "lockfile";
 import * as myfs from "./myfs";
+import * as fs from "fs";
 
 import * as D from "../data";
+
+fs.mkdirSync("../../data", {recursive: true});
+
+export interface Users {
+  nextId: number;
+  users: {[name: string]: {password: string; id: number}};
+}
+
+export async function getUsers(): Promise<Users> {
+  const content = await myfs.readFile(`../../data/users.json`);
+  if (content === undefined) {
+    return {nextId: 0, users: {}};
+  } else {
+    return JSON.parse(content.toString());
+  }
+}
+
+export async function getUser(user: string): Promise<{password: string; id: number} | null> {
+  const userData = await getUsers();
+  if (userData.users[user] === undefined)
+    return null;
+  return userData.users[user];
+}
+
+// Check password and return user ID.
+export async function userId(user: string, password: string): Promise<number | null> {
+  const userData = await getUser(user);
+  if (userData === null)
+    return null;
+  if (userData.password !== password)
+    return null;
+  return userData.id;
+}
+
+export async function userName(userId: number): Promise<string | null> {
+  const users = await getUsers();
+  for (const name in users.users)
+    if (users.users[name].id === userId)
+      return name;
+  return null;
+}
+
+// TODO: What happens if this gets called from multiple locations at the same
+// time?
+export async function createUser(user: string, password: string): Promise<{type: "success"; userId: number} | {type: "error"; error: "user-exists"}> {
+  const users = await getUsers();
+  if (users.users[user] !== undefined)
+    return {type: "error", error: "user-exists"};
+  const newUsers = {...users, nextId: users.nextId + 1, users: {...users.users, [user]: {id: users.nextId, password}}};
+  await myfs.writeFile("../../data/users.json", JSON.stringify(newUsers));
+  return {type: "success", userId: users.nextId};
+}
 
 // We want to be able to know when a user's data was last updated. This is used
 // to figure out if we need to send an update to a client or not; we send
