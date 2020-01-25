@@ -1,5 +1,3 @@
-import * as lockfile from "lockfile";
-import * as myfs from "./myfs";
 import * as mongo from "mongodb";
 
 import * as D from "../data";
@@ -11,21 +9,12 @@ export type UserId = {name: string};
 let client: mongo.MongoClient = undefined as never;
 
 export async function initialize(uri: string): Promise<void> {
-  client = await new mongo.MongoClient(uri, {useUnifiedTopology: true}).connect();
+  client = await (await new mongo.MongoClient(uri, {useUnifiedTopology: true}).connect());
 }
 
 export interface Users {
   nextId: number;
   users: {[name: string]: {password: string; id: number}};
-}
-
-export async function getUsers(): Promise<Users> {
-  const content = await myfs.readFile(`../../data/users.json`);
-  if (content === undefined) {
-    return {nextId: 0, users: {}};
-  } else {
-    return JSON.parse(content.toString());
-  }
 }
 
 // Check password and return user ID.
@@ -79,34 +68,52 @@ export async function putThings(userId: UserId, things: D.Things): Promise<void>
   await updateThings(userId, _ => things);
 }
 
-export async function updateThings(userId: UserId, f: (data: D.Things) => D.Things): Promise<D.Things> {
-  // TODO: This lock file system is horrible implementation of a bad idea. We
-  // should probably do something completely different here, but I'm not quite
-  // sure what.
+const wait = false;
 
-  // TODO: Detect case where returned JSON parses correctly but is not valid.
-  return new Promise((resolve, reject) => (async () => {  // TODO: Does this even make sense? Seems to work 🤷
-    lockfile.lock(`../../data/.${userId.name}.json.lock`, {wait: 100}, async (err) => {
-      if (err)
-        return resolve(updateThings(userId, f));  // TODO: Yikes (we do this to avoid EEXIST error)
-      const content = await myfs.readFile(`../../data/${userId.name}.json`);
-      let things = D.empty;
-      if (content !== undefined) {
-        try {
-          things = JSON.parse(content);
-        } catch (e) {
-          console.warn(`Got error while parsing JSON for user ${userId} (%o): %o`, content, e);
-        }
-      }
-      const newThings = f(things);
-      if (newThings !== things) {
-        await myfs.writeFile(`../../data/${userId.name}.json`, JSON.stringify(newThings));
-        lastUpdates[userId.name] = new Date();
-      }
-      lockfile.unlockSync(`../../data/.${userId.name}.json.lock`);
-      resolve(newThings);
+export async function updateThings(userId: UserId, f: (data: D.Things) => D.Things): Promise<D.Things> {
+  // We want to do updates atomically. The best way I can think of doing this is
+  // to acquire a lock, read the contents, apply the update, and then release
+  // the lock. This does not seem to be a very good solution, but I can't think
+  // of any better ones.
+
+  // The way we handle locks is a bit weird. We try to set the "lock" attribute,
+  // and if that doesn't do anything, then it must be because the item is
+  // already locked. In this case, we wait a bit and try again. Otherwise, we go
+  // ahead and do the change, and then update the database again when we are
+  // done.
+
+  const lock = await client.db("diaform").collection("things").updateOne({_id: userId.name}, {$set: {lock: true}});
+  if (lock.matchedCount > 0 && lock.modifiedCount === 0) {
+    console.log("Locked!");
+    return new Promise((resolve, reject) => {
+      setTimeout(async () => {
+        resolve(await updateThings(userId, f));
+      }, 20);
     });
-  })());
+  }
+
+  const document = await client.db("diaform").collection("things").findOne({_id: userId.name});
+
+  let things = D.empty;
+
+  if (document !== null) {
+    // TODO: Throw more useful error when JSON cannot be parsed (maybe?).
+    // TODO: Detect case where returned JSON parses correctly but is not valid.
+    things = JSON.parse(document.json as string) as D.Things;
+  }
+
+  const newThings = f(things);
+
+  if (newThings !== things) {
+    console.log("starting replacement");
+    await client.db("diaform").collection("things").replaceOne({_id: userId.name}, {_id: userId.name, json: JSON.stringify(newThings)}, {upsert: true});
+    console.log("replaced it");
+    lastUpdates[userId.name] = new Date();
+  }
+
+  await client.db("diaform").collection("things").updateOne({_id: userId.name}, {$set: {lock: false}});
+
+  return newThings;
 }
 
 export function lastUpdated(userId: UserId): Date | null {

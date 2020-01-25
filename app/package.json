@@ -4,7 +4,6 @@
   "devDependencies": {
     "@types/draft-js": "latest",
     "@types/express": "latest",
-    "@types/lockfile": "^1.0.1",
     "@types/mongodb": "latest",
     "@types/node": "latest",
     "@types/react-dom": "latest",
@@ -16,7 +15,6 @@
     "eslint-plugin-react": "latest",
     "eslint": "latest",
     "express": "latest",
-    "lockfile": "^1.0.4",
     "mongodb": "latest",
     "react-dom": "latest",
     "react": "latest",
