@@ -68,31 +68,25 @@ export async function putThings(userId: UserId, things: D.Things): Promise<void>
   await updateThings(userId, _ => things);
 }
 
-const wait = false;
-
 export async function updateThings(userId: UserId, f: (data: D.Things) => D.Things): Promise<D.Things> {
   // We want to do updates atomically. The best way I can think of doing this is
   // to acquire a lock, read the contents, apply the update, and then release
   // the lock. This does not seem to be a very good solution, but I can't think
   // of any better ones.
 
-  // The way we handle locks is a bit weird. We try to set the "lock" attribute,
-  // and if that doesn't do anything, then it must be because the item is
-  // already locked. In this case, we wait a bit and try again. Otherwise, we go
-  // ahead and do the change, and then update the database again when we are
-  // done.
+  // The lock is stored in the database. We try to set it, and if it is not
+  // already locked by someone else, we go ahead and make the changes. If it is
+  // already locked, then we wait a bit and try again.
 
-  const lock = await client.db("diaform").collection("things").updateOne({_id: userId.name}, {$set: {lock: true}});
-  if (lock.matchedCount > 0 && lock.modifiedCount === 0) {
-    console.log("Locked!");
+  const document = await (await client.db("diaform").collection("things").findOneAndUpdate({_id: userId.name}, {$set: {lock: true}})).value;
+
+  if (document !== null && document.lock) {
     return new Promise((resolve, reject) => {
       setTimeout(async () => {
         resolve(await updateThings(userId, f));
       }, 20);
     });
   }
-
-  const document = await client.db("diaform").collection("things").findOne({_id: userId.name});
 
   let things = D.empty;
 
@@ -105,9 +99,7 @@ export async function updateThings(userId: UserId, f: (data: D.Things) => D.Thin
   const newThings = f(things);
 
   if (newThings !== things) {
-    console.log("starting replacement");
     await client.db("diaform").collection("things").replaceOne({_id: userId.name}, {_id: userId.name, json: JSON.stringify(newThings)}, {upsert: true});
-    console.log("replaced it");
     lastUpdates[userId.name] = new Date();
   }
 
