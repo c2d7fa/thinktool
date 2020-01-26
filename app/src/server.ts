@@ -288,6 +288,7 @@ app.use((req, res, next) => {
 // Start app
 
 (async () => {
-  await DB.initialize("mongodb://localhost:27017");
+  const databaseUri = process.env.DIAFORM_DATABASE;
+  await DB.initialize(databaseUri ?? "mongodb://localhost:27017");
   app.listen(80, () => { console.log("Listening on http://localhost:80/") });
 })();
