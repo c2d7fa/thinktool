@@ -3,32 +3,16 @@
 To initialize MongoDB with data saved in =./diaform-db=, run:
 
 #+begin_example
-# docker run -p 27017:27017 -v "$(pwd)/diaform-db":/data/db -d mongo
+# docker run -p 127.0.0.1:27017:27017 -v "$(pwd)/diaform-db":/data/db -d mongo
 #+end_example
 
-The first time MongoDB is started, we want to set up authentication. The
-application assumes that there is a user =admin= with password
-=KOZ5vGsz5ZQJBY7rZvkaEsmx= (yes, this is probably not the ideal way of doing
-this, but it'll do for now.):
+This will start MongoDB, exposing the port only to the local machine (so foreign
+clients can't connect).
 
+** SSH tunelling
+
+To connect to remote MongoDB database from your local machine, use SSH forwarding:
 #+begin_example
-# docker exec -ti <CONTAINER NAME> /bin/bash
-root@...:/# mongo
-> use admin
-> db.createUser({user: "admin", pwd: "KOZ5vGsz5ZQJBY7rZvkaEsmx", roles: ["root"]})
-#+end_example
-
-Then, restart container with the =--auth= option:
-
-#+begin_example
-# docker stop <CONTAINER NAME>
-# docker run -p 27017:27017 -v "$(pwd)/diaform-db":/data/db -d mongo --auth
-#+end_example
-
-Now you can connect with:
-
-#+begin_example
-# docker exec -ti <CONTAINER NAME> /bin/bash
-root@...:/# mongo "mongodb://admin:KOZ5vGsz5ZQJBY7rZvkaEsmx@localhost:27017"
->
+$ ssh -NL 27018:localhost:27017 root@zunpre.name
+$ mongo mongodb://localhost:27018
 #+end_example
