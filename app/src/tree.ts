@@ -10,7 +10,7 @@ import * as D from "./data";
 // operations on it.
 
 export interface Node {
-  thing: number;
+  thing: string;
   expanded: boolean;
   children: number[];
 }
@@ -24,7 +24,7 @@ export interface Tree {
 
 export type Destination = {parent: number /* Thing */; index: number};
 
-export function fromRoot(state: Things, thing: number): Tree {
+export function fromRoot(state: Things, thing: string): Tree {
   return {
     next: 1,
     root: 0,
@@ -33,7 +33,7 @@ export function fromRoot(state: Things, thing: number): Tree {
   };
 }
 
-export function thing(tree: Tree, id: number): number {
+export function thing(tree: Tree, id: number): string {
   return tree.nodes[id].thing;
 }
 
@@ -201,7 +201,7 @@ export function toggle(state: Things, tree: Tree, id: number): Tree {
   return result;
 }
 
-export function load(state: Things, tree: Tree, thing: number): [number, Tree] {
+export function load(state: Things, tree: Tree, thing: string): [number, Tree] {
   const id = tree.next;
 
   // Update next ID
@@ -335,7 +335,7 @@ export function copyToAbove(state: Things, tree: Tree, sourceId: number, destina
   return copy(state, tree, sourceId, {parent: parent_, index: childIndex(tree, parent_, destinationId)});
 }
 
-export function createSiblingBefore(state: Things, tree: Tree, id: number): [Things, Tree, number, number] {
+export function createSiblingBefore(state: Things, tree: Tree, id: number): [Things, Tree, string, number] {
   let newState = state;
 
   const [newState_, newThing] = D.create(newState);
@@ -362,7 +362,7 @@ export function createSiblingBefore(state: Things, tree: Tree, id: number): [Thi
 }
 
 
-export function createSiblingAfter(state: Things, tree: Tree, id: number): [Things, Tree, number, number] {
+export function createSiblingAfter(state: Things, tree: Tree, id: number): [Things, Tree, string, number] {
   let newState = state;
 
   const [newState_, newThing] = D.create(newState);
@@ -388,7 +388,7 @@ export function createSiblingAfter(state: Things, tree: Tree, id: number): [Thin
   return [newState, newTree, newThing, newId];
 }
 
-export function createChild(state: Things, tree: Tree, id: number): [Things, Tree, number, number] {
+export function createChild(state: Things, tree: Tree, id: number): [Things, Tree, string, number] {
   // Create item as child
   const [state1, childThing] = D.create(state);
   const state2 = D.addChild(state1, thing(tree, id), childThing);

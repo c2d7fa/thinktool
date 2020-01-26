@@ -155,27 +155,13 @@ app.put("/api/things", requireUpToDateSession, async (req, res) => {
   res.end();
 });
 
-app.get("/api/things/next", requireSession, async (req, res) => {
-  res.type("text/plain").send((await DB.getThings(req.user!)).next.toString());
-});
-
-app.put("/api/things/next", requireUpToDateSession, async (req, res) => {
-  if (typeof req.body !== "string" || (!+req.body && +req.body !== 0)) {
-    res.status(400).type("text/plain").send("400 Bad Request");
-    return;
-  }
-  await DB.updateThings(req.user!, (things) => ({...things, next: +req.body}));
-  session.sessionPolled(req.session!);
-  res.end();
-});
-
 app.get("/api/username", requireSession, async (req, res) => {
   res.type("json").send(JSON.stringify(await DB.userName(req.user!)));
 });
 
 async function parseThingExists(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const thing = +req.params.thing;
-  if (!thing && thing !== 0) {
+  const thing = req.params.thing;
+  if (thing.length === 0) {
     res.status(400).type("text/plain").send("400 Bad Request");
     next("router");
   }
@@ -188,14 +174,13 @@ async function parseThingExists(req: express.Request, res: express.Response, nex
 }
 
 async function parseThing(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const thing = +req.params.thing;
-  if (!thing && thing !== 0) {
+  const thing = req.params.thing;
+  if (thing.length === 0) {
     res.status(400).type("text/plain").send("400 Bad Request");
     next("router");
   }
   res.locals.thing = thing;
-  next();
-}
+  next();}
 
 app.get("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
   res.type("application/json").send(JSON.stringify((await DB.getThings(req.user!)).things[res.locals.thing]));
