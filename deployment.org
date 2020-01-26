@@ -1,0 +1,34 @@
+* MongoDB
+
+To initialize MongoDB with data saved in =./diaform-db=, run:
+
+#+begin_example
+# docker run -p 27017:27017 -v "$(pwd)/diaform-db":/data/db -d mongo
+#+end_example
+
+The first time MongoDB is started, we want to set up authentication. The
+application assumes that there is a user =admin= with password
+=KOZ5vGsz5ZQJBY7rZvkaEsmx= (yes, this is probably not the ideal way of doing
+this, but it'll do for now.):
+
+#+begin_example
+# docker exec -ti <CONTAINER NAME> /bin/bash
+root@...:/# mongo
+> use admin
+> db.createUser({user: "admin", pwd: "KOZ5vGsz5ZQJBY7rZvkaEsmx", roles: ["root"]})
+#+end_example
+
+Then, restart container with the =--auth= option:
+
+#+begin_example
+# docker stop <CONTAINER NAME>
+# docker run -p 27017:27017 -v "$(pwd)/diaform-db":/data/db -d mongo --auth
+#+end_example
+
+Now you can connect with:
+
+#+begin_example
+# docker exec -ti <CONTAINER NAME> /bin/bash
+root@...:/# mongo "mongodb://admin:KOZ5vGsz5ZQJBY7rZvkaEsmx@localhost:27017"
+>
+#+end_example

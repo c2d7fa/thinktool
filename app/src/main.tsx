@@ -25,14 +25,14 @@ interface StateContext {
   setState(value: Things): void;
   setLocalState(value: Things): void;
 
-  setContent(thing: number, content: string): void;
-  setPage(thing: number, page: string): void;
-  removePage(thing: number): void;
+  setContent(thing: string, content: string): void;
+  setPage(thing: string, page: string): void;
+  removePage(thing: string): void;
 
   undo(): void;
 }
 
-type SetSelectedThing = (value: number) => void;
+type SetSelectedThing = (value: string) => void;
 
 interface TreeContext extends StateContext {
   tree: Tree;
@@ -44,14 +44,14 @@ interface TreeContext extends StateContext {
 
 // == Components ==
 
-function extractThingFromURL(): number {
+function extractThingFromURL(): string {
   if (window.location.hash.length > 0) {
-    const thing = Number(window.location.hash.slice(1));
+    const thing = window.location.hash.slice(1);
     return thing;
   } else {
     // By default, use thing #0. We should probably do something smarter here,
     // like allow the user to set a deafult thing.
-    return 0;
+    return "0";
   }
 }
 
@@ -101,24 +101,24 @@ function useBatched(cooldown: number): {update(key: string, callback: () => void
 // In theory, we would prefer to write our code such that we always know exactly
 // what to send to the server. In practice, we use diffState quite frequently.
 
-function diffState(oldState: Things, newState: Things): {added: number[]; deleted: number[]; changed: number[]} {
-  const added: number[] = [];
-  const deleted: number[] = [];
-  const changed: number[] = [];
+function diffState(oldState: Things, newState: Things): {added: string[]; deleted: string[]; changed: string[]} {
+  const added: string[] = [];
+  const deleted: string[] = [];
+  const changed: string[] = [];
 
   for (const thing in oldState.things) {
     if (oldState.things[thing] !== newState.things[thing]) {
       if (newState.things[thing] === undefined) {
-        deleted.push(+thing);
+        deleted.push(thing);
       } else if (JSON.stringify(oldState.things[thing]) !== JSON.stringify(newState.things[thing])) {
-        changed.push(+thing);
+        changed.push(thing);
       }
     }
   }
 
   for (const thing in newState.things) {
     if (oldState.things[thing] === undefined) {
-      added.push(+thing);
+      added.push(thing);
     }
   }
 
@@ -130,17 +130,17 @@ function useStateContext(initialState: Things): StateContext {
 
   const batched = useBatched(200);
 
-  function setContent(thing: number, content: string): void {
+  function setContent(thing: string, content: string): void {
     setLocalState(Data.setContent(state, thing, content));
     batched.update(`${thing}/content`, () => { Server.setContent(thing, content) });
   }
 
-  function setPage(thing: number, page: string): void {
+  function setPage(thing: string, page: string): void {
     setLocalState(Data.setPage(state, thing, page));
     batched.update(`${thing}/page`, () => { Server.setPage(thing, page) });
   }
 
-  function removePage(thing: number): void {
+  function removePage(thing: string): void {
     setLocalState(Data.removePage(state, thing));
     Server.removePage(thing);
   }
@@ -159,9 +159,6 @@ function useStateContext(initialState: Things): StateContext {
       for (const thing of [...diff.added, ...diff.changed]) {
         Server.putThing(thing, newState.things[thing]);
       }
-
-      if (newState.next !== state.next)
-        Server.putNext(newState.next);
     }
   }
 
@@ -172,7 +169,14 @@ function useStateContext(initialState: Things): StateContext {
       return;
     }
     setLocalState(oldState);
-    Server.putData(oldState);
+    // TODO: Code duplication, see setState above
+    const diff = diffState(state, oldState);
+    for (const thing of diff.deleted) {
+      Server.deleteThing(thing);
+    }
+    for (const thing of [...diff.added, ...diff.changed]) {
+      Server.putThing(thing, oldState.things[thing]);
+    }
   }
 
   return {state, setState, setLocalState, setContent, undo: undo_, setPage, removePage};
@@ -180,7 +184,7 @@ function useStateContext(initialState: Things): StateContext {
 
 function App({initialState, username}: {initialState: Things; username: string}) {
   const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
-  function setSelectedThing(thing: number): void {
+  function setSelectedThing(thing: string): void {
     // TODO: Update title?
     setSelectedThing_(thing);
     window.history.pushState(undefined, document.title, `#${thing}`);
@@ -235,7 +239,7 @@ function App({initialState, username}: {initialState: Things; username: string})
   </>;
 }
 
-function ThingOverview(p: {context: StateContext; selectedThing: number; setSelectedThing(value: number): void}) {
+function ThingOverview(p: {context: StateContext; selectedThing: string; setSelectedThing(value: string): void}) {
   return (
     <div className="overview">
       <ParentsOutline context={p.context} child={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
@@ -250,15 +254,15 @@ function ThingOverview(p: {context: StateContext; selectedThing: number; setSele
     </div>);
 }
 
-function ParentsOutline(p: {context: StateContext; child: number; setSelectedThing: SetSelectedThing}) {
-  function ParentItem(p: {context: StateContext; parent: number; setSelectedThing: SetSelectedThing}) {
+function ParentsOutline(p: {context: StateContext; child: string; setSelectedThing: SetSelectedThing}) {
+  function ParentItem(p: {context: StateContext; parent: string; setSelectedThing: SetSelectedThing}) {
     const [tree, setTree] = React.useState(T.fromRoot(p.context.state, p.parent));
     const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
     const treeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
     return <ExpandableItem id={0} context={treeContext}/>;
   }
 
-  const parentLinks = Data.parents(p.context.state, p.child).map((parent: number) => {
+  const parentLinks = Data.parents(p.context.state, p.child).map((parent: string) => {
     return <ParentItem key={parent} context={p.context} parent={parent} setSelectedThing={p.setSelectedThing}/>;
   });
 
@@ -269,7 +273,7 @@ function ParentsOutline(p: {context: StateContext; child: number; setSelectedThi
   }
 }
 
-function PageView(p: {context: StateContext; thing: number}) {
+function PageView(p: {context: StateContext; thing: string}) {
   const page = Data.page(p.context.state, p.thing);
 
   if (Data.page(p.context.state, p.thing) === null) {
@@ -294,7 +298,7 @@ function PageView(p: {context: StateContext; thing: number}) {
   );
 }
 
-function Outline(p: {context: StateContext; root: number; setSelectedThing: SetSelectedThing}) {
+function Outline(p: {context: StateContext; root: string; setSelectedThing: SetSelectedThing}) {
   // To simulate multiple top-level items, we just assign a thing as the root,
   // and use its children as the top-level items. This is a bit of a hack. We
   // should probably do something smarter.
@@ -567,7 +571,7 @@ function Subtree(p: {context: TreeContext; parent: number; children?: React.Reac
 
 async function start(): Promise<void> {
   ReactDOM.render(
-    <App initialState={Data.cleanGarbage(await Server.getData() as Things, 0)} username={await Server.getUsername()}/>,
+    <App initialState={Data.cleanGarbage(await Server.getData() as Things, "0")} username={await Server.getUsername()}/>,
     document.querySelector("#app")
   );
 }
