@@ -61,51 +61,37 @@ export async function createUser(user: string, password: string): Promise<{type:
 const lastUpdates: {[userName: string]: Date | undefined} = {};
 
 export async function getThings(userId: UserId): Promise<D.Things> {
-  return await updateThings(userId, x => x);
+  const documents = client.db("diaform").collection("things").find({user: userId.name});
+
+  if (await documents.count() === 0)
+    return D.empty;
+
+  const things = {};
+  await documents.forEach((document) => {
+    things[document.name] = {content: document.content ?? "", children: document.children ?? [], page: document.page};
+  });
+  return {things} as D.Things;
 }
 
-export async function putThings(userId: UserId, things: D.Things): Promise<void> {
-  await updateThings(userId, _ => things);
+export async function putThing(userId: UserId, thing: string, thingData: D.ThingData): Promise<void> {
+  await client.db("diaform").collection("things").replaceOne({user: userId.name, name: thing}, {user: userId.name, name: thing, ...thingData}, {upsert: true});
+  lastUpdates[userId.name] = new Date();
 }
 
-export async function updateThings(userId: UserId, f: (data: D.Things) => D.Things): Promise<D.Things> {
-  // We want to do updates atomically. The best way I can think of doing this is
-  // to acquire a lock, read the contents, apply the update, and then release
-  // the lock. This does not seem to be a very good solution, but I can't think
-  // of any better ones.
+export async function deleteThing(userId: UserId, thing: string): Promise<void> {
+  await client.db("diaform").collection("things").deleteOne({user: userId.name, name: thing});
+  lastUpdates[userId.name] = new Date();
+}
 
-  // The lock is stored in the database. We try to set it, and if it is not
-  // already locked by someone else, we go ahead and make the changes. If it is
-  // already locked, then we wait a bit and try again.
+export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
+  console.log(userId);
+  await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, {$set: {content}}, {upsert: true});
+  lastUpdates[userId.name] = new Date();
+}
 
-  const document = await (await client.db("diaform").collection("things").findOneAndUpdate({_id: userId.name}, {$set: {lock: true}})).value;
-
-  if (document !== null && document.lock) {
-    return new Promise((resolve, reject) => {
-      setTimeout(async () => {
-        resolve(await updateThings(userId, f));
-      }, 20);
-    });
-  }
-
-  let things = D.empty;
-
-  if (document !== null) {
-    // TODO: Throw more useful error when JSON cannot be parsed (maybe?).
-    // TODO: Detect case where returned JSON parses correctly but is not valid.
-    things = JSON.parse(document.json as string) as D.Things;
-  }
-
-  const newThings = f(things);
-
-  if (newThings !== things) {
-    await client.db("diaform").collection("things").replaceOne({_id: userId.name}, {_id: userId.name, json: JSON.stringify(newThings)}, {upsert: true});
-    lastUpdates[userId.name] = new Date();
-  }
-
-  await client.db("diaform").collection("things").updateOne({_id: userId.name}, {$set: {lock: false}});
-
-  return newThings;
+export async function setPage(userId: UserId, thing: string, page: string | null): Promise<void> {
+  await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, {$set: {page}}, {upsert: true});
+  lastUpdates[userId.name] = new Date();
 }
 
 export function lastUpdated(userId: UserId): Date | null {

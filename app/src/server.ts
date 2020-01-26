@@ -181,13 +181,13 @@ app.put("/api/things/:thing", requireUpToDateSession, parseThing, async (req, re
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
-  await DB.updateThings(req.user!, (things) => ({...things, things: {...things.things, [res.locals.thing]: req.body}}));
+  await DB.putThing(req.user!, res.locals.thing, req.body);
   session.sessionPolled(req.session!);
   res.end();
 });
 
 app.delete("/api/things/:thing", requireUpToDateSession, parseThingExists, async (req, res) => {
-  await DB.updateThings(req.user!, (things) => Data.remove(things, res.locals.thing));
+  await DB.deleteThing(req.user!, res.locals.thing);
   session.sessionPolled(req.session!);
   res.end();
 });
@@ -202,7 +202,7 @@ app.put("/api/things/:thing/content", requireUpToDateSession, parseThingExists, 
     return;
   }
 
-  await DB.updateThings(req.user!, (things) => Data.setContent(things, res.locals.thing, req.body));
+  await DB.setContent(req.user!, res.locals.thing, req.body);
   session.sessionPolled(req.session!);
   res.end();
 });
@@ -222,13 +222,13 @@ app.put("/api/things/:thing/page", requireUpToDateSession, parseThingExists, asy
     return;
   }
 
-  await DB.updateThings(req.user!, (things) => Data.setPage(things, res.locals.thing, req.body));
+  await DB.setPage(req.user!, res.locals.thing, req.body);
   session.sessionPolled(req.session!);
   res.end();
 });
 
 app.delete("/api/things/:thing/page", requireUpToDateSession, parseThingExists, async (req, res) => {
-  await DB.updateThings(req.user!, (things) => Data.removePage(things, res.locals.thing));
+  await DB.setPage(req.user!, res.locals.thing, null);
   session.sessionPolled(req.session!);
   res.end();
 });
