@@ -169,7 +169,14 @@ function useStateContext(initialState: Things): StateContext {
       return;
     }
     setLocalState(oldState);
-    Server.putData(oldState);
+    // TODO: Code duplication, see setState above
+    const diff = diffState(state, oldState);
+    for (const thing of diff.deleted) {
+      Server.deleteThing(thing);
+    }
+    for (const thing of [...diff.added, ...diff.changed]) {
+      Server.putThing(thing, oldState.things[thing]);
+    }
   }
 
   return {state, setState, setLocalState, setContent, undo: undo_, setPage, removePage};

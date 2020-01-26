@@ -145,16 +145,6 @@ app.get("/api/things", requireSession, async (req, res) => {
   res.type("json").send(await DB.getThings(req.user!));
 });
 
-app.put("/api/things", requireUpToDateSession, async (req, res) => {
-  if (typeof req.body !== "object") {
-    res.status(400).type("text/plain").send("400 Bad Request");
-    return;
-  }
-  await DB.putThings(req.user!, req.body);
-  session.sessionPolled(req.session!);
-  res.end();
-});
-
 app.get("/api/username", requireSession, async (req, res) => {
   res.type("json").send(JSON.stringify(await DB.userName(req.user!)));
 });

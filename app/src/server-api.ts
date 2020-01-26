@@ -5,10 +5,6 @@ export async function getData(): Promise<D.Things> {
   return (await fetch("/api/things")).json() as Promise<D.Things>;
 }
 
-export async function putData(data: D.Things): Promise<void> {
-  await fetch("/api/things", {method: "put", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)});
-}
-
 export async function getUsername(): Promise<string> {
   return (await fetch("/api/username")).json();
 }
