@@ -1,5 +1,5 @@
-import {Things} from "./client/data";
-import * as D from "./client/data";
+import {Things} from "./data";
+import * as D from "./data";
 
 // The underlying data representation that is stored on the server is like a
 // graph. It is defined in the Data module.

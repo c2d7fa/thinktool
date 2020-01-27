@@ -1,16 +1,16 @@
 import {Things} from "./client/data";
-import {Tree} from "./tree";
+import {Tree} from "./client/tree";
 
 import * as Data from "./client/data";
-import * as T from "./tree";
-import * as Server from "./server-api";
+import * as T from "./client/tree";
+import * as Server from "./client/server-api";
 
-import {PlainText} from "./ui/content";
+import {PlainText} from "./client/ui/content";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import undo from "./undo";
+import undo from "./client/undo";
 
 // ==
 

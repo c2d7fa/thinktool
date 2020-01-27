@@ -1,4 +1,4 @@
-import {Things} from "./client/data";
+import {Things} from "./data";
 
 const stack: Things[] = [];
 

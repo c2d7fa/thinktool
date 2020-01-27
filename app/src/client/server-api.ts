@@ -1,5 +1,5 @@
-import * as D from "./client/data";
-import * as Communication from "./communication";
+import * as D from "./data";
+import * as Communication from "../communication";
 
 export async function getFullState(): Promise<D.Things> {
   const response = await (await fetch("/api/things")).json() as Communication.FullStateResponse;
