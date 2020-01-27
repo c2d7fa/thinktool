@@ -132,7 +132,7 @@ app.get("/", (req, res) => {
     session.sessionPolled(req.session!);
     return sendStatic(res, "app.html");
   } else {
-    return sendRedirect(res, "/login");
+    return sendStatic(res, "landing.html");
   }
 });
 
@@ -265,6 +265,7 @@ app.post("/", async (req, res) => {
 // Static files
 app.get("/bundle.js", (req, res) => { res.sendFile("bundle.js", {root: "."}) });
 app.get("/style.css", (req, res) => { sendStatic(res, "style.css") });
+app.get("/landing.css", (req, res) => { sendStatic(res, "landing.css") });
 app.get("/bullet-collapsed.svg", (req, res) => { sendStatic(res, "bullet-collapsed.svg") });
 app.get("/bullet-expanded.svg", (req, res) => { sendStatic(res, "bullet-expanded.svg") });
 app.get("/bullet-collapsed-page.svg", (req, res) => { sendStatic(res, "bullet-collapsed-page.svg") });
