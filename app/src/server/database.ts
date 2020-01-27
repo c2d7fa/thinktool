@@ -22,7 +22,6 @@ export async function userId(name: string, password: string): Promise<UserId | n
   const user = await client.db("diaform").collection("users").findOne({_id: name});
 
   if (user === null) {
-    console.log("found no such user: %o", name);
     return null;
   } else {
     if (user.password as string === password) {
@@ -84,7 +83,6 @@ export async function deleteThing(userId: UserId, thing: string): Promise<void> 
 }
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
-  console.log(userId);
   await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, {$set: {content}}, {upsert: true});
   lastUpdates[userId.name] = new Date();
 }
