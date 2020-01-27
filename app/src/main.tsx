@@ -1,7 +1,7 @@
-import {Things} from "./data";
+import {Things} from "./client/data";
 import {Tree} from "./tree";
 
-import * as Data from "./data";
+import * as Data from "./client/data";
 import * as T from "./tree";
 import * as Server from "./server-api";
 
@@ -215,7 +215,7 @@ function App({initialState, username}: {initialState: Things; username: string})
         if (hasChanges) {
           timesSinceLastChange = 0;
           await Server.polledChanges();
-          context.setLocalState(await Server.getData());
+          context.setLocalState(await Server.getFullState());
         } else {
           timesSinceLastChange++;
         }
@@ -571,7 +571,7 @@ function Subtree(p: {context: TreeContext; parent: number; children?: React.Reac
 
 async function start(): Promise<void> {
   ReactDOM.render(
-    <App initialState={Data.cleanGarbage(await Server.getData() as Things, "0")} username={await Server.getUsername()}/>,
+    <App initialState={Data.cleanGarbage(await Server.getFullState() as Things, "0")} username={await Server.getUsername()}/>,
     document.querySelector("#app")
   );
 }

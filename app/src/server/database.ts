@@ -1,7 +1,5 @@
 import * as mongo from "mongodb";
 
-import * as D from "../data";
-
 export type UserId = {name: string};
 
 // This is a hack. We require the consumer of this module to call initialize()
@@ -59,21 +57,18 @@ export async function createUser(user: string, password: string): Promise<{type:
 
 const lastUpdates: {[userName: string]: Date | undefined} = {};
 
-export async function getThings(userId: UserId): Promise<D.Things> {
+export async function getAllThings(userId: UserId): Promise<{name: string; content?: string; page?: string; children?: string[]}[]> {
   const documents = client.db("diaform").collection("things").find({user: userId.name});
-
-  if (await documents.count() === 0)
-    return D.empty;
-
-  const things = {};
-  await documents.forEach((document) => {
-    things[document.name] = {content: document.content ?? "", children: document.children ?? [], page: document.page};
-  });
-  return {things} as D.Things;
+  return documents.project({name: 1, content: 1, children: 1, page: 1, _id: 0}).toArray();
 }
 
-export async function putThing(userId: UserId, thing: string, thingData: D.ThingData): Promise<void> {
-  await client.db("diaform").collection("things").replaceOne({user: userId.name, name: thing}, {user: userId.name, name: thing, ...thingData}, {upsert: true});
+export async function thingExists(userId: UserId, thing: string): Promise<boolean> {
+  return await client.db("diaform").collection("things").find({user: userId.name, name: thing}).count() > 0;
+}
+
+export async function updateThing(userId: UserId, thing: string, content: string, page: string | null, children: string[]): Promise<void> {
+  const operation = page === null ? {$set: {content, children}, $unset: {page}} : {$set: {content, children, page}};
+  await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, operation, {upsert: true});
   lastUpdates[userId.name] = new Date();
 }
 
@@ -88,7 +83,8 @@ export async function setContent(userId: UserId, thing: string, content: string)
 }
 
 export async function setPage(userId: UserId, thing: string, page: string | null): Promise<void> {
-  await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, {$set: {page}}, {upsert: true});
+  const operator = page === null ? {$unset: {page}} : {$set: {page}};
+  await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, operator, {upsert: true});
   lastUpdates[userId.name] = new Date();
 }
 

@@ -1,8 +1,15 @@
-import * as D from "./data";
+import * as D from "./client/data";
+import * as Communication from "./communication";
 
-export async function getData(): Promise<D.Things> {
-  // TODO: Error handling when converting to Things.
-  return (await fetch("/api/things")).json() as Promise<D.Things>;
+export async function getFullState(): Promise<D.Things> {
+  const response = await (await fetch("/api/things")).json() as Communication.FullStateResponse;
+
+  const things = {};
+  for (const thing of response) {
+    things[thing.name] = {content: thing.content, children: thing.children, page: thing.page};
+  }
+
+  return {things};
 }
 
 export async function getUsername(): Promise<string> {
@@ -26,7 +33,8 @@ export async function deleteThing(thing: string): Promise<void> {
 }
 
 export async function putThing(thing: string, data: D.ThingData): Promise<void> {
-  await fetch(`/api/things/${thing}`, {method: "put", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)});
+  const request: Communication.ThingData = data;
+  await fetch(`/api/things/${thing}`, {method: "put", headers: {"Content-Type": "application/json"}, body: JSON.stringify(request)});
 }
 
 export async function hasChanges(): Promise<boolean> {

@@ -2,8 +2,8 @@ import * as crypto from "crypto";
 import * as express from "express";
 import * as util from "util";
 
-import * as Data from "./data";
 import * as DB from "./server/database";
+import * as Communication from "./communication";
 
 const session = (() => {
   interface SessionData {
@@ -142,7 +142,8 @@ app.post("/api/changes", requireSession, async (req, res) => {
 });
 
 app.get("/api/things", requireSession, async (req, res) => {
-  res.type("json").send(await DB.getThings(req.user!));
+  const result = (await DB.getAllThings(req.user!)).map(t => ({name: t.name, content: t.content ?? "", page: t.page, children: t.children ?? []}));
+  res.type("json").send(result as Communication.FullStateResponse);
 });
 
 app.get("/api/username", requireSession, async (req, res) => {
@@ -155,7 +156,7 @@ async function parseThingExists(req: express.Request, res: express.Response, nex
     res.status(400).type("text/plain").send("400 Bad Request");
     next("router");
   }
-  if (!Data.exists(await DB.getThings(req.user!), thing)) {
+  if (!DB.thingExists(req.user!, thing)) {
     res.type("text/plain").status(404).send("404 Not Found");
     return;
   }
@@ -170,18 +171,16 @@ async function parseThing(req: express.Request, res: express.Response, next: exp
     next("router");
   }
   res.locals.thing = thing;
-  next();}
-
-app.get("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
-  res.type("application/json").send(JSON.stringify((await DB.getThings(req.user!)).things[res.locals.thing]));
-});
+  next();
+}
 
 app.put("/api/things/:thing", requireUpToDateSession, parseThing, async (req, res) => {
   if (typeof req.body !== "object") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
-  await DB.putThing(req.user!, res.locals.thing, req.body);
+  const data = req.body as Communication.ThingData;
+  await DB.updateThing(req.user!, res.locals.thing, data.content, data.page ?? null, data.children);
   session.sessionPolled(req.session!);
   res.end();
 });
@@ -190,10 +189,6 @@ app.delete("/api/things/:thing", requireUpToDateSession, parseThingExists, async
   await DB.deleteThing(req.user!, res.locals.thing);
   session.sessionPolled(req.session!);
   res.end();
-});
-
-app.get("/api/things/:thing/content", requireSession, parseThingExists, async (req, res) => {
-  res.type("text/plain").send(Data.content(await DB.getThings(req.user!), res.locals.thing));
 });
 
 app.put("/api/things/:thing/content", requireUpToDateSession, parseThingExists, async (req, res) => {
@@ -205,15 +200,6 @@ app.put("/api/things/:thing/content", requireUpToDateSession, parseThingExists, 
   await DB.setContent(req.user!, res.locals.thing, req.body);
   session.sessionPolled(req.session!);
   res.end();
-});
-
-app.get("/api/things/:thing/page", requireSession, parseThingExists, async (req, res) => {
-  const page = Data.page(await DB.getThings(req.user!), res.locals.thing);
-  if (page === null) {
-    res.status(404).end();
-    return;
-  }
-  res.type("text/plain").send(page);
 });
 
 app.put("/api/things/:thing/page", requireUpToDateSession, parseThingExists, async (req, res) => {
