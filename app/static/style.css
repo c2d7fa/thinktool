@@ -3,8 +3,11 @@
 
 body {
     margin: 0;
-    font-family: "Roboto", sans-serif;
     color: #202020;
+
+    font-family: "Roboto", sans-serif;
+    font-size: 1.1rem;
+    line-height: 150%;
 }
 
 #app {

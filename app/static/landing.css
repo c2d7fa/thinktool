@@ -33,6 +33,8 @@ a {
     color: inherit;
     text-decoration: none;
     background-color: #f8f8a0;
+    padding: 0 2px;
+    margin: 0 -2px;
 }
 
 a:hover {
@@ -41,13 +43,6 @@ a:hover {
 
 a.external-app-link {
     background-color: #dcf0e0;
-}
-
-a.call-to-action {
-    font-weight: bold;
-    padding: 0 2px;
-    margin: 0 -2px;
-    text-decoration: underline;
 }
 
 h1 {
@@ -84,11 +79,12 @@ strong.warning {
     font-size: 2em;
     font-weight: bold;
     display: inline-block;
+    cursor: default;
+    user-select: none;
 }
 
 #top-bar #login {
     display: inline-block;
-    justify-self: right;
 }
 
 #top-bar #login a {
@@ -101,6 +97,8 @@ strong.warning {
     text-decoration: none;
 
     transition: color 0.3s ease, background-color 0.3s ease;
+
+    user-select: none;
 }
 
 #top-bar #login a:hover {
