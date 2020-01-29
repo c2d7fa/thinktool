@@ -6,7 +6,7 @@ body {
     color: #202020;
 
     font-family: "Roboto", sans-serif;
-    font-size: 1.1rem;
+    font-size: 1.1em;
     line-height: 150%;
 }
 
@@ -22,11 +22,11 @@ body {
 
 .parents {
     display: block;
-    margin: 0 -6rem;
-    margin-bottom: 3rem;
-    padding: 1rem 6rem;
-    min-height: calc(1.75ex + 1rem);
-    background: linear-gradient(0deg, #fafafa 0%, #ffffff calc(min(6rem, 100%)));
+    margin: 0 -6em;
+    margin-bottom: 3em;
+    padding: 1em 6em;
+    min-height: calc(1.75ex + 1em);
+    background: linear-gradient(0deg, #fafafa 0%, #ffffff calc(min(6em, 100%)));
     border-radius: 0 0 6px 6px;
 
     transition: position 0.3s ease, padding 0.3s ease, margin 0.3s ease;
@@ -38,16 +38,16 @@ body {
     font-size: 0.8em;
     font-family: "Titillium Web";
     text-transform: uppercase;
-    padding-left: 1rem;
+    padding-left: 1.5rem;
 }
 
 .children {
-    margin: 3rem -6rem;
+    margin: 3em -6em;
     margin-bottom: 0;
-    padding: 1rem 6rem;
+    padding: 1em 6em;
     padding-bottom: 0;
     color: #404040;
-    background: linear-gradient(180deg, #f8f8f8 0%, #ffffff calc(min(6rem, 100%)));
+    background: linear-gradient(180deg, #f8f8f8 0%, #ffffff calc(min(6em, 100%)));
     border-radius: 6px 6px 0 0;
 
     transition: position 0.3s ease, padding 0.3s ease, margin 0.3s ease;
@@ -57,7 +57,7 @@ body {
 ul.outline-tree {
     margin: 0 auto;
     list-style: none;
-    padding-left: 1.5em;
+    padding-left: 1.5rem;
 }
 
 .bullet {
@@ -156,12 +156,13 @@ input.content {
 }
 
 #current-user a.log-out {
+    padding: 0.5ex 1ex;
+    margin: -1ex;
     margin-left: 1ex;
-    margin-right: -1ex;
+
     color: inherit;
     text-decoration: none;
 
-    padding: 1ex;
     border-radius: 6px;
 
     transition: color 0.3s ease, background-color 0.3s ease;
@@ -179,8 +180,8 @@ input.content {
 
 .selected-content {
     display: block;
-    margin: -0.5rem -0.5rem;
-    padding: 0.5rem 0.5rem;
+    margin: -0.5em -0.5em;
+    padding: 0.5em 0.5em;
     border-radius: 6px;
     border: 1px solid rgba(0, 0, 0, 0%);
 
@@ -200,8 +201,8 @@ input.content {
     border-radius: 6px;
     border: 1px solid rgba(0, 0, 0, 0%);
 
-    padding: 0.5rem 0.5rem;
-    margin: 1rem -0.5rem;
+    padding: 0.5em 0.5em;
+    margin: 1em -0.5em;
 
     transition: border-color 0.3s ease;
 }
@@ -233,7 +234,7 @@ input.content {
     text-transform: uppercase;
 
     margin: -1ex;
-    margin-top: 1rem;
+    margin-top: 1em;
 
     padding: 1ex;
 
@@ -265,7 +266,7 @@ input.content {
     padding: 2em;
     display: flex;
     justify-content: center;
-    background: linear-gradient(180deg, #fafafa 0%, #ffffff calc(min(6rem, 100%)));
+    background: linear-gradient(180deg, #fafafa 0%, #ffffff calc(min(6em, 100%)));
 }
 
 #login form {
@@ -290,8 +291,8 @@ input.content {
     text-transform: uppercase;
     color: #808080;
 
-    padding-bottom: 2rem;
-    padding-right: 1rem;
+    padding-bottom: 2em;
+    padding-right: 1em;
 }
 
 #login input {
@@ -301,7 +302,7 @@ input.content {
     border-radius: 6px;
     outline: none;
 
-    font-size: 1rem;
+    font-size: 1em;
     font-family: "Roboto", sans-serif;
     color: #202020;
 
@@ -321,7 +322,7 @@ input.content {
     font-family: "Titillium Web";
     text-transform: uppercase;
 
-    margin-right: 1rem;
+    margin-right: 1em;
     padding: 1ex 1em;
 
     border: none;
@@ -355,6 +356,6 @@ input.content {
     }
 
     #current-user {
-        margin-right: 2rem;
+        margin-right: 2em;
     }
 }
