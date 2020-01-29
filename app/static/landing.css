@@ -70,3 +70,45 @@ p {
 strong.warning {
     border-bottom: 3px solid #f8a0a0;
 }
+
+#top-bar {
+    padding: 1em 2em;
+    background: linear-gradient(180deg, #f8f8f8 0%, #fcfcfc 100%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#top-bar #logo {
+    text-transform: uppercase;
+    font-size: 2em;
+    font-weight: bold;
+    display: inline-block;
+}
+
+#top-bar #login {
+    display: inline-block;
+    justify-self: right;
+}
+
+#top-bar #login a {
+    text-transform: uppercase;
+    background-color: inherit;
+    font-family: "Titillium Web";
+    border-radius: 6px;
+
+    color: #b0b0b0;
+    text-decoration: none;
+
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+#top-bar #login a:hover {
+    color: #808080;
+    background-color: #f8f8f8;
+}
+
+#top-bar #login a:active {
+    color: #404040;
+    background-color: #f8f8f8;
+}
