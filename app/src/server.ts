@@ -123,13 +123,26 @@ function sendStatic(res: express.Response, path: string) {
   return res.sendFile(path, {root: "../static"});
 }
 
+function sendRedirect(res: express.Response, location: string): void {
+  res.status(303).header("Location", location).end();
+}
+
 app.get("/", (req, res) => {
   if (req.hasSession) {
     session.sessionPolled(req.session!);
-    sendStatic(res, "index.html");
+    return sendStatic(res, "app.html");
   } else {
-    sendStatic(res, "login.html");
+    return sendStatic(res, "landing.html");
   }
+});
+
+app.get("/login", (req, res) => {
+  if (req.hasSession) return sendRedirect(res, "/");
+  sendStatic(res, "login.html");
+});
+
+app.get("/logout", async (req, res) => {
+  sendRedirect(res.header("Set-Cookie", "DiaformSession=; Max-Age=0"), "/");
 });
 
 app.get("/api/changes", requireSession, async (req, res) => {
@@ -219,14 +232,6 @@ app.delete("/api/things/:thing/page", requireUpToDateSession, parseThingExists, 
   res.end();
 });
 
-app.get("/logout", async (req, res) => {
-  res
-    .status(303)
-    .header("Set-Cookie", "DiaformSession=; Max-Age=0")
-    .header("Location", "/")
-    .end();
-});
-
 app.post("/", async (req, res) => {
   if (typeof req.body !== "object" || typeof req.body.user !== "string" || typeof req.body.password !== "string") {
     res.status(400).type("text/plain").send("400 Bad Request");
@@ -241,7 +246,7 @@ app.post("/", async (req, res) => {
       return;
     }
     const sessionId = await session.create(userId);
-    res.status(303).header("Set-Cookie", `DiaformSession=${sessionId}`).header("Location", "/").end();
+    sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), "/");
   } else if (req.body.signup) {
     const {user, password} = req.body;
     const result = await DB.createUser(user, password);
@@ -250,7 +255,7 @@ app.post("/", async (req, res) => {
     } else {
       const {userId} = result;
       const sessionId = await session.create(userId);
-      res.status(303).header("Set-Cookie", `DiaformSession=${sessionId}`).header("Location", "/").end();
+      sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), "/");
     }
   } else {
     res.status(400).type("text/plain").send("400 Bad Request");
@@ -260,6 +265,7 @@ app.post("/", async (req, res) => {
 // Static files
 app.get("/bundle.js", (req, res) => { res.sendFile("bundle.js", {root: "."}) });
 app.get("/style.css", (req, res) => { sendStatic(res, "style.css") });
+app.get("/landing.css", (req, res) => { sendStatic(res, "landing.css") });
 app.get("/bullet-collapsed.svg", (req, res) => { sendStatic(res, "bullet-collapsed.svg") });
 app.get("/bullet-expanded.svg", (req, res) => { sendStatic(res, "bullet-expanded.svg") });
 app.get("/bullet-collapsed-page.svg", (req, res) => { sendStatic(res, "bullet-collapsed-page.svg") });

@@ -258,13 +258,15 @@ input.content {
 /* Login page */
 /* TODO: Move this to separate file */
 #login {
-    margin: 2em 0;
+    margin: 1em;
+    padding: 2em;
     display: flex;
     justify-content: center;
+    background: linear-gradient(180deg, #fafafa 0%, #ffffff calc(min(6rem, 100%)));
 }
 
 #login form {
-    padding: 0;
+    padding: 0em;
 }
 
 #login form .form-table {
@@ -283,7 +285,7 @@ input.content {
     font-size: 0.8em;
     font-family: "Titillium Web";
     text-transform: uppercase;
-    color: #b0b0b0;
+    color: #808080;
 
     padding-bottom: 2rem;
     padding-right: 1rem;
@@ -316,21 +318,20 @@ input.content {
     font-family: "Titillium Web";
     text-transform: uppercase;
 
-    margin: -1ex;
-    padding: 1ex;
-
-    margin-top: 1rem;
     margin-right: 1rem;
+    padding: 1ex 1em;
 
     border: none;
     border-radius: 6px;
     background: none;
 
-    color: #808080;
+    color: #404040;
 
     cursor: pointer;
 
     transition: color 0.3s ease, background-color 0.3s ease;
+
+    border: 1px solid #f0f0f0;
 }
 
 #login input[type="submit"]:hover {
