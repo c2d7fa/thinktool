@@ -16,7 +16,7 @@ body {
 .section {
     margin: 2em 1em;
     padding: 2em;
-    background: linear-gradient(180deg, #f4f4f4 0%, #ffffff 6em);
+    background: linear-gradient(180deg, #fafafa 0%, #ffffff 6em);
     border-radius: 6px;
 }
 
@@ -85,9 +85,7 @@ strong.warning {
 
 #top-bar #login {
     display: inline-block;
-}
 
-#top-bar #login a {
     text-transform: uppercase;
     background-color: inherit;
     font-family: "Titillium Web";
@@ -101,12 +99,12 @@ strong.warning {
     user-select: none;
 }
 
-#top-bar #login a:hover {
+#top-bar a#login:hover {
     color: #808080;
     background-color: #f8f8f8;
 }
 
-#top-bar #login a:active {
+#top-bar a#login:active {
     color: #404040;
     background-color: #f8f8f8;
 }

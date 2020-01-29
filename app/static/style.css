@@ -26,6 +26,7 @@ body {
     margin-bottom: 3em;
     padding: 1em 6em;
     min-height: calc(1.75ex + 1em);
+    background: linear-gradient(0deg, #fafafa 0%, #ffffff 100%); /* For browsers that don't support calc in linear-gradient (e.g. Firefox) */
     background: linear-gradient(0deg, #fafafa 0%, #ffffff calc(min(6em, 100%)));
     border-radius: 0 0 6px 6px;
 
@@ -47,12 +48,12 @@ body {
     padding: 1em 6em;
     padding-bottom: 0;
     color: #404040;
+    background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%); /* For browsers that don't support calc in linear-gradient (e.g. Firefox) */
     background: linear-gradient(180deg, #f8f8f8 0%, #ffffff calc(min(6em, 100%)));
     border-radius: 6px 6px 0 0;
 
     transition: position 0.3s ease, padding 0.3s ease, margin 0.3s ease;
 }
-
 
 ul.outline-tree {
     margin: 0 auto;
@@ -156,6 +157,8 @@ input.content {
 }
 
 #current-user a.log-out {
+    display: inline-block;
+
     padding: 0.5ex 1ex;
     margin: -1ex;
     margin-left: 1ex;
