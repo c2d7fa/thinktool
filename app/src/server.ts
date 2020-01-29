@@ -270,6 +270,7 @@ app.get("/bullet-collapsed.svg", (req, res) => { sendStatic(res, "bullet-collaps
 app.get("/bullet-expanded.svg", (req, res) => { sendStatic(res, "bullet-expanded.svg") });
 app.get("/bullet-collapsed-page.svg", (req, res) => { sendStatic(res, "bullet-collapsed-page.svg") });
 app.get("/bullet-expanded-page.svg", (req, res) => { sendStatic(res, "bullet-expanded-page.svg") });
+app.get("/icon.png", (req, res) => { sendStatic(res, "icon.png") });
 
 // Error handling
 app.use((req, res, next) => {

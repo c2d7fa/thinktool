@@ -1,5 +1,5 @@
 {
-  "name": "diaform",
+  "name": "thinktool",
   "private": true,
   "devDependencies": {
     "@types/draft-js": "latest",
