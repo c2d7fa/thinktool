@@ -1,5 +1,6 @@
 import * as React from "react";
 import {Editor, EditorState, ContentState, getDefaultKeyBinding, getVisibleSelectionRect, SelectionState} from "draft-js";
+import * as draft from "draft-js";
 
 // TODO: The entire implementation of this is an absolute hack. The problem is
 // that we want to handle ArrowUp and ArrowDown events differently depending on
@@ -75,18 +76,40 @@ function lastLineInBlockSelected(editorState: EditorState): boolean {
   );
 }
 
+function linkStrategy(block: draft.ContentBlock, callback: (start: number, end: number) => void, contentState: ContentState): void {
+  const linkRegex = /https?\:\/\S*/g;
+  for (const match of block.getText().matchAll(linkRegex) ?? []) {
+    if (match.index === undefined) {
+      console.warn("I didn't think this could happen.");
+      return;
+    }
+    const start = match.index;
+    const end = match.index + match[0].length;
+    callback(start, end);
+  }
+}
+
+function Link(props) {
+  // This works, but I don't understand why.
+  return <a className="plain-text-link" href={props.children[0].props.text}>{props.children}</a>;
+}
+
+const decorator = new draft.CompositeDecorator([
+  {strategy: linkStrategy, component: Link},
+]);
+
 export const PlainText = React.forwardRef(function PlainText(props: {text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string}, ref?: React.Ref<{focus(): void}>) {
   const ref_: React.MutableRefObject<{focus(): void}> = React.useRef({focus: () => {}});
   if (ref === undefined || ref === null)
     ref = ref_;
 
-  const [editorState, setEditorState] = React.useState(EditorState.createWithContent(ContentState.createFromText(props.text)));
+  const [editorState, setEditorState] = React.useState(EditorState.createWithContent(ContentState.createFromText(props.text), decorator));
 
   // TODO: There is almost certainly a better way to do this.
 
   React.useEffect(() => {
     if (props.text !== editorState.getCurrentContent().getPlainText()) {
-      setEditorState(EditorState.createWithContent(ContentState.createFromText(props.text)));
+      setEditorState(EditorState.createWithContent(ContentState.createFromText(props.text), decorator));
     }
   }, [props.text]);
 
