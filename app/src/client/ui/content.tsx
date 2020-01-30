@@ -77,20 +77,27 @@ function lastLineInBlockSelected(editorState: EditorState): boolean {
 }
 
 function linkStrategy(block: draft.ContentBlock, callback: (start: number, end: number) => void, contentState: ContentState): void {
-  const linkRegex = /https?\:\/\S*/g;
+  const linkRegex = /https?:\/\S*/g;
   for (const match of block.getText().matchAll(linkRegex) ?? []) {
     if (match.index === undefined) {
       console.warn("I didn't think this could happen.");
       return;
     }
+
     const start = match.index;
-    const end = match.index + match[0].length;
+    let end = match.index + match[0].length;
+
+    // Trim punctuation at the end of link:
+    if ([",", ".", ":", ")", "]"].includes(block.getText()[end - 1])) {
+      end -= 1;
+    }
+
     callback(start, end);
   }
 }
 
-function Link(props) {
-  const text = props.children[0].props.text; // TODO: Type checking on this
+function Link(props: {contentState: draft.ContentState; blockKey: string; start: number; end: number; children: React.ReactNode[]}) {
+  const url = props.contentState.getBlockForKey(props.blockKey).getText().slice(props.start, props.end);
 
   // For reasons that I do not understand (even though I have spent the last 45
   // minutes trying to figure it out), the link cannot be clicked and
@@ -106,14 +113,14 @@ function Link(props) {
   const workaroundProps = {
     onAuxClick: (ev) => {
       if (ev.button === 1) { // Middle click
-        window.open(text);
+        window.open(url);
         ev.preventDefault();
       }
     },
-    title: `${text}\n(Open with middle click)`,
+    title: `${url}\n(Open with middle click)`,
   };
 
-  return <a {...workaroundProps} className="plain-text-link" href={text}>{props.children}</a>;
+  return <a {...workaroundProps} className="plain-text-link" href={url}>{props.children}</a>;
 }
 
 const decorator = new draft.CompositeDecorator([
