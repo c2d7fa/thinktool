@@ -90,8 +90,30 @@ function linkStrategy(block: draft.ContentBlock, callback: (start: number, end: 
 }
 
 function Link(props) {
-  // This works, but I don't understand why.
-  return <a className="plain-text-link" href={props.children[0].props.text}>{props.children}</a>;
+  const text = props.children[0].props.text; // TODO: Type checking on this
+
+  // For reasons that I do not understand (even though I have spent the last 45
+  // minutes trying to figure it out), the link cannot be clicked and
+  // essentially behaves exactly like text (except you can right-click it). So
+  // we use these properties to make the link behave like an actual link. This
+  // is obviously less-than-ideal.
+  //
+  // Let's just pretend that this is intentional behavior by only triggering the
+  // link on middle click. That way the user can easily edit the text, I guess.
+  //
+  // Note that this is pretty broken on mobile, although if the user really
+  // wants they can open links, it's just annoying to use.
+  const workaroundProps = {
+    onAuxClick: (ev) => {
+      if (ev.button === 1) { // Middle click
+        window.open(text);
+        ev.preventDefault();
+      }
+    },
+    title: `${text}\n(Open with middle click)`,
+  };
+
+  return <a {...workaroundProps} className="plain-text-link" href={text}>{props.children}</a>;
 }
 
 const decorator = new draft.CompositeDecorator([
