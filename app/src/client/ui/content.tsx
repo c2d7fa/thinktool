@@ -1,27 +1,25 @@
 import * as React from "react";
-import {Editor, EditorState, ContentState, getDefaultKeyBinding, getVisibleSelectionRect, SelectionState} from "draft-js";
-import * as draft from "draft-js";
 
-// TODO: The entire implementation of this is an absolute hack. The problem is
-// that we want to handle ArrowUp and ArrowDown events differently depending on
-// whether the user's selection is on the first or last line of the item. But it
-// isn't enough to look at the text content, since an item without any newlines
-// may be wrapped visually.
+import * as Slate from "slate";
+import * as SlateReact from "slate-react";
 
-function firstBlockSelected(editorState: EditorState): boolean {
-  return editorState.getCurrentContent().getKeyBefore(editorState.getSelection().getFocusKey()) == null;
-}
+// #region Lines in the editor
 
-function lastBlockSelected(editorState: EditorState): boolean {
-  return editorState.getCurrentContent().getKeyAfter(editorState.getSelection().getFocusKey()) == null;
-}
+// The editor may contain multiple lines of text. When it makes sense to do so,
+// the user should be able to navigate up and down the editor using the arrow up
+// and down keys.
+//
+// However, on the first and last line, we want to allow our parent to handle
+// arrow up and arrow down key events, respectively. Unfortunately, there is no
+// easy way to check whether the selection is currently on the first or the last
+// line of a Slate editor, so we use the following code instead.
 
 function currentSelectionIsOnFirstLineOfSelectedElement(): boolean {
   const selection = window.getSelection();
   if (selection == undefined) return false;
 
   const range = selection.getRangeAt(0);
-  const rect = getVisibleSelectionRect(window);
+  const rect = range.getBoundingClientRect();
 
   const testRange = document.createRange();
   testRange.setStart(range.startContainer, 0);
@@ -29,7 +27,7 @@ function currentSelectionIsOnFirstLineOfSelectedElement(): boolean {
   selection.removeAllRanges();
   selection.addRange(testRange);
 
-  const testRect = getVisibleSelectionRect(window);
+  const testRect = testRange.getBoundingClientRect();
 
   selection.removeAllRanges();
   selection.addRange(range);
@@ -42,7 +40,7 @@ function currentSelectionIsOnLastLineOfSelectedElement(): boolean {
   if (selection == undefined) return false;
 
   const range = selection.getRangeAt(0);
-  const rect = getVisibleSelectionRect(window);
+  const rect = range.getBoundingClientRect();
 
   const testRange = document.createRange();
   testRange.setStart(range.startContainer, (range.startContainer as Text).length);
@@ -50,7 +48,7 @@ function currentSelectionIsOnLastLineOfSelectedElement(): boolean {
   selection.removeAllRanges();
   selection.addRange(testRange);
 
-  const testRect = getVisibleSelectionRect(window);
+  const testRect = testRange.getBoundingClientRect();
 
   selection.removeAllRanges();
   selection.addRange(range);
@@ -58,134 +56,147 @@ function currentSelectionIsOnLastLineOfSelectedElement(): boolean {
   return rect.top === testRect.top;
 }
 
-function firstLineInBlockSelected(editorState: EditorState): boolean {
-  const block = editorState.getCurrentContent().getBlockForKey(editorState.getSelection().getFocusKey());
-  return (
-    (block.getText().indexOf("\n") === -1 ||  // Block is one line
-      block.getText().indexOf("\n") >= editorState.getSelection().getFocusOffset()) && // Focus is before first newline
-    currentSelectionIsOnFirstLineOfSelectedElement()
-  );
+function atFirstLineInEditor(): boolean {
+  return currentSelectionIsOnFirstLineOfSelectedElement();
 }
 
-function lastLineInBlockSelected(editorState: EditorState): boolean {
-  const block = editorState.getCurrentContent().getBlockForKey(editorState.getSelection().getFocusKey());
-  return (
-    (block.getText().lastIndexOf("\n") === -1 || // Block is one line
-      block.getText().lastIndexOf("\n") <= editorState.getSelection().getFocusOffset()) && // Focus is after last newline
-    currentSelectionIsOnLastLineOfSelectedElement()
-  );
+function atLastLineInEditor(): boolean {
+  return currentSelectionIsOnLastLineOfSelectedElement();
 }
 
-function linkStrategy(block: draft.ContentBlock, callback: (start: number, end: number) => void, contentState: ContentState): void {
+// #endregion
+
+function decorate([node, path]: [Slate.Node, Slate.Path]): Slate.Range[] {
+  const text = Slate.Node.string(node);
+
+  let ranges: Slate.Range[] = [];
+
   const linkRegex = /https?:\/\S*/g;
-  for (const match of block.getText().matchAll(linkRegex) ?? []) {
-    if (match.index === undefined) {
-      console.warn("I didn't think this could happen.");
-      return;
-    }
+  for (const match of text.matchAll(linkRegex) ?? []) {
+    if (match.index === undefined) throw "bad programmer error";
 
     const start = match.index;
     let end = match.index + match[0].length;
 
     // Trim punctuation at the end of link:
-    if ([",", ".", ":", ")", "]"].includes(block.getText()[end - 1])) {
+    if ([",", ".", ":", ")", "]"].includes(text[end - 1])) {
       end -= 1;
     }
 
-    callback(start, end);
+    ranges = [...ranges, {anchor: {path, offset: start}, focus: {path, offset: end}, link: text.slice(start, end)}];
+  }
+
+  return ranges;
+}
+
+function renderLeaf(props: SlateReact.RenderLeafProps) {
+  if (props.leaf.link) {
+    // Since the link is inside an element with contenteditable="true" and does
+    // not itself have contenteditable="false", it cannot be clicked, so we need
+    // to add some special UI to allow the link to be clicked.
+    //
+    // TODO: It would be nice if it were possible to click the link when the
+    // item is not being edited, but I'm not sure how to implement this. Setting
+    // readOnly on the editor should do the job, but how do we detect when the
+    // user is actively editing the item?
+    //
+    // Anyway, we just let the user open the link by middle clicking on it.
+    // That's good enough for now.
+
+    const clickProps = {
+      onAuxClick: (ev) => {
+        if (ev.button === 1) { // Middle click
+          window.open(props.leaf.link);
+          ev.preventDefault();
+        }
+      },
+      title: `${props.leaf.link}\n(Open with middle click)`,
+    };
+
+    return <a className="plain-text-link" href={props.leaf.link} {...clickProps} {...props.attributes}>{props.children}</a>;
+  } else {
+    return <SlateReact.DefaultLeaf {...props}/>;
   }
 }
 
-function Link(props: {contentState: draft.ContentState; blockKey: string; start: number; end: number; children: React.ReactNode[]}) {
-  const url = props.contentState.getBlockForKey(props.blockKey).getText().slice(props.start, props.end);
-
-  // For reasons that I do not understand (even though I have spent the last 45
-  // minutes trying to figure it out), the link cannot be clicked and
-  // essentially behaves exactly like text (except you can right-click it). So
-  // we use these properties to make the link behave like an actual link. This
-  // is obviously less-than-ideal.
-  //
-  // Let's just pretend that this is intentional behavior by only triggering the
-  // link on middle click. That way the user can easily edit the text, I guess.
-  //
-  // Note that this is pretty broken on mobile, although if the user really
-  // wants they can open links, it's just annoying to use.
-  const workaroundProps = {
-    onAuxClick: (ev) => {
-      if (ev.button === 1) { // Middle click
-        window.open(url);
-        ev.preventDefault();
-      }
-    },
-    title: `${url}\n(Open with middle click)`,
-  };
-
-  return <a {...workaroundProps} className="plain-text-link" href={url}>{props.children}</a>;
+function nodesFromText(text: string): Slate.Node[] {
+  return [{type: "paragraph", children: [{text}]}];
 }
 
-const decorator = new draft.CompositeDecorator([
-  {strategy: linkStrategy, component: Link},
-]);
+function nodesToText(nodes: Slate.Node[]): string {
+  let result = Slate.Node.string(nodes[0]);
+  for (const node of nodes.slice(1)) {
+    result += "\n" + Slate.Node.string(node);
+  }
+  return result;
+}
 
-export const PlainText = React.forwardRef(function PlainText(props: {text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string}, ref?: React.Ref<{focus(): void}>) {
-  const ref_: React.MutableRefObject<{focus(): void}> = React.useRef({focus: () => {}});
-  if (ref === undefined || ref === null)
-    ref = ref_;
+export function PlainText(props: {focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string}) {
+  const editor = React.useMemo(() => SlateReact.withReact(Slate.createEditor()), []);
+  const [value, setValue] = React.useState(nodesFromText(props.text));
+  const divRef = React.useRef<HTMLDivElement>(null);
 
-  const [editorState, setEditorState] = React.useState(EditorState.createWithContent(ContentState.createFromText(props.text), decorator));
-
-  // TODO: There is almost certainly a better way to do this.
+  // I don't entirely understand how focus is supposed to be handled in Slate,
+  // so we use a bit of a hack (or at least, I think it's a hack).
+  //
+  // Basically, the parent can pass the "focused" property. When this is updated
+  // such that it becomes true, we manually transfer focus to the Slate editor
+  // using the Effect below.
+  //
+  // I would have thought that simply calling SlateReact.ReactEditor.focus(editor)
+  // would be enough, but apparently this is not the case, so we do some other
+  // stuff as well.
 
   React.useEffect(() => {
-    if (props.text !== editorState.getCurrentContent().getPlainText()) {
-      setEditorState(EditorState.createWithContent(ContentState.createFromText(props.text), decorator));
+    if (props.focused) {
+      if (!SlateReact.ReactEditor.isFocused(editor)) {
+        SlateReact.ReactEditor.focus(editor);
+        Slate.Transforms.select(editor, editor.selection ?? Slate.Editor.start(editor, []));
+      }
     }
+  }, [props.focused]);
+
+  React.useEffect(() => {
+    if (props.text !== nodesToText(value))
+      setValue(nodesFromText(props.text));
   }, [props.text]);
 
-  function onChange(newEditorState: EditorState): void {
-    setEditorState(newEditorState);
-    const newText = newEditorState.getCurrentContent().getPlainText();
-    if (newText !== props.text)
-      props.setText(newText);
+  function onChange(nodes: Slate.Node[]): void {
+    if (nodesToText(nodes) !== props.text) {
+      props.setText(nodesToText(nodes));
+    }
+    setValue(nodes);
   }
 
-  function keyBindingFn(ev: React.KeyboardEvent<{}>) {
-    if (ev.key === "ArrowUp" && !(ev.ctrlKey || ev.altKey) && !(firstBlockSelected(editorState) && firstLineInBlockSelected(editorState))) {
-      // Arrow up without modifiers inside text. Use normal action.
-      return getDefaultKeyBinding(ev);
-    }
-    if (ev.key === "ArrowDown" && !(ev.ctrlKey || ev.altKey) && !(lastBlockSelected(editorState) && lastLineInBlockSelected(editorState))) {
-      // Arrow down without modifiers inside text. Use normal action.
-      return getDefaultKeyBinding(ev);
+  function onKeyDown(ev: React.KeyboardEvent): void {
+    if ((ev.key === "ArrowUp" && !atFirstLineInEditor() || ev.key === "ArrowDown" && !atLastLineInEditor()) && !(ev.ctrlKey || ev.altKey)) {
+      // Arrow key without modifiers inside text. Use normal action.
+      return;
     }
 
-    const startOfItem = firstBlockSelected(editorState) && editorState.getSelection().getFocusOffset() === 0;
-    const endOfItem = lastBlockSelected(editorState) && editorState.getSelection().getFocusOffset() === editorState.getCurrentContent().getBlockForKey(editorState.getSelection().getFocusKey()).getLength();
+    if (!editor.selection) throw "bad programmer error";
+    const startOfItem = Slate.Point.equals(Slate.Range.start(editor.selection), Slate.Editor.start(editor, []));
+    const endOfItem = Slate.Point.equals(Slate.Range.end(editor.selection), Slate.Editor.end(editor, []));
 
     if (props.onKeyDown !== undefined && props.onKeyDown(ev, {startOfItem, endOfItem})) {
-      return null;
+      // The event was handled by our parent.
+      ev.preventDefault();
+      return;
     } else {
-      return getDefaultKeyBinding(ev);
+      if (ev.key === "Enter") {
+        editor.insertText("\n");
+        ev.preventDefault();
+      }
+
+      return;
     }
   }
 
-  function resetSelection(): void {
-    // TODO: Hack. If we do this immediately, the change is not reflected for some reason.
-    setTimeout(() => {
-      const newState = EditorState.acceptSelection(editorState, SelectionState.createEmpty(editorState.getCurrentContent().getFirstBlock().getKey()));
-      setEditorState(newState);
-    }, 20);
-  }
-
-  return <span className={`content-editable-plain-text ${props.className}`}>
-    <Editor
-      ref={ref as React.RefObject<Editor>}
-      placeholder={props.placeholder}
-      editorState={editorState}
-      onChange={onChange}
-      stripPastedStyles={true}
-      keyBindingFn={keyBindingFn}
-      onFocus={(ev: React.FocusEvent<{}>) => { props.onFocus !== undefined && props.onFocus(ev) }}
-      onBlur={resetSelection}/>
-  </span>;
-});
+  return (
+    <div ref={divRef} className={`content-editable-plain-text ${props.className}`}>
+      <SlateReact.Slate editor={editor} value={value} onChange={onChange}>
+        <SlateReact.Editable renderLeaf={renderLeaf} decorate={decorate} onKeyDown={onKeyDown} onFocus={props.onFocus}/>
+      </SlateReact.Slate>
+    </div>
+  );
+}

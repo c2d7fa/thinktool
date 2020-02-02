@@ -330,7 +330,8 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
 
       if (element != null) {
         const target = +element.dataset.id!;
-        setDrag({current: drag.current, target, finished: false});
+        if (target !== drag.target)
+          setDrag({current: drag.current, target, finished: false});
       }
     }
 
@@ -344,29 +345,26 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
 
       if (element != null) {
         const target = +element.dataset.id!;
-        setDrag({current: drag.current, target, finished: false});
+        if (target !== drag.target)
+          setDrag({current: drag.current, target, finished: false});
       }
     }
 
     window.addEventListener("mousemove", mousemove);
     window.addEventListener("touchmove", touchmove);
 
-    return () => {
-      window.removeEventListener("mousemove", mousemove);
-      window.removeEventListener("touchmove", touchmove);
-    };
-  }, [drag.current]);
-
-  React.useEffect(() => {
-    function callback(ev: MouseEvent | TouchEvent): void {
+    function mouseup(ev: MouseEvent | TouchEvent): void {
       setDrag({...drag, finished: ev.ctrlKey ? "copy" : true});
     }
 
-    window.addEventListener("mouseup", callback);
-    window.addEventListener("touchend", callback);
+    window.addEventListener("mouseup", mouseup);
+    window.addEventListener("touchend", mouseup);
+
     return () => {
-      window.removeEventListener("mouseup", callback);
-      window.removeEventListener("touchend", callback);
+      window.removeEventListener("mousemove", mousemove);
+      window.removeEventListener("touchmove", touchmove);
+      window.removeEventListener("mouseup", mouseup);
+      window.removeEventListener("touchend", mouseup);
     };
   }, [drag]);
 
@@ -541,17 +539,10 @@ function Content(p: {context: TreeContext; id: number}) {
     }
   }
 
-  const ref: React.MutableRefObject<HTMLElement | null> = React.useRef(null);
-
-  React.useEffect(() => {
-    if (T.hasFocus(p.context.tree, p.id))
-      ref.current?.focus();
-  }, [ref, p.context.tree]);
-
   return (
     <PlainText
-      ref={ref}
       className="content"
+      focused={T.hasFocus(p.context.tree, p.id)}
       text={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
       setText={(text) => { p.context.setContent(T.thing(p.context.tree, p.id), text) }}
       onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.id)) }}

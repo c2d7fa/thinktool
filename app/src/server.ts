@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import * as express from "express";
+import express from "express";
 import * as util from "util";
 
 import * as DB from "./server/database";
