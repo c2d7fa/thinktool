@@ -93,18 +93,6 @@ function decorate([node, path]: [Slate.Node, Slate.Path]): Slate.Range[] {
     ranges = [...ranges, {anchor: {path, offset: start}, focus: {path, offset: end}, link: text.slice(start, end)}];
   }
 
-  // Internal links
-
-  const internalLinkRegex = /#([a-z0-9]{8})/g;
-  for (const match of [...text.matchAll(internalLinkRegex)]) {
-    if (match.index === undefined) throw "bad programmer error";
-
-    const start = match.index;
-    const end = match.index + match[0].length;
-
-    ranges = [...ranges, {anchor: {path, offset: start}, focus: {path, offset: end}, internalLink: match[1]}];
-  }
-
   return ranges;
 }
 
@@ -133,12 +121,6 @@ function renderLeaf(props: SlateReact.RenderLeafProps & {getContent(thing: strin
     };
 
     return <a className="plain-text-link" href={props.leaf.link} {...clickProps} {...props.attributes}>{props.children}</a>;
-  } else if (props.leaf.internalLink) {
-    // TODO: This should really be a void, inline element. See
-    // https://www.slatejs.org/examples/mentions for an example of what we want
-    // to do.
-    const itemName = props.getContent(props.leaf.internalLink);
-    return <a className="internal-link" href={`/#${props.leaf.internalLink}`} {...props.attributes} title={itemName}>{props.children}</a>;
   } else {
     return <SlateReact.DefaultLeaf {...props}/>;
   }
