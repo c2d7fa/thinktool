@@ -5,7 +5,7 @@ import * as Data from "./client/data";
 import * as T from "./client/tree";
 import * as Server from "./client/server-api";
 
-import {PlainText} from "./client/ui/content";
+import * as C from "./client/ui/content";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -243,8 +243,9 @@ function ThingOverview(p: {context: StateContext; selectedThing: string; setSele
   return (
     <div className="overview">
       <ParentsOutline context={p.context} child={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
-      <PlainText
+      <C.Content
         className="selected-content"
+        getContent={thing => Data.content(p.context.state, thing)}
         text={Data.content(p.context.state, p.selectedThing)}
         setText={(text) => { p.context.setContent(p.selectedThing, text) }}/>
       <PageView context={p.context} thing={p.selectedThing}/>
@@ -289,8 +290,9 @@ function PageView(p: {context: StateContext; thing: string}) {
   }
 
   return (
-    <PlainText
+    <C.Content
       className="page"
+      getContent={thing => Data.content(p.context.state, thing)}
       placeholder="Empty Page"
       text={page ?? ""}
       setText={(text) => { p.context.setPage(p.thing, text) }}
@@ -540,8 +542,9 @@ function Content(p: {context: TreeContext; id: number}) {
   }
 
   return (
-    <PlainText
+    <C.Content
       className="content"
+      getContent={thing => Data.content(p.context.state, thing)}
       focused={T.hasFocus(p.context.tree, p.id)}
       text={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
       setText={(text) => { p.context.setContent(T.thing(p.context.tree, p.id), text) }}
