@@ -67,12 +67,19 @@ function atLastLineInEditor(): boolean {
 // #endregion
 
 function decorate([node, path]: [Slate.Node, Slate.Path]): Slate.Range[] {
+  // TODO: I don't understand what the point of this is, but if we don't add it,
+  // Slate makes empty copies of the decorators. Taken from
+  // https://github.com/ianstormtaylor/slate/blob/master/site/examples/markdown-preview.js.
+  if (!Slate.Text.isText(node)) return [];
+
   const text = Slate.Node.string(node);
 
   let ranges: Slate.Range[] = [];
 
+  // External links
+
   const linkRegex = /https?:\/\S*/g;
-  for (const match of text.matchAll(linkRegex) ?? []) {
+  for (const match of [...text.matchAll(linkRegex)]) {
     if (match.index === undefined) throw "bad programmer error";
 
     const start = match.index;
@@ -86,10 +93,22 @@ function decorate([node, path]: [Slate.Node, Slate.Path]): Slate.Range[] {
     ranges = [...ranges, {anchor: {path, offset: start}, focus: {path, offset: end}, link: text.slice(start, end)}];
   }
 
+  // Internal links
+
+  const internalLinkRegex = /#([a-z0-9]{8})/g;
+  for (const match of [...text.matchAll(internalLinkRegex)]) {
+    if (match.index === undefined) throw "bad programmer error";
+
+    const start = match.index;
+    const end = match.index + match[0].length;
+
+    ranges = [...ranges, {anchor: {path, offset: start}, focus: {path, offset: end}, internalLink: match[1]}];
+  }
+
   return ranges;
 }
 
-function renderLeaf(props: SlateReact.RenderLeafProps) {
+function renderLeaf(props: SlateReact.RenderLeafProps & {getContent(thing: string): string}) {
   if (props.leaf.link) {
     // Since the link is inside an element with contenteditable="true" and does
     // not itself have contenteditable="false", it cannot be clicked, so we need
@@ -114,6 +133,12 @@ function renderLeaf(props: SlateReact.RenderLeafProps) {
     };
 
     return <a className="plain-text-link" href={props.leaf.link} {...clickProps} {...props.attributes}>{props.children}</a>;
+  } else if (props.leaf.internalLink) {
+    // TODO: This should really be a void, inline element. See
+    // https://www.slatejs.org/examples/mentions for an example of what we want
+    // to do.
+    const itemName = props.getContent(props.leaf.internalLink);
+    return <a className="internal-link" href={`/#${props.leaf.internalLink}`} {...props.attributes} title={itemName}>{props.children}</a>;
   } else {
     return <SlateReact.DefaultLeaf {...props}/>;
   }
@@ -131,8 +156,16 @@ function nodesToText(nodes: Slate.Node[]): string {
   return result;
 }
 
-export function PlainText(props: {focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string}) {
-  const editor = React.useMemo(() => SlateReact.withReact(Slate.createEditor()), []);
+function isVoid(element: Slate.Element): boolean {
+  return false;
+}
+
+export function Content(props: {focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string; getContent(thing: string): string}) {
+  const editor = React.useMemo(() => {
+    const editor = SlateReact.withReact(Slate.createEditor());
+    editor.isVoid = isVoid;
+    return editor;
+  }, []);
   const [value, setValue] = React.useState(nodesFromText(props.text));
   const divRef = React.useRef<HTMLDivElement>(null);
 
@@ -195,7 +228,7 @@ export function PlainText(props: {focused?: boolean; text: string; setText(text:
   return (
     <div ref={divRef} className={`content-editable-plain-text ${props.className}`}>
       <SlateReact.Slate editor={editor} value={value} onChange={onChange}>
-        <SlateReact.Editable renderLeaf={renderLeaf} decorate={decorate} onKeyDown={onKeyDown} onFocus={props.onFocus}/>
+        <SlateReact.Editable renderLeaf={leafProps => renderLeaf({...leafProps, getContent: props.getContent})} decorate={decorate} onKeyDown={onKeyDown} onFocus={props.onFocus}/>
       </SlateReact.Slate>
     </div>
   );
