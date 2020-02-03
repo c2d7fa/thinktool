@@ -144,26 +144,78 @@ function renderLeaf(props: SlateReact.RenderLeafProps & {getContent(thing: strin
   }
 }
 
+function renderElement(props: SlateReact.RenderElementProps & {getContent(thing: string): string}) {
+  if (props.element.type === "internalLink") {
+    const content = props.getContent(props.element.internalLink);
+    return (
+      <a className="internal-link" href={`/#${props.element.internalLink}`} {...props.attributes} contentEditable={false}>
+        { content === "" ? <span className="empty-content">#{props.element.internalLink}</span> : content}
+        {props.children}
+      </a>);
+  } else {
+    return <SlateReact.DefaultElement {...props}/>;
+  }
+}
+
+// We store nodes as text like this: "Text text text #abcdefgh text text\nMore
+// text." That is, internal linkes are stored like "#<THING NAME>", and
+// paragraphs are separated by a newline.
+
 function nodesFromText(text: string): Slate.Node[] {
-  return [{type: "paragraph", children: [{text}]}];
+  let nodes: Slate.Node[] = [];
+
+  const segments = text.split(/(#[a-z0-9]+)/g);
+
+  for (const segment of segments) {
+    const match = segment.match(/#([a-z0-9]+)/);
+    if (match && match[0] === segment) {
+      nodes = [...nodes, {type: "internalLink", internalLink: match[1], children: [{text: ""}]}];
+    } else {
+      nodes = [...nodes, {text: segment}];
+    }
+  }
+
+  return [{type: "paragraph", children: nodes}];
 }
 
 function nodesToText(nodes: Slate.Node[]): string {
-  let result = Slate.Node.string(nodes[0]);
-  for (const node of nodes.slice(1)) {
-    result += "\n" + Slate.Node.string(node);
+  let result = "";
+
+  function addNodes(nodes) {
+    for (const node of nodes) {
+      if (node.type === "paragraph") {
+        if (node === nodes[0]) {
+          addNodes(node.children);
+        } else {
+          result += "\n";
+          addNodes(node.children);
+        }
+      } else if (node.type === "internalLink") {
+        result += "#" + node.internalLink;
+      } else {
+        result += Slate.Node.string(node);
+      }
+    }
   }
+
+  addNodes(nodes);
+
   return result;
 }
 
 function isVoid(element: Slate.Element): boolean {
-  return false;
+  return element.type === "internalLink";
+}
+
+function isInline(element: Slate.Element): boolean {
+  return element.type === "internalLink";
 }
 
 export function Content(props: {focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string; getContent(thing: string): string}) {
   const editor = React.useMemo(() => {
     const editor = SlateReact.withReact(Slate.createEditor());
     editor.isVoid = isVoid;
+    editor.isInline = isInline;
     return editor;
   }, []);
   const [value, setValue] = React.useState(nodesFromText(props.text));
@@ -202,6 +254,12 @@ export function Content(props: {focused?: boolean; text: string; setText(text: s
   }
 
   function onKeyDown(ev: React.KeyboardEvent): void {
+    if (ev.key === "l" && ev.altKey) {
+      const id = window.prompt("Enter ID of linked thing (e.g. 'q4s97lfo')");
+      editor.insertNode({type: "internalLink", internalLink: id, children: [{text: ""}]});
+      return ev.preventDefault();
+    }
+
     if ((ev.key === "ArrowUp" && !atFirstLineInEditor() || ev.key === "ArrowDown" && !atLastLineInEditor()) && !(ev.ctrlKey || ev.altKey)) {
       // Arrow key without modifiers inside text. Use normal action.
       return;
@@ -228,7 +286,12 @@ export function Content(props: {focused?: boolean; text: string; setText(text: s
   return (
     <div ref={divRef} className={`content-editable-plain-text ${props.className}`}>
       <SlateReact.Slate editor={editor} value={value} onChange={onChange}>
-        <SlateReact.Editable renderLeaf={leafProps => renderLeaf({...leafProps, getContent: props.getContent})} decorate={decorate} onKeyDown={onKeyDown} onFocus={props.onFocus}/>
+        <SlateReact.Editable
+          renderLeaf={leafProps => renderLeaf({...leafProps, getContent: props.getContent})}
+          renderElement={elementProps => renderElement({...elementProps, getContent: props.getContent})}
+          decorate={decorate}
+          onKeyDown={onKeyDown}
+          onFocus={props.onFocus}/>
       </SlateReact.Slate>
     </div>
   );
