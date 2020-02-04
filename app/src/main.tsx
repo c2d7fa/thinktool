@@ -586,12 +586,43 @@ function Content(p: {context: TreeContext; id: number}) {
   );
 }
 
+function BackreferencesItem(p: {context: TreeContext; parent: number}) {
+  const backreferences = Data.backreferences(p.context.state, T.thing(p.context.tree, p.parent));
+
+  return (
+    <li className="outline-item backreferences-item">
+      <span className="item-line">
+        <Bullet
+          beginDrag={() => {}}
+          expanded={true}
+          toggle={() => {}}
+          page={false}
+          onMiddleClick={() => {}}
+        />
+        <span className="backreferences-text">{backreferences.length} references</span>
+      </span>
+    </li>
+  );
+}
+
 function Subtree(p: {context: TreeContext; parent: number; children?: React.ReactNode[] | React.ReactNode}) {
   const children = T.children(p.context.tree, p.parent).map(child => {
     return <ExpandableItem key={child} id={child} context={p.context}/>;
   });
 
-  return <ul className="outline-tree">{children}{p.children}</ul>;
+  const backreferences = Data.backreferences(p.context.state, T.thing(p.context.tree, p.parent));
+
+  if (backreferences.length > 0) {
+    return (
+      <ul className="outline-tree">
+        {children}
+        {p.children}
+        <BackreferencesItem key="backreferences" parent={p.parent} context={p.context}/>
+      </ul>
+    );
+  } else {
+    return <ul className="outline-tree">{children}{p.children}</ul>;
+  }
 }
 
 // ==

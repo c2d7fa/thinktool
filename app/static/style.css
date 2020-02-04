@@ -142,6 +142,14 @@ input.content {
     flex-shrink: 0;
 }
 
+.backreferences-text {
+    font-size: 0.8em;
+    font-family: "Titillium Web";
+    text-transform: uppercase;
+    color: #808080;
+    cursor: default;
+}
+
 .selected-content {
     font-weight: bold;
 }
