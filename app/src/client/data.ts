@@ -142,3 +142,33 @@ export function parents(state: Things, child: string): string[] {
 }
 
 export const empty: Things = {things: {"0": {content: "root", children: []}}};
+
+// #region In-line references
+//
+// Items may reference other items in their content or pages. Such items are
+// displayed with the referenced item embedded where the reference is.
+//
+// We currently use a pretty lazy way of implementing this: References are
+// simply stored as part of the string in the format '#<ITEM ID>', e.g.
+// '#q54vf530'.
+
+export function references(state: Things, thing: string): string[] {
+  let result: string[] = [];
+  for (const referenceMatch of content(state, thing).matchAll(/#([a-z0-9]+)/g)) {
+    if (typeof referenceMatch[1] !== "string") throw "bad programmer error";
+    result = [...result, referenceMatch[1]];
+  }
+  return result;
+}
+
+export function backreferences(state: Things, thing: string): string[] {
+  let result: string[] = [];
+  for (const other in state.things) {
+    if (references(state, other).includes(thing)) {
+      result = [...result, other];
+    }
+  }
+  return result;
+}
+
+// #endregion

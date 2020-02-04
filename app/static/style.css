@@ -55,6 +55,14 @@ body {
     transition: position 0.3s ease, padding 0.3s ease, margin 0.3s ease;
 }
 
+.link-section {
+    font-size: 0.8em;
+    color: #b0b0b0;
+    cursor: default;
+    font-family: "Titillium Web";
+    text-transform: uppercase;
+}
+
 ul.outline-tree {
     margin: 0 auto;
     list-style: none;
