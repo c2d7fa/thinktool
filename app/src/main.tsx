@@ -416,7 +416,7 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
 }
 
 function PlaceholderItem(p: {context: TreeContext; parent: number}) {
-  function onFocus(ev: React.FocusEvent<HTMLInputElement>): void {
+  function onFocus(ev: React.FocusEvent<HTMLDivElement>): void {
     const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, 0);
     p.context.setState(newState);
     p.context.setTree(T.focus(newTree, newId));
@@ -428,7 +428,7 @@ function PlaceholderItem(p: {context: TreeContext; parent: number}) {
     <li className="outline-item">
       <span className="item-line">
         <Bullet page={false} beginDrag={() => { return }} expanded={true} toggle={() => { return }}/>
-        <input className="content" value={""} readOnly placeholder={"New Item"} onFocus={onFocus}/>
+        <span className="content placeholder-child" onFocus={onFocus} tabIndex={0}>New Item</span>
       </span>
     </li>
   );
