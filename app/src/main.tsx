@@ -252,12 +252,12 @@ function ThingOverview(p: {context: StateContext; selectedThing: string; setSele
         setText={(text) => { p.context.setContent(p.selectedThing, text) }}/>
       <PageView context={p.context} thing={p.selectedThing}/>
       <div className="children">
+        <h1 className="link-section">Children</h1>
         <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
         { hasReferences && <>
           <h1 className="link-section">References</h1>
           <ReferencesOutline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
         </> }
-
       </div>
     </div>);
 }
@@ -283,7 +283,10 @@ function ParentsOutline(p: {context: StateContext; child: string; setSelectedThi
   if (parentLinks.length === 0) {
     return <span className="parents"><span className="no-parents">No parents</span></span>;
   } else {
-    return <span className="parents"><ul className="outline-tree">{parentLinks}</ul></span>;
+    return <span className="parents">
+      <h1 className="link-section">Parents</h1>
+      <ul className="outline-tree">{parentLinks}</ul>
+    </span>;
   }
 }
 
@@ -406,7 +409,7 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
   const context: TreeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
 
   return (
-    <Subtree context={context} parent={0}>
+    <Subtree context={context} parent={0} omitReferences={true}>
       { T.children(tree, 0).length === 0 && <PlaceholderItem context={context} parent={0}/> }
     </Subtree>
   );
@@ -618,14 +621,14 @@ function BackreferencesSubtree(p: {context: TreeContext; parent: number}) {
   );
 }
 
-function Subtree(p: {context: TreeContext; parent: number; children?: React.ReactNode[] | React.ReactNode}) {
+function Subtree(p: {context: TreeContext; parent: number; children?: React.ReactNode[] | React.ReactNode; omitReferences?: boolean}) {
   const children = T.children(p.context.tree, p.parent).map(child => {
     return <ExpandableItem key={child} id={child} context={p.context}/>;
   });
 
   const backreferences = Data.backreferences(p.context.state, T.thing(p.context.tree, p.parent));
 
-  if (backreferences.length > 0) {
+  if (backreferences.length > 0 && !p.omitReferences) {
     return (
       <ul className="outline-tree">
         {children}

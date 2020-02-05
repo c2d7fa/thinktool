@@ -55,12 +55,20 @@ body {
     transition: position 0.3s ease, padding 0.3s ease, margin 0.3s ease;
 }
 
-.link-section {
+h1.link-section {
+    margin-top: calc(1em - 1.25ex);
+    margin-bottom: 1em;
+
     font-size: 0.8em;
     color: #b0b0b0;
     cursor: default;
     font-family: "Titillium Web";
+    font-weight: normal;
     text-transform: uppercase;
+}
+
+h1.link-section:first-child {
+    margin-top: 0;
 }
 
 ul.outline-tree {
