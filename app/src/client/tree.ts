@@ -241,9 +241,10 @@ export function children(tree: Tree, parent: number): number[] {
 export function refresh(tree: Tree, state: Things): Tree {
   let result = tree;
   for (const id in tree.nodes) {
-    if (D.exists(state, thing(tree, +id)))
+    if (D.exists(state, thing(tree, +id))) { // Otherwise, it will be removed from its parents in refreshChildren.
       result = refreshChildren(state, result, +id);
-    // Otherwise, it will be removed from its parents in refreshChildren.
+      result = refreshBackreferencesChildren(state, result, +id);
+    }
   }
   return result;
 }
