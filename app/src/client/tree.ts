@@ -13,6 +13,7 @@ export interface Node {
   thing: string;
   expanded: boolean;
   children: number[];
+  backreferences: {expanded: boolean; children: number[]};
 }
 
 export interface Tree {
@@ -28,7 +29,7 @@ export function fromRoot(state: Things, thing: string): Tree {
   return {
     next: 1,
     root: 0,
-    nodes: {0: {thing, expanded: false, children: []}},
+    nodes: {0: {thing, expanded: false, children: [], backreferences: {expanded: false, children: []}}},
     focus: null,
   };
 }
@@ -166,7 +167,7 @@ function refreshChildren(state: Things, tree: Tree, parent: number): Tree {
     // TODO: Clean up removed children.
     let result: Tree = {...tree, nodes: {...tree.nodes, [parent]: {...tree.nodes[parent], children: []}}};
 
-    for (const childThing of D.children(state, thing(tree, parent))) {
+    for (const childThing of stateChildren) {
       const [newChild, newResult] = load(state, result, childThing);
       result = newResult;
       result.nodes[parent].children = [...result.nodes[parent].children, newChild];
@@ -208,7 +209,21 @@ export function load(state: Things, tree: Tree, thing: string): [number, Tree] {
   let result = {...tree, next: tree.next + 1};
 
   // Add node
-  result = {...result, nodes: {...result.nodes, [id]: {thing, expanded: false, children: []}}};
+  result = {
+    ...result,
+    nodes: {
+      ...result.nodes,
+      [id]: {
+        thing,
+        expanded: false,
+        children: [],
+        backreferences: {
+          expanded: false,
+          children: [],
+        },
+      },
+    },
+  };
 
   // If the child has no children, it should be expanded by default
   if (!D.hasChildren(state, thing))
@@ -411,4 +426,84 @@ export function remove(state: Things, tree: Tree, id: number): [Things, Tree] {
   const newTree = focus(tree, previousVisibleItem(tree, id));
 
   return [newState, refresh(newTree, newState)];
+}
+
+export function backreferencesExpanded(tree: Tree, id: number): boolean {
+  return tree.nodes[id].backreferences.expanded;
+}
+
+// TODO: Massive code duplication between this and 'refreshChildren'
+function refreshBackreferencesChildren(state: Things, tree: Tree, parent: number): Tree {
+  function arrayEqual<T>(a: T[], b: T[]): boolean {
+    if (a.length !== b.length)
+      return false;
+    for (let i = 0; i < a.length; i++)
+      if (a[i] !== b[i])
+        return false;
+    return true;
+  }
+
+  const stateChildren = D.backreferences(state, thing(tree, parent));
+  const treeChildren = tree.nodes[parent].backreferences.children.map(ch => thing(tree, ch));
+
+  if (!expanded(tree, parent))
+    return tree;
+  if (arrayEqual(stateChildren, treeChildren))
+    return tree;
+
+  if (stateChildren.length === treeChildren.length + 1) {
+    // Assume new child was inserted
+
+    // Copy children so we can mutate it for convencience
+    let result: Tree = {...tree, nodes: {...tree.nodes, [parent]: {...tree.nodes[parent], backreferences: {...tree.nodes[parent].backreferences, children: [...tree.nodes[parent].backreferences.children]}}}};
+
+    for (let i = 0; i < stateChildren.length; i++) {
+      if (result.nodes[parent].backreferences.children[i] === undefined) {
+        const [newChild, newResult] = load(state, result, stateChildren[i]);
+        result = newResult;
+        result.nodes[parent].backreferences.children.splice(i, 0, newChild);
+      } else {
+        if (thing(result, result.nodes[parent].backreferences.children[i]) === stateChildren[i])
+          continue;
+        const [newChild, newResult] = load(state, result, stateChildren[i]);
+        result = newResult;
+        result.nodes[parent].backreferences.children.splice(i, 0, newChild, result.nodes[parent].backreferences.children[i]);
+      }
+    }
+
+    // In case our assumption was wrong, truncate any extra elements that were inserted.
+    result.nodes[parent].backreferences.children.splice(stateChildren.length);
+
+    return result;
+  } else {
+    // We can't make any assumptions; just recreate the entire children array
+
+    // TODO: Clean up removed children.
+    let result: Tree = {...tree, nodes: {...tree.nodes, [parent]: {...tree.nodes[parent], backreferences: {...tree.nodes[parent].backreferences, children: []}}}};
+
+    for (const childThing of stateChildren) {
+      const [newChild, newResult] = load(state, result, childThing);
+      result = newResult;
+      result.nodes[parent].backreferences.children = [...result.nodes[parent].backreferences.children, newChild];
+    }
+
+    return result;
+  }
+}
+
+export function toggleBackreferences(state: Things, tree: Tree, id: number): Tree {
+  const expanded = !tree.nodes[id].backreferences.expanded;
+
+  let result = {...tree, nodes: {...tree.nodes, [id]: {...tree.nodes[id], backreferences: {...tree.nodes[id].backreferences, expanded}}}};
+
+  // Load children if necessary
+  if (expanded) {
+    result = refreshBackreferencesChildren(state, result, id);
+  }
+
+  return result;
+}
+
+export function backreferencesChildren(tree: Tree, id: number): number[] {
+  return tree.nodes[id].backreferences.children;
 }

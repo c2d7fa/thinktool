@@ -594,14 +594,27 @@ function BackreferencesItem(p: {context: TreeContext; parent: number}) {
       <span className="item-line">
         <Bullet
           beginDrag={() => {}}
-          expanded={true}
-          toggle={() => {}}
+          expanded={T.backreferencesExpanded(p.context.tree, p.parent)}
+          toggle={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
           page={false}
           onMiddleClick={() => {}}
         />
         <span className="backreferences-text">{backreferences.length} references</span>
       </span>
+      { T.backreferencesExpanded(p.context.tree, p.parent) && <BackreferencesSubtree parent={p.parent} context={p.context}/> }
     </li>
+  );
+}
+
+function BackreferencesSubtree(p: {context: TreeContext; parent: number}) {
+  const children = T.backreferencesChildren(p.context.tree, p.parent).map(child => {
+    return <ExpandableItem key={child} id={child} context={p.context}/>;
+  });
+
+  return (
+    <ul className="outline-tree">
+      {children}
+    </ul>
   );
 }
 
