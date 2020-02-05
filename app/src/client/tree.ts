@@ -187,8 +187,8 @@ export function expand(state: Things, tree: Tree, id: number): Tree {
 export function toggle(state: Things, tree: Tree, id: number): Tree {
   let expanded = !tree.nodes[id].expanded;
 
-  if (!D.hasChildren(state, thing(tree, id))) {
-    // Items without children are always expanded
+  if (!D.hasChildren(state, thing(tree, id)) && D.backreferences(state, thing(tree, id)).length === 0) {
+    // Items without children (including backreferences) are always expanded
     expanded = true;
   }
 
@@ -225,8 +225,8 @@ export function load(state: Things, tree: Tree, thing: string): [number, Tree] {
     },
   };
 
-  // If the child has no children, it should be expanded by default
-  if (!D.hasChildren(state, thing))
+  // If the child has no children (including backreferences), it should be expanded by default
+  if (!D.hasChildren(state, thing) && D.backreferences(state, thing).length === 0)
     result.nodes[id].expanded = true;
 
   return [id, result];
