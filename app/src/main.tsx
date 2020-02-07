@@ -246,6 +246,7 @@ function ThingOverview(p: {context: StateContext; selectedThing: string; setSele
     <div className="overview">
       <ParentsOutline context={p.context} child={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
       <C.Content
+        things={p.context.state}
         className="selected-content"
         getContent={thing => Data.content(p.context.state, thing)}
         text={Data.content(p.context.state, p.selectedThing)}
@@ -327,6 +328,7 @@ function PageView(p: {context: StateContext; thing: string}) {
 
   return (
     <C.Content
+      things={p.context.state}
       className="page"
       getContent={thing => Data.content(p.context.state, thing)}
       placeholder="Empty Page"
@@ -579,6 +581,7 @@ function Content(p: {context: TreeContext; id: number}) {
 
   return (
     <C.Content
+      things={p.context.state}
       className="content"
       getContent={thing => Data.content(p.context.state, thing)}
       focused={T.hasFocus(p.context.tree, p.id)}

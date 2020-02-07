@@ -27,7 +27,8 @@ module.exports = {
     "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/semi": ["error", "always", {"omitLastInOneLineBlock": true}],
     "comma-dangle": ["error", "always-multiline"],
-    "react-hooks/rules-of-hooks": "error",
+    "no-inner-declarations": "off",
+    "react-hooks/rules-of-hooks": "error"
   },
   settings: {
     react: {
