@@ -163,7 +163,7 @@ function nodesFromText(text: string): Slate.Node[] {
 function nodesToText(nodes: Slate.Node[]): string {
   let result = "";
 
-  function addNodes(nodes) {
+  function addNodes(nodes: Slate.Node[]) {
     for (const node of nodes) {
       if (node.type === "paragraph") {
         if (node === nodes[0]) {
@@ -193,6 +193,41 @@ function isInline(element: Slate.Element): boolean {
   return element.type === "internalLink";
 }
 
+function LinkAutocompletePopup(props: {hide(): void; submit(thing: string): void; position: {x: number; y: number}}) {
+  const [text, setText] = React.useState("");
+  const ref = React.useRef<HTMLInputElement>(null);
+
+  // This element should always be focused when it exists. We expect the parent
+  // to destroy us through the 'hide' callback.
+  React.useEffect(() => {
+    ref.current?.focus();
+  }, []);
+
+  function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
+    if (ev.key === "Enter") {
+      console.log("Submitting %o", text);
+      props.submit(text);
+      props.hide();
+    } else if (ev.key === "Escape") {
+      console.log("Canceled");
+      props.hide();
+    }
+  }
+
+  return (
+    <div id="link-autocomplete-popup" style={{left: props.position.x, right: props.position.y}}>
+      <input
+        ref={ref}
+        type="text"
+        value={text}
+        onChange={(ev: React.ChangeEvent<HTMLInputElement>) => setText(ev.target.value)}
+        onBlur={props.hide}
+        onKeyDown={onKeyDown}
+      />
+    </div>
+  );
+}
+
 export function Content(props: {focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string; getContent(thing: string): string}) {
   const editor = React.useMemo(() => {
     const editor = SlateReact.withReact(Slate.createEditor());
@@ -202,6 +237,9 @@ export function Content(props: {focused?: boolean; text: string; setText(text: s
   }, []);
   const [value, setValue] = React.useState(nodesFromText(props.text));
   const divRef = React.useRef<HTMLDivElement>(null);
+
+  const [inactiveEditorSelection, setInactiveEditorSelection] = React.useState<Slate.Range | null>(null);
+  const [showLinkPopup, setShowLinkPopup] = React.useState(false);
 
   // I don't entirely understand how focus is supposed to be handled in Slate,
   // so we use a bit of a hack (or at least, I think it's a hack).
@@ -249,8 +287,11 @@ export function Content(props: {focused?: boolean; text: string; setText(text: s
 
   function onKeyDown(ev: React.KeyboardEvent): void {
     if (ev.key === "l" && ev.altKey) {
-      const id = window.prompt("Enter ID of linked thing (e.g. 'q4s97lfo')");
-      editor.insertNode({type: "internalLink", internalLink: id, children: [{text: ""}]});
+      // Before we show the link popup, we want to remember the old selection,
+      // so we can restore it afterwards.
+      setInactiveEditorSelection(editor.selection);
+
+      setShowLinkPopup(true);
       return ev.preventDefault();
     }
 
@@ -277,6 +318,30 @@ export function Content(props: {focused?: boolean; text: string; setText(text: s
     }
   }
 
+  const linkPopup = (() => {
+    if (!showLinkPopup) return null;
+
+    if (editor.selection !== null) {
+      const range = SlateReact.ReactEditor.toDOMRange(editor, editor.selection);
+      const {x, y} = range.getBoundingClientRect();
+
+      function submit(id: string): void {
+        // When we focus the popup, Slate will have forgotten the old selection,
+        // so we need to restore it first:
+        editor.selection = inactiveEditorSelection;
+        SlateReact.ReactEditor.focus(editor);
+
+        editor.insertNode({type: "internalLink", internalLink: id, children: [{text: ""}]});
+      }
+
+      return <LinkAutocompletePopup hide={() => setShowLinkPopup(false)} position={{x, y}} submit={submit}/>;
+    } else {
+      // TODO: This happens sometimes. Namely when the focus is moved to the
+      // LinkAutocompletePopup we just created. We probably need to handle this
+      // case, right?
+    }
+  })();
+
   return (
     <div ref={divRef} className={`content-editable-plain-text ${props.className}`}>
       <SlateReact.Slate editor={editor} value={value} onChange={onChange}>
@@ -286,6 +351,7 @@ export function Content(props: {focused?: boolean; text: string; setText(text: s
           decorate={decorate}
           onKeyDown={onKeyDown}
           onFocus={props.onFocus}/>
+        {linkPopup}
       </SlateReact.Slate>
     </div>
   );

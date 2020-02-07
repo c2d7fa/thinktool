@@ -420,3 +420,7 @@ a.internal-link .empty-content {
     font-family: "Titillium Web";
     text-transform: uppercase;
 }
+
+#link-autocomplete-popup {
+    position: absolute;
+}
