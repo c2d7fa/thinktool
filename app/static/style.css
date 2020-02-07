@@ -74,7 +74,12 @@ h1.link-section:first-child {
 ul.outline-tree {
     margin: 0 auto;
     list-style: none;
-    padding-left: 1.5rem;
+    padding-left: 1.6em;
+}
+
+/* Root tree */
+:not(.outline-item) > .outline-tree {
+    padding-left: 1em;
 }
 
 .bullet {
@@ -83,7 +88,7 @@ ul.outline-tree {
     width: 1.35ex;
     height: 1.35ex;
     padding: 0.5ex;
-    margin-right: 0.65ex;
+    margin-right: 0.6em;
     cursor: pointer;
     background-repeat: no-repeat;
 
@@ -137,7 +142,7 @@ ul.outline-root-tree {
 
 .item-line .content {
     width: 100%;
-    margin-bottom: 1ex;
+    margin-bottom: 0.8em;
 }
 
 .content.placeholder-child {
@@ -151,7 +156,7 @@ ul.outline-root-tree {
 .backreferences-text {
     display: block;
     width: 100%;
-    margin-bottom: 1ex;
+    margin-bottom: 1em;
 
     font-size: 0.8em;
     font-family: "Titillium Web";
