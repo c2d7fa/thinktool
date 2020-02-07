@@ -143,7 +143,22 @@ export function parents(state: Things, child: string): string[] {
 
 export const empty: Things = {things: {"0": {content: "root", children: []}}};
 
-// #region In-line references
+// Search
+
+// TODO: We should use some kind of streaming data structure for search results,
+// so that we don't have to wait for the entire thing before we can display
+// something to the user.
+export function search(state: Things, text: string): string[] {
+  let results: string[] = [];
+  for (const thing in state.things) {
+    if (content(state, thing).toLowerCase().includes(text.toLowerCase())) {
+      results = [...results, thing];
+    }
+  }
+  return results;
+}
+
+// In-line references
 //
 // Items may reference other items in their content or pages. Such items are
 // displayed with the referenced item embedded where the reference is.
@@ -170,5 +185,3 @@ export function backreferences(state: Things, thing: string): string[] {
   }
   return result;
 }
-
-// #endregion

@@ -1,7 +1,10 @@
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 
 import * as Slate from "slate";
 import * as SlateReact from "slate-react";
+
+import * as D from "../data";
 
 // #region Lines in the editor
 
@@ -193,8 +196,14 @@ function isInline(element: Slate.Element): boolean {
   return element.type === "internalLink";
 }
 
-function LinkAutocompletePopup(props: {hide(): void; submit(thing: string): void; position: {x: number; y: number}}) {
-  const [text, setText] = React.useState("");
+function search(state: D.Things, text: string): [string, string][] {
+  return D.search(state, text).slice(0, 8).map(thing => [D.content(state, thing), thing]);
+}
+
+function LinkAutocompletePopup(props: {state: D.Things; hide(): void; submit(thing: string): void; position: {x: number; y: number}}) {
+  const [text, setText_] = React.useState("");
+  const [results, setResults] = React.useState<[string, string][]>([]);
+  const [selectedIndex, setSelectedIndex] = React.useState<number>(-1); // -1 means nothing selected
   const ref = React.useRef<HTMLInputElement>(null);
 
   // This element should always be focused when it exists. We expect the parent
@@ -203,19 +212,40 @@ function LinkAutocompletePopup(props: {hide(): void; submit(thing: string): void
     ref.current?.focus();
   }, []);
 
-  function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
-    if (ev.key === "Enter") {
-      console.log("Submitting %o", text);
-      props.submit(text);
-      props.hide();
-    } else if (ev.key === "Escape") {
-      console.log("Canceled");
-      props.hide();
+  function setText(text: string): void {
+    setText_(text);
+
+    if (text === "") {
+      setResults([]);
+    } else {
+      setResults(search(props.state, text));
     }
   }
 
-  return (
-    <div id="link-autocomplete-popup" style={{left: props.position.x, right: props.position.y}}>
+  function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
+    if (ev.key === "Enter") {
+      props.submit(results[selectedIndex][1]);
+      props.hide();
+      ev.preventDefault();
+    } else if (ev.key === "Escape") {
+      console.log("Canceled");
+      props.hide();
+      ev.preventDefault();
+    } else if (ev.key === "ArrowDown") {
+      setSelectedIndex(Math.min(results.length, selectedIndex + 1));
+      ev.preventDefault();
+    } else if (ev.key === "ArrowUp") {
+      setSelectedIndex(Math.max(-1, selectedIndex - 1));
+      ev.preventDefault;
+    }
+  }
+
+  function Result(props: {result: [string, string]; selected: boolean}) {
+    return <li className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}><span className="link-autocomplete-popup-result-content">{props.result[0]} ({props.result[1]})</span></li>;
+  }
+
+  return ReactDOM.createPortal(
+    <div id="link-autocomplete-popup" style={{left: props.position.x, top: props.position.y}}>
       <input
         ref={ref}
         type="text"
@@ -224,11 +254,16 @@ function LinkAutocompletePopup(props: {hide(): void; submit(thing: string): void
         onBlur={props.hide}
         onKeyDown={onKeyDown}
       />
-    </div>
+      { results.length !== 0 &&
+        <ul id="link-autocomplete-popup-results">
+          {results.map((result, i) => <Result key={result[1]} selected={i === selectedIndex} result={result}/>)}
+        </ul> }
+    </div>,
+    document.body
   );
 }
 
-export function Content(props: {focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string; getContent(thing: string): string}) {
+export function Content(props: {things: D.Things; focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string; getContent(thing: string): string}) {
   const editor = React.useMemo(() => {
     const editor = SlateReact.withReact(Slate.createEditor());
     editor.isVoid = isVoid;
@@ -323,7 +358,7 @@ export function Content(props: {focused?: boolean; text: string; setText(text: s
 
     if (editor.selection !== null) {
       const range = SlateReact.ReactEditor.toDOMRange(editor, editor.selection);
-      const {x, y} = range.getBoundingClientRect();
+      const rect = range.getBoundingClientRect();
 
       function submit(id: string): void {
         // When we focus the popup, Slate will have forgotten the old selection,
@@ -334,7 +369,7 @@ export function Content(props: {focused?: boolean; text: string; setText(text: s
         editor.insertNode({type: "internalLink", internalLink: id, children: [{text: ""}]});
       }
 
-      return <LinkAutocompletePopup hide={() => setShowLinkPopup(false)} position={{x, y}} submit={submit}/>;
+      return <LinkAutocompletePopup state={props.things} hide={() => setShowLinkPopup(false)} position={{x: rect.x + 2, y: rect.y + (rect.height / 2)}} submit={submit}/>;
     } else {
       // TODO: This happens sometimes. Namely when the focus is moved to the
       // LinkAutocompletePopup we just created. We probably need to handle this
