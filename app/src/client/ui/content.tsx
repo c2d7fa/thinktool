@@ -224,8 +224,20 @@ export function Content(props: {focused?: boolean; text: string; setText(text: s
   }, [props.focused]);
 
   React.useEffect(() => {
-    if (props.text !== nodesToText(value))
+    if (props.text !== nodesToText(value)) {
+      // TODO
+      //
+      // Workaround for https://github.com/ianstormtaylor/slate/issues/3477
+      //
+      // Sometimes when we follow a link, we get an error about Slate being
+      // unable to "find a descendant at path [0,1,0] in node ...". These next
+      // two lines fix this, but I haven't really looked into why, so it may be
+      // a bad idea to do this:
+      editor.selection = { anchor: { path: [0,0], offset:0 }, focus: { path: [0,0], offset: 0 } };
+      SlateReact.ReactEditor.blur(editor);
+
       setValue(nodesFromText(props.text));
+    }
   }, [props.text]);
 
   function onChange(nodes: Slate.Node[]): void {
