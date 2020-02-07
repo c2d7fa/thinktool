@@ -240,6 +240,8 @@ function App({initialState, username}: {initialState: Things; username: string})
 }
 
 function ThingOverview(p: {context: StateContext; selectedThing: string; setSelectedThing(value: string): void}) {
+  const hasReferences = Data.backreferences(p.context.state, p.selectedThing).length > 0;
+
   return (
     <div className="overview">
       <ParentsOutline context={p.context} child={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
@@ -250,10 +252,21 @@ function ThingOverview(p: {context: StateContext; selectedThing: string; setSele
         setText={(text) => { p.context.setContent(p.selectedThing, text) }}/>
       <PageView context={p.context} thing={p.selectedThing}/>
       <div className="children">
+        <h1 className="link-section">Children</h1>
         <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+        { hasReferences && <>
+          <h1 className="link-section">References</h1>
+          <ReferencesOutline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+        </> }
       </div>
     </div>);
 }
+
+// TODO: ParentsOutline and ReferencesOutline should both have their use-cases
+// supported directly by the Tree module, like Outline, and they should support
+// drag and drop between trees. They should also have appropriate custom
+// behavior in response to key-presses (e.g. Alt+Backspace in ParentsOutline
+// should remove parent from child).
 
 function ParentsOutline(p: {context: StateContext; child: string; setSelectedThing: SetSelectedThing}) {
   function ParentItem(p: {context: StateContext; parent: string; setSelectedThing: SetSelectedThing}) {
@@ -270,9 +283,32 @@ function ParentsOutline(p: {context: StateContext; child: string; setSelectedThi
   if (parentLinks.length === 0) {
     return <span className="parents"><span className="no-parents">No parents</span></span>;
   } else {
-    return <span className="parents"><ul className="outline-tree">{parentLinks}</ul></span>;
+    return <span className="parents">
+      <h1 className="link-section">Parents</h1>
+      <ul className="outline-tree">{parentLinks}</ul>
+    </span>;
   }
 }
+
+function ReferencesOutline(p: {context: StateContext; root: string; setSelectedThing: SetSelectedThing}) {
+  function ReferenceItem(p: {context: StateContext; reference: string; setSelectedThing: SetSelectedThing}) {
+    const [tree, setTree] = React.useState(T.fromRoot(p.context.state, p.reference));
+    const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
+    const treeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
+    return <ExpandableItem id={0} context={treeContext}/>;
+  }
+
+  const referenceItems = Data.backreferences(p.context.state, p.root).map((reference: string) => {
+    return <ReferenceItem key={reference} context={p.context} reference={reference} setSelectedThing={p.setSelectedThing}/>;
+  });
+
+  if (referenceItems.length === 0) {
+    return null;
+  } else {
+    return <ul className="outline-tree">{referenceItems}</ul>;
+  }
+}
+
 
 function PageView(p: {context: StateContext; thing: string}) {
   const page = Data.page(p.context.state, p.thing);
@@ -373,14 +409,14 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
   const context: TreeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
 
   return (
-    <Subtree context={context} parent={0}>
+    <Subtree context={context} parent={0} omitReferences={true}>
       { T.children(tree, 0).length === 0 && <PlaceholderItem context={context} parent={0}/> }
     </Subtree>
   );
 }
 
 function PlaceholderItem(p: {context: TreeContext; parent: number}) {
-  function onFocus(ev: React.FocusEvent<HTMLInputElement>): void {
+  function onFocus(ev: React.FocusEvent<HTMLDivElement>): void {
     const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, 0);
     p.context.setState(newState);
     p.context.setTree(T.focus(newTree, newId));
@@ -392,7 +428,7 @@ function PlaceholderItem(p: {context: TreeContext; parent: number}) {
     <li className="outline-item">
       <span className="item-line">
         <Bullet page={false} beginDrag={() => { return }} expanded={true} toggle={() => { return }}/>
-        <input className="content" value={""} readOnly placeholder={"New Item"} onFocus={onFocus}/>
+        <span className="content placeholder-child" onFocus={onFocus} tabIndex={0}>New Item</span>
       </span>
     </li>
   );
@@ -553,12 +589,56 @@ function Content(p: {context: TreeContext; id: number}) {
   );
 }
 
-function Subtree(p: {context: TreeContext; parent: number; children?: React.ReactNode[] | React.ReactNode}) {
+function BackreferencesItem(p: {context: TreeContext; parent: number}) {
+  const backreferences = Data.backreferences(p.context.state, T.thing(p.context.tree, p.parent));
+
+  return (
+    <li className="outline-item backreferences-item">
+      <span className="item-line">
+        <Bullet
+          beginDrag={() => {}}
+          expanded={T.backreferencesExpanded(p.context.tree, p.parent)}
+          toggle={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
+          page={false}
+          onMiddleClick={() => {}}
+        />
+        <span className="backreferences-text">{backreferences.length} references</span>
+      </span>
+      { T.backreferencesExpanded(p.context.tree, p.parent) && <BackreferencesSubtree parent={p.parent} context={p.context}/> }
+    </li>
+  );
+}
+
+function BackreferencesSubtree(p: {context: TreeContext; parent: number}) {
+  const children = T.backreferencesChildren(p.context.tree, p.parent).map(child => {
+    return <ExpandableItem key={child} id={child} context={p.context}/>;
+  });
+
+  return (
+    <ul className="outline-tree">
+      {children}
+    </ul>
+  );
+}
+
+function Subtree(p: {context: TreeContext; parent: number; children?: React.ReactNode[] | React.ReactNode; omitReferences?: boolean}) {
   const children = T.children(p.context.tree, p.parent).map(child => {
     return <ExpandableItem key={child} id={child} context={p.context}/>;
   });
 
-  return <ul className="outline-tree">{children}{p.children}</ul>;
+  const backreferences = Data.backreferences(p.context.state, T.thing(p.context.tree, p.parent));
+
+  if (backreferences.length > 0 && !p.omitReferences) {
+    return (
+      <ul className="outline-tree">
+        {children}
+        {p.children}
+        <BackreferencesItem key="backreferences" parent={p.parent} context={p.context}/>
+      </ul>
+    );
+  } else {
+    return <ul className="outline-tree">{children}{p.children}</ul>;
+  }
 }
 
 // ==

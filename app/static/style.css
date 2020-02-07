@@ -55,6 +55,22 @@ body {
     transition: position 0.3s ease, padding 0.3s ease, margin 0.3s ease;
 }
 
+h1.link-section {
+    margin-top: calc(1em - 1.25ex);
+    margin-bottom: 1em;
+
+    font-size: 0.8em;
+    color: #b0b0b0;
+    cursor: default;
+    font-family: "Titillium Web";
+    font-weight: normal;
+    text-transform: uppercase;
+}
+
+h1.link-section:first-child {
+    margin-top: 0;
+}
+
 ul.outline-tree {
     margin: 0 auto;
     list-style: none;
@@ -103,12 +119,6 @@ ul.outline-root-tree {
     padding-left: 0;
 }
 
-input.content {
-    border: none;
-    background-color: inherit;
-    outline: none;
-}
-
 .item-line.drop-target {
     border-top: 3px solid #d0d0d0;
     margin-top: -3px;
@@ -130,8 +140,26 @@ input.content {
     margin-bottom: 1ex;
 }
 
+.content.placeholder-child {
+    color: #b0b0b0;
+}
+
 .item-line .bullet {
     flex-shrink: 0;
+}
+
+.backreferences-text {
+    display: block;
+    width: 100%;
+    margin-bottom: 1ex;
+
+    font-size: 0.8em;
+    font-family: "Titillium Web";
+    text-transform: uppercase;
+    color: #808080;
+    cursor: default;
+
+    margin-top: -0.15em; /* Hack to improve vertical centering of text */
 }
 
 .selected-content {
