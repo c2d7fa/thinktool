@@ -108,26 +108,6 @@ export function exists(state: Things, thing: string): boolean {
   return typeof state.things[thing] === "object";
 }
 
-// Remove things that are not referred to anywhere.
-export function cleanGarbage(state: Things, root: string): Things {
-  const seen: {[k: string]: boolean} = {};
-  function mark(root: string): void {
-    if (seen[root]) return;
-    seen[root] = true;
-    for (const child of children(state, root))
-      mark(child);
-  }
-  mark(root);
-
-  const result = {...state, things: {...state.things}};
-
-  for (const thing in state.things)
-    if (!seen[thing] || !exists(state, thing))
-      delete result.things[thing];
-
-  return result;
-}
-
 export function parents(state: Things, child: string): string[] {
   const result: string[] = [];
 

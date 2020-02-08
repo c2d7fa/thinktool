@@ -648,7 +648,7 @@ function Subtree(p: {context: TreeContext; parent: number; children?: React.Reac
 
 async function start(): Promise<void> {
   ReactDOM.render(
-    <App initialState={Data.cleanGarbage(await Server.getFullState() as Things, "0")} username={await Server.getUsername()}/>,
+    <App initialState={await Server.getFullState() as Things} username={await Server.getUsername()}/>,
     document.querySelector("#app")
   );
 }
