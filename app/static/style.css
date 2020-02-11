@@ -251,19 +251,6 @@ ul.outline-root-tree {
     border-color: #d0d0d0;
 }
 
-.page .public-DraftEditorPlaceholder-root {
-    text-transform: uppercase;
-    font-size: 0.8em;
-    font-family: "Titillium Web";
-    position: absolute;
-    color: #c0c0c0;
-    z-index: -1;
-}
-
-.page .DraftEditor-root {
-    min-height: 1em;
-}
-
 .new-page {
     font-size: 0.8em;
     font-family: "Titillium Web";
