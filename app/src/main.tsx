@@ -7,6 +7,7 @@ import * as Server from "./client/server-api";
 
 import * as C from "./client/ui/content";
 import Search from "./client/ui/search";
+import { ThingSelectPopup } from "./client/ui/thing-select-popup";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -471,6 +472,8 @@ function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void
 }
 
 function Content(p: {context: TreeContext; id: number}) {
+  const [showChildPopup, setShowChildPopup] = React.useState(false);
+
   function onKeyDown(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean {
     if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
       const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.id);
@@ -534,12 +537,32 @@ function Content(p: {context: TreeContext; id: number}) {
       const newState = Data.remove(p.context.state, T.thing(p.context.tree, p.id));
       p.context.setState(newState);
       return true;
+    } else if (ev.key === "c" && ev.altKey) {
+      setShowChildPopup(true);
+      return true;
     } else {
       return false;
     }
   }
 
-  return (
+  const insertChildPopup = (() => {
+    if (showChildPopup) {
+      console.log("ayy");
+      const range = window.getSelection()?.getRangeAt(0);
+      const rect = range?.getBoundingClientRect();
+
+      return <ThingSelectPopup
+        hide={() => setShowChildPopup(false)}
+        position={{x: (rect?.x ?? 100) + 2, y: (rect?.y ?? 100) + ((rect?.height ?? 0) / 2)}}
+        state={p.context.state}
+        submit={(child: string) => {p.context.setState(Data.insertChild(p.context.state, T.thing(p.context.tree, p.id), child, 0))}}
+      />;
+    } else {
+      return null;
+    }
+  })();
+
+  return <>
     <C.Content
       things={p.context.state}
       className="content"
@@ -549,7 +572,8 @@ function Content(p: {context: TreeContext; id: number}) {
       setText={(text) => { p.context.setContent(T.thing(p.context.tree, p.id), text) }}
       onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.id)) }}
       onKeyDown={onKeyDown}/>
-  );
+    { insertChildPopup }
+  </>;
 }
 
 function BackreferencesItem(p: {context: TreeContext; parent: number}) {
