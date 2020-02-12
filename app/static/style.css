@@ -322,6 +322,10 @@ ul.outline-root-tree {
         padding-right: 1ex;
     }
 
+    h1.link-section {
+        margin-left: 1em;
+    }
+
     #current-user {
         margin-right: 2em;
     }
