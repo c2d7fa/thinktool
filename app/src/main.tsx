@@ -6,6 +6,7 @@ import * as T from "./client/tree";
 import * as Server from "./client/server-api";
 
 import * as C from "./client/ui/content";
+import Search from "./client/ui/search";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -234,6 +235,7 @@ function App({initialState, username}: {initialState: Things; username: string})
   };
 
   return <>
+    <Search context={context}/>
     <div id="current-user"><span className="username">{username}</span> <a className="log-out" href="/logout">log out</a></div>
     <ThingOverview context={context} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
   </>;
