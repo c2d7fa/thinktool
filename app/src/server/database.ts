@@ -57,18 +57,17 @@ export async function createUser(user: string, password: string): Promise<{type:
 
 const lastUpdates: {[userName: string]: Date | undefined} = {};
 
-export async function getAllThings(userId: UserId): Promise<{name: string; content?: string; page?: string; children?: string[]}[]> {
+export async function getAllThings(userId: UserId): Promise<{name: string; content?: string; children?: string[]}[]> {
   const documents = client.db("diaform").collection("things").find({user: userId.name});
-  return documents.project({name: 1, content: 1, children: 1, page: 1, _id: 0}).toArray();
+  return documents.project({name: 1, content: 1, children: 1, _id: 0}).toArray();
 }
 
 export async function thingExists(userId: UserId, thing: string): Promise<boolean> {
   return await client.db("diaform").collection("things").find({user: userId.name, name: thing}).count() > 0;
 }
 
-export async function updateThing(userId: UserId, thing: string, content: string, page: string | null, children: string[]): Promise<void> {
-  const operation = page === null ? {$set: {content, children}, $unset: {page}} : {$set: {content, children, page}};
-  await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, operation, {upsert: true});
+export async function updateThing(userId: UserId, thing: string, content: string, children: string[]): Promise<void> {
+  await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, {$set: {content, children}}, {upsert: true});
   lastUpdates[userId.name] = new Date();
 }
 
@@ -79,12 +78,6 @@ export async function deleteThing(userId: UserId, thing: string): Promise<void> 
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
   await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, {$set: {content}}, {upsert: true});
-  lastUpdates[userId.name] = new Date();
-}
-
-export async function setPage(userId: UserId, thing: string, page: string | null): Promise<void> {
-  const operator = page === null ? {$unset: {page}} : {$set: {page}};
-  await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, operator, {upsert: true});
   lastUpdates[userId.name] = new Date();
 }
 

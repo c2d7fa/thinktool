@@ -108,14 +108,6 @@ ul.outline-tree {
     background-image: url(/bullet-expanded.svg);
 }
 
-.bullet.collapsed-page {
-    background-image: url(/bullet-collapsed-page.svg);
-}
-
-.bullet.expanded-page {
-    background-image: url(/bullet-expanded-page.svg);
-}
-
 li.outline-item > * {
     vertical-align: middle;
     margin-top: auto;
@@ -232,56 +224,6 @@ ul.outline-root-tree {
 
 .selected-content:focus-within {
     border-color: #d0d0d0;
-}
-
-.page {
-    display: block;
-    border-radius: 6px;
-    border: 1px solid rgba(0, 0, 0, 0%);
-
-    padding: 0.5em 0.5em;
-    margin: 1em -0.5em;
-
-    transition: border-color 0.3s ease;
-}
-
-.page:hover {
-    border-color: #f0f0f0;
-}
-
-.page:focus-within {
-    border-color: #d0d0d0;
-}
-
-.new-page {
-    font-size: 0.8em;
-    font-family: "Titillium Web";
-    text-transform: uppercase;
-
-    margin: -1ex;
-    margin-top: 1em;
-
-    padding: 1ex;
-
-    display: block;
-    background: none;
-    cursor: pointer;
-    color: #b0b0b0;
-    border: none;
-    border-radius: 6px;
-
-    transition: color 0.3s ease, background-color 0.3s ease;
-
-    outline: none;
-}
-
-.new-page:hover {
-    color: #808080;
-    background-color: #f8f8f8;
-}
-
-.new-page:active {
-    color: #404040;
 }
 
 /* Login page */

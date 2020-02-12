@@ -155,7 +155,7 @@ app.post("/api/changes", requireSession, async (req, res) => {
 });
 
 app.get("/api/things", requireSession, async (req, res) => {
-  const result = (await DB.getAllThings(req.user!)).map(t => ({name: t.name, content: t.content ?? "", page: t.page, children: t.children ?? []}));
+  const result = (await DB.getAllThings(req.user!)).map(t => ({name: t.name, content: t.content ?? "", children: t.children ?? []}));
   res.type("json").send(result as Communication.FullStateResponse);
 });
 
@@ -193,7 +193,7 @@ app.put("/api/things/:thing", requireUpToDateSession, parseThing, async (req, re
     return;
   }
   const data = req.body as Communication.ThingData;
-  await DB.updateThing(req.user!, res.locals.thing, data.content, data.page ?? null, data.children);
+  await DB.updateThing(req.user!, res.locals.thing, data.content, data.children);
   session.sessionPolled(req.session!);
   res.end();
 });
@@ -211,23 +211,6 @@ app.put("/api/things/:thing/content", requireUpToDateSession, parseThingExists, 
   }
 
   await DB.setContent(req.user!, res.locals.thing, req.body);
-  session.sessionPolled(req.session!);
-  res.end();
-});
-
-app.put("/api/things/:thing/page", requireUpToDateSession, parseThingExists, async (req, res) => {
-  if (typeof req.body !== "string") {
-    res.status(400).type("text/plain").send("400 Bad Request");
-    return;
-  }
-
-  await DB.setPage(req.user!, res.locals.thing, req.body);
-  session.sessionPolled(req.session!);
-  res.end();
-});
-
-app.delete("/api/things/:thing/page", requireUpToDateSession, parseThingExists, async (req, res) => {
-  await DB.setPage(req.user!, res.locals.thing, null);
   session.sessionPolled(req.session!);
   res.end();
 });
@@ -268,8 +251,6 @@ app.get("/style.css", (req, res) => { sendStatic(res, "style.css") });
 app.get("/landing.css", (req, res) => { sendStatic(res, "landing.css") });
 app.get("/bullet-collapsed.svg", (req, res) => { sendStatic(res, "bullet-collapsed.svg") });
 app.get("/bullet-expanded.svg", (req, res) => { sendStatic(res, "bullet-expanded.svg") });
-app.get("/bullet-collapsed-page.svg", (req, res) => { sendStatic(res, "bullet-collapsed-page.svg") });
-app.get("/bullet-expanded-page.svg", (req, res) => { sendStatic(res, "bullet-expanded-page.svg") });
 app.get("/icon.png", (req, res) => { sendStatic(res, "icon.png") });
 
 // Error handling

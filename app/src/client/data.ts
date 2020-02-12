@@ -1,7 +1,6 @@
 export interface ThingData {
   content: string;
   children: string[];
-  page?: string;
 }
 
 export interface Things {
@@ -20,19 +19,6 @@ export function content(things: Things, thing: string): string {
 
 export function setContent(things: Things, thing: string, newContent: string): Things {
   return {...things, things: {...things.things, [thing]: {...things.things[thing], content: newContent}}};
-}
-
-export function page(things: Things, thing: string): string | null {
-  if (!exists(things, thing)) return "";
-  return things.things[thing].page  ?? null;
-}
-
-export function setPage(things: Things, thing: string, page: string): Things {
-  return {...things, things: {...things.things, [thing]: {...things.things[thing], page}}};
-}
-
-export function removePage(things: Things, thing: string): Things {
-  return {...things, things: {...things.things, [thing]: {...things.things[thing], page: undefined}}};
 }
 
 export function hasChildren(things: Things, thing: string): boolean {
@@ -140,8 +126,8 @@ export function search(state: Things, text: string): string[] {
 
 // In-line references
 //
-// Items may reference other items in their content or pages. Such items are
-// displayed with the referenced item embedded where the reference is.
+// Items may reference other items in their content. Such items are displayed
+// with the referenced item embedded where the reference is.
 //
 // We currently use a pretty lazy way of implementing this: References are
 // simply stored as part of the string in the format '#<ITEM ID>', e.g.

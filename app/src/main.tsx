@@ -27,8 +27,6 @@ interface StateContext {
   setLocalState(value: Things): void;
 
   setContent(thing: string, content: string): void;
-  setPage(thing: string, page: string): void;
-  removePage(thing: string): void;
 
   undo(): void;
 }
@@ -136,16 +134,6 @@ function useStateContext(initialState: Things): StateContext {
     batched.update(`${thing}/content`, () => { Server.setContent(thing, content) });
   }
 
-  function setPage(thing: string, page: string): void {
-    setLocalState(Data.setPage(state, thing, page));
-    batched.update(`${thing}/page`, () => { Server.setPage(thing, page) });
-  }
-
-  function removePage(thing: string): void {
-    setLocalState(Data.removePage(state, thing));
-    Server.removePage(thing);
-  }
-
   // TODO: setState and undo should override timeouts from setContent.
 
   function setState(newState: Things): void {
@@ -180,7 +168,7 @@ function useStateContext(initialState: Things): StateContext {
     }
   }
 
-  return {state, setState, setLocalState, setContent, undo: undo_, setPage, removePage};
+  return {state, setState, setLocalState, setContent, undo: undo_};
 }
 
 function App({initialState, username}: {initialState: Things; username: string}) {
@@ -253,7 +241,6 @@ function ThingOverview(p: {context: StateContext; selectedThing: string; setSele
         getContent={thing => Data.content(p.context.state, thing)}
         text={Data.content(p.context.state, p.selectedThing)}
         setText={(text) => { p.context.setContent(p.selectedThing, text) }}/>
-      <PageView context={p.context} thing={p.selectedThing}/>
       <div className="children">
         <h1 className="link-section">Children</h1>
         <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
@@ -310,34 +297,6 @@ function ReferencesOutline(p: {context: StateContext; root: string; setSelectedT
   } else {
     return <ul className="outline-tree">{referenceItems}</ul>;
   }
-}
-
-
-function PageView(p: {context: StateContext; thing: string}) {
-  const page = Data.page(p.context.state, p.thing);
-
-  if (Data.page(p.context.state, p.thing) === null) {
-    return <button onClick={() => { p.context.setPage(p.thing, "") }} className="new-page">Create Page</button>;
-  }
-
-  function onKeyDown(ev: React.KeyboardEvent<{}>): boolean {
-    if (ev.key === "Delete" && ev.altKey) {
-      p.context.removePage(p.thing);
-      return true;
-    }
-    return false;
-  }
-
-  return (
-    <C.Content
-      things={p.context.state}
-      className="page"
-      getContent={thing => Data.content(p.context.state, thing)}
-      placeholder="Empty Page"
-      text={page ?? ""}
-      setText={(text) => { p.context.setPage(p.thing, text) }}
-      onKeyDown={onKeyDown}/>
-  );
 }
 
 function Outline(p: {context: StateContext; root: string; setSelectedThing: SetSelectedThing}) {
@@ -431,7 +390,7 @@ function PlaceholderItem(p: {context: TreeContext; parent: number}) {
   return (
     <li className="outline-item">
       <span className="item-line">
-        <Bullet page={false} beginDrag={() => { return }} expanded={true} toggle={() => { return }}/>
+        <Bullet beginDrag={() => { return }} expanded={true} toggle={() => { return }}/>
         <span className="content placeholder-child" onFocus={onFocus} tabIndex={0}>New Item</span>
       </span>
     </li>
@@ -485,7 +444,6 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
           beginDrag={beginDrag}
           expanded={T.expanded(p.context.tree, p.id)}
           toggle={toggle}
-          page={Data.page(p.context.state, T.thing(p.context.tree, p.id)) !== null}
           onMiddleClick={() => { p.context.setSelectedThing(T.thing(p.context.tree, p.id)) }}/>
         <Content context={p.context} id={p.id}/>
       </span>
@@ -494,7 +452,7 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
   );
 }
 
-function Bullet(p: {expanded: boolean; page: boolean; toggle: () => void; beginDrag: () => void; onMiddleClick?(): void}) {
+function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void; onMiddleClick?(): void}) {
   function onAuxClick(ev: React.MouseEvent<never>): void {
     if (ev.button === 1) { // Middle click
       if (p.onMiddleClick !== undefined)
@@ -504,7 +462,7 @@ function Bullet(p: {expanded: boolean; page: boolean; toggle: () => void; beginD
 
   return (
     <span
-      className={`bullet ${p.expanded ? "expanded" : "collapsed"}${p.page ? "-page" : ""}`}
+      className={`bullet ${p.expanded ? "expanded" : "collapsed"}`}
       onMouseDown={p.beginDrag}
       onTouchStart={p.beginDrag}
       onClick={() => p.toggle()}
@@ -604,7 +562,6 @@ function BackreferencesItem(p: {context: TreeContext; parent: number}) {
           beginDrag={() => {}}
           expanded={T.backreferencesExpanded(p.context.tree, p.parent)}
           toggle={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
-          page={false}
           onMiddleClick={() => {}}
         />
         <span className="backreferences-text">{backreferences.length} references</span>
