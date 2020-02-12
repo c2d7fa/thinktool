@@ -6,7 +6,7 @@ export async function getFullState(): Promise<D.Things> {
 
   const things = {};
   for (const thing of response) {
-    things[thing.name] = {content: thing.content, children: thing.children, page: thing.page};
+    things[thing.name] = {content: thing.content, children: thing.children};
   }
 
   return {things};
@@ -18,14 +18,6 @@ export async function getUsername(): Promise<string> {
 
 export async function setContent(thing: string, content: string): Promise<void> {
   await fetch(`/api/things/${thing}/content`, {method: "put", body: content});
-}
-
-export async function setPage(thing: string, page: string): Promise<void> {
-  await fetch(`/api/things/${thing}/page`, {method: "put", body: page});
-}
-
-export async function removePage(thing: string): Promise<void> {
-  await fetch(`/api/things/${thing}/page`, {method: "delete"});
 }
 
 export async function deleteThing(thing: string): Promise<void> {
