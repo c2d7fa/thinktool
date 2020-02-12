@@ -1,0 +1,16 @@
+name: Deploy to DigitalOcean server
+on:
+  push:
+    branches:
+      - deploy
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Run deployment script on server
+      uses: appleboy/ssh-action@v0.0.7
+      with:
+        host: thinktool.io
+        username: root
+        key: ${{ secrets.key }}
+        script: ./deploy-diaform.sh
