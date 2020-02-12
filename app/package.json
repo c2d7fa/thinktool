@@ -2,6 +2,7 @@
   "name": "thinktool",
   "private": true,
   "devDependencies": {
+    "@types/bcrypt": "latest",
     "@types/express": "latest",
     "@types/mongodb": "latest",
     "@types/node": "latest",
@@ -9,6 +10,7 @@
     "@types/react": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
+    "bcrypt": "latest",
     "eslint-plugin-react-hooks": "latest",
     "eslint-plugin-react": "latest",
     "eslint": "latest",

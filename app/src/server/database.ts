@@ -1,4 +1,5 @@
 import * as mongo from "mongodb";
+import * as bcrypt from "bcrypt";
 
 export type UserId = {name: string};
 
@@ -22,7 +23,7 @@ export async function userId(name: string, password: string): Promise<UserId | n
   if (user === null) {
     return null;
   } else {
-    if (user.password as string === password) {
+    if (await bcrypt.compare(password, user.hashedPassword as string)) {
       return {name: user._id as string};
     } else {
       return null;
@@ -43,7 +44,9 @@ export async function createUser(user: string, password: string): Promise<{type:
     return {type: "error", error: "user-exists"};
   }
 
-  const result = await client.db("diaform").collection("users").insertOne({_id: user, name: user, password});
+  const hashedPassword = await bcrypt.hash(password, 6);
+
+  const result = await client.db("diaform").collection("users").insertOne({_id: user, name: user, hashedPassword});
   if (result.result.ok) {
     return {type: "success", userId: {name: user}};
   } else {
