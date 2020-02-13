@@ -239,7 +239,7 @@ function ThingOverview(p: {context: StateContext; selectedThing: string; setSele
       <C.Content
         things={p.context.state}
         className="selected-content"
-        getContent={thing => Data.content(p.context.state, thing)}
+        getContentText={thing => Data.contentText(p.context.state, thing)}
         text={Data.content(p.context.state, p.selectedThing)}
         setText={(text) => { p.context.setContent(p.selectedThing, text) }}/>
       <div className="children">
@@ -566,7 +566,7 @@ function Content(p: {context: TreeContext; id: number}) {
     <C.Content
       things={p.context.state}
       className="content"
-      getContent={thing => Data.content(p.context.state, thing)}
+      getContentText={thing => Data.contentText(p.context.state, thing)}
       focused={T.hasFocus(p.context.tree, p.id)}
       text={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
       setText={(text) => { p.context.setContent(T.thing(p.context.tree, p.id), text) }}

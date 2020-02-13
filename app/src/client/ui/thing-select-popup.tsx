@@ -4,7 +4,7 @@ import * as ReactDOM from "react-dom";
 import * as D from "../data";
 
 function search(state: D.Things, text: string): [string, string][] {
-  return D.search(state, text).slice(0, 8).map(thing => [D.content(state, thing), thing]);
+  return D.search(state, text).slice(0, 8).map(thing => [D.contentText(state, thing), thing]);
 }
 
 export function ThingSelectPopup(props: {state: D.Things; hide(): void; submit(thing: string): void; position: {x: number; y: number}}) {

@@ -111,13 +111,24 @@ export const empty: Things = {things: {"0": {content: "root", children: []}}};
 
 // Search
 
+export function contentText(state: Things, thing: string): string {
+  function contentText_(thing: string, seen: string[]): string {
+    return content(state, thing).replace(/#([a-z0-9]+)/g, (match: string, thing: string, offset: number, string: string) => {
+      if (seen.includes(thing)) return "...";
+      return contentText_(thing, [...seen, thing]);
+    });
+  }
+
+  return contentText_(thing, []);
+}
+
 // TODO: We should use some kind of streaming data structure for search results,
 // so that we don't have to wait for the entire thing before we can display
 // something to the user.
 export function search(state: Things, text: string): string[] {
   let results: string[] = [];
   for (const thing in state.things) {
-    if (content(state, thing).toLowerCase().includes(text.toLowerCase())) {
+    if (contentText(state, thing).toLowerCase().includes(text.toLowerCase())) {
       results = [...results, thing];
     }
   }

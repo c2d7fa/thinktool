@@ -28,5 +28,5 @@ function SearchResults(props: {searchText: string; context: StateContext}) {
 }
 
 function Result(props: {thing: string; context: StateContext}) {
-  return <a href={`#${props.thing}`}><li className="search-result">{D.content(props.context.state, props.thing)}</li></a>;
+  return <a href={`#${props.thing}`}><li className="search-result">{D.contentText(props.context.state, props.thing)}</li></a>;
 }

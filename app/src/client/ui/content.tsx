@@ -100,7 +100,7 @@ function decorate([node, path]: [Slate.Node, Slate.Path]): Slate.Range[] {
   return ranges;
 }
 
-function renderLeaf(props: SlateReact.RenderLeafProps & {getContent(thing: string): string}) {
+function renderLeaf(props: SlateReact.RenderLeafProps) {
   if (props.leaf.link) {
     // Since the link is inside an element with contenteditable="true" and does
     // not itself have contenteditable="false", it cannot be clicked, so we need
@@ -130,9 +130,9 @@ function renderLeaf(props: SlateReact.RenderLeafProps & {getContent(thing: strin
   }
 }
 
-function renderElement(props: SlateReact.RenderElementProps & {getContent(thing: string): string}) {
+function renderElement(props: SlateReact.RenderElementProps & {getContentText(thing: string): string}) {
   if (props.element.type === "internalLink") {
-    const content = props.getContent(props.element.internalLink);
+    const content = props.getContentText(props.element.internalLink);
     return (
       <a className="internal-link" href={`/#${props.element.internalLink}`} {...props.attributes} contentEditable={false}>
         { content === "" ? <span className="empty-content">#{props.element.internalLink}</span> : content}
@@ -197,7 +197,7 @@ function isInline(element: Slate.Element): boolean {
   return element.type === "internalLink";
 }
 
-export function Content(props: {things: D.Things; focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string; getContent(thing: string): string}) {
+export function Content(props: {things: D.Things; focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string; getContentText(thing: string): string}) {
   const editor = React.useMemo(() => {
     const editor = SlateReact.withReact(Slate.createEditor());
     editor.isVoid = isVoid;
@@ -315,8 +315,8 @@ export function Content(props: {things: D.Things; focused?: boolean; text: strin
     <div ref={divRef} className={`content-editable-plain-text ${props.className}`}>
       <SlateReact.Slate editor={editor} value={value} onChange={onChange}>
         <SlateReact.Editable
-          renderLeaf={leafProps => renderLeaf({...leafProps, getContent: props.getContent})}
-          renderElement={elementProps => renderElement({...elementProps, getContent: props.getContent})}
+          renderLeaf={renderLeaf}
+          renderElement={elementProps => renderElement({...elementProps, getContentText: props.getContentText})}
           decorate={decorate}
           onKeyDown={onKeyDown}
           onFocus={props.onFocus}/>
