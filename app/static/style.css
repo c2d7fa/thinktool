@@ -45,6 +45,15 @@ body {
 }
 
 .children {
+    margin-top: 2em;
+    margin-bottom: 0;
+}
+
+.children > .outline-tree > .outline-item:last-of-type .content {
+    margin-bottom: 0;
+}
+
+.references {
     margin: 3em -6em;
     margin-bottom: 0;
     padding: 1em 6em;
@@ -315,7 +324,7 @@ ul.outline-root-tree {
 }
 
 @media screen and (max-width: 120ex) {
-    .parents, .children {
+    .parents, .references {
         margin-left: 0;
         margin-right: 0;
         padding-left: 0;

@@ -243,14 +243,16 @@ function ThingOverview(p: {context: StateContext; selectedThing: string; setSele
         text={Data.content(p.context.state, p.selectedThing)}
         setText={(text) => { p.context.setContent(p.selectedThing, text) }}/>
       <div className="children">
-        <h1 className="link-section">Children</h1>
         <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
-        { hasReferences && <>
+      </div>
+      { hasReferences && <>
+        <div className="references">
           <h1 className="link-section">References</h1>
           <ReferencesOutline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
-        </> }
-      </div>
-    </div>);
+        </div>
+      </> }
+    </div>
+  );
 }
 
 // TODO: ParentsOutline and ReferencesOutline should both have their use-cases
@@ -547,7 +549,6 @@ function Content(p: {context: TreeContext; id: number}) {
 
   const insertChildPopup = (() => {
     if (showChildPopup) {
-      console.log("ayy");
       const range = window.getSelection()?.getRangeAt(0);
       const rect = range?.getBoundingClientRect();
 
