@@ -508,3 +508,13 @@ export function toggleBackreferences(state: Things, tree: Tree, id: number): Tre
 export function backreferencesChildren(tree: Tree, id: number): number[] {
   return tree.nodes[id].backreferences.children;
 }
+
+export function insertChild(state: Things, tree: Tree, id: number, child: string, position: number): [Things, Tree] {
+  const newState = D.insertChild(state, thing(tree, id), child, position);
+  return [newState, refresh(tree, newState)];
+}
+
+export function removeThing(state: Things, tree: Tree, id: number): [Things, Tree] {
+  const newState = D.remove(state, thing(tree, id));
+  return [newState, refresh(tree, newState)];
+}

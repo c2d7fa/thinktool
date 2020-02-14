@@ -536,8 +536,9 @@ function Content(p: {context: TreeContext; id: number}) {
       p.context.setTree(newTree);
       return true;
     } else if (ev.key === "Delete" && ev.altKey) {
-      const newState = Data.remove(p.context.state, T.thing(p.context.tree, p.id));
+      const [newState, newTree] = T.removeThing(p.context.state, p.context.tree, p.id);
       p.context.setState(newState);
+      p.context.setTree(newTree);
       return true;
     } else if (ev.key === "c" && ev.altKey) {
       setShowChildPopup(true);
@@ -556,7 +557,11 @@ function Content(p: {context: TreeContext; id: number}) {
         hide={() => setShowChildPopup(false)}
         position={{x: (rect?.x ?? 100) + 2, y: (rect?.y ?? 100) + ((rect?.height ?? 0) / 2)}}
         state={p.context.state}
-        submit={(child: string) => {p.context.setState(Data.insertChild(p.context.state, T.thing(p.context.tree, p.id), child, 0))}}
+        submit={(child: string) => {
+          const [newState, newTree] = T.insertChild(p.context.state, p.context.tree, p.id, child, 0);
+          p.context.setState(newState);
+          p.context.setTree(newTree);
+        }}
       />;
     } else {
       return null;
