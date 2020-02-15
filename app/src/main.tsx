@@ -17,8 +17,8 @@ import undo from "./client/undo";
 // ==
 
 interface DragInfo {
-  current: number | null;
-  target: number | null;
+  current: T.NodeRef | null;
+  target: T.NodeRef | null;
   finished: boolean | "copy";
 }
 
@@ -266,7 +266,7 @@ function ParentsOutline(p: {context: StateContext; child: string; setSelectedThi
     const [tree, setTree] = React.useState(T.fromRoot(p.context.state, p.parent));
     const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
     const treeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
-    return <ExpandableItem id={0} context={treeContext}/>;
+    return <ExpandableItem node={T.root(tree)} context={treeContext}/>;
   }
 
   const parentLinks = Data.parents(p.context.state, p.child).map((parent: string) => {
@@ -288,7 +288,7 @@ function ReferencesOutline(p: {context: StateContext; root: string; setSelectedT
     const [tree, setTree] = React.useState(T.fromRoot(p.context.state, p.reference));
     const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
     const treeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
-    return <ExpandableItem id={0} context={treeContext}/>;
+    return <ExpandableItem node={T.root(tree)} context={treeContext}/>;
   }
 
   const referenceItems = Data.backreferences(p.context.state, p.root).map((reference: string) => {
@@ -302,18 +302,23 @@ function ReferencesOutline(p: {context: StateContext; root: string; setSelectedT
   }
 }
 
+function expandedFromRoot(state: Things, root: string) {
+  const tree = T.fromRoot(state, root);
+  return T.expand(state, tree, T.root(tree));
+}
+
 function Outline(p: {context: StateContext; root: string; setSelectedThing: SetSelectedThing}) {
   // To simulate multiple top-level items, we just assign a thing as the root,
   // and use its children as the top-level items. This is a bit of a hack. We
   // should probably do something smarter.
-  const [tree, setTree] = React.useState(T.expand(p.context.state, T.fromRoot(p.context.state, p.root), 0));
+  const [tree, setTree] = React.useState(expandedFromRoot(p.context.state, p.root));
 
   React.useEffect(() => {
     setTree(T.refresh(tree, p.context.state));
   }, [p.context.state]);
 
   React.useEffect(() => {
-    setTree(T.expand(p.context.state, T.fromRoot(p.context.state, p.root), 0));
+    setTree(expandedFromRoot(p.context.state, p.root));
   }, [p.root]);
 
   const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
@@ -333,9 +338,9 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
       }
 
       if (element != null) {
-        const target = +element.dataset.id!;
-        if (target !== drag.target)
-          setDrag({current: drag.current, target, finished: false});
+        const targetId = +element.dataset.id!;
+        if (targetId !== drag.target?.id)
+          setDrag({current: drag.current, target: {id: targetId}, finished: false});
       }
     }
 
@@ -348,9 +353,9 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
       }
 
       if (element != null) {
-        const target = +element.dataset.id!;
-        if (target !== drag.target)
-          setDrag({current: drag.current, target, finished: false});
+        const targetId = +element.dataset.id!;
+        if (targetId !== drag.target?.id)
+          setDrag({current: drag.current, target: {id: targetId}, finished: false});
       }
     }
 
@@ -375,15 +380,15 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
   const context: TreeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
 
   return (
-    <Subtree context={context} parent={0} omitReferences={true}>
-      { T.children(tree, 0).length === 0 && <PlaceholderItem context={context} parent={0}/> }
+    <Subtree context={context} parent={T.root(tree)} omitReferences={true}>
+      { T.children(tree, T.root(tree)).length === 0 && <PlaceholderItem context={context} parent={T.root(tree)}/> }
     </Subtree>
   );
 }
 
-function PlaceholderItem(p: {context: TreeContext; parent: number}) {
+function PlaceholderItem(p: {context: TreeContext; parent: T.NodeRef}) {
   function onFocus(ev: React.FocusEvent<HTMLDivElement>): void {
-    const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, 0);
+    const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, T.root(p.context.tree));
     p.context.setState(newState);
     p.context.setTree(T.focus(newTree, newId));
     ev.stopPropagation();
@@ -400,21 +405,21 @@ function PlaceholderItem(p: {context: TreeContext; parent: number}) {
   );
 }
 
-function ExpandableItem(p: {context: TreeContext; id: number}) {
+function ExpandableItem(p: {context: TreeContext; node: T.NodeRef}) {
   function toggle() {
-    p.context.setTree(T.toggle(p.context.state, p.context.tree, p.id));
+    p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
   }
 
-  const expanded = T.expanded(p.context.tree, p.id);
+  const expanded = T.expanded(p.context.tree, p.node);
 
   function beginDrag() {
-    p.context.setDrag({current: p.id, target: null, finished: false});
+    p.context.setDrag({current: p.node, target: null, finished: false});
   }
 
   // TODO: This seems like a hack, but I'm not sure if it's actually as bad as
   // it looks or if we just need to clean up the code a bit.
-  if (p.context.drag.finished && (p.context.drag.target === p.id || p.context.drag.target === null)) {
-    if (p.context.drag.current !== null && p.context.drag.target !== null && p.context.drag.current !== p.id) {
+  if (p.context.drag.finished && (p.context.drag.target?.id === p.node.id || p.context.drag.target === null)) {
+    if (p.context.drag.current !== null && p.context.drag.target !== null && p.context.drag.current?.id !== p.node.id) {
       if (p.context.drag.finished === "copy") {
         const [newState, newTree, newId] = T.copyToAbove(p.context.state, p.context.tree, p.context.drag.current, p.context.drag.target);
         p.context.setState(newState);
@@ -430,25 +435,25 @@ function ExpandableItem(p: {context: TreeContext; id: number}) {
   }
 
   let className = "item-line";
-  if (p.context.drag.current !== null && p.context.drag.target === p.id)
+  if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id)
     className += " drop-target";
-  if (p.context.drag.current === p.id && p.context.drag.target !== null)
+  if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null)
     className += " drag-source";
 
   const subtree =
     <Subtree
       context={p.context}
-      parent={p.id}/>;
+      parent={p.node}/>;
 
   return (
     <li className="outline-item">
-      <span className={className} data-id={p.id}> {/* data-id is used for drag and drop. */}
+      <span className={className} data-id={p.node.id}> {/* data-id is used for drag and drop. */}
         <Bullet
           beginDrag={beginDrag}
-          expanded={T.expanded(p.context.tree, p.id)}
+          expanded={T.expanded(p.context.tree, p.node)}
           toggle={toggle}
-          onMiddleClick={() => { p.context.setSelectedThing(T.thing(p.context.tree, p.id)) }}/>
-        <Content context={p.context} id={p.id}/>
+          onMiddleClick={() => { p.context.setSelectedThing(T.thing(p.context.tree, p.node)) }}/>
+        <Content context={p.context} node={p.node}/>
       </span>
       { expanded && subtree }
     </li>
@@ -473,32 +478,32 @@ function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void
   );
 }
 
-function Content(p: {context: TreeContext; id: number}) {
+function Content(p: {context: TreeContext; node: T.NodeRef}) {
   const [showChildPopup, setShowChildPopup] = React.useState(false);
 
   function onKeyDown(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean {
     if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
-      const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.id);
+      const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.node);
       p.context.setState(newState);
       p.context.setTree(newTree);
       return true;
     } else if (ev.key === "ArrowLeft" && ev.altKey && ev.ctrlKey) {
-      const [newState, newTree] = T.unindent(p.context.state, p.context.tree, p.id);
+      const [newState, newTree] = T.unindent(p.context.state, p.context.tree, p.node);
       p.context.setState(newState);
       p.context.setTree(newTree);
       return true;
     } else if (ev.key === "ArrowDown" && ev.altKey && ev.ctrlKey) {
-      const [newState, newTree] = T.moveDown(p.context.state, p.context.tree, p.id);
+      const [newState, newTree] = T.moveDown(p.context.state, p.context.tree, p.node);
       p.context.setState(newState);
       p.context.setTree(newTree);
       return true;
     } else if (ev.key === "ArrowUp" && ev.altKey && ev.ctrlKey) {
-      const [newState, newTree] = T.moveUp(p.context.state, p.context.tree, p.id);
+      const [newState, newTree] = T.moveUp(p.context.state, p.context.tree, p.node);
       p.context.setState(newState);
       p.context.setTree(newTree);
       return true;
     } else if (ev.key === "Tab") {
-      p.context.setTree(T.toggle(p.context.state, p.context.tree, p.id));
+      p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
       return true;
     } else if (ev.key === "ArrowUp") {
       p.context.setTree(T.focusUp(p.context.tree));
@@ -507,23 +512,23 @@ function Content(p: {context: TreeContext; id: number}) {
       p.context.setTree(T.focusDown(p.context.tree));
       return true;
     } else if (ev.key === "Enter" && ev.altKey) {
-      const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, p.id);
+      const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, p.node);
       p.context.setState(newState);
       p.context.setTree(T.focus(newTree, newId));
       return true;
     } else if (ev.key === "Enter" && ev.ctrlKey) {
-      const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.id);
+      const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.node);
       p.context.setState(newState);
       p.context.setTree(T.focus(newTree, newId));
       return true;
     } else if (ev.key === "Enter" && !ev.shiftKey) {
       if (notes.endOfItem) {
-        const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.id);
+        const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.node);
         p.context.setState(newState);
         p.context.setTree(T.focus(newTree, newId));
         return true;
       } else if (notes.startOfItem) {
-        const [newState, newTree, _, newId] = T.createSiblingBefore(p.context.state, p.context.tree, p.id);
+        const [newState, newTree, _, newId] = T.createSiblingBefore(p.context.state, p.context.tree, p.node);
         p.context.setState(newState);
         p.context.setTree(T.focus(newTree, newId));
         return true;
@@ -531,12 +536,12 @@ function Content(p: {context: TreeContext; id: number}) {
         return false;
       }
     } else if (ev.key === "Backspace" && ev.altKey) {
-      const [newState, newTree] = T.remove(p.context.state, p.context.tree, p.id);
+      const [newState, newTree] = T.remove(p.context.state, p.context.tree, p.node);
       p.context.setState(newState);
       p.context.setTree(newTree);
       return true;
     } else if (ev.key === "Delete" && ev.altKey) {
-      const [newState, newTree] = T.removeThing(p.context.state, p.context.tree, p.id);
+      const [newState, newTree] = T.removeThing(p.context.state, p.context.tree, p.node);
       p.context.setState(newState);
       p.context.setTree(newTree);
       return true;
@@ -558,7 +563,7 @@ function Content(p: {context: TreeContext; id: number}) {
         position={{x: (rect?.x ?? 100) + 2, y: (rect?.y ?? 100) + ((rect?.height ?? 0) / 2)}}
         state={p.context.state}
         submit={(child: string) => {
-          const [newState, newTree] = T.insertChild(p.context.state, p.context.tree, p.id, child, 0);
+          const [newState, newTree] = T.insertChild(p.context.state, p.context.tree, p.node, child, 0);
           p.context.setState(newState);
           p.context.setTree(newTree);
         }}
@@ -573,16 +578,16 @@ function Content(p: {context: TreeContext; id: number}) {
       things={p.context.state}
       className="content"
       getContentText={thing => Data.contentText(p.context.state, thing)}
-      focused={T.hasFocus(p.context.tree, p.id)}
-      text={Data.content(p.context.state, T.thing(p.context.tree, p.id))}
-      setText={(text) => { p.context.setContent(T.thing(p.context.tree, p.id), text) }}
-      onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.id)) }}
+      focused={T.hasFocus(p.context.tree, p.node)}
+      text={Data.content(p.context.state, T.thing(p.context.tree, p.node))}
+      setText={(text) => { p.context.setContent(T.thing(p.context.tree, p.node), text) }}
+      onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.node)) }}
       onKeyDown={onKeyDown}/>
     { insertChildPopup }
   </>;
 }
 
-function BackreferencesItem(p: {context: TreeContext; parent: number}) {
+function BackreferencesItem(p: {context: TreeContext; parent: T.NodeRef}) {
   const backreferences = Data.backreferences(p.context.state, T.thing(p.context.tree, p.parent));
 
   return (
@@ -601,9 +606,9 @@ function BackreferencesItem(p: {context: TreeContext; parent: number}) {
   );
 }
 
-function BackreferencesSubtree(p: {context: TreeContext; parent: number}) {
+function BackreferencesSubtree(p: {context: TreeContext; parent: T.NodeRef}) {
   const children = T.backreferencesChildren(p.context.tree, p.parent).map(child => {
-    return <ExpandableItem key={child} id={child} context={p.context}/>;
+    return <ExpandableItem key={child.id} node={child} context={p.context}/>;
   });
 
   return (
@@ -613,9 +618,9 @@ function BackreferencesSubtree(p: {context: TreeContext; parent: number}) {
   );
 }
 
-function Subtree(p: {context: TreeContext; parent: number; children?: React.ReactNode[] | React.ReactNode; omitReferences?: boolean}) {
+function Subtree(p: {context: TreeContext; parent: T.NodeRef; children?: React.ReactNode[] | React.ReactNode; omitReferences?: boolean}) {
   const children = T.children(p.context.tree, p.parent).map(child => {
-    return <ExpandableItem key={child} id={child} context={p.context}/>;
+    return <ExpandableItem key={child.id} node={child} context={p.context}/>;
   });
 
   const backreferences = Data.backreferences(p.context.state, T.thing(p.context.tree, p.parent));
