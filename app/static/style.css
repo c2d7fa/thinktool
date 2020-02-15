@@ -46,11 +46,7 @@ body {
 
 .children {
     margin-top: 2em;
-    margin-bottom: 0;
-}
-
-.children > .outline-tree > .outline-item:last-of-type .content {
-    margin-bottom: 0;
+    margin-bottom: -0.8em; /* Because of margin on .item-line .content */
 }
 
 .references {
