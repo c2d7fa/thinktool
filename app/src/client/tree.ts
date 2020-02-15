@@ -182,7 +182,8 @@ export function toggle(state: D.Things, tree: Tree, node: NodeRef): Tree {
 }
 
 export function load(state: D.Things, tree: Tree, thing: string): [NodeRef, Tree] {
-  let [newNode, newTree] = I.loadThing(tree, thing);
+  const [newNode, newTree_] = I.loadThing(tree, thing);
+  let newTree = newTree_;
 
   // If the child has no children (including backreferences), it should be expanded by default
   if (!D.hasChildren(state, thing) && D.backreferences(state, thing).length === 0)
@@ -311,7 +312,8 @@ export function createSiblingBefore(state: D.Things, tree: Tree, node: NodeRef):
 
   newState = D.insertChild(newState, parentThing, newThing, index);
 
-  let [newId, newTree] = load(newState, tree, newThing);
+  const [newId, newTree_] = load(newState, tree, newThing);
+  let newTree = newTree_;
 
   newTree = I.updateChildren(newTree, parent_, children => G.splice(children, index, 0, newId));
   newTree = refresh(newTree, newState);
@@ -334,7 +336,8 @@ export function createSiblingAfter(state: D.Things, tree: Tree, node: NodeRef): 
 
   newState = D.insertChild(newState, parentThing, newThing, index);
 
-  let [newNode, newTree] = load(newState, tree, newThing);
+  const [newNode, newTree_] = load(newState, tree, newThing);
+  let newTree = newTree_;
   newTree = I.updateChildren(newTree, parent_, children => G.splice(children, index, 0, newNode));
   newTree = refresh(newTree, newState);
 

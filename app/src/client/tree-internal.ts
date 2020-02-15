@@ -96,4 +96,3 @@ export function markBackreferencesExpanded(tree: Tree, node: NodeRef, expanded: 
 export function updateBackreferencesChildren(tree: Tree, node: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree {
   return updateNode(tree, node, n => ({...n, backreferences: {...n.backreferences, children: update(n.backreferences.children)}}));
 }
-
