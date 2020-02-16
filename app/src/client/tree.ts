@@ -1,5 +1,6 @@
-import {Things} from "./data";
+import * as G from "../general";
 import * as D from "./data";
+import * as I from "./tree-internal";
 
 // The underlying data representation that is stored on the server is like a
 // graph. It is defined in the Data module.
@@ -9,81 +10,66 @@ import * as D from "./data";
 // module defines such a "graph-as-a-tree" datastrcture and implements various
 // operations on it.
 
-export interface Node {
-  thing: string;
-  expanded: boolean;
-  children: number[];
-  backreferences: {expanded: boolean; children: number[]};
+export type NodeRef = I.NodeRef;
+export type Tree = I.Tree;
+
+export type Destination = {parent: NodeRef; index: number};
+
+export function fromRoot(state: D.Things, thing: string): Tree {
+  return I.fromRoot(thing);
 }
 
-export interface Tree {
-  next: number; // Next ID to be created
-  root: number;
-  nodes: {[id: number]: Node};
-  focus: null | number;
+export const root = I.root;
+export const thing = I.thing;
+export const expanded = I.expanded;
+export const hasFocus = I.hasFocus;
+export const focus = I.focus;
+export const unfocus = I.unfocus;
+export const children = I.children;
+export const backreferencesExpanded = I.backreferencesExpanded;
+export const backreferencesChildren = I.backreferencesChildren;
+
+function refEq(x: NodeRef, y: NodeRef): boolean {
+  return x.id === y.id;
 }
 
-export type Destination = {parent: number /* Thing */; index: number};
-
-export function fromRoot(state: Things, thing: string): Tree {
-  return {
-    next: 1,
-    root: 0,
-    nodes: {0: {thing, expanded: false, children: [], backreferences: {expanded: false, children: []}}},
-    focus: null,
-  };
+function parent(tree: Tree, child: NodeRef): NodeRef | undefined {
+  for (const node of I.allNodes(tree))
+    if (G.includesBy(children(tree, node), child, refEq))
+      return node;
+  return undefined;
 }
 
-export function thing(tree: Tree, id: number): string {
-  return tree.nodes[id].thing;
-}
-
-export function expanded(tree: Tree, id: number): boolean {
-  return tree.nodes[id].expanded;
-}
-
-export function hasFocus(tree: Tree, id: number): boolean {
-  return tree.focus === id;
-}
-
-export function focus(tree: Tree, id: number): Tree {
-  return {...tree, focus: id};
-}
-
-export function unfocus(tree: Tree): Tree {
-  return {...tree, focus: null};
-}
-
-function indexInParent(tree: Tree, id: number): number | undefined {
-  const parent_ = parent(tree, id);
+function indexInParent(tree: Tree, node: NodeRef): number | undefined {
+  const parent_ = parent(tree, node);
   if (parent_ === undefined)
     return undefined;
-  return childIndex(tree, parent_, id);
+  return childIndex(tree, parent_, node);
 }
 
-function previousSibling(tree: Tree, id: number): number | null {
-  const index = indexInParent(tree, id);
+function previousSibling(tree: Tree, node: NodeRef): NodeRef | null {
+  const index = indexInParent(tree, node);
   if (index === undefined || index === 0)
     return null;
-  return children(tree, parent(tree, id)!)[index - 1];
+  return children(tree, parent(tree, node)!)[index - 1];
 }
 
-function nextSibling(tree: Tree, id: number): number | null {
-  const index = indexInParent(tree, id);
-  if (index === undefined || index === children(tree, parent(tree, id)!).length - 1)
+function nextSibling(tree: Tree, node: NodeRef): NodeRef | null {
+  const index = indexInParent(tree, node);
+  if (index === undefined || index === children(tree, parent(tree, node)!).length - 1)
     return null;
-  return children(tree, parent(tree, id)!)[index + 1];
+  return children(tree, parent(tree, node)!)[index + 1];
 }
 
-function previousVisibleItem(tree: Tree, id: number): number {
-  const parent_ = parent(tree, id);
+function previousVisibleItem(tree: Tree, node: NodeRef): NodeRef {
+  const parent_ = parent(tree, node);
   if (parent_ === undefined)
-    return id;
+    return node;
 
-  if (indexInParent(tree, id) === 0)
+  if (indexInParent(tree, node) === 0)
     return parent_;
 
-  let result = previousSibling(tree, id);
+  let result = previousSibling(tree, node);
   if (result === null) throw "logic error";
   while (children(tree, result).length !== 0) {
     result = children(tree, result)[children(tree, result).length - 1];
@@ -91,12 +77,12 @@ function previousVisibleItem(tree: Tree, id: number): number {
   return result;
 }
 
-function nextVisibleItem(tree: Tree, id: number): number {
-  if (children(tree, id).length !== 0)
-    return children(tree, id)[0];
+function nextVisibleItem(tree: Tree, node: NodeRef): NodeRef {
+  if (children(tree, node).length !== 0)
+    return children(tree, node)[0];
 
   // Recursively traverse tree upwards until we hit a parent with a sibling
-  let nparent = id;
+  let nparent = node;
   while (nparent !== tree.root) {
     const nextSibling_ = nextSibling(tree, nparent);
     if (nextSibling_ !== null)
@@ -107,177 +93,141 @@ function nextVisibleItem(tree: Tree, id: number): number {
 }
 
 export function focusUp(tree: Tree): Tree {
-  if (tree.focus === null)
+  if (I.getFocus(tree) === null)
     throw "Cannot move focus because nothing is focused";
-  return {...tree, focus: previousVisibleItem(tree, tree.focus)};
+  return focus(tree, previousVisibleItem(tree, I.getFocus(tree)!));
 }
 
 export function focusDown(tree: Tree): Tree {
-  if (tree.focus === null)
+  if (I.getFocus(tree) === null)
     throw "Cannot move focus because nothing is focused";
 
-  return {...tree, focus: nextVisibleItem(tree, tree.focus)};
+  return focus(tree, nextVisibleItem(tree, I.getFocus(tree)!));
 }
 
-function refreshChildren(state: Things, tree: Tree, parent: number): Tree {
-  function arrayEqual<T>(a: T[], b: T[]): boolean {
-    if (a.length !== b.length)
-      return false;
-    for (let i = 0; i < a.length; i++)
-      if (a[i] !== b[i])
-        return false;
-    return true;
-  }
+function genericRefreshChildren(
+  {getStateChildren, getTreeChildren, updateChildren}: {
+    getStateChildren(state: D.Things, thing: string): string[];
+    getTreeChildren(tree: Tree, node: NodeRef): NodeRef[];
+    updateChildren(tree: Tree, parent: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree;
+  }): (state: D.Things, tree: Tree, parent: NodeRef) => Tree
+{
+  return (state: D.Things, tree: Tree, parent: NodeRef) => {
+    const stateChildren = getStateChildren(state, thing(tree, parent));
+    const treeChildren = getTreeChildren(tree, parent).map(ch => thing(tree, ch));
 
-  const stateChildren = D.children(state, thing(tree, parent));
-  const treeChildren = children(tree, parent).map(ch => thing(tree, ch));
+    if (!expanded(tree, parent))
+      return tree;
+    if (G.arrayEq(stateChildren, treeChildren))
+      return tree;
 
-  if (!expanded(tree, parent))
-    return tree;
-  if (arrayEqual(stateChildren, treeChildren))
-    return tree;
+    if (stateChildren.length === treeChildren.length + 1) {
+      // Assume new child was inserted
 
-  if (stateChildren.length === treeChildren.length + 1) {
-    // Assume new child was inserted
+      let result = tree;
 
-    // Copy children so we can mutate it for convencience
-    let result: Tree = {...tree, nodes: {...tree.nodes, [parent]: {...tree.nodes[parent], children: [...tree.nodes[parent].children]}}};
-
-    for (let i = 0; i < stateChildren.length; i++) {
-      if (children(result, parent)[i] === undefined) {
-        const [newChild, newResult] = load(state, result, stateChildren[i]);
-        result = newResult;
-        result.nodes[parent].children.splice(i, 0, newChild);
-      } else {
-        if (thing(result, children(result, parent)[i]) === stateChildren[i])
-          continue;
-        const [newChild, newResult] = load(state, result, stateChildren[i]);
-        result = newResult;
-        result.nodes[parent].children.splice(i, 0, newChild, children(result, parent)[i]);
+      for (let i = 0; i < stateChildren.length; i++) {
+        if (getTreeChildren(result, parent)[i] === undefined) {
+          const [newChild, newResult] = load(state, result, stateChildren[i]);
+          result = updateChildren(newResult, parent, cs => G.splice(cs, i, 0, newChild));
+        } else {
+          if (thing(result, getTreeChildren(result, parent)[i]) === stateChildren[i])
+            continue;
+          const [newChild, newResult] = load(state, result, stateChildren[i]);
+          result = updateChildren(newResult, parent, cs => G.splice(cs, i, 0, newChild, getTreeChildren(result, parent)[i]));
+        }
       }
+
+      // In case our assumption was wrong, truncate any extra elements that were inserted.
+      result = updateChildren(result, parent, cs => G.splice(cs, stateChildren.length));
+
+      return result;
+    } else {
+      // We can't make any assumptions; just recreate the entire children array
+
+      // TODO: Clean up removed children.
+      let result = updateChildren(tree, parent, cs => []);
+
+      for (const childThing of stateChildren) {
+        const [newChild, newResult] = load(state, result, childThing);
+        result = updateChildren(newResult, parent, cs => [...cs, newChild]);
+      }
+
+      return result;
     }
-
-    // In case our assumption was wrong, truncate any extra elements that were inserted.
-    result.nodes[parent].children.splice(stateChildren.length);
-
-    return result;
-  } else {
-    // We can't make any assumptions; just recreate the entire children array
-
-    // TODO: Clean up removed children.
-    let result: Tree = {...tree, nodes: {...tree.nodes, [parent]: {...tree.nodes[parent], children: []}}};
-
-    for (const childThing of stateChildren) {
-      const [newChild, newResult] = load(state, result, childThing);
-      result = newResult;
-      result.nodes[parent].children = [...result.nodes[parent].children, newChild];
-    }
-
-    return result;
-  }
-}
-
-export function expand(state: Things, tree: Tree, id: number): Tree {
-  if (!expanded(tree, id))
-    return toggle(state, tree, id);
-  else
-    return tree;
-}
-
-export function toggle(state: Things, tree: Tree, id: number): Tree {
-  let expanded = !tree.nodes[id].expanded;
-
-  if (!D.hasChildren(state, thing(tree, id)) && D.backreferences(state, thing(tree, id)).length === 0) {
-    // Items without children (including backreferences) are always expanded
-    expanded = true;
-  }
-
-  // Update expanded status
-  let result = {...tree, nodes: {...tree.nodes, [id]: {...tree.nodes[id], expanded}}};
-
-  // Load children from state if necessary
-  if (result.nodes[id].children.length === 0)
-    result = refreshChildren(state, result, id);
-
-  return result;
-}
-
-export function load(state: Things, tree: Tree, thing: string): [number, Tree] {
-  const id = tree.next;
-
-  // Update next ID
-  let result = {...tree, next: tree.next + 1};
-
-  // Add node
-  result = {
-    ...result,
-    nodes: {
-      ...result.nodes,
-      [id]: {
-        thing,
-        expanded: false,
-        children: [],
-        backreferences: {
-          expanded: false,
-          children: [],
-        },
-      },
-    },
   };
+}
+
+const refreshChildren = genericRefreshChildren({getStateChildren: D.children, getTreeChildren: children, updateChildren: I.updateChildren});
+
+export function expand(state: D.Things, tree: Tree, node: NodeRef): Tree {
+  if (!expanded(tree, node)) {
+    return toggle(state, tree, node);
+  } else {
+    return tree;
+  }
+}
+
+export function toggle(state: D.Things, tree: Tree, node: NodeRef): Tree {
+  if (!D.hasChildren(state, thing(tree, node)) && D.backreferences(state, thing(tree, node)).length === 0) {
+    // Items without children (including backreferences) are always expanded
+    return I.markExpanded(tree, node, true);
+  } else {
+    let result = I.markExpanded(tree, node, !expanded(tree, node));
+    if (children(tree, node).length === 0) {
+      result = refreshChildren(state, result, node);
+    }
+    return result;
+  }
+}
+
+export function load(state: D.Things, tree: Tree, thing: string): [NodeRef, Tree] {
+  const [newNode, newTree_] = I.loadThing(tree, thing);
+  let newTree = newTree_;
 
   // If the child has no children (including backreferences), it should be expanded by default
   if (!D.hasChildren(state, thing) && D.backreferences(state, thing).length === 0)
-    result.nodes[id].expanded = true;
+    newTree = I.markExpanded(newTree, newNode, true);
 
-  return [id, result];
-}
-
-export function children(tree: Tree, parent: number): number[] {
-  return tree.nodes[parent].children;
+  return [newNode, newTree];
 }
 
 // Refresh the nodes of a tree based on the state, such that relevant changes in
 // the state are reflected in the tree.
-export function refresh(tree: Tree, state: Things): Tree {
+export function refresh(tree: Tree, state: D.Things): Tree {
   let result = tree;
-  for (const id in tree.nodes) {
-    if (D.exists(state, thing(tree, +id))) { // Otherwise, it will be removed from its parents in refreshChildren.
-      result = refreshChildren(state, result, +id);
-      result = refreshBackreferencesChildren(state, result, +id);
+  for (const node of I.allNodes(tree)) {
+    if (D.exists(state, thing(tree, node))) { // Otherwise, it will be removed from its parents in refreshChildren.
+      result = refreshChildren(state, result, node);
+      result = refreshBackreferencesChildren(state, result, node);
     }
   }
   return result;
 }
 
-export function indent(state: Things, tree: Tree, id: number): [Things, Tree] {
-  if (tree.root === id)
+export function indent(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
+  if (refEq(root(tree), node))
     return [state, tree];
 
-  const parent_ = parent(tree, id);
-  const index = indexInParent(tree, id);
+  const oldParent = parent(tree, node);
+  const index = indexInParent(tree, node);
 
-  if (parent_ === undefined || index === undefined || index === 0)
+  if (oldParent === undefined || index === undefined || index === 0)
     return [state, tree];
 
-  const newState = D.indent(state, thing(tree, parent_), index);
+  const newState = D.indent(state, thing(tree, oldParent), index);
 
-  // TODO: A lot of this logic is similar to Data.indent, but I'm not sure if we
-  // can express one in terms of the other.
+  let newTree = I.updateChildren(tree, oldParent, children => G.splice(children, index, 1));
 
-  let newTree: Tree = {...tree, nodes: {...tree.nodes, [parent_]: {...tree.nodes[parent_], children: [...tree.nodes[parent_].children]}}};
-  newTree.nodes[parent_].children.splice(index, 1);
-
-  const newParent = tree.nodes[parent_].children[index - 1];
-  newTree = {...newTree, nodes: {...newTree.nodes, [newParent]: {...tree.nodes[newParent], children: [...tree.nodes[newParent].children]}}};
-  newTree.nodes[newParent].children.push(id);
-
+  const newParent = children(newTree, oldParent)[index - 1];
+  newTree = I.updateChildren(newTree, newParent, children => [...children, node]);
   newTree = expand(newState, newTree, newParent);
 
   return [newState, refresh(newTree, newState)];
 }
 
-export function unindent(state: Things, tree: Tree, id: number): [Things, Tree] {
-  const parent_ = parent(tree, id);
+export function unindent(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
+  const parent_ = parent(tree, node);
   if (parent_ === undefined)
     return [state, tree];
 
@@ -285,226 +235,158 @@ export function unindent(state: Things, tree: Tree, id: number): [Things, Tree] 
   if (grandparent === undefined)
     return [state, tree];
 
-  return move(state, tree, id, {parent: grandparent, index: childIndex(tree, grandparent, parent_) + 1});
+  return move(state, tree, node, {parent: grandparent, index: childIndex(tree, grandparent, parent_) + 1});
 }
 
-function parent(tree: Tree, child: number): number | undefined {
-  for (const parent in tree.nodes)
-    if (children(tree, +parent).includes(child))
-      return +parent;
-  return undefined;
+function childIndex(tree: Tree, parent: NodeRef, child: NodeRef): number {
+  const result = G.indexOfBy(children(tree, parent), child, refEq);
+  if (result === undefined) throw "Parent does not contain child";
+  return result;
 }
 
-function childIndex(tree: Tree, parent: number, child: number): number {
-  return children(tree, parent).indexOf(child);
-}
-
-export function move(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree] {
-  const parent_ = parent(tree, id);
+export function move(state: D.Things, tree: Tree, node: NodeRef, destination: Destination): [D.Things, Tree] {
+  const parent_ = parent(tree, node);
 
   if (parent_ === undefined)
     return [state, tree]; // Can't move root
 
-  let newState = D.removeChild(state, thing(tree, parent_), indexInParent(tree, id)!);
-  newState = D.insertChild(newState, thing(tree, destination.parent), thing(tree, id), destination.index);
+  let newState = D.removeChild(state, thing(tree, parent_), indexInParent(tree, node)!);
+  newState = D.insertChild(newState, thing(tree, destination.parent), thing(tree, node), destination.index);
 
   let newTree = refresh(tree, newState);  // TODO: Could be improved
 
   // Keep focus
-  if (tree.focus === id)
-    newTree = {...newTree, focus: children(newTree, destination.parent)[destination.index]};
+  if (hasFocus(tree, node)) {
+    newTree = focus(tree, children(newTree, destination.parent)[destination.index]);
+  }
 
   return [newState, newTree];
 }
 
-export function moveToAbove(state: Things, tree: Tree, sourceId: number, destinationId: number): [Things, Tree] {
-  const parent_ = parent(tree, destinationId);
+export function moveToAbove(state: D.Things, tree: Tree, sourceNode: NodeRef, destinationNode: NodeRef): [D.Things, Tree] {
+  const parent_ = parent(tree, destinationNode);
   if (parent_ === undefined)
     return [state, tree];
-  return move(state, tree, sourceId, {parent: parent_, index: childIndex(tree, parent_, destinationId)});
+  return move(state, tree, sourceNode, {parent: parent_, index: childIndex(tree, parent_, destinationNode)});
 }
 
-export function moveUp(state: Things, tree: Tree, id: number): [Things, Tree] {
-  const parent_ = parent(tree, id);
-  if (parent_ === undefined || childIndex(tree, parent_, id) === 0)
+export function moveUp(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
+  const parent_ = parent(tree, node);
+  if (parent_ === undefined || childIndex(tree, parent_, node) === 0)
     return [state, tree];
-  return move(state, tree, id, {parent: parent_, index: childIndex(tree, parent_, id) - 1});
+  return move(state, tree, node, {parent: parent_, index: childIndex(tree, parent_, node) - 1});
 }
 
-export function moveDown(state: Things, tree: Tree, id: number): [Things, Tree] {
-  const parent_ = parent(tree, id);
-  if (parent_ === undefined || childIndex(tree, parent_, id) === children(tree, parent_).length - 1)
+export function moveDown(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
+  const parent_ = parent(tree, node);
+  if (parent_ === undefined || childIndex(tree, parent_, node) === children(tree, parent_).length - 1)
     return [state, tree];
-  return move(state, tree, id, {parent: parent_, index: childIndex(tree, parent_, id) + 1});
+  return move(state, tree, node, {parent: parent_, index: childIndex(tree, parent_, node) + 1});
 }
 
-export function copy(state: Things, tree: Tree, id: number, destination: Destination): [Things, Tree, number] {
-  const newState = D.insertChild(state, thing(tree, destination.parent), thing(tree, id), destination.index);
+export function copy(state: D.Things, tree: Tree, node: NodeRef, destination: Destination): [D.Things, Tree, NodeRef] {
+  const newState = D.insertChild(state, thing(tree, destination.parent), thing(tree, node), destination.index);
   const newTree = refreshChildren(newState, tree, destination.parent);
   return [newState, newTree, children(newTree, destination.parent)[destination.index]];
 }
 
-export function copyToAbove(state: Things, tree: Tree, sourceId: number, destinationId: number): [Things, Tree, number] {
-  const parent_ = parent(tree, destinationId);
+export function copyToAbove(state: D.Things, tree: Tree, sourceNode: NodeRef, destinationNode: NodeRef): [D.Things, Tree, NodeRef] {
+  const parent_ = parent(tree, destinationNode);
   if (parent_ === undefined)
-    return [state, tree, sourceId];
-  return copy(state, tree, sourceId, {parent: parent_, index: childIndex(tree, parent_, destinationId)});
+    return [state, tree, sourceNode];
+  return copy(state, tree, sourceNode, {parent: parent_, index: childIndex(tree, parent_, destinationNode)});
 }
 
-export function createSiblingBefore(state: Things, tree: Tree, id: number): [Things, Tree, string, number] {
+export function createSiblingBefore(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree, string, NodeRef] {
   let newState = state;
 
   const [newState_, newThing] = D.create(newState);
   newState = newState_;
 
-  const parent_ = parent(tree, id);
+  const parent_ = parent(tree, node);
   if (parent_ === undefined)
     throw "Cannot create sibling before item with no parent";
 
   const parentThing = thing(tree, parent_);
-  const index = childIndex(tree, parent_, id);
+  const index = childIndex(tree, parent_, node);
 
   newState = D.insertChild(newState, parentThing, newThing, index);
 
-  let newTree = tree;
   const [newId, newTree_] = load(newState, tree, newThing);
-  newTree = newTree_;
-  newTree = {...newTree, nodes: {...newTree.nodes, [parent_]: {...newTree.nodes[parent_], children: [...newTree.nodes[parent_].children]}}};
-  newTree.nodes[parent_].children.splice(index, 0, newId);
+  let newTree = newTree_;
 
+  newTree = I.updateChildren(newTree, parent_, children => G.splice(children, index, 0, newId));
   newTree = refresh(newTree, newState);
 
   return [newState, newTree, newThing, newId];
 }
 
-
-export function createSiblingAfter(state: Things, tree: Tree, id: number): [Things, Tree, string, number] {
+export function createSiblingAfter(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree, string, NodeRef] {
   let newState = state;
 
   const [newState_, newThing] = D.create(newState);
   newState = newState_;
 
-  const parent_ = parent(tree, id);
+  const parent_ = parent(tree, node);
   if (parent_ === undefined)
     throw "Cannot create sibling after item with no parent";
 
   const parentThing = thing(tree, parent_);
-  const index = childIndex(tree, parent_, id) + 1;
+  const index = childIndex(tree, parent_, node) + 1;
 
   newState = D.insertChild(newState, parentThing, newThing, index);
 
-  let newTree = tree;
-  const [newId, newTree_] = load(newState, tree, newThing);
-  newTree = newTree_;
-  newTree = {...newTree, nodes: {...newTree.nodes, [parent_]: {...newTree.nodes[parent_], children: [...newTree.nodes[parent_].children]}}};
-  newTree.nodes[parent_].children.splice(index, 0, newId);
-
+  const [newNode, newTree_] = load(newState, tree, newThing);
+  let newTree = newTree_;
+  newTree = I.updateChildren(newTree, parent_, children => G.splice(children, index, 0, newNode));
   newTree = refresh(newTree, newState);
 
-  return [newState, newTree, newThing, newId];
+  return [newState, newTree, newThing, newNode];
 }
 
-export function createChild(state: Things, tree: Tree, id: number): [Things, Tree, string, number] {
+export function createChild(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree, string, NodeRef] {
   // Create item as child
   const [state1, childThing] = D.create(state);
-  const state2 = D.addChild(state1, thing(tree, id), childThing);
+  const state2 = D.addChild(state1, thing(tree, node), childThing);
 
   // Load it into the tree
-  const tree1 = expand(state, tree, id);
-  const [childId, tree2] = load(state2, tree1, childThing);
-  const tree3 = {...tree2, nodes: {...tree2.nodes, [id]: {...tree2.nodes[id], children: [...tree2.nodes[id].children, childId]}}};
-  const tree4 = focus(tree3, childId);
+  const tree1 = expand(state, tree, node);
+  const [childNode, tree2] = load(state2, tree1, childThing);
+  const tree3 = I.updateChildren(tree2, node, children => [...children, childNode]);
+  const tree4 = focus(tree3, childNode);
 
-  return [state2, tree4, childThing, childId];
+  return [state2, tree4, childThing, childNode];
 }
 
-export function remove(state: Things, tree: Tree, id: number): [Things, Tree] {
-  const parent_ = parent(tree, id);
+export function remove(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
+  const parent_ = parent(tree, node);
   if (parent_ === undefined)
     return [state, tree];
 
-  const newState = D.removeChild(state, thing(tree, parent_), childIndex(tree, parent_, id));
-  const newTree = focus(tree, previousVisibleItem(tree, id));
+  const newState = D.removeChild(state, thing(tree, parent_), childIndex(tree, parent_, node));
+  const newTree = focus(tree, previousVisibleItem(tree, node));
 
   return [newState, refresh(newTree, newState)];
 }
 
-export function backreferencesExpanded(tree: Tree, id: number): boolean {
-  return tree.nodes[id].backreferences.expanded;
-}
+// Backreferences:
 
-// TODO: Massive code duplication between this and 'refreshChildren'
-function refreshBackreferencesChildren(state: Things, tree: Tree, parent: number): Tree {
-  function arrayEqual<T>(a: T[], b: T[]): boolean {
-    if (a.length !== b.length)
-      return false;
-    for (let i = 0; i < a.length; i++)
-      if (a[i] !== b[i])
-        return false;
-    return true;
+const refreshBackreferencesChildren = genericRefreshChildren({getStateChildren: D.backreferences, getTreeChildren: I.backreferencesChildren, updateChildren: I.updateBackreferencesChildren});
+
+export function toggleBackreferences(state: D.Things, tree: Tree, node: NodeRef): Tree {
+  let result = I.markBackreferencesExpanded(tree, node, !backreferencesExpanded(tree, node));
+  if (backreferencesExpanded(result, node)) {
+    result = refreshBackreferencesChildren(state, result, node);
   }
-
-  const stateChildren = D.backreferences(state, thing(tree, parent));
-  const treeChildren = tree.nodes[parent].backreferences.children.map(ch => thing(tree, ch));
-
-  if (!expanded(tree, parent))
-    return tree;
-  if (arrayEqual(stateChildren, treeChildren))
-    return tree;
-
-  if (stateChildren.length === treeChildren.length + 1) {
-    // Assume new child was inserted
-
-    // Copy children so we can mutate it for convencience
-    let result: Tree = {...tree, nodes: {...tree.nodes, [parent]: {...tree.nodes[parent], backreferences: {...tree.nodes[parent].backreferences, children: [...tree.nodes[parent].backreferences.children]}}}};
-
-    for (let i = 0; i < stateChildren.length; i++) {
-      if (result.nodes[parent].backreferences.children[i] === undefined) {
-        const [newChild, newResult] = load(state, result, stateChildren[i]);
-        result = newResult;
-        result.nodes[parent].backreferences.children.splice(i, 0, newChild);
-      } else {
-        if (thing(result, result.nodes[parent].backreferences.children[i]) === stateChildren[i])
-          continue;
-        const [newChild, newResult] = load(state, result, stateChildren[i]);
-        result = newResult;
-        result.nodes[parent].backreferences.children.splice(i, 0, newChild, result.nodes[parent].backreferences.children[i]);
-      }
-    }
-
-    // In case our assumption was wrong, truncate any extra elements that were inserted.
-    result.nodes[parent].backreferences.children.splice(stateChildren.length);
-
-    return result;
-  } else {
-    // We can't make any assumptions; just recreate the entire children array
-
-    // TODO: Clean up removed children.
-    let result: Tree = {...tree, nodes: {...tree.nodes, [parent]: {...tree.nodes[parent], backreferences: {...tree.nodes[parent].backreferences, children: []}}}};
-
-    for (const childThing of stateChildren) {
-      const [newChild, newResult] = load(state, result, childThing);
-      result = newResult;
-      result.nodes[parent].backreferences.children = [...result.nodes[parent].backreferences.children, newChild];
-    }
-
-    return result;
-  }
-}
-
-export function toggleBackreferences(state: Things, tree: Tree, id: number): Tree {
-  const expanded = !tree.nodes[id].backreferences.expanded;
-
-  let result = {...tree, nodes: {...tree.nodes, [id]: {...tree.nodes[id], backreferences: {...tree.nodes[id].backreferences, expanded}}}};
-
-  // Load children if necessary
-  if (expanded) {
-    result = refreshBackreferencesChildren(state, result, id);
-  }
-
   return result;
 }
 
-export function backreferencesChildren(tree: Tree, id: number): number[] {
-  return tree.nodes[id].backreferences.children;
+export function insertChild(state: D.Things, tree: Tree, node: NodeRef, child: string, position: number): [D.Things, Tree] {
+  const newState = D.insertChild(state, thing(tree, node), child, position);
+  return [newState, refresh(tree, newState)];
+}
+
+export function removeThing(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
+  const newState = D.remove(state, thing(tree, node));
+  return [newState, refresh(tree, newState)];
 }
