@@ -3,6 +3,7 @@ export interface Node {
   expanded: boolean;
   children: NodeRef[];
   backreferences: {expanded: boolean; children: NodeRef[]};
+  otherParents: {expanded: boolean; children: NodeRef[]};
 }
 
 export type NodeRef = {id: number};
@@ -26,7 +27,13 @@ export function fromRoot(thing: string): Tree {
   return {
     nextId: 1,
     root: {id: 0},
-    nodes: {0: {thing, expanded: false, children: [], backreferences: {expanded: false, children: []}}},
+    nodes: {0: {
+      thing,
+      expanded: false,
+      children: [],
+      backreferences: {expanded: false, children: []},
+      otherParents: {expanded: false, children: []},
+    }},
     focus: null,
   };
 }
@@ -68,7 +75,7 @@ export function children(tree: Tree, node: NodeRef): NodeRef[] {
 }
 
 export function loadThing(tree: Tree, thing: string): [NodeRef, Tree] {
-  return [{id: tree.nextId}, {...tree, nextId: tree.nextId + 1, nodes: {...tree.nodes, [tree.nextId]: {thing, expanded: false, children: [], backreferences: {expanded: false, children: []}}}}];
+  return [{id: tree.nextId}, {...tree, nextId: tree.nextId + 1, nodes: {...tree.nodes, [tree.nextId]: {thing, expanded: false, children: [], backreferences: {expanded: false, children: []}, otherParents: {expanded: false, children: []}}}}];
 }
 
 export function* allNodes(tree: Tree): Generator<NodeRef> {
@@ -80,6 +87,8 @@ export function* allNodes(tree: Tree): Generator<NodeRef> {
 export function updateChildren(tree: Tree, node: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree {
   return updateNode(tree, node, n => ({...n, children: update(n.children)}));
 }
+
+// Backreferences
 
 export function backreferencesExpanded(tree: Tree, node: NodeRef): boolean {
   return tree.nodes[node.id].backreferences.expanded;
@@ -95,4 +104,22 @@ export function markBackreferencesExpanded(tree: Tree, node: NodeRef, expanded: 
 
 export function updateBackreferencesChildren(tree: Tree, node: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree {
   return updateNode(tree, node, n => ({...n, backreferences: {...n.backreferences, children: update(n.backreferences.children)}}));
+}
+
+// Parents as children ("other parents")
+
+export function otherParentsExpanded(tree: Tree, node: NodeRef): boolean {
+  return tree.nodes[node.id].otherParents.expanded;
+}
+
+export function otherParentsChildren(tree: Tree, node: NodeRef): NodeRef[] {
+  return tree.nodes[node.id].otherParents.children;
+}
+
+export function markOtherParentsExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree {
+  return updateNode(tree, node, n => ({...n, otherParents: {...n.otherParents, expanded}}));
+}
+
+export function updateOtherParentsChildren(tree: Tree, node: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree {
+  return updateNode(tree, node, n => ({...n, otherParents: {...n.otherParents, children: update(n.otherParents.children)}}));
 }

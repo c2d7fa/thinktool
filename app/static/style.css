@@ -152,7 +152,7 @@ ul.outline-root-tree {
     flex-shrink: 0;
 }
 
-.backreferences-text {
+.backreferences-text, .other-parents-text {
     display: block;
     width: 100%;
     margin-bottom: 1em;
@@ -164,6 +164,7 @@ ul.outline-root-tree {
     cursor: default;
 
     margin-top: -0.15em; /* Hack to improve vertical centering of text */
+    margin-bottom: 1.15em;
 }
 
 .selected-content {

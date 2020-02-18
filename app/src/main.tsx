@@ -405,7 +405,7 @@ function PlaceholderItem(p: {context: TreeContext; parent: T.NodeRef}) {
   );
 }
 
-function ExpandableItem(p: {context: TreeContext; node: T.NodeRef}) {
+function ExpandableItem(p: {context: TreeContext; node: T.NodeRef; parent?: T.NodeRef}) {
   function toggle() {
     p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
   }
@@ -443,7 +443,8 @@ function ExpandableItem(p: {context: TreeContext; node: T.NodeRef}) {
   const subtree =
     <Subtree
       context={p.context}
-      parent={p.node}/>;
+      parent={p.node}
+      grandparent={p.parent}/>;
 
   return (
     <li className="outline-item">
@@ -590,6 +591,10 @@ function Content(p: {context: TreeContext; node: T.NodeRef}) {
 function BackreferencesItem(p: {context: TreeContext; parent: T.NodeRef}) {
   const backreferences = Data.backreferences(p.context.state, T.thing(p.context.tree, p.parent));
 
+  if (backreferences.length === 0) {
+    return null;
+  }
+
   return (
     <li className="outline-item backreferences-item">
       <span className="item-line">
@@ -618,24 +623,53 @@ function BackreferencesSubtree(p: {context: TreeContext; parent: T.NodeRef}) {
   );
 }
 
-function Subtree(p: {context: TreeContext; parent: T.NodeRef; children?: React.ReactNode[] | React.ReactNode; omitReferences?: boolean}) {
-  const children = T.children(p.context.tree, p.parent).map(child => {
+function OtherParentsItem(p: {context: TreeContext; parent: T.NodeRef; grandparent: T.NodeRef}) {
+  const otherParents = Data.otherParents(p.context.state, T.thing(p.context.tree, p.parent), T.thing(p.context.tree, p.grandparent));
+
+  if (otherParents.length === 0) {
+    return null;
+  }
+
+  return (
+    <li className="outline-item other-parents-item">
+      <span className="item-line">
+        <Bullet
+          beginDrag={() => {}}
+          expanded={T.otherParentsExpanded(p.context.tree, p.parent)}
+          toggle={() => p.context.setTree(T.toggleOtherParents(p.context.state, p.context.tree, p.parent))}
+        />
+        <span className="other-parents-text">{otherParents.length} other parents</span>
+      </span>
+      { T.otherParentsExpanded(p.context.tree, p.parent) && <OtherParentsSubtree parent={p.parent} grandparent={p.grandparent} context={p.context}/>}
+    </li>
+  );
+}
+
+function OtherParentsSubtree(p: {context: TreeContext; parent: T.NodeRef; grandparent: T.NodeRef}) {
+  const children = T.otherParentsChildren(p.context.tree, p.parent).map(child => {
     return <ExpandableItem key={child.id} node={child} context={p.context}/>;
   });
 
-  const backreferences = Data.backreferences(p.context.state, T.thing(p.context.tree, p.parent));
+  return (
+    <ul className="outline-tree">
+      {children}
+    </ul>
+  );
+}
 
-  if (backreferences.length > 0 && !p.omitReferences) {
-    return (
-      <ul className="outline-tree">
-        {children}
-        {p.children}
-        <BackreferencesItem key="backreferences" parent={p.parent} context={p.context}/>
-      </ul>
-    );
-  } else {
-    return <ul className="outline-tree">{children}{p.children}</ul>;
-  }
+function Subtree(p: {context: TreeContext; parent: T.NodeRef; grandparent?: T.NodeRef; children?: React.ReactNode[] | React.ReactNode; omitReferences?: boolean}) {
+  const children = T.children(p.context.tree, p.parent).map(child => {
+    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context}/>;
+  });
+
+  return (
+    <ul className="outline-tree">
+      {children}
+      {p.children}
+      <BackreferencesItem key="backreferences" parent={p.parent} context={p.context}/>
+      { p.grandparent && <OtherParentsItem key="other-parents" parent={p.parent} grandparent={p.grandparent} context={p.context}/> }
+    </ul>
+  );
 }
 
 // ==
