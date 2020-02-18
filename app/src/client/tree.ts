@@ -128,12 +128,12 @@ function genericRefreshChildren(
 
       for (let i = 0; i < stateChildren.length; i++) {
         if (getTreeChildren(result, parent)[i] === undefined) {
-          const [newChild, newResult] = load(state, result, stateChildren[i]);
+          const [newChild, newResult] = load(state, result, stateChildren[i], parent);
           result = updateChildren(newResult, parent, cs => G.splice(cs, i, 0, newChild));
         } else {
           if (thing(result, getTreeChildren(result, parent)[i]) === stateChildren[i])
             continue;
-          const [newChild, newResult] = load(state, result, stateChildren[i]);
+          const [newChild, newResult] = load(state, result, stateChildren[i], parent);
           result = updateChildren(newResult, parent, cs => G.splice(cs, i, 0, newChild, getTreeChildren(result, parent)[i]));
         }
       }
@@ -149,7 +149,7 @@ function genericRefreshChildren(
       let result = updateChildren(tree, parent, cs => []);
 
       for (const childThing of stateChildren) {
-        const [newChild, newResult] = load(state, result, childThing);
+        const [newChild, newResult] = load(state, result, childThing, parent);
         result = updateChildren(newResult, parent, cs => [...cs, newChild]);
       }
 
@@ -168,9 +168,19 @@ export function expand(state: D.Things, tree: Tree, node: NodeRef): Tree {
   }
 }
 
+function hasOtherParents(state: D.Things, tree: Tree, node: NodeRef, wrtParent?: NodeRef): boolean {
+  if (wrtParent === undefined) {
+    const parent_ = parent(tree, node);
+    if (parent_ === undefined) return false;
+    return D.otherParents(state, thing(tree, node), thing(tree, parent_)).length !== 0;
+  } else {
+    return D.otherParents(state, thing(tree, node), thing(tree, wrtParent)).length !== 0;
+  }
+}
+
 export function toggle(state: D.Things, tree: Tree, node: NodeRef): Tree {
-  if (!D.hasChildren(state, thing(tree, node)) && D.backreferences(state, thing(tree, node)).length === 0) {
-    // Items without children (including backreferences) are always expanded
+  if (!D.hasChildren(state, thing(tree, node)) && D.backreferences(state, thing(tree, node)).length === 0 && !hasOtherParents(state, tree, node)) {
+    // Items without children (including backreferences and other parents) are always expanded
     return I.markExpanded(tree, node, true);
   } else {
     let result = I.markExpanded(tree, node, !expanded(tree, node));
@@ -181,13 +191,14 @@ export function toggle(state: D.Things, tree: Tree, node: NodeRef): Tree {
   }
 }
 
-export function load(state: D.Things, tree: Tree, thing: string): [NodeRef, Tree] {
+export function load(state: D.Things, tree: Tree, thing: string, parent?: NodeRef): [NodeRef, Tree] {
   const [newNode, newTree_] = I.loadThing(tree, thing);
   let newTree = newTree_;
 
-  // If the child has no children (including backreferences), it should be expanded by default
-  if (!D.hasChildren(state, thing) && D.backreferences(state, thing).length === 0)
+  // If the child has no children (including backreferences and other parents), it should be expanded by default
+  if (!D.hasChildren(state, thing) && D.backreferences(state, thing).length === 0 && !hasOtherParents(state, newTree, newNode, parent)) {
     newTree = I.markExpanded(newTree, newNode, true);
+  }
 
   return [newNode, newTree];
 }
@@ -200,6 +211,7 @@ export function refresh(tree: Tree, state: D.Things): Tree {
     if (D.exists(state, thing(tree, node))) { // Otherwise, it will be removed from its parents in refreshChildren.
       result = refreshChildren(state, result, node);
       result = refreshBackreferencesChildren(state, result, node);
+      result = refreshOtherParentsChildren(state, result, node);
     }
   }
   return result;
@@ -312,7 +324,7 @@ export function createSiblingBefore(state: D.Things, tree: Tree, node: NodeRef):
 
   newState = D.insertChild(newState, parentThing, newThing, index);
 
-  const [newId, newTree_] = load(newState, tree, newThing);
+  const [newId, newTree_] = load(newState, tree, newThing, parent_);
   let newTree = newTree_;
 
   newTree = I.updateChildren(newTree, parent_, children => G.splice(children, index, 0, newId));
@@ -336,7 +348,7 @@ export function createSiblingAfter(state: D.Things, tree: Tree, node: NodeRef): 
 
   newState = D.insertChild(newState, parentThing, newThing, index);
 
-  const [newNode, newTree_] = load(newState, tree, newThing);
+  const [newNode, newTree_] = load(newState, tree, newThing, parent_);
   let newTree = newTree_;
   newTree = I.updateChildren(newTree, parent_, children => G.splice(children, index, 0, newNode));
   newTree = refresh(newTree, newState);
@@ -351,7 +363,7 @@ export function createChild(state: D.Things, tree: Tree, node: NodeRef): [D.Thin
 
   // Load it into the tree
   const tree1 = expand(state, tree, node);
-  const [childNode, tree2] = load(state2, tree1, childThing);
+  const [childNode, tree2] = load(state2, tree1, childThing, node);
   const tree3 = I.updateChildren(tree2, node, children => [...children, childNode]);
   const tree4 = focus(tree3, childNode);
 
@@ -369,6 +381,16 @@ export function remove(state: D.Things, tree: Tree, node: NodeRef): [D.Things, T
   return [newState, refresh(newTree, newState)];
 }
 
+export function insertChild(state: D.Things, tree: Tree, node: NodeRef, child: string, position: number): [D.Things, Tree] {
+  const newState = D.insertChild(state, thing(tree, node), child, position);
+  return [newState, refresh(tree, newState)];
+}
+
+export function removeThing(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
+  const newState = D.remove(state, thing(tree, node));
+  return [newState, refresh(tree, newState)];
+}
+
 // Backreferences:
 
 const refreshBackreferencesChildren = genericRefreshChildren({getStateChildren: D.backreferences, getTreeChildren: I.backreferencesChildren, updateChildren: I.updateBackreferencesChildren});
@@ -381,12 +403,26 @@ export function toggleBackreferences(state: D.Things, tree: Tree, node: NodeRef)
   return result;
 }
 
-export function insertChild(state: D.Things, tree: Tree, node: NodeRef, child: string, position: number): [D.Things, Tree] {
-  const newState = D.insertChild(state, thing(tree, node), child, position);
-  return [newState, refresh(tree, newState)];
+// Other parents:
+
+function refreshOtherParentsChildren(state: D.Things, tree: Tree, node: NodeRef): Tree {
+  return genericRefreshChildren({
+    getStateChildren: (state, thing_) => {
+      const parent_ = parent(tree, node);
+      return D.otherParents(state, thing_, parent_ && thing(tree, parent_));
+    },
+    getTreeChildren: I.otherParentsChildren,
+    updateChildren: I.updateOtherParentsChildren,
+  })(state, tree, node);
 }
 
-export function removeThing(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
-  const newState = D.remove(state, thing(tree, node));
-  return [newState, refresh(tree, newState)];
+export const otherParentsExpanded = I.otherParentsExpanded;
+export const otherParentsChildren = I.otherParentsChildren;
+
+export function toggleOtherParents(state: D.Things, tree: Tree, node: NodeRef): Tree {
+  let result = I.markOtherParentsExpanded(tree, node, !otherParentsExpanded(tree, node));
+  if (otherParentsExpanded(result, node)) {
+    result = refreshOtherParentsChildren(state, result, node);
+  }
+  return result;
 }
