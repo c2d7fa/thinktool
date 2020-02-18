@@ -666,8 +666,8 @@ function Subtree(p: {context: TreeContext; parent: T.NodeRef; grandparent?: T.No
     <ul className="outline-tree">
       {children}
       {p.children}
-      <BackreferencesItem key="backreferences" parent={p.parent} context={p.context}/>
-      <OtherParentsItem key="other-parents" parent={p.parent} grandparent={p.grandparent} context={p.context}/>
+      { !p.omitReferences && <BackreferencesItem key="backreferences" parent={p.parent} context={p.context}/> }
+      { !p.omitReferences && <OtherParentsItem key="other-parents" parent={p.parent} grandparent={p.grandparent} context={p.context}/> }
     </ul>
   );
 }
