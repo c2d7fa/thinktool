@@ -409,8 +409,7 @@ function refreshOtherParentsChildren(state: D.Things, tree: Tree, node: NodeRef)
   return genericRefreshChildren({
     getStateChildren: (state, thing_) => {
       const parent_ = parent(tree, node);
-      if (parent_ === undefined) return [];
-      return D.otherParents(state, thing_, thing(tree, parent_));
+      return D.otherParents(state, thing_, parent_ && thing(tree, parent_));
     },
     getTreeChildren: I.otherParentsChildren,
     updateChildren: I.updateOtherParentsChildren,

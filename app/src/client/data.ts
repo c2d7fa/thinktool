@@ -107,7 +107,7 @@ export function parents(state: Things, child: string): string[] {
   return result;
 }
 
-export function otherParents(state: Things, child: string, parent: string): string[] {
+export function otherParents(state: Things, child: string, parent?: string): string[] {
   return parents(state, child).filter(p => p !== parent);
 }
 

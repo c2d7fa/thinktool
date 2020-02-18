@@ -623,8 +623,8 @@ function BackreferencesSubtree(p: {context: TreeContext; parent: T.NodeRef}) {
   );
 }
 
-function OtherParentsItem(p: {context: TreeContext; parent: T.NodeRef; grandparent: T.NodeRef}) {
-  const otherParents = Data.otherParents(p.context.state, T.thing(p.context.tree, p.parent), T.thing(p.context.tree, p.grandparent));
+function OtherParentsItem(p: {context: TreeContext; parent: T.NodeRef; grandparent?: T.NodeRef}) {
+  const otherParents = Data.otherParents(p.context.state, T.thing(p.context.tree, p.parent), p.grandparent && T.thing(p.context.tree, p.grandparent));
 
   if (otherParents.length === 0) {
     return null;
@@ -638,14 +638,14 @@ function OtherParentsItem(p: {context: TreeContext; parent: T.NodeRef; grandpare
           expanded={T.otherParentsExpanded(p.context.tree, p.parent)}
           toggle={() => p.context.setTree(T.toggleOtherParents(p.context.state, p.context.tree, p.parent))}
         />
-        <span className="other-parents-text">{otherParents.length} other parents</span>
+        <span className="other-parents-text">{otherParents.length} {p.grandparent ? " other parents" : "parents"}</span>
       </span>
       { T.otherParentsExpanded(p.context.tree, p.parent) && <OtherParentsSubtree parent={p.parent} grandparent={p.grandparent} context={p.context}/>}
     </li>
   );
 }
 
-function OtherParentsSubtree(p: {context: TreeContext; parent: T.NodeRef; grandparent: T.NodeRef}) {
+function OtherParentsSubtree(p: {context: TreeContext; parent: T.NodeRef; grandparent?: T.NodeRef}) {
   const children = T.otherParentsChildren(p.context.tree, p.parent).map(child => {
     return <ExpandableItem key={child.id} node={child} context={p.context}/>;
   });
@@ -667,7 +667,7 @@ function Subtree(p: {context: TreeContext; parent: T.NodeRef; grandparent?: T.No
       {children}
       {p.children}
       <BackreferencesItem key="backreferences" parent={p.parent} context={p.context}/>
-      { p.grandparent && <OtherParentsItem key="other-parents" parent={p.parent} grandparent={p.grandparent} context={p.context}/> }
+      <OtherParentsItem key="other-parents" parent={p.parent} grandparent={p.grandparent} context={p.context}/>
     </ul>
   );
 }
