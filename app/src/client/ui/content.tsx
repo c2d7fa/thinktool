@@ -130,11 +130,11 @@ function renderLeaf(props: SlateReact.RenderLeafProps) {
   }
 }
 
-function renderElement(props: SlateReact.RenderElementProps & {getContentText(thing: string): string}) {
+function renderElement(props: SlateReact.RenderElementProps & {getContentText(thing: string): string; openInternalLink(thing: string): void; isLinkOpen(thing: string): boolean}) {
   if (props.element.type === "internalLink") {
     const content = props.getContentText(props.element.internalLink);
     return (
-      <a className="internal-link" href={`/#${props.element.internalLink}`} {...props.attributes} contentEditable={false}>
+      <a className={`internal-link${ props.isLinkOpen(props.element.internalLink) ? " internal-link-open" : ""}`} href="#" onClick={(ev) => { props.openInternalLink(props.element.internalLink); ev.preventDefault() }} {...props.attributes} contentEditable={false}>
         { content === "" ? <span className="empty-content">#{props.element.internalLink}</span> : content}
         {props.children}
       </a>);
@@ -197,7 +197,7 @@ function isInline(element: Slate.Element): boolean {
   return element.type === "internalLink";
 }
 
-export function Content(props: {things: D.Things; focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string; getContentText(thing: string): string}) {
+export function Content(props: {things: D.Things; focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string; getContentText(thing: string): string; openInternalLink?(thing: string): void; isLinkOpen?(thing: string): boolean}) {
   const editor = React.useMemo(() => {
     const editor = SlateReact.withReact(Slate.createEditor());
     editor.isVoid = isVoid;
@@ -316,7 +316,7 @@ export function Content(props: {things: D.Things; focused?: boolean; text: strin
       <SlateReact.Slate editor={editor} value={value} onChange={onChange}>
         <SlateReact.Editable
           renderLeaf={renderLeaf}
-          renderElement={elementProps => renderElement({...elementProps, getContentText: props.getContentText})}
+          renderElement={elementProps => renderElement({...elementProps, getContentText: props.getContentText, openInternalLink: props.openInternalLink ?? (() => {}), isLinkOpen: props.isLinkOpen ?? (_ => false)})}
           decorate={decorate}
           onKeyDown={onKeyDown}
           onFocus={props.onFocus}/>

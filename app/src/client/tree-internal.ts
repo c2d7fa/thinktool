@@ -1,9 +1,12 @@
+import * as G from "../general";
+
 export interface Node {
   thing: string;
   expanded: boolean;
   children: NodeRef[];
   backreferences: {expanded: boolean; children: NodeRef[]};
   otherParents: {expanded: boolean; children: NodeRef[]};
+  openedLinks: {[thing: string]: NodeRef};
 }
 
 export type NodeRef = {id: number};
@@ -33,6 +36,7 @@ export function fromRoot(thing: string): Tree {
       children: [],
       backreferences: {expanded: false, children: []},
       otherParents: {expanded: false, children: []},
+      openedLinks: {},
     }},
     focus: null,
   };
@@ -71,11 +75,11 @@ export function markExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree
 }
 
 export function children(tree: Tree, node: NodeRef): NodeRef[] {
-  return tree.nodes[node.id].children;
+  return getNode(tree, node).children;
 }
 
 export function loadThing(tree: Tree, thing: string): [NodeRef, Tree] {
-  return [{id: tree.nextId}, {...tree, nextId: tree.nextId + 1, nodes: {...tree.nodes, [tree.nextId]: {thing, expanded: false, children: [], backreferences: {expanded: false, children: []}, otherParents: {expanded: false, children: []}}}}];
+  return [{id: tree.nextId}, {...tree, nextId: tree.nextId + 1, nodes: {...tree.nodes, [tree.nextId]: {thing, expanded: false, children: [], backreferences: {expanded: false, children: []}, otherParents: {expanded: false, children: []}, openedLinks: {}}}}];
 }
 
 export function* allNodes(tree: Tree): Generator<NodeRef> {
@@ -91,11 +95,11 @@ export function updateChildren(tree: Tree, node: NodeRef, update: (children: Nod
 // Backreferences
 
 export function backreferencesExpanded(tree: Tree, node: NodeRef): boolean {
-  return tree.nodes[node.id].backreferences.expanded;
+  return getNode(tree, node).backreferences.expanded;
 }
 
 export function backreferencesChildren(tree: Tree, node: NodeRef): NodeRef[] {
-  return tree.nodes[node.id].backreferences.children;
+  return getNode(tree, node).backreferences.children;
 }
 
 export function markBackreferencesExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree {
@@ -109,11 +113,11 @@ export function updateBackreferencesChildren(tree: Tree, node: NodeRef, update: 
 // Parents as children ("other parents")
 
 export function otherParentsExpanded(tree: Tree, node: NodeRef): boolean {
-  return tree.nodes[node.id].otherParents.expanded;
+  return getNode(tree, node).otherParents.expanded;
 }
 
 export function otherParentsChildren(tree: Tree, node: NodeRef): NodeRef[] {
-  return tree.nodes[node.id].otherParents.children;
+  return getNode(tree, node).otherParents.children;
 }
 
 export function markOtherParentsExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree {
@@ -122,4 +126,23 @@ export function markOtherParentsExpanded(tree: Tree, node: NodeRef, expanded: bo
 
 export function updateOtherParentsChildren(tree: Tree, node: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree {
   return updateNode(tree, node, n => ({...n, otherParents: {...n.otherParents, children: update(n.otherParents.children)}}));
+}
+
+// Internal links
+// (See comment in Tree module)
+
+export function openedLinkNode(tree: Tree, node: NodeRef, link: string): NodeRef | undefined {
+  return getNode(tree, node).openedLinks[link];
+}
+
+export function setOpenedLinkNode(tree: Tree, node: NodeRef, link: string, linkNode: NodeRef | null) {
+  if (linkNode === null) {
+    return updateNode(tree, node, n => ({...n, openedLinks: G.removeKey(n.openedLinks, link)}));
+  } else {
+    return updateNode(tree, node, n => ({...n, openedLinks: {...n.openedLinks, [link]: linkNode}}));
+  }
+}
+
+export function openedLinksChildren(tree: Tree, node: NodeRef): NodeRef[] {
+  return Object.values(getNode(tree, node).openedLinks);
 }

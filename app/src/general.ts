@@ -8,6 +8,14 @@ export function arrayEq<T>(a: T[], b: T[], eq?: (x: T, y: T) => boolean): boolea
   return true;
 }
 
+export function toggleList<T>(a: T[], x: T): T[] {
+  if (a.includes(x)) {
+    return a.filter(y => y !== x);
+  } else {
+    return [...a, x];
+  }
+}
+
 // A variant of splice that returns a new array rather than modifying its input.
 export function splice<T>(a: T[], start: number, deleteCount?: number): T[];
 export function splice<T>(a: T[], start: number, deleteCount: number, ...items: T[]): T[];
@@ -35,4 +43,10 @@ export function indexOfBy<T>(a: T[], x: T, eq?: (x: T, y: T) => boolean): number
     if (eq_(a[i], x))
       return i;
   return undefined;
+}
+
+export function removeKey<V>(o: {[x: string]: V}, k: string): {[x: string]: V} {
+  const result = {...o};
+  delete result[k];
+  return result;
 }

@@ -426,3 +426,28 @@ export function toggleOtherParents(state: D.Things, tree: Tree, node: NodeRef): 
   }
   return result;
 }
+
+// Internal links:
+
+// Internal links can be opened and closed in-line; opening a link creates a new
+// child of the relevant item in the tree. A link refers to a thing (not a
+// node), but the item that is created in the tree is a node. There is
+// one-to-one relationships between linked things and nodes in the tree; that
+// is, the same thing cannot be opened multiple times, even if a link occurs
+// multiple times in the relevant item.
+
+export function isLinkOpen(tree: Tree, node: NodeRef, link: string): boolean {
+  return I.openedLinkNode(tree, node, link) !== undefined;
+}
+
+export function toggleLink(state: D.Things, tree: Tree, node: NodeRef, link: string): Tree {
+  if (isLinkOpen(tree, node, link)) {
+    return I.setOpenedLinkNode(tree, node, link, null);
+  } else {
+    const [linkNode, result0] = load(state, tree, link);
+    const result = I.setOpenedLinkNode(result0, node, link, linkNode);
+    return result;
+  }
+}
+
+export const openedLinksChildren = I.openedLinksChildren;

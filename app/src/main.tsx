@@ -469,7 +469,7 @@ function PlaceholderItem(p: {context: TreeContext; parent: T.NodeRef}) {
   );
 }
 
-function ExpandableItem(p: {context: TreeContext; node: T.NodeRef; parent?: T.NodeRef}) {
+function ExpandableItem(p: {context: TreeContext; node: T.NodeRef; parent?: T.NodeRef; className?: string}) {
   function toggle() {
     p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
   }
@@ -499,6 +499,8 @@ function ExpandableItem(p: {context: TreeContext; node: T.NodeRef; parent?: T.No
   }
 
   let className = "item-line";
+  if (p.className)
+    className += " " + p.className;
   if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id)
     className += " drop-target";
   if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null)
@@ -647,6 +649,8 @@ function Content(p: {context: TreeContext; node: T.NodeRef}) {
       text={Data.content(p.context.state, T.thing(p.context.tree, p.node))}
       setText={(text) => { p.context.setContent(T.thing(p.context.tree, p.node), text) }}
       onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.node)) }}
+      isLinkOpen={(thing) => T.isLinkOpen(p.context.tree, p.node, thing)}
+      openInternalLink={(thing) => p.context.setTree(T.toggleLink(p.context.state, p.context.tree, p.node, thing))}
       onKeyDown={onKeyDown}/>
     { insertChildPopup }
   </>;
@@ -726,8 +730,13 @@ function Subtree(p: {context: TreeContext; parent: T.NodeRef; grandparent?: T.No
     return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context}/>;
   });
 
+  const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map(child => {
+    return <ExpandableItem className="opened-link" key={child.id} node={child} parent={p.parent} context={p.context}/>;
+  });
+
   return (
     <ul className="outline-tree">
+      {openedLinksChildren}
       {children}
       {p.children}
       { !p.omitReferences && <BackreferencesItem key="backreferences" parent={p.parent} context={p.context}/> }
