@@ -9,6 +9,8 @@ import * as C from "./client/ui/content";
 import Search from "./client/ui/search";
 import { ThingSelectPopup } from "./client/ui/thing-select-popup";
 
+import * as Demo from "./client/demo";
+
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -172,6 +174,36 @@ function useStateContext(initialState: Things): StateContext {
   return {state, setState, setLocalState, setContent, undo: undo_};
 }
 
+// A variation of useStateContext that doesn't synchronize its data with the
+// server. This is used by DemoApp.
+function useLocalOnlyStateContext(initialState: Things): StateContext {
+  // TODO: We should be able to dramatically reduce duplication between this and
+  // useStateContext.
+  const [state, setLocalState] = React.useState(initialState);
+
+  function setContent(thing: string, content: string): void {
+    setLocalState(Data.setContent(state, thing, content));
+  }
+
+  function setState(newState: Things): void {
+    if (newState !== state) {
+      undo.pushState(state);
+      setLocalState(newState);
+    }
+  }
+
+  function undo_(): void {
+    const oldState = undo.popState();
+    if (oldState === null) {
+      console.log("Can't undo further");
+      return;
+    }
+    setLocalState(oldState);
+  }
+
+  return {state, setState, setLocalState, setContent, undo: undo_};
+}
+
 function App({initialState, username}: {initialState: Things; username: string}) {
   const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
   function setSelectedThing(thing: string): void {
@@ -226,6 +258,38 @@ function App({initialState, username}: {initialState: Things; username: string})
   return <>
     <Search context={context}/>
     <div id="current-user"><span className="username">{username}</span> <a className="log-out" href="/logout">log out</a></div>
+    <ThingOverview context={context} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
+  </>;
+}
+
+// A variation of App that stores all the data locally and which does not have a
+// user associated with it. As the name suggests, this is used for the demo.
+function DemoApp() {
+  // TODO: We should be able to dramatically reduce duplication between this and
+  // App, since App is just this with a bunch of extra stuff.
+
+  const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
+  function setSelectedThing(thing: string): void {
+    setSelectedThing_(thing);
+    window.history.pushState(undefined, document.title, `#${thing}`);
+  }
+
+  window.onpopstate = (ev) => {
+    setSelectedThing_(extractThingFromURL());
+  };
+
+  const context = useLocalOnlyStateContext(Demo.initialState);
+
+  document.onkeydown = (ev) => {
+    if (ev.key === "z" && ev.ctrlKey) {
+      console.log("Undoing");
+      context.undo();
+      ev.preventDefault();
+    }
+  };
+
+  return <>
+    <Search context={context}/>
     <ThingOverview context={context} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
   </>;
 }
@@ -675,9 +739,12 @@ function Subtree(p: {context: TreeContext; parent: T.NodeRef; grandparent?: T.No
 // ==
 
 async function start(): Promise<void> {
+  const appElement = document.querySelector("#app")! as HTMLDivElement;
+  const isDemo = appElement.dataset.demo === "true";
+
   ReactDOM.render(
-    <App initialState={await Server.getFullState() as Things} username={await Server.getUsername()}/>,
-    document.querySelector("#app")
+    isDemo ? <DemoApp/> : <App initialState={await Server.getFullState() as Things} username={await Server.getUsername()}/>,
+    appElement
   );
 }
 
