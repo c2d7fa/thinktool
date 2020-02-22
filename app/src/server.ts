@@ -136,6 +136,10 @@ app.get("/", (req, res) => {
   }
 });
 
+app.get("/demo", (req, res) => {
+  return sendStatic(res, "demo.html");
+});
+
 app.get("/login", (req, res) => {
   if (req.hasSession) return sendRedirect(res, "/");
   sendStatic(res, "login.html");

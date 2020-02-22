@@ -63,6 +63,7 @@ p {
     display: block;
     width: max-content;
     margin: 0 auto;
+    -webkit-user-drag: none;
 
     margin-top: 2em;
 

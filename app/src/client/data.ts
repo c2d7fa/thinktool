@@ -74,8 +74,8 @@ function generateShortId(): string {
   return x.toString(36);
 }
 
-export function create(state: Things): [Things, string] {
-  const newId = generateShortId();
+export function create(state: Things, customId?: string): [Things, string] {
+  const newId = customId ?? generateShortId();
   return [{...state, things: {...state.things, [newId]: {content: "", children: []}}}, newId];
 }
 
