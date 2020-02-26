@@ -4,6 +4,7 @@
   "devDependencies": {
     "@types/bcrypt": "latest",
     "@types/express": "latest",
+    "@types/express-ws": "latest",
     "@types/mongodb": "latest",
     "@types/node": "latest",
     "@types/react-dom": "latest",
@@ -15,6 +16,7 @@
     "eslint-plugin-react": "latest",
     "eslint": "latest",
     "express": "latest",
+    "express-ws": "latest",
     "mongodb": "latest",
     "react-dom": "latest",
     "react": "latest",
