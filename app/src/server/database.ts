@@ -54,12 +54,6 @@ export async function createUser(user: string, password: string): Promise<{type:
   }
 }
 
-// We want to be able to know when a user's data was last updated. This is used
-// to figure out if we need to send an update to a client or not; we send
-// updates when the last update was later than the last read from the client.
-
-const lastUpdates: {[userName: string]: Date | undefined} = {};
-
 export async function getAllThings(userId: UserId): Promise<{name: string; content?: string; children?: string[]}[]> {
   const documents = client.db("diaform").collection("things").find({user: userId.name});
   return documents.project({name: 1, content: 1, children: 1, _id: 0}).toArray();
@@ -71,19 +65,12 @@ export async function thingExists(userId: UserId, thing: string): Promise<boolea
 
 export async function updateThing(userId: UserId, thing: string, content: string, children: string[]): Promise<void> {
   await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, {$set: {content, children}}, {upsert: true});
-  lastUpdates[userId.name] = new Date();
 }
 
 export async function deleteThing(userId: UserId, thing: string): Promise<void> {
   await client.db("diaform").collection("things").deleteOne({user: userId.name, name: thing});
-  lastUpdates[userId.name] = new Date();
 }
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
   await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, {$set: {content}}, {upsert: true});
-  lastUpdates[userId.name] = new Date();
-}
-
-export function lastUpdated(userId: UserId): Date | null {
-  return lastUpdates[userId.name] ?? null;
 }

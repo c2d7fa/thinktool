@@ -223,28 +223,15 @@ function App({initialState, username}: {initialState: Things; username: string})
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
   //
-  // The server gives us /api/changes, which returns true when there are pending
-  // changes from another client. We poll for such changes regularly, and when
-  // changes are found, update the local state. The polling interval is
-  // dynamically adjusted to avoid polling very frequently when we don't expect
-  // to see any changes.
+  // The server makes a websocket available on /api/changes, which notifies us
+  // when there are pending changes from another client.
 
   React.useEffect(() => {
-    let timesSinceLastChange = 0;
-    function callback(ms: number): void {
-      setTimeout(async () => {
-        const hasChanges = await Server.hasChanges();
-        if (hasChanges) {
-          timesSinceLastChange = 0;
-          await Server.polledChanges();
-          context.setLocalState(await Server.getFullState());
-        } else {
-          timesSinceLastChange++;
-        }
-        callback(Math.min(timesSinceLastChange * 100 + 500, 10000));
-      }, ms);
-    }
-    callback(5000);
+    Server.onChanges(async (changes) => {
+      // TODO: We receive the specific item that was changed, so we don't need
+      // to fetch the entire state each time.
+      context.setLocalState(await Server.getFullState());
+    });
   }, []);
 
   document.onkeydown = (ev) => {
