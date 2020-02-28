@@ -12,8 +12,8 @@ COPY ./app ./app
 
 WORKDIR ./app
 RUN npx eslint . --ext .ts --fix
-RUN npx tsc
-RUN npx webpack
+RUN npx parcel build src/server.ts -d build -t node
+RUN npx parcel build src/main.tsx -d build -o bundle.js
 
 WORKDIR ./build
 EXPOSE 80
