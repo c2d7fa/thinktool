@@ -1,9 +1,9 @@
 * MongoDB
 
-To initialize MongoDB with data saved in =./diaform-db=, run:
+To initialize MongoDB with data saved in =./db=, run:
 
 #+begin_example
-# docker run -p 127.0.0.1:27017:27017 -v "$(pwd)/diaform-db":/data/db -d mongo
+# docker run -p 127.0.0.1:27017:27017 -v "$(pwd)/db":/data/db -d mongo
 #+end_example
 
 This will start MongoDB, exposing the port only to the local machine (so foreign

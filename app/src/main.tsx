@@ -1,3 +1,5 @@
+import "regenerator-runtime/runtime";  // Required by Parcel for reasons that I do not understand.
+
 import {Things} from "./client/data";
 import {Tree} from "./client/tree";
 
