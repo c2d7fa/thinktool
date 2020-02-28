@@ -1,6 +1,8 @@
 import * as mongo from "mongodb";
 import * as bcrypt from "bcrypt";
 
+import * as Communication from "../communication";
+
 export type UserId = {name: string};
 
 // This is a hack. We require the consumer of this module to call initialize()
@@ -73,4 +75,9 @@ export async function deleteThing(userId: UserId, thing: string): Promise<void> 
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
   await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, {$set: {content}}, {upsert: true});
+}
+
+export async function getThingData(userId: UserId, thing: string): Promise<Communication.ThingData> {
+  const data = await client.db("diaform").collection("things").findOne({user: userId.name, name: thing});
+  return {content: data.content ?? "", children: data.children ?? []};
 }

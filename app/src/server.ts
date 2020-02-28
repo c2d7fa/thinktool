@@ -270,6 +270,11 @@ app.put("/api/things/:thing/content", requireSession, parseThingExists, requireC
 
 // #endregion
 
+app.get("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
+  const thingData = await DB.getThingData(req.user!, res.locals.thing);
+  res.type("json").send(thingData as Communication.ThingData);
+});
+
 app.post("/", async (req, res) => {
   if (typeof req.body !== "object" || typeof req.body.user !== "string" || typeof req.body.password !== "string") {
     res.status(400).type("text/plain").send("400 Bad Request");

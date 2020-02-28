@@ -33,7 +33,7 @@ export async function putThing(thing: string, data: D.ThingData): Promise<void> 
   await fetch(`/api/things/${thing}`, {method: "put", headers: {"Content-Type": "application/json", "Thinktool-Client-Id": clientId}, body: JSON.stringify(request)});
 }
 
-export function onChanges(callback: (changes: string[]) => void): void {
+export function onChanges(callback: (changes: string[]) => void): () => void {
   // TODO: This is a bit awkward. We do this so it works both on localhost:8080
   // and on a "real" domain.
   const url = `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/api/changes`;
@@ -48,4 +48,12 @@ export function onChanges(callback: (changes: string[]) => void): void {
     if (!(changes instanceof Array)) throw "bad data from server";
     callback(changes);
   };
+
+  return () => socket.close();
+}
+
+export async function getThingData(thing: string): Promise<Communication.ThingData | null> {
+  const response = await fetch(`/api/things/${thing}`);
+  if (response.status === 404) return null;
+  return await response.json() as Communication.ThingData;
 }

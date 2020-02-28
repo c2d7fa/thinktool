@@ -30,6 +30,7 @@ interface StateContext {
   state: Things;
   setState(value: Things): void;
   setLocalState(value: Things): void;
+  updateLocalState(f: (value: Things) => Things): void;
 
   setContent(thing: string, content: string): void;
 
@@ -173,7 +174,7 @@ function useStateContext(initialState: Things): StateContext {
     }
   }
 
-  return {state, setState, setLocalState, setContent, undo: undo_};
+  return {state, setState, setLocalState, setContent, undo: undo_, updateLocalState: setLocalState};
 }
 
 // A variation of useStateContext that doesn't synchronize its data with the
@@ -203,7 +204,7 @@ function useLocalOnlyStateContext(initialState: Things): StateContext {
     setLocalState(oldState);
   }
 
-  return {state, setState, setLocalState, setContent, undo: undo_};
+  return {state, setState, setLocalState, setContent, undo: undo_, updateLocalState: setLocalState};
 }
 
 function App({initialState, username}: {initialState: Things; username: string}) {
@@ -229,12 +230,32 @@ function App({initialState, username}: {initialState: Things; username: string})
   // when there are pending changes from another client.
 
   React.useEffect(() => {
-    Server.onChanges(async (changes) => {
-      // TODO: We receive the specific item that was changed, so we don't need
-      // to fetch the entire state each time.
-      context.setLocalState(await Server.getFullState());
+    return Server.onChanges(async (changes) => {
+      for (const changedThing of changes) {
+        const thingData = await Server.getThingData(changedThing);
+
+        if (thingData === null) {
+          // Thing was deleted
+          context.updateLocalState(state => Data.remove(state, changedThing));
+          continue;
+        }
+
+        context.updateLocalState(state => {
+          let newState = state;
+
+          if (!Data.exists(newState, changedThing)) {
+          // A new item was created
+            newState = Data.create(newState, changedThing)[0];
+          }
+
+          newState = Data.setContent(newState, changedThing, thingData.content);
+          newState = Data.replaceChildren(newState, changedThing, thingData.children);
+
+          return newState;
+        });
+      }
     });
-  }, []);
+  }, [context.updateLocalState]);
 
   document.onkeydown = (ev) => {
     if (ev.key === "z" && ev.ctrlKey) {
