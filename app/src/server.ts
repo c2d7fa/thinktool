@@ -1,9 +1,50 @@
 import * as crypto from "crypto";
 import express from "express";
+import expressWs from "express-ws";
 import * as util from "util";
 
 import * as DB from "./server/database";
 import * as Communication from "./communication";
+
+// #region changes
+
+// We want to be able to subscribe to changes in a user's data. This is used to
+// notify a client when a user changes their data in another client.
+
+type ClientId = string;
+
+const changes = (() => {
+  type SubscriptionId = number;
+
+  interface Subscription {
+    userId: DB.UserId;
+    receiver: ClientId;
+    callback(thing: string): void;
+  }
+
+  let nextId = 0;
+  const subscriptions: {[id: number]: Subscription} = {};
+
+  function updated(userId: DB.UserId, thing: string, sender: ClientId): void {
+    for (const subscription of Object.values(subscriptions).filter(s => s.userId.name === userId.name && s.receiver !== sender)) {
+      subscription.callback(thing);
+    }
+  }
+
+  function subscribe(userId: DB.UserId, receiver: ClientId, callback: (thing: string) => void): SubscriptionId {
+    const id = nextId++;
+    subscriptions[id] = {userId, callback, receiver};
+    return id;
+  }
+
+  function unsubscribe(subscriptionId: SubscriptionId): void {
+    delete subscriptions[subscriptionId];
+  }
+
+  return {updated, subscribe, unsubscribe};
+})();
+
+// #endregion
 
 const session = (() => {
   interface SessionData {
@@ -36,21 +77,7 @@ const session = (() => {
     return user(sessionId) !== null;
   }
 
-  function hasChanges(sessionId: string): boolean {
-    const session = sessions[sessionId];
-    const lastUpdated = DB.lastUpdated(user(sessionId)!);
-    if (session.lastPolled === null)
-      return lastUpdated !== null;
-    if (lastUpdated === null)
-      return false;
-    return lastUpdated > session.lastPolled;
-  }
-
-  function sessionPolled(sessionId: string): void {
-    sessions[sessionId].lastPolled = new Date();
-  }
-
-  return {create, user, validId, hasChanges, sessionPolled};
+  return {create, user, validId};
 })();
 
 function getCookie(cookies: string | undefined, key: string): string | null {
@@ -80,19 +107,7 @@ function requireSession(req: express.Request, res: express.Response, next: expre
   }
 }
 
-const requireUpToDateSession = [requireSession, ((req: express.Request, res: express.Response, next: express.NextFunction): void => {
-  return requireSession(req, res, () => {
-    if (session.hasChanges(req.session!)) {
-      console.log("Denying request because client is unaware of some changes.");
-      res.status(409).type("text/plain").send("I refuse to process your request because there are new changes to the state since you last polled.");
-      next("route");
-    } else {
-      next();
-    }
-  });
-})];
-
-const app = express();
+const app = expressWs(express()).app;
 
 // Body
 app.use(express.text());
@@ -129,7 +144,6 @@ function sendRedirect(res: express.Response, location: string): void {
 
 app.get("/", (req, res) => {
   if (req.hasSession) {
-    session.sessionPolled(req.session!);
     return sendStatic(res, "app.html");
   } else {
     return sendStatic(res, "landing.html");
@@ -149,13 +163,32 @@ app.get("/logout", async (req, res) => {
   sendRedirect(res.header("Set-Cookie", "DiaformSession=; Max-Age=0"), "/");
 });
 
-app.get("/api/changes", requireSession, async (req, res) => {
-  res.type("json").send(session.hasChanges(req.session!));
-});
+app.ws("/api/changes", async (ws, req) => {
+  if (req.user === undefined) return ws.close();
 
-app.post("/api/changes", requireSession, async (req, res) => {
-  session.sessionPolled(req.session!);
-  res.end();
+  let subscription: number | null = null;
+
+  // The first message from the client is an ID for that client. We don't want
+  // to notify a particular client of its own changes. That would be silly!
+
+  ws.onmessage = (ev) => {
+    if (typeof ev.data !== "string") {
+      console.warn("Received unexpected data over websocket: %o", ev);
+      return;
+    }
+
+    subscription = changes.subscribe(req.user!, ev.data, (change: string) => {
+      ws.send(JSON.stringify([change]));
+    });
+
+    ws.onmessage = () => {};
+  };
+
+  ws.onclose = (ev) => {
+    if (subscription !== null) {
+      changes.unsubscribe(subscription);
+    }
+  };
 });
 
 app.get("/api/things", requireSession, async (req, res) => {
@@ -191,32 +224,55 @@ async function parseThing(req: express.Request, res: express.Response, next: exp
   next();
 }
 
-app.put("/api/things/:thing", requireUpToDateSession, parseThing, async (req, res) => {
+// #region Updates
+
+async function requireClientId(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const header = req.headers["thinktool-client-id"];
+
+  if (typeof header !== "string") {
+    console.log(header, req.headers);
+    res.status(400).type("text/plain").send("400 Bad Request: Missing client ID header");
+    return next("router");
+  }
+
+  res.locals.clientId = header;
+
+  next();
+}
+
+app.put("/api/things/:thing", requireSession, parseThing, requireClientId, async (req, res) => {
   if (typeof req.body !== "object") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
   const data = req.body as Communication.ThingData;
   await DB.updateThing(req.user!, res.locals.thing, data.content, data.children);
-  session.sessionPolled(req.session!);
+  changes.updated(req.user!, res.locals.thing, res.locals.clientId);
   res.end();
 });
 
-app.delete("/api/things/:thing", requireUpToDateSession, parseThingExists, async (req, res) => {
+app.delete("/api/things/:thing", requireSession, parseThingExists, requireClientId, async (req, res) => {
   await DB.deleteThing(req.user!, res.locals.thing);
-  session.sessionPolled(req.session!);
+  changes.updated(req.user!, res.locals.thing, res.locals.clientId);
   res.end();
 });
 
-app.put("/api/things/:thing/content", requireUpToDateSession, parseThingExists, async (req, res) => {
+app.put("/api/things/:thing/content", requireSession, parseThingExists, requireClientId, async (req, res) => {
   if (typeof req.body !== "string") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
 
   await DB.setContent(req.user!, res.locals.thing, req.body);
-  session.sessionPolled(req.session!);
+  changes.updated(req.user!, res.locals.thing, res.locals.clientId);
   res.end();
+});
+
+// #endregion
+
+app.get("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
+  const thingData = await DB.getThingData(req.user!, res.locals.thing);
+  res.type("json").send(thingData as Communication.ThingData);
 });
 
 app.post("/", async (req, res) => {

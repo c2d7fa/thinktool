@@ -67,6 +67,10 @@ export function insertChild(state: Things, parent: string, child: string, index:
   return result;
 }
 
+export function replaceChildren(state: Things, parent: string, children: string[]) {
+  return {...state, things: {...state.things, [parent]: {...state.things[parent], children}}};
+}
+
 function generateShortId(): string {
   const d = Math.floor((new Date().getTime()) / 1000) % (36 * 36 * 36 * 36 * 36 * 36);
   const r = Math.floor(Math.random() * 36 * 36);

@@ -30,6 +30,7 @@ interface StateContext {
   state: Things;
   setState(value: Things): void;
   setLocalState(value: Things): void;
+  updateLocalState(f: (value: Things) => Things): void;
 
   setContent(thing: string, content: string): void;
 
@@ -173,7 +174,7 @@ function useStateContext(initialState: Things): StateContext {
     }
   }
 
-  return {state, setState, setLocalState, setContent, undo: undo_};
+  return {state, setState, setLocalState, setContent, undo: undo_, updateLocalState: setLocalState};
 }
 
 // A variation of useStateContext that doesn't synchronize its data with the
@@ -203,7 +204,7 @@ function useLocalOnlyStateContext(initialState: Things): StateContext {
     setLocalState(oldState);
   }
 
-  return {state, setState, setLocalState, setContent, undo: undo_};
+  return {state, setState, setLocalState, setContent, undo: undo_, updateLocalState: setLocalState};
 }
 
 function App({initialState, username}: {initialState: Things; username: string}) {
@@ -225,29 +226,36 @@ function App({initialState, username}: {initialState: Things; username: string})
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
   //
-  // The server gives us /api/changes, which returns true when there are pending
-  // changes from another client. We poll for such changes regularly, and when
-  // changes are found, update the local state. The polling interval is
-  // dynamically adjusted to avoid polling very frequently when we don't expect
-  // to see any changes.
+  // The server makes a websocket available on /api/changes, which notifies us
+  // when there are pending changes from another client.
 
   React.useEffect(() => {
-    let timesSinceLastChange = 0;
-    function callback(ms: number): void {
-      setTimeout(async () => {
-        const hasChanges = await Server.hasChanges();
-        if (hasChanges) {
-          timesSinceLastChange = 0;
-          await Server.polledChanges();
-          context.setLocalState(await Server.getFullState());
-        } else {
-          timesSinceLastChange++;
+    return Server.onChanges(async (changes) => {
+      for (const changedThing of changes) {
+        const thingData = await Server.getThingData(changedThing);
+
+        if (thingData === null) {
+          // Thing was deleted
+          context.updateLocalState(state => Data.remove(state, changedThing));
+          continue;
         }
-        callback(Math.min(timesSinceLastChange * 100 + 500, 10000));
-      }, ms);
-    }
-    callback(5000);
-  }, []);
+
+        context.updateLocalState(state => {
+          let newState = state;
+
+          if (!Data.exists(newState, changedThing)) {
+          // A new item was created
+            newState = Data.create(newState, changedThing)[0];
+          }
+
+          newState = Data.setContent(newState, changedThing, thingData.content);
+          newState = Data.replaceChildren(newState, changedThing, thingData.children);
+
+          return newState;
+        });
+      }
+    });
+  }, [context.updateLocalState]);
 
   document.onkeydown = (ev) => {
     if (ev.key === "z" && ev.ctrlKey) {
