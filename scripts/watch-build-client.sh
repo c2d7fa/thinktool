@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 cd app
-npx parcel build src/main.tsx -d build -o bundle.js
+npx parcel watch src/main.tsx -d build -o bundle.js
