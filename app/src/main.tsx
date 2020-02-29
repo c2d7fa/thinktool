@@ -266,8 +266,10 @@ function App({initialState, username}: {initialState: Things; username: string})
   };
 
   return <>
-    <Search context={context}/>
-    <div id="current-user"><span className="username">{username}</span> <a className="log-out" href="/logout">log out</a></div>
+    <div className="top-bar">
+      <Search context={context}/>
+      <div id="current-user"><span className="username">{username}</span> <a className="log-out" href="/logout">log out</a></div>
+    </div>
     <ThingOverview context={context} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
   </>;
 }
@@ -299,7 +301,9 @@ function DemoApp() {
   };
 
   return <>
-    <Search context={context}/>
+    <div className="top-bar">
+      <Search context={context}/>
+    </div>
     <ThingOverview context={context} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
   </>;
 }
@@ -310,19 +314,23 @@ function ThingOverview(p: {context: StateContext; selectedThing: string; setSele
   return (
     <div className="overview">
       <ParentsOutline context={p.context} child={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
-      <C.Content
-        things={p.context.state}
-        className="selected-content"
-        getContentText={thing => Data.contentText(p.context.state, thing)}
-        text={Data.content(p.context.state, p.selectedThing)}
-        setText={(text) => { p.context.setContent(p.selectedThing, text) }}/>
-      <div className="children">
-        <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+      <div className="overview-main">
+        <C.Content
+          things={p.context.state}
+          className="selected-content"
+          getContentText={thing => Data.contentText(p.context.state, thing)}
+          text={Data.content(p.context.state, p.selectedThing)}
+          setText={(text) => { p.context.setContent(p.selectedThing, text) }}/>
+        <div className="children">
+          <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+        </div>
       </div>
       { hasReferences && <>
         <div className="references">
-          <h1 className="link-section">References</h1>
-          <ReferencesOutline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+          <div className="references-inner">
+            <h1 className="link-section">References</h1>
+            <ReferencesOutline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+          </div>
         </div>
       </> }
     </div>
@@ -348,12 +356,18 @@ function ParentsOutline(p: {context: StateContext; child: string; setSelectedThi
   });
 
   if (parentLinks.length === 0) {
-    return <span className="parents"><span className="no-parents">No parents</span></span>;
+    return <div className="parents">
+      <div className="parents-inner">
+        <span className="no-parents">No parents</span>
+      </div>
+    </div>;
   } else {
-    return <span className="parents">
-      <h1 className="link-section">Parents</h1>
-      <ul className="outline-tree">{parentLinks}</ul>
-    </span>;
+    return <div className="parents">
+      <div className="parents-inner">
+        <h1 className="link-section">Parents</h1>
+        <ul className="outline-tree">{parentLinks}</ul>
+      </div>
+    </div>;
   }
 }
 
