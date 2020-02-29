@@ -490,24 +490,17 @@ ul.search-results {
 #current-user a.log-out {
     display: inline-block;
 
-    padding: 0.5ex 1ex;
-    margin: -1ex;
-    margin-left: 1ex;
-
     color: inherit;
+    margin-left: 1ex;
     text-decoration: none;
 
-    border-radius: 6px;
-
-    transition: color 0.3s ease, background-color 0.3s ease;
+    transition: color 0.3s ease;
 }
 
 #current-user a.log-out:hover {
     color: #808080;
-    background-color: #f8f8f8;
 }
 
 #current-user a.log-out:active {
     color: #404040;
-    background-color: #f8f8f8;
 }
