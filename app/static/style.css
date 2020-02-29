@@ -394,7 +394,8 @@ h1.link-section:first-child {
     display: flex;
     justify-content: space-between;
 
-    border-bottom: 1px solid #f0f0f0;
+    background: linear-gradient(180deg, #fcfcfc 0%, #fafafa 100%);
+    color: #a0a0a0;
 }
 
 /* Search */
@@ -409,10 +410,17 @@ h1.link-section:first-child {
 
     padding: 0.2em 0.5em;
 
-    border: 1px solid #e0e0e0;
+    border: 1px solid #f4f4f4;
+    background-color: rgba(0, 0, 0, 0%);
     border-radius: 6px;
 
     outline: none;
+
+    transition: border-color 0.15s ease;
+}
+
+.search input:hover {
+    border: 1px solid #e8e8e8;
 }
 
 .search input::placeholder {
