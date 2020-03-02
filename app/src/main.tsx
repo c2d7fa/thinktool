@@ -44,6 +44,8 @@ interface TreeContext extends StateContext {
   setTree(value: Tree): void;
   drag: DragInfo;
   setDrag(value: DragInfo): void;
+
+  selectedThing: string;
   setSelectedThing: SetSelectedThing;
 }
 
@@ -311,9 +313,11 @@ function DemoApp() {
 function ThingOverview(p: {context: StateContext; selectedThing: string; setSelectedThing(value: string): void}) {
   const hasReferences = Data.backreferences(p.context.state, p.selectedThing).length > 0;
 
+  const treeContext = useTreeContext(p.context, p.selectedThing, p.setSelectedThing);
+
   return (
     <div className="overview">
-      <ParentsOutline context={p.context} child={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+      <ParentsOutline context={treeContext}/>
       <div className="overview-main">
         <C.Content
           things={p.context.state}
@@ -322,14 +326,14 @@ function ThingOverview(p: {context: StateContext; selectedThing: string; setSele
           text={Data.content(p.context.state, p.selectedThing)}
           setText={(text) => { p.context.setContent(p.selectedThing, text) }}/>
         <div className="children">
-          <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+          <Outline context={treeContext}/>
         </div>
       </div>
       { hasReferences && <>
         <div className="references">
           <div className="references-inner">
             <h1 className="link-section">References</h1>
-            <ReferencesOutline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
+            <ReferencesOutline context={treeContext}/>
           </div>
         </div>
       </> }
@@ -337,25 +341,18 @@ function ThingOverview(p: {context: StateContext; selectedThing: string; setSele
   );
 }
 
-// TODO: ParentsOutline and ReferencesOutline should both have their use-cases
-// supported directly by the Tree module, like Outline, and they should support
-// drag and drop between trees. They should also have appropriate custom
-// behavior in response to key-presses (e.g. Alt+Backspace in ParentsOutline
-// should remove parent from child).
+// TODO: ParentsOutline and ReferencesOutline should both have appropriate
+// custom behavior in response to key-presses (e.g. Alt+Backspace in
+// ParentsOutline should remove parent from child).
 
-function ParentsOutline(p: {context: StateContext; child: string; setSelectedThing: SetSelectedThing}) {
-  function ParentItem(p: {context: StateContext; parent: string; setSelectedThing: SetSelectedThing}) {
-    const [tree, setTree] = React.useState(T.fromRoot(p.context.state, p.parent));
-    const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
-    const treeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
-    return <ExpandableItem node={T.root(tree)} context={treeContext}/>;
-  }
-
-  const parentLinks = Data.parents(p.context.state, p.child).map((parent: string) => {
-    return <ParentItem key={parent} context={p.context} parent={parent} setSelectedThing={p.setSelectedThing}/>;
+function ParentsOutline(p: {context: TreeContext}) {
+  const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map((child: T.NodeRef) => {
+    return <ExpandableItem key={child.id} node={child} context={p.context}/>;
   });
 
-  if (parentLinks.length === 0) {
+  const subtree = <ul className="outline-tree">{parentItems}</ul>;
+
+  if (parentItems.length === 0) {
     return <div className="parents">
       <div className="parents-inner">
         <span className="no-parents">No parents</span>
@@ -365,22 +362,15 @@ function ParentsOutline(p: {context: StateContext; child: string; setSelectedThi
     return <div className="parents">
       <div className="parents-inner">
         <h1 className="link-section">Parents</h1>
-        <ul className="outline-tree">{parentLinks}</ul>
+        {subtree}
       </div>
     </div>;
   }
 }
 
-function ReferencesOutline(p: {context: StateContext; root: string; setSelectedThing: SetSelectedThing}) {
-  function ReferenceItem(p: {context: StateContext; reference: string; setSelectedThing: SetSelectedThing}) {
-    const [tree, setTree] = React.useState(T.fromRoot(p.context.state, p.reference));
-    const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
-    const treeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
-    return <ExpandableItem node={T.root(tree)} context={treeContext}/>;
-  }
-
-  const referenceItems = Data.backreferences(p.context.state, p.root).map((reference: string) => {
-    return <ReferenceItem key={reference} context={p.context} reference={reference} setSelectedThing={p.setSelectedThing}/>;
+function ReferencesOutline(p: {context: TreeContext}) {
+  const referenceItems = T.backreferencesChildren(p.context.tree, T.root(p.context.tree)).map((child: T.NodeRef) => {
+    return <ExpandableItem key={child.id} node={child} context={p.context}/>;
   });
 
   if (referenceItems.length === 0) {
@@ -390,24 +380,16 @@ function ReferencesOutline(p: {context: StateContext; root: string; setSelectedT
   }
 }
 
-function expandedFromRoot(state: Things, root: string) {
-  const tree = T.fromRoot(state, root);
-  return T.expand(state, tree, T.root(tree));
-}
-
-function Outline(p: {context: StateContext; root: string; setSelectedThing: SetSelectedThing}) {
-  // To simulate multiple top-level items, we just assign a thing as the root,
-  // and use its children as the top-level items. This is a bit of a hack. We
-  // should probably do something smarter.
-  const [tree, setTree] = React.useState(expandedFromRoot(p.context.state, p.root));
+function useTreeContext(context: StateContext, selectedThing: string, setSelectedThing: SetSelectedThing) {
+  const [tree, setTree] = React.useState(T.fromRoot(context.state, selectedThing));
 
   React.useEffect(() => {
-    setTree(T.refresh(tree, p.context.state));
-  }, [p.context.state]);
+    setTree(T.refresh(tree, context.state));
+  }, [context.state]);
 
   React.useEffect(() => {
-    setTree(expandedFromRoot(p.context.state, p.root));
-  }, [p.root]);
+    setTree(T.fromRoot(context.state, selectedThing));
+  }, [selectedThing]);
 
   const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
 
@@ -465,11 +447,13 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
     };
   }, [drag]);
 
-  const context: TreeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
+  return {...context, tree, setTree, drag, setDrag, selectedThing, setSelectedThing};
+}
 
+function Outline(p: {context: TreeContext}) {
   return (
-    <Subtree context={context} parent={T.root(tree)} omitReferences={true}>
-      { T.children(tree, T.root(tree)).length === 0 && <PlaceholderItem context={context} parent={T.root(tree)}/> }
+    <Subtree context={p.context} parent={T.root(p.context.tree)} omitReferences={true}>
+      { T.children(p.context.tree, T.root(p.context.tree)).length === 0 && <PlaceholderItem context={p.context} parent={T.root(p.context.tree)}/> }
     </Subtree>
   );
 }

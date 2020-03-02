@@ -16,7 +16,18 @@ export type Tree = I.Tree;
 export type Destination = {parent: NodeRef; index: number};
 
 export function fromRoot(state: D.Things, thing: string): Tree {
-  return I.fromRoot(thing);
+  // The UI considers otherParentsChildren(tree, {id: 0}) to be the list of
+  // parents for the currently selected item, so we have to prepare the parents
+  // here.
+
+  // The underlying idea is good, but the specific implementation that we use is
+  // a tad hacky.
+
+  let result = I.fromRoot(thing);
+  result = expand(state, result, {id: 0});
+  result = toggleOtherParents(state, result, {id: 0});
+  result = toggleBackreferences(state, result, {id: 0});
+  return result;
 }
 
 export const root = I.root;
