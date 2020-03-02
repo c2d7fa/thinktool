@@ -54,6 +54,10 @@ export function expanded(tree: Tree, node: NodeRef): boolean {
   return getNode(tree, node).expanded;
 }
 
+export function focused(tree: Tree): NodeRef | null {
+  return tree.focus;
+}
+
 export function hasFocus(tree: Tree, node: NodeRef): boolean {
   return tree.focus?.id === node.id;
 }

@@ -321,12 +321,18 @@ function App({initialState, username, args}: {initialState: Things; username: st
 }
 
 function Toolbar(props: {context: Context}) {
+  const focused = T.focused(props.context.tree);
+
   function createSibling(): void {
-    console.warn("Create sibling not yet implemented");
+    if (focused === null) throw "invalid state";
+    const [newState, newTree, _, newId] = T.createSiblingAfter(props.context.state, props.context.tree, focused);
+    props.context.setState(newState);
+    props.context.setTree(T.focus(newTree, newId));
   }
 
   function zoom(): void {
-    console.warn("Zoom is not yet implemented");
+    if (focused === null) throw "invalid state";
+    props.context.setSelectedThing(T.thing(props.context.tree, focused));
   }
 
   return (

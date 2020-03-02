@@ -33,6 +33,7 @@ export function fromRoot(state: D.Things, thing: string): Tree {
 export const root = I.root;
 export const thing = I.thing;
 export const expanded = I.expanded;
+export const focused = I.focused;
 export const hasFocus = I.hasFocus;
 export const focus = I.focus;
 export const unfocus = I.unfocus;
