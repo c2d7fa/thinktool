@@ -271,6 +271,7 @@ function App({initialState, username}: {initialState: Things; username: string})
       <div id="current-user"><span className="username">{username}</span> <a className="log-out" href="/logout">log out</a></div>
     </div>
     <ThingOverview context={context} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
+    <Toolbar context={context} selectedThing={selectedThing}/>
   </>;
 }
 
@@ -305,7 +306,25 @@ function DemoApp() {
       <Search context={context}/>
     </div>
     <ThingOverview context={context} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
+    <Toolbar context={context} selectedThing={selectedThing}/>
   </>;
+}
+
+function Toolbar(props: {context: StateContext; selectedThing: string}) {
+  function createSibling(): void {
+    console.warn("Create sibling not yet implemented");
+  }
+
+  function zoom(): void {
+    console.warn("Zoom is not yet implemented");
+  }
+
+  return (
+    <div className="toolbar">
+      <button onClick={createSibling} title="Create a new item as a sibling of the currently selected item [enter/ctrl-enter]">New</button>
+      <button onClick={zoom} title="Zoom in on selected item [middle-click bullet]">Zoom</button>
+    </div>
+  );
 }
 
 function ThingOverview(p: {context: StateContext; selectedThing: string; setSelectedThing(value: string): void}) {

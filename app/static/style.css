@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto:400,400i,500,500i,700,700i&display=swap&subset=cyrillic,greek,latin-ext');
-@import url('https://fonts.googleapis.com/css?family=Titillium+Web:400,400i&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Titillium+Web:400,400i,600&display=swap');
 @import url('https://fonts.googleapis.com/css?family=Raleway:400,400i,500,600,700&display=swap');
 
 body {
@@ -503,4 +503,57 @@ ul.search-results {
 
 #current-user a.log-out:active {
     color: #404040;
+}
+
+/* TOOLBAR */
+
+#app {
+    margin-bottom: 2em;
+}
+
+.toolbar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+
+    padding: 0.35em 0;
+    background-color: #eaeaea;
+    box-shadow: #e0e0e0 0 0 6px;
+
+    display: flex;
+
+    font-size: 0.8em;
+}
+
+.toolbar button {
+    background: none;
+    padding: 0;
+    margin: 0;
+    border: none;
+    outline: none;
+
+    font-family: "Titillium Web";
+    text-transform: uppercase;
+    font-size: 1em;
+
+    color: #808080;
+
+    padding: 0 1ex;
+    background-color: #dadada;
+    border-radius: 3px;
+
+    margin-left: 1ex;
+
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.toolbar button:hover {
+    cursor: pointer;
+
+    color: #606060;
+    background-color: #d0d0d0;
+}
+
+.toolbar button:active {
+    background-color: #c0c0c0;
 }
