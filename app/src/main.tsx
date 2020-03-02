@@ -26,7 +26,7 @@ interface DragInfo {
   finished: boolean | "copy";
 }
 
-interface StateContext {
+interface Context {
   state: Things;
   setState(value: Things): void;
   setLocalState(value: Things): void;
@@ -35,16 +35,15 @@ interface StateContext {
   setContent(thing: string, content: string): void;
 
   undo(): void;
-}
 
-type SetSelectedThing = (value: string) => void;
-
-interface TreeContext extends StateContext {
   tree: Tree;
   setTree(value: Tree): void;
+
   drag: DragInfo;
   setDrag(value: DragInfo): void;
-  setSelectedThing: SetSelectedThing;
+
+  selectedThing: string;
+  setSelectedThing(value: string): void;
 }
 
 // == Components ==
@@ -130,14 +129,16 @@ function diffState(oldState: Things, newState: Things): {added: string[]; delete
   return {added, deleted, changed};
 }
 
-function useStateContext(initialState: Things): StateContext {
+function useContext(initialState: Things, args?: {local: boolean}): Context {
   const [state, setLocalState] = React.useState(initialState);
 
   const batched = useBatched(200);
 
   function setContent(thing: string, content: string): void {
     setLocalState(Data.setContent(state, thing, content));
-    batched.update(`${thing}/content`, () => { Server.setContent(thing, content) });
+    if (!args?.local) {
+      batched.update(`${thing}/content`, () => { Server.setContent(thing, content) });
+    }
   }
 
   // TODO: setState and undo should override timeouts from setContent.
@@ -147,12 +148,14 @@ function useStateContext(initialState: Things): StateContext {
       undo.pushState(state);
       setLocalState(newState);
 
-      const diff = diffState(state, newState);
-      for (const thing of diff.deleted) {
-        Server.deleteThing(thing);
-      }
-      for (const thing of [...diff.added, ...diff.changed]) {
-        Server.putThing(thing, newState.things[thing]);
+      if (!args?.local) {
+        const diff = diffState(state, newState);
+        for (const thing of diff.deleted) {
+          Server.deleteThing(thing);
+        }
+        for (const thing of [...diff.added, ...diff.changed]) {
+          Server.putThing(thing, newState.things[thing]);
+        }
       }
     }
   }
@@ -165,50 +168,21 @@ function useStateContext(initialState: Things): StateContext {
     }
     setLocalState(oldState);
     // TODO: Code duplication, see setState above
-    const diff = diffState(state, oldState);
-    for (const thing of diff.deleted) {
-      Server.deleteThing(thing);
-    }
-    for (const thing of [...diff.added, ...diff.changed]) {
-      Server.putThing(thing, oldState.things[thing]);
-    }
-  }
-
-  return {state, setState, setLocalState, setContent, undo: undo_, updateLocalState: setLocalState};
-}
-
-// A variation of useStateContext that doesn't synchronize its data with the
-// server. This is used by DemoApp.
-function useLocalOnlyStateContext(initialState: Things): StateContext {
-  // TODO: We should be able to dramatically reduce duplication between this and
-  // useStateContext.
-  const [state, setLocalState] = React.useState(initialState);
-
-  function setContent(thing: string, content: string): void {
-    setLocalState(Data.setContent(state, thing, content));
-  }
-
-  function setState(newState: Things): void {
-    if (newState !== state) {
-      undo.pushState(state);
-      setLocalState(newState);
+    if (!args?.local) {
+      const diff = diffState(state, oldState);
+      for (const thing of diff.deleted) {
+        Server.deleteThing(thing);
+      }
+      for (const thing of [...diff.added, ...diff.changed]) {
+        Server.putThing(thing, oldState.things[thing]);
+      }
     }
   }
 
-  function undo_(): void {
-    const oldState = undo.popState();
-    if (oldState === null) {
-      console.log("Can't undo further");
-      return;
-    }
-    setLocalState(oldState);
-  }
+  // Selected thing:
 
-  return {state, setState, setLocalState, setContent, undo: undo_, updateLocalState: setLocalState};
-}
-
-function App({initialState, username}: {initialState: Things; username: string}) {
   const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
+
   function setSelectedThing(thing: string): void {
     // TODO: Update title?
     setSelectedThing_(thing);
@@ -221,7 +195,27 @@ function App({initialState, username}: {initialState: Things; username: string})
     setSelectedThing_(extractThingFromURL());
   };
 
-  const context = useStateContext(initialState);
+  // Tree:
+
+  const [tree, setTree] = React.useState(T.fromRoot(state, selectedThing));
+
+  React.useEffect(() => {
+    setTree(T.refresh(tree, state));
+  }, [state]);
+
+  React.useEffect(() => {
+    setTree(T.fromRoot(state, selectedThing));
+  }, [selectedThing]);
+
+  // Drag and drop:
+
+  const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
+
+  return {state, setState, setLocalState, setContent, undo: undo_, updateLocalState: setLocalState, selectedThing, setSelectedThing, tree, setTree, drag, setDrag};
+}
+
+function App({initialState, username, args}: {initialState: Things; username: string; args?: {local: boolean}}) {
+  const context = useContext(initialState, args);
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
@@ -265,157 +259,8 @@ function App({initialState, username}: {initialState: Things; username: string})
     }
   };
 
-  return <>
-    <div className="top-bar">
-      <Search context={context}/>
-      <div id="current-user"><span className="username">{username}</span> <a className="log-out" href="/logout">log out</a></div>
-    </div>
-    <ThingOverview context={context} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
-  </>;
-}
-
-// A variation of App that stores all the data locally and which does not have a
-// user associated with it. As the name suggests, this is used for the demo.
-function DemoApp() {
-  // TODO: We should be able to dramatically reduce duplication between this and
-  // App, since App is just this with a bunch of extra stuff.
-
-  const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
-  function setSelectedThing(thing: string): void {
-    setSelectedThing_(thing);
-    window.history.pushState(undefined, document.title, `#${thing}`);
-  }
-
-  window.onpopstate = (ev) => {
-    setSelectedThing_(extractThingFromURL());
-  };
-
-  const context = useLocalOnlyStateContext(Demo.initialState);
-
-  document.onkeydown = (ev) => {
-    if (ev.key === "z" && ev.ctrlKey) {
-      console.log("Undoing");
-      context.undo();
-      ev.preventDefault();
-    }
-  };
-
-  return <>
-    <div className="top-bar">
-      <Search context={context}/>
-    </div>
-    <ThingOverview context={context} selectedThing={selectedThing} setSelectedThing={setSelectedThing}/>
-  </>;
-}
-
-function ThingOverview(p: {context: StateContext; selectedThing: string; setSelectedThing(value: string): void}) {
-  const hasReferences = Data.backreferences(p.context.state, p.selectedThing).length > 0;
-
-  return (
-    <div className="overview">
-      <ParentsOutline context={p.context} child={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
-      <div className="overview-main">
-        <C.Content
-          things={p.context.state}
-          className="selected-content"
-          getContentText={thing => Data.contentText(p.context.state, thing)}
-          text={Data.content(p.context.state, p.selectedThing)}
-          setText={(text) => { p.context.setContent(p.selectedThing, text) }}/>
-        <div className="children">
-          <Outline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
-        </div>
-      </div>
-      { hasReferences && <>
-        <div className="references">
-          <div className="references-inner">
-            <h1 className="link-section">References</h1>
-            <ReferencesOutline context={p.context} root={p.selectedThing} setSelectedThing={p.setSelectedThing}/>
-          </div>
-        </div>
-      </> }
-    </div>
-  );
-}
-
-// TODO: ParentsOutline and ReferencesOutline should both have their use-cases
-// supported directly by the Tree module, like Outline, and they should support
-// drag and drop between trees. They should also have appropriate custom
-// behavior in response to key-presses (e.g. Alt+Backspace in ParentsOutline
-// should remove parent from child).
-
-function ParentsOutline(p: {context: StateContext; child: string; setSelectedThing: SetSelectedThing}) {
-  function ParentItem(p: {context: StateContext; parent: string; setSelectedThing: SetSelectedThing}) {
-    const [tree, setTree] = React.useState(T.fromRoot(p.context.state, p.parent));
-    const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
-    const treeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
-    return <ExpandableItem node={T.root(tree)} context={treeContext}/>;
-  }
-
-  const parentLinks = Data.parents(p.context.state, p.child).map((parent: string) => {
-    return <ParentItem key={parent} context={p.context} parent={parent} setSelectedThing={p.setSelectedThing}/>;
-  });
-
-  if (parentLinks.length === 0) {
-    return <div className="parents">
-      <div className="parents-inner">
-        <span className="no-parents">No parents</span>
-      </div>
-    </div>;
-  } else {
-    return <div className="parents">
-      <div className="parents-inner">
-        <h1 className="link-section">Parents</h1>
-        <ul className="outline-tree">{parentLinks}</ul>
-      </div>
-    </div>;
-  }
-}
-
-function ReferencesOutline(p: {context: StateContext; root: string; setSelectedThing: SetSelectedThing}) {
-  function ReferenceItem(p: {context: StateContext; reference: string; setSelectedThing: SetSelectedThing}) {
-    const [tree, setTree] = React.useState(T.fromRoot(p.context.state, p.reference));
-    const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
-    const treeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
-    return <ExpandableItem node={T.root(tree)} context={treeContext}/>;
-  }
-
-  const referenceItems = Data.backreferences(p.context.state, p.root).map((reference: string) => {
-    return <ReferenceItem key={reference} context={p.context} reference={reference} setSelectedThing={p.setSelectedThing}/>;
-  });
-
-  if (referenceItems.length === 0) {
-    return null;
-  } else {
-    return <ul className="outline-tree">{referenceItems}</ul>;
-  }
-}
-
-function expandedFromRoot(state: Things, root: string) {
-  const tree = T.fromRoot(state, root);
-  return T.expand(state, tree, T.root(tree));
-}
-
-function Outline(p: {context: StateContext; root: string; setSelectedThing: SetSelectedThing}) {
-  // To simulate multiple top-level items, we just assign a thing as the root,
-  // and use its children as the top-level items. This is a bit of a hack. We
-  // should probably do something smarter.
-  const [tree, setTree] = React.useState(expandedFromRoot(p.context.state, p.root));
-
   React.useEffect(() => {
-    setTree(T.refresh(tree, p.context.state));
-  }, [p.context.state]);
-
-  React.useEffect(() => {
-    setTree(expandedFromRoot(p.context.state, p.root));
-  }, [p.root]);
-
-  const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
-
-  // When dragging items we use the 'data-id' attribute that is set on
-  // ExpandableItems to figure out where the drag ends.
-
-  React.useEffect(() => {
-    if (drag.current === null) return;
+    if (context.drag.current === null) return;
 
     function mousemove(ev: MouseEvent): void {
       const [x, y] = [ev.clientX, ev.clientY];
@@ -427,8 +272,8 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
 
       if (element != null) {
         const targetId = +element.dataset.id!;
-        if (targetId !== drag.target?.id)
-          setDrag({current: drag.current, target: {id: targetId}, finished: false});
+        if (targetId !== context.drag.target?.id)
+          context.setDrag({current: context.drag.current, target: {id: targetId}, finished: false});
       }
     }
 
@@ -442,8 +287,8 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
 
       if (element != null) {
         const targetId = +element.dataset.id!;
-        if (targetId !== drag.target?.id)
-          setDrag({current: drag.current, target: {id: targetId}, finished: false});
+        if (targetId !== context.drag.target?.id)
+          context.setDrag({current: context.drag.current, target: {id: targetId}, finished: false});
       }
     }
 
@@ -451,7 +296,7 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
     window.addEventListener("touchmove", touchmove);
 
     function mouseup(ev: MouseEvent | TouchEvent): void {
-      setDrag({...drag, finished: ev.ctrlKey ? "copy" : true});
+      context.setDrag({...context.drag, finished: ev.ctrlKey ? "copy" : true});
     }
 
     window.addEventListener("mouseup", mouseup);
@@ -463,18 +308,94 @@ function Outline(p: {context: StateContext; root: string; setSelectedThing: SetS
       window.removeEventListener("mouseup", mouseup);
       window.removeEventListener("touchend", mouseup);
     };
-  }, [drag]);
+  }, [context.drag]);
 
-  const context: TreeContext = {...p.context, tree, setTree, drag, setDrag, setSelectedThing: p.setSelectedThing};
+  return <>
+    <div className="top-bar">
+      <Search context={context}/>
+      <div id="current-user"><span className="username">{username}</span> <a className="log-out" href="/logout">log out</a></div>
+    </div>
+    <ThingOverview context={context}/>
+  </>;
+}
+
+function ThingOverview(p: {context: Context}) {
+  const hasReferences = Data.backreferences(p.context.state, p.context.selectedThing).length > 0;
 
   return (
-    <Subtree context={context} parent={T.root(tree)} omitReferences={true}>
-      { T.children(tree, T.root(tree)).length === 0 && <PlaceholderItem context={context} parent={T.root(tree)}/> }
+    <div className="overview">
+      <ParentsOutline context={p.context}/>
+      <div className="overview-main">
+        <C.Content
+          things={p.context.state}
+          className="selected-content"
+          getContentText={thing => Data.contentText(p.context.state, thing)}
+          text={Data.content(p.context.state, p.context.selectedThing)}
+          setText={(text) => { p.context.setContent(p.context.selectedThing, text) }}/>
+        <div className="children">
+          <Outline context={p.context}/>
+        </div>
+      </div>
+      { hasReferences && <>
+        <div className="references">
+          <div className="references-inner">
+            <h1 className="link-section">References</h1>
+            <ReferencesOutline context={p.context}/>
+          </div>
+        </div>
+      </> }
+    </div>
+  );
+}
+
+// TODO: ParentsOutline and ReferencesOutline should both have appropriate
+// custom behavior in response to key-presses (e.g. Alt+Backspace in
+// ParentsOutline should remove parent from child).
+
+function ParentsOutline(p: {context: Context}) {
+  const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map((child: T.NodeRef) => {
+    return <ExpandableItem key={child.id} node={child} context={p.context}/>;
+  });
+
+  const subtree = <ul className="outline-tree">{parentItems}</ul>;
+
+  if (parentItems.length === 0) {
+    return <div className="parents">
+      <div className="parents-inner">
+        <span className="no-parents">No parents</span>
+      </div>
+    </div>;
+  } else {
+    return <div className="parents">
+      <div className="parents-inner">
+        <h1 className="link-section">Parents</h1>
+        {subtree}
+      </div>
+    </div>;
+  }
+}
+
+function ReferencesOutline(p: {context: Context}) {
+  const referenceItems = T.backreferencesChildren(p.context.tree, T.root(p.context.tree)).map((child: T.NodeRef) => {
+    return <ExpandableItem key={child.id} node={child} context={p.context}/>;
+  });
+
+  if (referenceItems.length === 0) {
+    return null;
+  } else {
+    return <ul className="outline-tree">{referenceItems}</ul>;
+  }
+}
+
+function Outline(p: {context: Context}) {
+  return (
+    <Subtree context={p.context} parent={T.root(p.context.tree)} omitReferences={true}>
+      { T.children(p.context.tree, T.root(p.context.tree)).length === 0 && <PlaceholderItem context={p.context} parent={T.root(p.context.tree)}/> }
     </Subtree>
   );
 }
 
-function PlaceholderItem(p: {context: TreeContext; parent: T.NodeRef}) {
+function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   function onFocus(ev: React.FocusEvent<HTMLDivElement>): void {
     const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, T.root(p.context.tree));
     p.context.setState(newState);
@@ -493,7 +414,7 @@ function PlaceholderItem(p: {context: TreeContext; parent: T.NodeRef}) {
   );
 }
 
-function ExpandableItem(p: {context: TreeContext; node: T.NodeRef; parent?: T.NodeRef; className?: string}) {
+function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRef; className?: string}) {
   function toggle() {
     p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
   }
@@ -569,7 +490,7 @@ function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void
   );
 }
 
-function Content(p: {context: TreeContext; node: T.NodeRef}) {
+function Content(p: {context: Context; node: T.NodeRef}) {
   const [showChildPopup, setShowChildPopup] = React.useState(false);
 
   function onKeyDown(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean {
@@ -680,7 +601,7 @@ function Content(p: {context: TreeContext; node: T.NodeRef}) {
   </>;
 }
 
-function BackreferencesItem(p: {context: TreeContext; parent: T.NodeRef}) {
+function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
   const backreferences = Data.backreferences(p.context.state, T.thing(p.context.tree, p.parent));
 
   if (backreferences.length === 0) {
@@ -703,7 +624,7 @@ function BackreferencesItem(p: {context: TreeContext; parent: T.NodeRef}) {
   );
 }
 
-function BackreferencesSubtree(p: {context: TreeContext; parent: T.NodeRef}) {
+function BackreferencesSubtree(p: {context: Context; parent: T.NodeRef}) {
   const children = T.backreferencesChildren(p.context.tree, p.parent).map(child => {
     return <ExpandableItem key={child.id} node={child} context={p.context}/>;
   });
@@ -715,7 +636,7 @@ function BackreferencesSubtree(p: {context: TreeContext; parent: T.NodeRef}) {
   );
 }
 
-function OtherParentsItem(p: {context: TreeContext; parent: T.NodeRef; grandparent?: T.NodeRef}) {
+function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef}) {
   const otherParents = Data.otherParents(p.context.state, T.thing(p.context.tree, p.parent), p.grandparent && T.thing(p.context.tree, p.grandparent));
 
   if (otherParents.length === 0) {
@@ -737,7 +658,7 @@ function OtherParentsItem(p: {context: TreeContext; parent: T.NodeRef; grandpare
   );
 }
 
-function OtherParentsSubtree(p: {context: TreeContext; parent: T.NodeRef; grandparent?: T.NodeRef}) {
+function OtherParentsSubtree(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef}) {
   const children = T.otherParentsChildren(p.context.tree, p.parent).map(child => {
     return <ExpandableItem key={child.id} node={child} context={p.context}/>;
   });
@@ -749,7 +670,7 @@ function OtherParentsSubtree(p: {context: TreeContext; parent: T.NodeRef; grandp
   );
 }
 
-function Subtree(p: {context: TreeContext; parent: T.NodeRef; grandparent?: T.NodeRef; children?: React.ReactNode[] | React.ReactNode; omitReferences?: boolean}) {
+function Subtree(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef; children?: React.ReactNode[] | React.ReactNode; omitReferences?: boolean}) {
   const children = T.children(p.context.tree, p.parent).map(child => {
     return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context}/>;
   });
@@ -776,7 +697,9 @@ async function start(): Promise<void> {
   const isDemo = appElement.dataset.demo === "true";
 
   ReactDOM.render(
-    isDemo ? <DemoApp/> : <App initialState={await Server.getFullState() as Things} username={await Server.getUsername()}/>,
+    isDemo ?
+      <App initialState={Demo.initialState} username={"demo"} args={{local: true}}/> :
+      <App initialState={await Server.getFullState() as Things} username={await Server.getUsername()}/>,
     appElement
   );
 }
