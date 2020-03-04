@@ -33,6 +33,7 @@ export function fromRoot(state: D.Things, thing: string): Tree {
 export const root = I.root;
 export const thing = I.thing;
 export const expanded = I.expanded;
+export const focused = I.focused;
 export const hasFocus = I.hasFocus;
 export const focus = I.focus;
 export const unfocus = I.unfocus;
@@ -400,6 +401,12 @@ export function insertChild(state: D.Things, tree: Tree, node: NodeRef, child: s
 export function removeThing(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
   const newState = D.remove(state, thing(tree, node));
   return [newState, refresh(tree, newState)];
+}
+
+export function clone(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
+  const [newState, newTree, _] = copyToAbove(state, tree, node, node);
+  const newTree2 = focus(newTree, node);
+  return [newState, newTree2];
 }
 
 // Backreferences:
