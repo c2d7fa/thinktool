@@ -521,8 +521,11 @@ ul.search-results {
     box-shadow: #e0e0e0 0 0 6px;
 
     display: flex;
+    justify-content: center;
 
     font-size: 0.8em;
+
+    overflow-x: auto;
 }
 
 .toolbar button {
@@ -531,6 +534,8 @@ ul.search-results {
     margin: 0;
     border: none;
     outline: none;
+
+    white-space: nowrap;
 
     font-family: "Titillium Web";
     text-transform: uppercase;

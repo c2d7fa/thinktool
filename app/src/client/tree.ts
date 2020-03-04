@@ -403,6 +403,12 @@ export function removeThing(state: D.Things, tree: Tree, node: NodeRef): [D.Thin
   return [newState, refresh(tree, newState)];
 }
 
+export function clone(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
+  const [newState, newTree, _] = copyToAbove(state, tree, node, node);
+  const newTree2 = focus(newTree, node);
+  return [newState, newTree2];
+}
+
 // Backreferences:
 
 const refreshBackreferencesChildren = genericRefreshChildren({getStateChildren: D.backreferences, getTreeChildren: I.backreferencesChildren, updateChildren: I.updateBackreferencesChildren});

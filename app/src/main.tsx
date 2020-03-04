@@ -320,25 +320,88 @@ function App({initialState, username, args}: {initialState: Things; username: st
   </>;
 }
 
+function actionsWith(context: Context, node: T.NodeRef) {
+  return {
+    createSiblingAfter(): void {
+      const [newState, newTree, _, newId] = T.createSiblingAfter(context.state, context.tree, node);
+      context.setState(newState);
+      context.setTree(T.focus(newTree, newId));
+    },
+
+    zoom(): void {
+      context.setSelectedThing(T.thing(context.tree, node));
+    },
+
+    indent() {
+      const [newState, newTree] = T.indent(context.state, context.tree, node);
+      context.setState(newState);
+      context.setTree(newTree);
+    },
+
+    unindent() {
+      const [newState, newTree] = T.unindent(context.state, context.tree, node);
+      context.setState(newState);
+      context.setTree(newTree);
+    },
+
+    moveDown() {
+      const [newState, newTree] = T.moveDown(context.state, context.tree, node);
+      context.setState(newState);
+      context.setTree(newTree);
+    },
+
+    moveUp() {
+      const [newState, newTree] = T.moveUp(context.state, context.tree, node);
+      context.setState(newState);
+      context.setTree(newTree);
+    },
+
+    createChild() {
+      const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, node);
+      context.setState(newState);
+      context.setTree(T.focus(newTree, newId));
+    },
+
+    removeFromParent() {
+      const [newState, newTree] = T.remove(context.state, context.tree, node);
+      context.setState(newState);
+      context.setTree(newTree);
+    },
+
+    delete() {
+      const [newState, newTree] = T.removeThing(context.state, context.tree, node);
+      context.setState(newState);
+      context.setTree(newTree);
+    },
+
+    clone() {
+      const [newState, newTree] = T.clone(context.state, context.tree, node);
+      context.setState(newState);
+      context.setTree(newTree);
+    },
+  };
+}
+
 function Toolbar(props: {context: Context}) {
   const focused = T.focused(props.context.tree);
 
-  function createSibling(): void {
-    if (focused === null) throw "invalid state";
-    const [newState, newTree, _, newId] = T.createSiblingAfter(props.context.state, props.context.tree, focused);
-    props.context.setState(newState);
-    props.context.setTree(T.focus(newTree, newId));
-  }
-
-  function zoom(): void {
-    if (focused === null) throw "invalid state";
-    props.context.setSelectedThing(T.thing(props.context.tree, focused));
+  function actions() {
+    if (focused === null) throw "invalid state"; // TODO: Make it so that user can't click buttons here
+    return actionsWith(props.context, focused);
   }
 
   return (
     <div className="toolbar">
-      <button onClick={createSibling} title="Create a new item as a sibling of the currently selected item [enter/ctrl-enter]">New</button>
-      <button onClick={zoom} title="Zoom in on selected item [middle-click bullet]">Zoom</button>
+      <button onClick={() => actions().zoom()} title="Zoom in on selected item [middle-click bullet]">Zoom</button>
+      <button onClick={() => actions().createSiblingAfter()} title="Create a new item as a sibling of the currently selected item [enter/ctrl+enter]">New</button>
+      <button onClick={() => actions().removeFromParent()} title="Remove the selected item from its parent. This does not delete the item. [alt+backspace]">Remove</button>
+      <button onClick={() => actions().unindent()} title="Unindent the selected item [ctrl+alt+left]">Unindent</button>
+      <button onClick={() => actions().indent()} title="Indent the selected item [ctrl+alt+right]">Indent</button>
+      <button onClick={() => actions().moveUp()} title="Move the selected item up [ctrl+alt+up]">Up</button>
+      <button onClick={() => actions().moveDown()} title="Move the selected item down [ctrl+alt+down]">Down</button>
+      <button onClick={() => actions().createChild()} title="Create a new child of the selected item [alt+C]">New Child</button>
+      <button onClick={() => actions().clone()} title="Create a copy of the selected item [ctrl+mouse drag]">Clone</button>
+      <button onClick={() => actions().delete()} title="Delete the selected item. If this item has other parents, it will be removed from *all* parents. [alt+delete]">Delete</button>
     </div>
   );
 }
@@ -517,26 +580,20 @@ function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void
 function Content(p: {context: Context; node: T.NodeRef}) {
   const [showChildPopup, setShowChildPopup] = React.useState(false);
 
+  const actions = actionsWith(p.context, p.node);
+
   function onKeyDown(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean {
     if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
-      const [newState, newTree] = T.indent(p.context.state, p.context.tree, p.node);
-      p.context.setState(newState);
-      p.context.setTree(newTree);
+      actions.indent();
       return true;
     } else if (ev.key === "ArrowLeft" && ev.altKey && ev.ctrlKey) {
-      const [newState, newTree] = T.unindent(p.context.state, p.context.tree, p.node);
-      p.context.setState(newState);
-      p.context.setTree(newTree);
+      actions.unindent();
       return true;
     } else if (ev.key === "ArrowDown" && ev.altKey && ev.ctrlKey) {
-      const [newState, newTree] = T.moveDown(p.context.state, p.context.tree, p.node);
-      p.context.setState(newState);
-      p.context.setTree(newTree);
+      actions.moveDown();
       return true;
     } else if (ev.key === "ArrowUp" && ev.altKey && ev.ctrlKey) {
-      const [newState, newTree] = T.moveUp(p.context.state, p.context.tree, p.node);
-      p.context.setState(newState);
-      p.context.setTree(newTree);
+      actions.moveUp();
       return true;
     } else if (ev.key === "Tab") {
       p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
@@ -548,20 +605,14 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       p.context.setTree(T.focusDown(p.context.tree));
       return true;
     } else if (ev.key === "Enter" && ev.altKey) {
-      const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, p.node);
-      p.context.setState(newState);
-      p.context.setTree(T.focus(newTree, newId));
+      actions.createChild();
       return true;
     } else if (ev.key === "Enter" && ev.ctrlKey) {
-      const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.node);
-      p.context.setState(newState);
-      p.context.setTree(T.focus(newTree, newId));
+      actions.createSiblingAfter();
       return true;
     } else if (ev.key === "Enter" && !ev.shiftKey) {
       if (notes.endOfItem) {
-        const [newState, newTree, _, newId] = T.createSiblingAfter(p.context.state, p.context.tree, p.node);
-        p.context.setState(newState);
-        p.context.setTree(T.focus(newTree, newId));
+        actions.createSiblingAfter();
         return true;
       } else if (notes.startOfItem) {
         const [newState, newTree, _, newId] = T.createSiblingBefore(p.context.state, p.context.tree, p.node);
@@ -572,14 +623,10 @@ function Content(p: {context: Context; node: T.NodeRef}) {
         return false;
       }
     } else if (ev.key === "Backspace" && ev.altKey) {
-      const [newState, newTree] = T.remove(p.context.state, p.context.tree, p.node);
-      p.context.setState(newState);
-      p.context.setTree(newTree);
+      actions.removeFromParent();
       return true;
     } else if (ev.key === "Delete" && ev.altKey) {
-      const [newState, newTree] = T.removeThing(p.context.state, p.context.tree, p.node);
-      p.context.setState(newState);
-      p.context.setTree(newTree);
+      actions.delete();
       return true;
     } else if (ev.key === "c" && ev.altKey) {
       setShowChildPopup(true);
