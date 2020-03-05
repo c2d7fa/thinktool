@@ -15,10 +15,10 @@ cp -r app/package.json dist/server
 echo "Built 'dist/server' from 'app/src'."
 
 echo "Building client..."
-cd app
-npx parcel build src/main.tsx -d ../dist/static -o bundle.js
-echo "Built 'dist/static/bundle.js' from 'app/src'."
-cd ..
+cd src/client
+npx parcel build main.tsx -d ../../dist/static -o bundle.js
+echo "Built 'dist/static/bundle.js' from 'src/client'."
+cd ../..
 
 echo "Building other static resources..."
 mkdir -p dist/static
