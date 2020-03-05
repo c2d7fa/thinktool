@@ -46,16 +46,12 @@ Build the server as a Docker image and run it:
 
 # Development
 
-Build the static resources and server into `dist` from the top-level directory:
-
-    $ ./tools/build.sh
-
 Run MongoDB on `localhost:27017`:
 
     # docker run -v "$(DB_VOLUME):/data/db" -d -p 27017:27017 mongo
 
-Run the server:
+Build the static resources and server into `dist` from the top-level directory
+and run the server:
 
-    $ cd dist/server
-    $ export DIAFORM_PORT=8080
-    $ node server.js
+    $ ./tools/build.sh
+    $ ./tools/dev/start-server.sh
