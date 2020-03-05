@@ -26,15 +26,23 @@ Tools and configuration:
 
 # Deployment
 
-Build the static resources into `/dist/static/` from the top-level directory:
+Build the static resources and server into `dist` from the top-level directory:
 
-    $ ./tools/build-static.sh
+    $ ./tools/build.sh
 
-Start MongoDB instance on `localhost:27017`:
+The server requires a MongoDB instance to be running on the same network. The
+address of the server should be passed in through the environment variable
+`DIAFORM_DATABASE`.
 
-    # docker run -p 127.0.0.1:27017:27017 -v "$(DB_VOLUME):/data/db" -d mongo
+Start by creating a network:
+
+    # docker network create thinktool
+
+Start MongoDB instance called `thinktooldb` running on the network:
+
+    # docker run --network thinktool --name thinktooldb -v "$(DB_VOLUME):/data/db" -d mongo
 
 Build the server as a Docker image and run it:
 
-    # docker build -t thinktool .
-    # docker run -p 80:80 thinktool
+    # docker build -t thinktool -f tools/Dockerfile .
+    # docker run --network thinktool -e DIAFORM_DATABASE=mongodb://thinktooldb:27017 -p 80:80 thinktool

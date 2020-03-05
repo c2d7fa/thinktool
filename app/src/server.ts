@@ -306,8 +306,8 @@ app.post("/", async (req, res) => {
 });
 
 // Static files
-app.get("/bundle.js", (req, res) => { res.sendFile("bundle.js", {root: "."}) });
-app.get("/bundle.js.map", (req, res) => { res.sendFile("bundle.js.map", {root: "."}) });
+app.get("/bundle.js", (req, res) => { sendStatic(res, "bundle.js") });
+app.get("/bundle.js.map", (req, res) => { sendStatic(res, "bundle.js.map") });
 app.get("/style.css", (req, res) => { sendStatic(res, "style.css") });
 app.get("/landing.css", (req, res) => { sendStatic(res, "landing.css") });
 app.get("/bullet-collapsed.svg", (req, res) => { sendStatic(res, "bullet-collapsed.svg") });
