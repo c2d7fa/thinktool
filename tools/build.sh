@@ -15,6 +15,9 @@ echo "Built 'dist/server' from 'src/server'."
 
 echo "Building client..."
 cd src/client
+if [ ! -e "node_modules" ]; then
+  npm ci
+fi
 npx parcel build main.tsx -d ../../dist/static -o bundle.js
 echo "Built 'dist/static/bundle.js' from 'src/client'."
 cd ../..

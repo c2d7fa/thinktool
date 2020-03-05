@@ -2,6 +2,6 @@
   "name": "thinktool",
   "private": true,
   "devDependencies": {
-    "typescript": "latest"
+    "typescript": "^3.8.3"
   }
 }

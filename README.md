@@ -26,10 +26,6 @@ Tools and configuration:
 
 # Deployment
 
-Build the static resources and server into `dist` from the top-level directory:
-
-    $ ./tools/build.sh
-
 The server requires a MongoDB instance to be running on the same network. The
 address of the server should be passed in through the environment variable
 `DIAFORM_DATABASE`.
