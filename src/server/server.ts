@@ -3,8 +3,8 @@ import express from "express";
 import expressWs from "express-ws";
 import * as util from "util";
 
-import * as DB from "./server/database";
-import * as Communication from "./communication";
+import * as DB from "./database";
+import * as Communication from "../shared/communication";
 
 // #region changes
 

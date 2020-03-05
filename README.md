@@ -1,4 +1,4 @@
-# Directory structure (WIP)
+# Directory structure
 
 Source code:
 
@@ -46,3 +46,19 @@ Build the server as a Docker image and run it:
 
     # docker build -t thinktool -f tools/Dockerfile .
     # docker run --network thinktool -e DIAFORM_DATABASE=mongodb://thinktooldb:27017 -p 80:80 thinktool
+
+# Development
+
+Build the static resources and server into `dist` from the top-level directory:
+
+    $ ./tools/build.sh
+
+Run MongoDB on `localhost:27017`:
+
+    # docker run -v "$(DB_VOLUME):/data/db" -d -p 27017:27017 mongo
+
+Run the server:
+
+    $ cd dist/server
+    $ export DIAFORM_PORT=8080
+    $ node server.js

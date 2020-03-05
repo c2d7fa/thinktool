@@ -4,15 +4,14 @@ set -e
 
 echo "Building server..."
 mkdir -p dist/server
-cd app
+cd src/server
 if [ ! -e "node_modules" ]; then
   npm ci
 fi
-npx parcel build src/server.ts -t node -d ../dist/server -o server.js # TODO: Just use TSC
-cd ..
-cp -r app/node_modules dist/server
-cp -r app/package.json dist/server
-echo "Built 'dist/server' from 'app/src'."
+npx parcel build server.ts -t node -d ../../dist/server -o server.js # TODO: Just use TSC
+cd ../..
+cp -r src/server/{node_modules,package.json} dist/server
+echo "Built 'dist/server' from 'src/server'."
 
 echo "Building client..."
 cd src/client

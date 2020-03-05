@@ -1,7 +1,7 @@
 import * as mongo from "mongodb";
 import * as bcrypt from "bcrypt";
 
-import * as Communication from "../communication";
+import * as Communication from "../shared/communication";
 
 export type UserId = {name: string};
 
