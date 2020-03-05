@@ -7,8 +7,6 @@
     "@types/express-ws": "latest",
     "@types/mongodb": "latest",
     "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
     "bcrypt": "latest",
@@ -19,10 +17,6 @@
     "express-ws": "latest",
     "mongodb": "latest",
     "parcel-bundler": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "slate": "latest",
-    "slate-react": "latest",
     "typescript": "latest"
   }
 }

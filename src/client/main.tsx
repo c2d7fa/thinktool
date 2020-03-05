@@ -69,7 +69,7 @@ function extractThingFromURL(): string {
 // send a request for each keystroke.
 
 function useBatched(cooldown: number): {update(key: string, callback: () => void): void} {
-  const timeouts: React.MutableRefObject<{[key: string]: NodeJS.Timeout}> = React.useRef({});
+  const timeouts: React.MutableRefObject<{[key: string]: number}> = React.useRef({});
   const callbacks: React.MutableRefObject<{[key: string]: () => void}> = React.useRef({});
 
   function update(key: string, callback: () => void): void {

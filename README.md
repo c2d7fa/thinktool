@@ -23,6 +23,7 @@ Tools and configuration:
 | Directory | Purpose |
 | ---       | ---     |
 | `/tools/` | Scripts and other tools used for building, development and deployment. |
+| `/tools/dev/` | Tools used for development only. |
 
 # Deployment
 
