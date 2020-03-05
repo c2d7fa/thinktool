@@ -1,22 +1,22 @@
 import "regenerator-runtime/runtime";  // Required by Parcel for reasons that I do not understand.
 
-import {Things} from "./client/data";
-import {Tree} from "./client/tree";
+import {Things} from "./data";
+import {Tree} from "./tree";
 
-import * as Data from "./client/data";
-import * as T from "./client/tree";
-import * as Server from "./client/server-api";
+import * as Data from "./data";
+import * as T from "./tree";
+import * as Server from "./server-api";
 
-import * as C from "./client/ui/content";
-import Search from "./client/ui/search";
-import { ThingSelectPopup } from "./client/ui/thing-select-popup";
+import * as C from "./ui/content";
+import Search from "./ui/search";
+import { ThingSelectPopup } from "./ui/thing-select-popup";
 
-import * as Demo from "./client/demo";
+import * as Demo from "./demo";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import undo from "./client/undo";
+import undo from "./undo";
 
 // ==
 
@@ -69,7 +69,7 @@ function extractThingFromURL(): string {
 // send a request for each keystroke.
 
 function useBatched(cooldown: number): {update(key: string, callback: () => void): void} {
-  const timeouts: React.MutableRefObject<{[key: string]: NodeJS.Timeout}> = React.useRef({});
+  const timeouts: React.MutableRefObject<{[key: string]: number}> = React.useRef({});
   const callbacks: React.MutableRefObject<{[key: string]: () => void}> = React.useRef({});
 
   function update(key: string, callback: () => void): void {

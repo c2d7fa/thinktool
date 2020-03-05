@@ -1,0 +1,14 @@
+{
+  "name": "thinktool",
+  "private": true,
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "parcel-bundler": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "slate": "latest",
+    "slate-react": "latest",
+    "typescript": "latest"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "thinktool",
+  "private": true,
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  }
+}

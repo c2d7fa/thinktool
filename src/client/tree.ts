@@ -1,4 +1,4 @@
-import * as G from "../general";
+import * as G from "../shared/general";
 import * as D from "./data";
 import * as I from "./tree-internal";
 

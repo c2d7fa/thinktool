@@ -1,4 +1,4 @@
-import * as G from "../general";
+import * as G from "../shared/general";
 
 export interface Node {
   thing: string;

@@ -1,5 +1,5 @@
 import * as D from "./data";
-import * as Communication from "../communication";
+import * as Communication from "../shared/communication";
 
 // The server expects us to identify ourselves. This way, the server will not
 // notify us of any changes that we are ourselves responsible for.
