@@ -135,7 +135,7 @@ app.use((req, res, next) => {
 });
 
 function sendStatic(res: express.Response, path: string) {
-  return res.sendFile(path, {root: "../static"});
+  return res.sendFile(path, {root: "../../dist/static"});
 }
 
 function sendRedirect(res: express.Response, location: string): void {
