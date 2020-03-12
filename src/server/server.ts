@@ -6,6 +6,8 @@ import * as util from "util";
 import * as DB from "./database";
 import * as Communication from "../shared/communication";
 
+const staticUrl = "http://localhost:8085" // [TODO] Make this configurable
+
 // #region changes
 
 // We want to be able to subscribe to changes in a user's data. This is used to
@@ -100,7 +102,10 @@ declare module "express-serve-static-core" {
 
 function requireSession(req: express.Request, res: express.Response, next: express.NextFunction): void {
   if (req.user === undefined) {
-    res.status(401).type("text/plain").send("401 Unauthorized");
+    res.status(401).type("text/plain")
+      .header("Access-Control-Allow-Origin", staticUrl)
+      .header("Access-Control-Allow-Credentials", "true")
+      .send("401 Unauthorized");
     next("route");
   } else {
     next();
@@ -193,11 +198,18 @@ app.ws("/api/changes", async (ws, req) => {
 
 app.get("/api/things", requireSession, async (req, res) => {
   const result = (await DB.getAllThings(req.user!)).map(t => ({name: t.name, content: t.content ?? "", children: t.children ?? []}));
-  res.type("json").send(result as Communication.FullStateResponse);
+  console.warn("Allowing origin %o", req.headers['Origin']);
+  res.type("json")
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send(result as Communication.FullStateResponse);
 });
 
 app.get("/api/username", requireSession, async (req, res) => {
-  res.type("json").send(JSON.stringify(await DB.userName(req.user!)));
+  res.type("json")
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send(JSON.stringify(await DB.userName(req.user!)));
 });
 
 async function parseThingExists(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -240,6 +252,24 @@ async function requireClientId(req: express.Request, res: express.Response, next
   next();
 }
 
+app.options("/api/things/:thing", async (req, res) => {
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .header("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
+    .header("Access-Control-Allow-Headers", "Thinktool-Client-Id, Content-Type")
+    .send()
+})
+
+app.options("/api/things/:thing/content", async (req, res) => {
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .header("Access-Control-Allow-Methods", "GET, PUT, OPTIONS")
+    .header("Access-Control-Allow-Headers", "Thinktool-Client-Id, Content-Type")
+    .send()
+})
+
 app.put("/api/things/:thing", requireSession, parseThing, requireClientId, async (req, res) => {
   if (typeof req.body !== "object") {
     res.status(400).type("text/plain").send("400 Bad Request");
@@ -248,13 +278,19 @@ app.put("/api/things/:thing", requireSession, parseThing, requireClientId, async
   const data = req.body as Communication.ThingData;
   await DB.updateThing(req.user!, res.locals.thing, data.content, data.children);
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
-  res.end();
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .end();
 });
 
 app.delete("/api/things/:thing", requireSession, parseThingExists, requireClientId, async (req, res) => {
   await DB.deleteThing(req.user!, res.locals.thing);
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
-  res.end();
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .end();
 });
 
 app.put("/api/things/:thing/content", requireSession, parseThingExists, requireClientId, async (req, res) => {
@@ -265,14 +301,21 @@ app.put("/api/things/:thing/content", requireSession, parseThingExists, requireC
 
   await DB.setContent(req.user!, res.locals.thing, req.body);
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
-  res.end();
+
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .end();
 });
 
 // #endregion
 
 app.get("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
   const thingData = await DB.getThingData(req.user!, res.locals.thing);
-  res.type("json").send(thingData as Communication.ThingData);
+  res.type("json")
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send(thingData as Communication.ThingData);
 });
 
 app.post("/", async (req, res) => {
