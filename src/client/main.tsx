@@ -224,6 +224,8 @@ function App({initialState, username, args}: {initialState: Things; username: st
   // when there are pending changes from another client.
 
   React.useEffect(() => {
+    if (args?.local) return
+
     return Server.onChanges(async (changes) => {
       for (const changedThing of changes) {
         const thingData = await Server.getThingData(changedThing);
