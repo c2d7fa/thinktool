@@ -6,7 +6,7 @@ import * as util from "util";
 import * as DB from "./database";
 import * as Communication from "../shared/communication";
 
-const staticUrl = "http://localhost:8085" // [TODO] Make this configurable
+const staticUrl = process.env.DIAFORM_STATIC_HOST
 
 // #region changes
 

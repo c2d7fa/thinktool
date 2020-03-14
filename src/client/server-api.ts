@@ -1,7 +1,9 @@
 import * as D from "./data";
 import * as Communication from "../shared/communication";
 
-const apiHost = "http://localhost:8080" // [TODO] Make this configurable
+import * as Configuration from "../../conf/client.json";
+
+const apiHost = Configuration.apiHost
 
 function api(endpoint: string, args?: object) {
   return fetch(`${apiHost}/api/${endpoint}`, {credentials: "include", ...args})

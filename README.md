@@ -37,22 +37,24 @@ The application consists of two parts:
 The static resources should be deployed to a static site hosting service, while
 the server code should be run on an appropriate server using Node.js.
 
-## Building
+## Static resources
 
 Set the following environment variables:
 
 * `DIAFORM_API_HOST` &mdash; API server host, including the protocol, e.g.
   `https://api.thinktool.io`.
 
-Then build the static resources with:
+Then build the client code and other static resources with:
 
+    $ ./tools/build-client.sh
     $ ./tools/build-static.sh
 
-## Server deployment
+## Server
 
 The server requires a MongoDB instance to be running on the same network. The
 address of the server should be passed in through the environment variable
-`DIAFORM_DATABASE`.
+`DIAFORM_DATABASE`, and the host servings static resources (including protocol)
+should be passed in through `DIAFORM_STATIC_HOST`.
 
 Start by creating a network:
 
@@ -65,16 +67,4 @@ Start MongoDB instance called `thinktooldb` running on the network:
 Build the server as a Docker image and run it:
 
     # docker build -t thinktool -f tools/Dockerfile .
-    # docker run --network thinktool -e DIAFORM_DATABASE=mongodb://thinktooldb:27017 -p 80:80 thinktool
-
-# Development
-
-Run MongoDB on `localhost:27017`:
-
-    # docker run -v "$(DB_VOLUME):/data/db" -d -p 27017:27017 mongo
-
-Build the static resources and server into `dist` from the top-level directory
-and run the server:
-
-    $ ./tools/build.sh
-    $ ./tools/dev/start-server.sh
+    # docker run --network thinktool -e DIAFORM_DATABASE=mongodb://thinktooldb:27017 -e DIAFORM_STATIC_HOST=https://thinktool.io -p 80:80 thinktool
