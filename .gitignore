@@ -1,4 +1,5 @@
 /dist/
 /conf/
+/.envrc
 node_modules/
 .cache/

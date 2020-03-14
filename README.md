@@ -49,6 +49,9 @@ Then build the client code and other static resources with:
     $ ./tools/build-client.sh
     $ ./tools/build-static.sh
 
+Then, set `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` and run
+`./tools/deploy-static.sh` to deploy static files to Microsoft Azure Storage.
+
 ## Server
 
 The server requires a MongoDB instance to be running on the same network. The
@@ -68,3 +71,35 @@ Build the server as a Docker image and run it:
 
     # docker build -t thinktool -f tools/Dockerfile .
     # docker run --network thinktool -e DIAFORM_DATABASE=mongodb://thinktooldb:27017 -e DIAFORM_STATIC_HOST=https://thinktool.io -p 80:80 thinktool
+
+# Development
+
+Start MongoDB instance on `localhost:27017`:
+
+    # docker run -v "$(DB_VOLUME):/data/db" -d -p 27017:27017 mongo
+
+Set environment variables:
+
+    $ export DIAFORM_DATABASE=mongodb://localhost:27017
+    $ export DIAFORM_PORT=8085
+    $ export DIAFORM_STATIC_HOST=http://localhost:8080
+    $ export DIAFORM_API_HOST=http://localhost:8085
+
+Watch for changes and automatically rebuild:
+
+    $ ./tools/dev/watch-client.sh
+    $ ./tools/dev/watch-server.sh
+
+Build static resources manually:
+
+    $ ./tools/build-static.sh
+
+Start a server for static resources:
+
+    $ cd dist/static
+    $ python -m http.server 8080
+
+Start the Node.js server:
+
+    $ cd dist/server
+    $ node server.js
