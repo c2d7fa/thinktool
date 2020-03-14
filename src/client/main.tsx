@@ -200,10 +200,6 @@ function useContext(initialState: Things, args?: {local: boolean}): Context {
   const [tree, setTree] = React.useState(T.fromRoot(state, selectedThing));
 
   React.useEffect(() => {
-    setTree(T.refresh(tree, state));
-  }, [state]);
-
-  React.useEffect(() => {
     setTree(T.fromRoot(state, selectedThing));
   }, [selectedThing]);
 
@@ -211,7 +207,7 @@ function useContext(initialState: Things, args?: {local: boolean}): Context {
 
   const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
 
-  return {state, setState, setLocalState, setContent, undo: undo_, updateLocalState: setLocalState, selectedThing, setSelectedThing, tree, setTree, drag, setDrag};
+  return {state, setState, setLocalState, setContent, undo: undo_, updateLocalState: (update) => { setLocalState(update); setTree(T.refresh(tree, update(state))) }, selectedThing, setSelectedThing, tree, setTree, drag, setDrag};
 }
 
 function App({initialState, username, args}: {initialState: Things; username: string; args?: {local: boolean}}) {
