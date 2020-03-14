@@ -313,7 +313,7 @@ function App({initialState, username, args}: {initialState: Things; username: st
   return <>
     <div className="top-bar">
       <Search context={context}/>
-      <div id="current-user"><span className="username">{username}</span> <a className="log-out" href="/logout">log out</a></div>
+      <div id="current-user"><span className="username">{username}</span> <a className="log-out" href={Server.logOutUrl}>log out</a></div>
     </div>
     <ThingOverview context={context}/>
     <Toolbar context={context}/>

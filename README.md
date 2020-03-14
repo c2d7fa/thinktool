@@ -41,8 +41,8 @@ the server code should be run on an appropriate server using Node.js.
 
 Set the following environment variables:
 
-* `DIAFORM_API_URL` &mdash; URL of the API server, not including the final
-  slash, e.g. `https://api.thinktool.io`.
+* `DIAFORM_API_HOST` &mdash; API server host, including the protocol, e.g.
+  `https://api.thinktool.io`.
 
 Then build the static resources with:
 

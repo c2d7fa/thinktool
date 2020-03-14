@@ -165,7 +165,7 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/logout", async (req, res) => {
-  sendRedirect(res.header("Set-Cookie", "DiaformSession=; Max-Age=0"), "/");
+  sendRedirect(res.header("Set-Cookie", "DiaformSession=; Max-Age=0"), `${staticUrl}/landing.html`);
 });
 
 app.ws("/api/changes", async (ws, req) => {
@@ -331,7 +331,7 @@ app.post("/", async (req, res) => {
       return;
     }
     const sessionId = await session.create(userId);
-    sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), "/");
+    sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
   } else if (req.body.signup) {
     const {user, password} = req.body;
     const result = await DB.createUser(user, password);
@@ -340,7 +340,7 @@ app.post("/", async (req, res) => {
     } else {
       const {userId} = result;
       const sessionId = await session.create(userId);
-      sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), "/");
+      sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
     }
   } else {
     res.status(400).type("text/plain").send("400 Bad Request");

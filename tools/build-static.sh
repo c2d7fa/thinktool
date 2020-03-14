@@ -14,7 +14,7 @@ const h = require("handlebars")
 const fs = require("fs")
 
 const template = fs.readFileSync("src/markup/login.handlebars", "utf8")
-const html = h.compile(template)({apiUrl: process.env.DIAFORM_API_URL})
+const html = h.compile(template)({apiUrl: process.env.DIAFORM_API_HOST})
 
 fs.writeFileSync("dist/static/login.html", html)
 EOF

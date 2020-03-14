@@ -35,7 +35,6 @@ export async function deleteThing(thing: string): Promise<void> {
 }
 
 export async function putThing(thing: string, data: D.ThingData): Promise<void> {
-  console.log("putting thign", thing)
   const request: Communication.ThingData = data;
   await api(`things/${thing}`, {method: "put", headers: {"Content-Type": "application/json", "Thinktool-Client-Id": clientId}, body: JSON.stringify(request)});
 }
@@ -65,3 +64,5 @@ export async function getThingData(thing: string): Promise<Communication.ThingDa
   if (response.status === 404) return null;
   return await response.json() as Communication.ThingData;
 }
+
+export const logOutUrl = `${apiHost}/logout`
