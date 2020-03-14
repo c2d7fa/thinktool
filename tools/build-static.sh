@@ -2,12 +2,19 @@
 
 set -e
 
-echo "Building static resources..."
+echo "Building images..."
 mkdir -p dist/static
-cp -r src/static/* dist/static
-echo "Built 'dist/static/' from 'src/static/'."
+cp -r src/static/*.svg dist/static
+cp -r src/static/*.png dist/static
 
-echo "Building HTML..."
+echo "Building stylesheets..."
+cp -r src/static/*.css dist/static
+
+echo "Building static HTML..."
+cp -r src/static/*.html dist/static/
+cp -r src/static/landing.html dist/static/index.html
+
+echo "Building HTML templates..."
 npm ci
 node <<EOF
 const h = require("handlebars")

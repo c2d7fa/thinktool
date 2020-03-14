@@ -16,7 +16,7 @@ export const initialState: D.Things = (() => {
   result = D.setContent(result, "0", "Thinktool Demo");
 
   add("0", "1", "Welcome to the Thinktool demo!");
-  add("1", "2", "If you like this demo, you can sign up for an account here: https://thinktool.io/login");
+  add("1", "2", "If you like this demo, you can sign up for an account here: https://thinktool.io/login.html");
 
   add("0", "3", "Please note that any changes you make here will be discarded when you reload the page.");
 
@@ -81,4 +81,3 @@ export const initialState: D.Things = (() => {
 
   return result;
 })();
-
