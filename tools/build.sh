@@ -18,7 +18,4 @@ npx parcel build main.tsx -d ../../dist/static -o bundle.js
 echo "Built 'dist/static/bundle.js' from 'src/client'."
 cd ../..
 
-echo "Building other static resources..."
-mkdir -p dist/static
-cp -r src/static/* dist/static
-echo "Built 'dist/static/' from 'src/static/'."
+tools/build-static.sh

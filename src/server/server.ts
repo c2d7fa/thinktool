@@ -198,7 +198,6 @@ app.ws("/api/changes", async (ws, req) => {
 
 app.get("/api/things", requireSession, async (req, res) => {
   const result = (await DB.getAllThings(req.user!)).map(t => ({name: t.name, content: t.content ?? "", children: t.children ?? []}));
-  console.warn("Allowing origin %o", req.headers['Origin']);
   res.type("json")
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
