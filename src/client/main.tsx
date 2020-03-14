@@ -312,6 +312,24 @@ function App({initialState, username, args}: {initialState: Things; username: st
     };
   }, [context.drag]);
 
+  React.useEffect(() => {
+    if (context.drag.finished) {
+      if (context.drag.current !== null && context.drag.target !== null && context.drag.current.id !== null) {
+        if (context.drag.finished === "copy") {
+          const [newState, newTree, newId] = T.copyToAbove(context.state, context.tree, context.drag.current, context.drag.target);
+          context.setState(newState);
+          context.setTree(T.focus(newTree, newId));
+        } else {
+          const [newState, newTree] = T.moveToAbove(context.state, context.tree, context.drag.current, context.drag.target);
+          context.setState(newState);
+          context.setTree(newTree);
+        }
+      }
+
+      context.setDrag({current: null, target: null, finished: false});
+    }
+  }, [context.drag]);
+
   return <>
     <div className="top-bar">
       <Search context={context}/>
@@ -512,24 +530,6 @@ function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRe
 
   function beginDrag() {
     p.context.setDrag({current: p.node, target: null, finished: false});
-  }
-
-  // TODO: This seems like a hack, but I'm not sure if it's actually as bad as
-  // it looks or if we just need to clean up the code a bit.
-  if (p.context.drag.finished && (p.context.drag.target?.id === p.node.id || p.context.drag.target === null)) {
-    if (p.context.drag.current !== null && p.context.drag.target !== null && p.context.drag.current?.id !== p.node.id) {
-      if (p.context.drag.finished === "copy") {
-        const [newState, newTree, newId] = T.copyToAbove(p.context.state, p.context.tree, p.context.drag.current, p.context.drag.target);
-        p.context.setState(newState);
-        p.context.setTree(T.focus(newTree, newId));
-      } else {
-        const [newState, newTree] = T.moveToAbove(p.context.state, p.context.tree, p.context.drag.current, p.context.drag.target);
-        p.context.setState(newState);
-        p.context.setTree(newTree);
-      }
-    }
-
-    p.context.setDrag({current: null, target: null, finished: false});
   }
 
   let className = "item-line";
