@@ -16,12 +16,23 @@ const clientId = Math.floor(Math.random() * Math.pow(36, 6)).toString(36);
 export async function getFullState(): Promise<D.Things> {
   const response = await (await api("things")).json() as Communication.FullStateResponse;
 
-  const things = {};
+  let state = {things: {}};
   for (const thing of response) {
-    things[thing.name] = {content: thing.content, children: thing.children};
+    if (!D.exists(state, thing.name)) {
+      const [newState, _] = D.create(state, thing.name);
+      state = newState;
+    }
+    state = D.setContent(state, thing.name, thing.content);
+    for (const child of thing.children) {
+      if (!D.exists(state, child)) {
+        const [newState, _] = D.create(state, child);
+        state = newState;
+      }
+      state = D.addChild(state, thing.name, child)
+    }
   }
 
-  return {things};
+  return state;
 }
 
 export async function getUsername(): Promise<string> {
