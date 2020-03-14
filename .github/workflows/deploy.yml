@@ -1,10 +1,10 @@
-name: Deploy to DigitalOcean server
+name: Deploy application
 on:
   push:
     branches:
       - master
 jobs:
-  deploy:
+  api:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository
@@ -24,3 +24,17 @@ jobs:
         username: root
         key: ${{secrets.key}}
         script: ./deploy-diaform.sh
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v1
+      - name: Build static resources
+        run: ./tools/build-client.sh && ./tools/build-static.sh
+        env:
+          DIAFORM_API_HOST: ${{secrets.api_host}}
+      - name: Deploy to Azure Storage
+        run: ./tools/deploy-static.sh
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
+          AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}
