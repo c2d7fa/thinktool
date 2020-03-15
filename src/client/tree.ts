@@ -363,7 +363,7 @@ export function createSiblingAfter(state: D.Things, tree: Tree, node: NodeRef): 
   const [newNode, newTree_] = load(newState, tree, newThing, parent_);
   let newTree = newTree_;
   newTree = I.updateChildren(newTree, parent_, children => G.splice(children, index, 0, newNode));
-  newTree = refresh(newTree, newState);
+  newTree = refreshChildren(newState, newTree, parent_);
 
   return [newState, newTree, newThing, newNode];
 }
