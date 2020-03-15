@@ -240,46 +240,103 @@ a.internal-link-open:hover {
     box-decoration-break: clone;
 }
 
-#link-autocomplete-popup {
+/* THING SELECTION POPUP */
+
+.link-autocomplete-popup {
     position: fixed;
+    z-index: 9999;
 
-    background-color: #fcfcfc;
-    border: 1px solid #e0e0e0;
-    z-index: 999;
+    left: 20vw;
+    top: 15vh;
 
-    max-width: 20em;
+    width: 60vw;
+    max-height: 60vh;
+
+    background-color: #f8f8f8;
+    border-radius: 6px;
+    box-shadow: #d8d8d8 0 0 12px;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow-y: none;
 }
 
-#link-autocomplete-popup input {
+@media (min-width: 1600px) {
+    .link-autocomplete-popup {
+        left: 25vw;
+        width: 50vw;
+    }
+}
+
+@media (min-width: 2000px) {
+    .link-autocomplete-popup {
+        left: 30vw;
+        width: 40vw;
+    }
+}
+
+@media (max-width: 1100px) {
+    .link-autocomplete-popup {
+        left: 15vw;
+        width: 70vw;
+    }
+}
+
+@media (max-width: 740px) {
+    .link-autocomplete-popup {
+        left: 5vw;
+        width: 90vw;
+    }
+}
+
+@media (max-height: 900px) {
+    .link-autocomplete-popup {
+        top: 10vh;
+        max-height: 70vh;
+    }
+}
+
+@media (max-height: 600px) {
+    .link-autocomplete-popup {
+        top: 5vh;
+        max-height: 90vh;
+    }
+}
+
+.link-autocomplete-popup input {
     width: 100%;
-    padding: 3px;
 
     font: inherit;
-    font-weight: bold;
-
+    background: none;
     outline: none;
     border: none;
+
     background-color: #f0f0f0;
+    border-bottom: 1px solid #e8e8e8;
+    padding: 0.3em 1em;
+    border-radius: 6px 6px 0 0;
 }
 
-ul#link-autocomplete-popup-results {
-    list-style: none;
-    padding: 0;
+.link-autocomplete-popup-results {
+    flex: 1 1 100%;
+
     margin: 0;
+    padding: 0;
+
+    list-style: none;
+    overflow-y: auto;
+    overflow-wrap: break-word;
+
 }
 
 .link-autocomplete-popup-result {
-    padding: 3px;
-
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-
-    border-top: 1px solid #e0e0e0;
+    padding: 0.3em 1em;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .link-autocomplete-popup-result.selected-result {
-    background-color: #f0f0f0;
+    background-color: #e8e8e8;
 }
 
 /* OVERVIEW */

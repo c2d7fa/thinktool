@@ -9,7 +9,7 @@ import * as Server from "./server-api";
 
 import * as C from "./ui/content";
 import Search from "./ui/search";
-import { ThingSelectPopup } from "./ui/thing-select-popup";
+import ThingSelectPopup from "./ui/ThingSelectPopup";
 
 import * as Demo from "./demo";
 
@@ -636,12 +636,8 @@ function Content(p: {context: Context; node: T.NodeRef}) {
 
   const insertChildPopup = (() => {
     if (showChildPopup) {
-      const range = window.getSelection()?.getRangeAt(0);
-      const rect = range?.getBoundingClientRect();
-
       return <ThingSelectPopup
         hide={() => setShowChildPopup(false)}
-        position={{x: (rect?.x ?? 100) + 2, y: (rect?.y ?? 100) + ((rect?.height ?? 0) / 2)}}
         state={p.context.state}
         submit={(child: string) => {
           const [newState, newTree] = T.insertChild(p.context.state, p.context.tree, p.node, child, 0);

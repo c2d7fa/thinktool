@@ -4,10 +4,10 @@ import * as ReactDOM from "react-dom";
 import * as D from "../data";
 
 function search(state: D.Things, text: string): [string, string][] {
-  return D.search(state, text).slice(0, 8).map(thing => [D.contentText(state, thing), thing]);
+  return D.search(state, text).map(thing => [D.contentText(state, thing), thing]);
 }
 
-export function ThingSelectPopup(props: {state: D.Things; hide(): void; submit(thing: string): void; position: {x: number; y: number}}) {
+export default function ThingSelectPopup(props: {state: D.Things; hide(): void; submit(thing: string): void}) {
   const [text, setText_] = React.useState("");
   const [results, setResults] = React.useState<[string, string][]>([]);
   const [selectedIndex, setSelectedIndex] = React.useState<number>(-1); // -1 means nothing selected
@@ -42,7 +42,7 @@ export function ThingSelectPopup(props: {state: D.Things; hide(): void; submit(t
       ev.preventDefault();
     } else if (ev.key === "ArrowUp") {
       setSelectedIndex(Math.max(-1, selectedIndex - 1));
-      ev.preventDefault;
+      ev.preventDefault();
     }
   }
 
@@ -51,17 +51,17 @@ export function ThingSelectPopup(props: {state: D.Things; hide(): void; submit(t
   }
 
   return ReactDOM.createPortal(
-    <div id="link-autocomplete-popup" style={{left: props.position.x, top: props.position.y}}>
+    <div className="link-autocomplete-popup">
       <input
         ref={ref}
         type="text"
         value={text}
         onChange={(ev: React.ChangeEvent<HTMLInputElement>) => setText(ev.target.value)}
-        onBlur={props.hide}
+        /*onBlur={props.hide}*/
         onKeyDown={onKeyDown}
       />
       { results.length !== 0 &&
-        <ul id="link-autocomplete-popup-results">
+        <ul className="link-autocomplete-popup-results">
           {results.map((result, i) => <Result key={result[1]} selected={i === selectedIndex} result={result}/>)}
         </ul> }
     </div>,

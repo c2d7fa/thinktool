@@ -5,7 +5,7 @@ import * as SlateReact from "slate-react";
 
 import * as D from "../data";
 
-import { ThingSelectPopup } from "./thing-select-popup";
+import ThingSelectPopup from "./ThingSelectPopup";
 
 // #region Lines in the editor
 
@@ -291,9 +291,6 @@ export function Content(props: {things: D.Things; focused?: boolean; text: strin
     if (!showLinkPopup) return null;
 
     if (editor.selection !== null) {
-      const range = SlateReact.ReactEditor.toDOMRange(editor, editor.selection);
-      const rect = range.getBoundingClientRect();
-
       function submit(id: string): void {
         // When we focus the popup, Slate will have forgotten the old selection,
         // so we need to restore it first:
@@ -303,7 +300,7 @@ export function Content(props: {things: D.Things; focused?: boolean; text: strin
         editor.insertNode({type: "internalLink", internalLink: id, children: [{text: ""}]});
       }
 
-      return <ThingSelectPopup state={props.things} hide={() => setShowLinkPopup(false)} position={{x: rect.x + 2, y: rect.y + (rect.height / 2)}} submit={submit}/>;
+      return <ThingSelectPopup state={props.things} hide={() => setShowLinkPopup(false)} submit={submit}/>;
     } else {
       // TODO: This happens sometimes. Namely when the focus is moved to the
       // ThingSelectPopup we just created. We probably need to handle this case,
