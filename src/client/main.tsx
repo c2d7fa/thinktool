@@ -8,7 +8,7 @@ import * as T from "./tree";
 import * as Server from "./server-api";
 
 import * as C from "./ui/content";
-import Search from "./ui/search";
+import Search from "./ui/Search";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
 
 import * as Demo from "./demo";
