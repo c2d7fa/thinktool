@@ -3,13 +3,14 @@ import * as ReactDOM from "react-dom";
 
 import * as D from "../data";
 
-function search(state: D.Things, text: string): [string, string][] {
-  return D.search(state, text).map(thing => [D.contentText(state, thing), thing]);
+function search(state: D.Things, text: string, maxResults: number): [string, string][] {
+  return D.search(state, text).slice(0, maxResults).map(thing => [D.contentText(state, thing), thing]);
 }
 
 export default function ThingSelectPopup(props: {state: D.Things; hide(): void; submit(thing: string): void}) {
   const [text, setText_] = React.useState("");
   const [results, setResults] = React.useState<[string, string][]>([]);
+  const [maxResults, setMaxResults] = React.useState<number>(50);
   const [selectedIndex, setSelectedIndex] = React.useState<number>(-1); // -1 means nothing selected
   const ref = React.useRef<HTMLInputElement>(null);
 
@@ -25,7 +26,8 @@ export default function ThingSelectPopup(props: {state: D.Things; hide(): void; 
     if (text === "") {
       setResults([]);
     } else {
-      setResults(search(props.state, text));
+      setMaxResults(50);
+      setResults(search(props.state, text, maxResults));
     }
   }
 
@@ -50,6 +52,14 @@ export default function ThingSelectPopup(props: {state: D.Things; hide(): void; 
     return <li className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}><span className="link-autocomplete-popup-result-content">{props.result[0]} ({props.result[1]})</span></li>;
   }
 
+  function onScroll(ev: React.UIEvent) {
+    const el = ev.target as HTMLUListElement
+    if (el.scrollTop + el.clientHeight + 500 > el.scrollHeight) {
+      setMaxResults(maxResults => maxResults + 50)
+      setResults(search(props.state, text, maxResults))
+    }
+  }
+
   return ReactDOM.createPortal(
     <div className="link-autocomplete-popup">
       <input
@@ -57,11 +67,11 @@ export default function ThingSelectPopup(props: {state: D.Things; hide(): void; 
         type="text"
         value={text}
         onChange={(ev: React.ChangeEvent<HTMLInputElement>) => setText(ev.target.value)}
-        /*onBlur={props.hide}*/
+        onBlur={props.hide}
         onKeyDown={onKeyDown}
       />
       { results.length !== 0 &&
-        <ul className="link-autocomplete-popup-results">
+        <ul className="link-autocomplete-popup-results" onScroll={onScroll}>
           {results.map((result, i) => <Result key={result[1]} selected={i === selectedIndex} result={result}/>)}
         </ul> }
     </div>,
