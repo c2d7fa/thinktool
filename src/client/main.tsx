@@ -761,6 +761,15 @@ async function start(): Promise<void> {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
   const isDemo = appElement.dataset.demo === "true";
 
+  if (!isDemo) {
+    try {
+      await Server.getUsername();
+    } catch (e) {
+      console.log("Got weird response from server, probably because we are not logged in. Redirecting to login page.");
+      window.location.href = "/login.html";
+    }
+  }
+
   ReactDOM.render(
     isDemo ?
       <App initialState={Demo.initialState} username={"demo"} args={{local: true}}/> :
