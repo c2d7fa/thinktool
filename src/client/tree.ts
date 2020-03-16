@@ -239,15 +239,9 @@ export function indent(state: D.Things, tree: Tree, node: NodeRef): [D.Things, T
   if (oldParent === undefined || index === undefined || index === 0)
     return [state, tree];
 
-  const newState = D.indent(state, thing(tree, oldParent), index);
+  const newParent = previousSibling(tree, node);
 
-  let newTree = I.updateChildren(tree, oldParent, children => G.splice(children, index, 1));
-
-  const newParent = children(newTree, oldParent)[index - 1];
-  newTree = I.updateChildren(newTree, newParent, children => [...children, node]);
-  newTree = expand(newState, newTree, newParent);
-
-  return [newState, refresh(newTree, newState)];
+  return move(state, tree, node, {parent: newParent, index: D.children(state, thing(tree, newParent)).length})
 }
 
 export function unindent(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
@@ -268,21 +262,35 @@ function childIndex(tree: Tree, parent: NodeRef, child: NodeRef): number {
   return result;
 }
 
+// [TODO] The index in destination refers to a node, but elsewhere in this
+// module we use it as though it refers to an index inside a thing. This is
+// important when referring to an index inside a parent that has not been
+// expanded in the tree yet.
 export function move(state: D.Things, tree: Tree, node: NodeRef, destination: Destination): [D.Things, Tree] {
   const parent_ = parent(tree, node);
 
   if (parent_ === undefined)
     return [state, tree]; // Can't move root
 
-  let newState = D.removeChild(state, thing(tree, parent_), indexInParent(tree, node)!);
-  newState = D.insertChild(newState, thing(tree, destination.parent), thing(tree, node), destination.index);
+  let newState = state;
+  let newTree = tree;
 
-  let newTree = refresh(tree, newState);  // TODO: Could be improved
+  // Destination parent should be expanded for this operation to make sense.
+  // Otherwise, we would be moving a node to somewhere that doesn't exist.
+  if (!expanded(newTree, destination.parent)) {
+    newTree = expand(newState, newTree, destination.parent);
+  }
+
+  newState = D.removeChild(newState, thing(tree, parent_), indexInParent(tree, node)!);
+  newState = D.insertChild(newState, thing(tree, destination.parent), thing(tree, node), destination.index);
 
   // Keep focus
   if (hasFocus(tree, node)) {
-    newTree = focus(tree, children(newTree, destination.parent)[destination.index]);
+    newTree = focus(newTree, children(newTree, destination.parent)[destination.index]);
   }
+
+  // Refresh tree
+  newTree = refresh(newTree, newState);
 
   return [newState, newTree];
 }

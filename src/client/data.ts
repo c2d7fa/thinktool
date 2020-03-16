@@ -1,3 +1,7 @@
+export interface Things {
+  things: {[id: string]: ThingData};
+}
+
 export interface ThingData {
   content: string;
   children: string[];
@@ -8,6 +12,8 @@ export interface Things {
 }
 
 //#region Fundamental operations
+
+export const empty: Things = {things: {"0": {content: "root", children: []}}};
 
 export function children(things: Things, thing: string): string[] {
   if (!exists(things, thing)) return [];
@@ -60,28 +66,6 @@ export function addChild(things: Things, parent: string, child: string): Things 
   return insertChild(things, parent, child, children(things, parent).length);
 }
 
-// Make the given child a child of its previous sibling.
-export function indent(state: Things, parent: string, index: number): Things {
-  const newState = removeChild(state, parent, index);
-  const newParent = children(state, parent)[index - 1];
-  const child = children(state, parent)[index];
-  return addChild(newState, newParent, child);
-}
-
-// Make the given child a sibling of its parent.
-export function unindent(things: Things, grandparent: string, parentIndex: number, index: number): Things {
-  const thing = children(things, children(things, grandparent)[parentIndex])[index];
-
-  // Remove the child from its parent
-  const parent = children(things, grandparent)[parentIndex];
-  let result = removeChild(things, parent, index);
-
-  // Make it a child of the grandparent following the parent
-  result = insertChild(result, grandparent, thing, parentIndex + 1);
-
-  return result;
-}
-
 export function replaceChildren(state: Things, parent: string, newChildren: string[]) {
   let result = state;
 
@@ -131,8 +115,6 @@ export function parents(state: Things, child: string): string[] {
 export function otherParents(state: Things, child: string, parent?: string): string[] {
   return parents(state, child).filter(p => p !== parent);
 }
-
-export const empty: Things = {things: {"0": {content: "root", children: []}}};
 
 // Search
 
