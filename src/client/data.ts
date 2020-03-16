@@ -7,6 +7,8 @@ export interface Things {
   things: {[id: string]: ThingData};
 }
 
+//#region Fundamental operations
+
 export function children(things: Things, thing: string): string[] {
   if (!exists(things, thing)) return [];
   return things.things[thing].children;
@@ -21,10 +23,6 @@ export function setContent(things: Things, thing: string, newContent: string): T
   return {...things, things: {...things.things, [thing]: {...things.things[thing], content: newContent}}};
 }
 
-export function hasChildren(things: Things, thing: string): boolean {
-  return children(things, thing).length !== 0;
-}
-
 export function insertChild(state: Things, parent: string, child: string, index: number) {
   const result = {...state, things: {...state.things, [parent]: {...state.things[parent], children: [...state.things[parent].children]}}};
   result.things[parent].children.splice(index, 0, child);
@@ -37,41 +35,67 @@ export function removeChild(state: Things, parent: string, index: number) {
   return result;
 }
 
+export function create(state: Things, customId?: string): [Things, string] {
+  const newId = customId ?? generateShortId();
+  return [{...state, things: {...state.things, [newId]: {content: "", children: []}}}, newId];
+}
+
+export function forget(state: Things, thing: string): Things {
+  const result = {...state, things: {...state.things}};
+  delete result[thing];
+  return result;
+}
+
+export function exists(state: Things, thing: string): boolean {
+  return typeof state.things[thing] === "object";
+}
+
+//#endregion
+
+export function hasChildren(things: Things, thing: string): boolean {
+  return children(things, thing).length !== 0;
+}
+
 export function addChild(things: Things, parent: string, child: string): Things {
-  return insertChild(things, parent, child, children(things, parent).length)
+  return insertChild(things, parent, child, children(things, parent).length);
 }
 
 // Make the given child a child of its previous sibling.
-// [TODO] Implement in terms of insertChild and removeChild.
-export function indent(things: Things, parent: string, index: number): Things {
-  const result: Things = {...things, things: {...things.things, [parent]: {...things.things[parent], children: [...things.things[parent].children]}}};
-  result.things[parent].children.splice(index, 1);
-
-  const newParent = things.things[parent].children[index - 1];
-  const child = things.things[parent].children[index];
-  return addChild(result, newParent, child);
+export function indent(state: Things, parent: string, index: number): Things {
+  const newState = removeChild(state, parent, index);
+  const newParent = children(state, parent)[index - 1];
+  const child = children(state, parent)[index];
+  return addChild(newState, newParent, child);
 }
 
 // Make the given child a sibling of its parent.
-// [TODO] Implement in terms of insertChild and removeChild.
 export function unindent(things: Things, grandparent: string, parentIndex: number, index: number): Things {
   const thing = children(things, children(things, grandparent)[parentIndex])[index];
 
   // Remove the child from its parent
   const parent = children(things, grandparent)[parentIndex];
-  let result: Things = {...things, things: {...things.things, [parent]: {...things.things[parent], children: [...things.things[parent].children]}}};
-  result.things[parent].children.splice(index, 1);
+  let result = removeChild(things, parent, index);
 
   // Make it a child of the grandparent following the parent
-  result = {...result, things: {...result.things, [grandparent]: {...things.things[grandparent], children: [...things.things[grandparent].children]}}};
-  result.things[grandparent].children.splice(parentIndex + 1, 0, thing);
+  result = insertChild(result, grandparent, thing, parentIndex + 1);
 
   return result;
 }
 
-// [TODO] Implement in terms of insertChild and removeChild.
-export function replaceChildren(state: Things, parent: string, children: string[]) {
-  return {...state, things: {...state.things, [parent]: {...state.things[parent], children}}};
+export function replaceChildren(state: Things, parent: string, newChildren: string[]) {
+  let result = state;
+
+  // Remove old children
+  for (let i = 0; i < children(state, parent).length; ++i) {
+    result = removeChild(result, parent, 0);
+  }
+
+  // Add new children
+  for (const child of newChildren) {
+    result = addChild(result, parent, child);
+  }
+
+  return result
 }
 
 function generateShortId(): string {
@@ -81,25 +105,14 @@ function generateShortId(): string {
   return x.toString(36);
 }
 
-export function create(state: Things, customId?: string): [Things, string] {
-  const newId = customId ?? generateShortId();
-  return [{...state, things: {...state.things, [newId]: {content: "", children: []}}}, newId];
-}
-
-// [TODO] Implement in terms of insertChild and removeChild.
 export function remove(state: Things, removedThing: string): Things {
   let newState = state;
   for (const thing in state.things) {
-    if (state.things[thing] === undefined) continue;
-    const newChildren = state.things[thing].children.filter(child => child !== removedThing);
-    newState = {...newState, things: {...newState.things, [thing]: {...newState.things[thing], children: newChildren}}};
+    if (!exists(state, thing)) continue;
+    const newChildren = children(state, thing).filter(child => child !== removedThing);
+    newState = replaceChildren(newState, thing, newChildren);
   }
-  delete newState.things[removedThing];
-  return newState;
-}
-
-export function exists(state: Things, thing: string): boolean {
-  return typeof state.things[thing] === "object";
+  return forget(newState, removedThing);
 }
 
 export function parents(state: Things, child: string): string[] {
