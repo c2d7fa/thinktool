@@ -219,6 +219,10 @@ function App({initialState, username, args}: {initialState: Things; username: st
   // The server makes a websocket available on /api/changes, which notifies us
   // when there are pending changes from another client.
 
+  // [TODO] Theoretically, this should be rerun when context.updateLocalState
+  // changes, but for some reason just putting context.updateLocalState in the
+  // dependencies makes it reconnect every time any change is made to the state
+  // (e.g. editing the content of an item).
   React.useEffect(() => {
     if (args?.local) return
 
@@ -247,7 +251,7 @@ function App({initialState, username, args}: {initialState: Things; username: st
         });
       }
     });
-  }, [context.updateLocalState]);
+  }, []);
 
   document.onkeydown = (ev) => {
     if (ev.key === "z" && ev.ctrlKey) {
