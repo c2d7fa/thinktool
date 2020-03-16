@@ -47,9 +47,8 @@ export async function deleteThing(thing: string): Promise<void> {
   await api(`things/${thing}`, {method: "delete", headers: {"Thinktool-Client-Id": clientId}});
 }
 
-export async function putThing(thing: string, data: D.ThingData): Promise<void> {
-  const request: Communication.ThingData = data;
-  await api(`things/${thing}`, {method: "put", headers: {"Content-Type": "application/json", "Thinktool-Client-Id": clientId}, body: JSON.stringify(request)});
+export async function putThing(thing: string, data: Communication.ThingData): Promise<void> {
+  await api(`things/${thing}`, {method: "put", headers: {"Content-Type": "application/json", "Thinktool-Client-Id": clientId}, body: JSON.stringify(data)});
 }
 
 export function onChanges(callback: (changes: string[]) => void): () => void {

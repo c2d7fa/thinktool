@@ -154,7 +154,7 @@ function useContext(initialState: Things, args?: {local: boolean}): Context {
           Server.deleteThing(thing);
         }
         for (const thing of [...diff.added, ...diff.changed]) {
-          Server.putThing(thing, newState.things[thing]);
+          Server.putThing(thing, {content: Data.content(newState, thing), children: Data.children(newState, thing)});
         }
       }
     }
@@ -174,7 +174,7 @@ function useContext(initialState: Things, args?: {local: boolean}): Context {
         Server.deleteThing(thing);
       }
       for (const thing of [...diff.added, ...diff.changed]) {
-        Server.putThing(thing, oldState.things[thing]);
+        Server.putThing(thing, {content: Data.content(oldState, thing), children: Data.children(oldState, thing)});
       }
     }
   }
