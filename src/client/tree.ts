@@ -398,9 +398,16 @@ export function remove(state: D.Things, tree: Tree, node: NodeRef): [D.Things, T
     return [state, tree];
 
   const newState = D.removeChild(state, thing(tree, parent_), childIndex(tree, parent_, node));
-  const newTree = focus(tree, previousVisibleItem(tree, node));
+  let newTree = focus(tree, previousVisibleItem(tree, node));
 
-  return [newState, refresh(newTree, newState)];
+  // Remove nodes from tree to match state
+  for (const n of I.allNodes(tree)) {
+    if (thing(newTree, n) === thing(tree, parent_)) {
+      newTree = I.updateChildren(newTree, n, ch => G.splice(ch, indexInParent(tree, node), 1));
+    }
+  }
+
+  return [newState, newTree];
 }
 
 export function insertChild(state: D.Things, tree: Tree, node: NodeRef, child: string, position: number): [D.Things, Tree] {
@@ -410,6 +417,16 @@ export function insertChild(state: D.Things, tree: Tree, node: NodeRef, child: s
 
 export function removeThing(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
   const newState = D.remove(state, thing(tree, node));
+
+  // Remove nodes from tree to match state
+  let newTree = tree;
+  for (const n of I.allNodes(tree)) {
+    if (thing(newTree, n) === thing(tree, node)) {
+      const p = parent(newTree, n);
+      newTree = I.updateChildren(newTree, p, ch => G.splice(ch, indexInParent(newTree, n), 1));
+    }
+  }
+
   return [newState, refresh(tree, newState)];
 }
 
