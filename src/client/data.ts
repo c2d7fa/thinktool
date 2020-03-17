@@ -1,23 +1,41 @@
+import * as G from "../shared/general";
+
 export interface State {
   things: {[id: string]: ThingData};
+  connections: {[connectionId: number]: ConnectionData};
+  nextConnectionId: number;
 }
+
+type Connection = {connectionId: number};
 
 export interface ThingData {
   content: string;
-  children: string[];
+  connections: Connection[];
+}
+
+export interface ConnectionData {
+  parent: string;
+  child: string;
 }
 
 export interface State {
   things: {[id: string]: ThingData};
 }
 
+// [TODO] We are transitioning into using Connections. Currently, we don't
+// properly manage connections from the parent to the child, but we also don't
+// rely on those connections anywhere, so it's OK. #connections
+
 //#region Fundamental operations
 
-export const empty: State = {things: {"0": {content: "root", children: []}}};
+export const empty: State = {things: {"0": {content: "root", connections: []}}, connections: {}, nextConnectionId: 0};
 
-export function children(things: State, thing: string): string[] {
-  if (!exists(things, thing)) return [];
-  return things.things[thing].children;
+function connectionParent(state: State, connection: Connection): string { return state.connections[connection.connectionId].parent; }
+function connectionChild(state: State, connection: Connection): string { return state.connections[connection.connectionId].child; }
+
+export function children(state: State, thing: string): string[] {
+  if (!exists(state, thing)) return [];
+  return state.things[thing].connections.filter(c => connectionParent(state, c) === thing).map(c => connectionChild(state, c));
 }
 
 export function content(things: State, thing: string): string {
@@ -25,25 +43,36 @@ export function content(things: State, thing: string): string {
   return things.things[thing].content;
 }
 
-export function setContent(things: State, thing: string, newContent: string): State {
-  return {...things, things: {...things.things, [thing]: {...things.things[thing], content: newContent}}};
+export function setContent(state: State, thing: string, newContent: string): State {
+  return {...state, things: {...state.things, [thing]: {...state.things[thing], content: newContent}}};
 }
 
 export function insertChild(state: State, parent: string, child: string, index: number) {
-  const result = {...state, things: {...state.things, [parent]: {...state.things[parent], children: [...state.things[parent].children]}}};
-  result.things[parent].children.splice(index, 0, child);
+  let result = {...state, nextConnectionId: state.nextConnectionId + 1};
+  result = {...result, connections: {...state.connections, [state.nextConnectionId]: {parent, child}}};
+  if (exists(result, child)) {
+    // [TODO] If the item does not exist, we should create it here, so we always have the relevant connections on each item! #connections
+    result = {...result, things: {...result.things, [child]: {...result.things[child], connections: G.splice(result.things[child].connections, index, 0, {connectionId: state.nextConnectionId})}}};
+  }
+  result = {...result, things: {...result.things, [parent]: {...result.things[parent], connections: G.splice(result.things[parent].connections, index, 0, {connectionId: state.nextConnectionId})}}};
   return result;
 }
 
 export function removeChild(state: State, parent: string, index: number) {
-  const result = {...state, things: {...state.things, [parent]: {...state.things[parent], children: [...state.things[parent].children]}}};
-  result.things[parent].children.splice(index, 1);
+  let result = state;
+
+  // Remove from parent
+  result = {...result, things: {...result.things, [parent]: {...result.things[parent], connections: G.splice(result.things[parent].connections, index, 1)}}};
+
+  // [TODO] Remove from child #connections
+  // [TODO] Remove connection #connections
+
   return result;
 }
 
 export function create(state: State, customId?: string): [State, string] {
   const newId = customId ?? generateShortId();
-  return [{...state, things: {...state.things, [newId]: {content: "", children: []}}}, newId];
+  return [{...state, things: {...state.things, [newId]: {content: "", connections: []}}}, newId];
 }
 
 export function forget(state: State, thing: string): State {

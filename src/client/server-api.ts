@@ -16,7 +16,7 @@ const clientId = Math.floor(Math.random() * Math.pow(36, 6)).toString(36);
 export async function getFullState(): Promise<D.State> {
   const response = await (await api("things")).json() as Communication.FullStateResponse;
 
-  let state = {things: {}};
+  let state: D.State = {things: {}, connections: {}, nextConnectionId: 0};
   for (const thing of response) {
     if (!D.exists(state, thing.name)) {
       const [newState, _] = D.create(state, thing.name);
