@@ -239,15 +239,9 @@ export function indent(state: D.Things, tree: Tree, node: NodeRef): [D.Things, T
   if (oldParent === undefined || index === undefined || index === 0)
     return [state, tree];
 
-  const newState = D.indent(state, thing(tree, oldParent), index);
+  const newParent = previousSibling(tree, node);
 
-  let newTree = I.updateChildren(tree, oldParent, children => G.splice(children, index, 1));
-
-  const newParent = children(newTree, oldParent)[index - 1];
-  newTree = I.updateChildren(newTree, newParent, children => [...children, node]);
-  newTree = expand(newState, newTree, newParent);
-
-  return [newState, refresh(newTree, newState)];
+  return move(state, tree, node, {parent: newParent, index: D.children(state, thing(tree, newParent)).length})
 }
 
 export function unindent(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
@@ -268,20 +262,36 @@ function childIndex(tree: Tree, parent: NodeRef, child: NodeRef): number {
   return result;
 }
 
+// [TODO] The index in destination refers to a node, but elsewhere in this
+// module we use it as though it refers to an index inside a thing. This is
+// important when referring to an index inside a parent that has not been
+// expanded in the tree yet.
 export function move(state: D.Things, tree: Tree, node: NodeRef, destination: Destination): [D.Things, Tree] {
   const parent_ = parent(tree, node);
 
   if (parent_ === undefined)
     return [state, tree]; // Can't move root
 
-  let newState = D.removeChild(state, thing(tree, parent_), indexInParent(tree, node)!);
+  let newState = state;
+  let newTree = tree;
+
+  // Destination parent should be expanded for this operation to make sense.
+  // Otherwise, we would be moving a node to somewhere that doesn't exist.
+  if (!expanded(newTree, destination.parent)) {
+    newTree = expand(newState, newTree, destination.parent);
+  }
+
+  newState = D.removeChild(newState, thing(tree, parent_), indexInParent(tree, node)!);
   newState = D.insertChild(newState, thing(tree, destination.parent), thing(tree, node), destination.index);
 
-  let newTree = refresh(tree, newState);  // TODO: Could be improved
+  // Move node in tree
+  const oldIndex = indexInParent(tree, node);
+  newTree = I.updateChildren(newTree, parent_, ch => G.splice(ch, oldIndex, 1));
+  newTree = I.updateChildren(newTree, destination.parent, ch => G.splice(ch, destination.index, 0, node));
 
   // Keep focus
   if (hasFocus(tree, node)) {
-    newTree = focus(tree, children(newTree, destination.parent)[destination.index]);
+    newTree = focus(newTree, children(newTree, destination.parent)[destination.index]);
   }
 
   return [newState, newTree];
@@ -388,9 +398,16 @@ export function remove(state: D.Things, tree: Tree, node: NodeRef): [D.Things, T
     return [state, tree];
 
   const newState = D.removeChild(state, thing(tree, parent_), childIndex(tree, parent_, node));
-  const newTree = focus(tree, previousVisibleItem(tree, node));
+  let newTree = focus(tree, previousVisibleItem(tree, node));
 
-  return [newState, refresh(newTree, newState)];
+  // Remove nodes from tree to match state
+  for (const n of I.allNodes(tree)) {
+    if (thing(newTree, n) === thing(tree, parent_)) {
+      newTree = I.updateChildren(newTree, n, ch => G.splice(ch, indexInParent(tree, node), 1));
+    }
+  }
+
+  return [newState, newTree];
 }
 
 export function insertChild(state: D.Things, tree: Tree, node: NodeRef, child: string, position: number): [D.Things, Tree] {
@@ -400,6 +417,16 @@ export function insertChild(state: D.Things, tree: Tree, node: NodeRef, child: s
 
 export function removeThing(state: D.Things, tree: Tree, node: NodeRef): [D.Things, Tree] {
   const newState = D.remove(state, thing(tree, node));
+
+  // Remove nodes from tree to match state
+  let newTree = tree;
+  for (const n of I.allNodes(tree)) {
+    if (thing(newTree, n) === thing(tree, node)) {
+      const p = parent(newTree, n);
+      newTree = I.updateChildren(newTree, p, ch => G.splice(ch, indexInParent(newTree, n), 1));
+    }
+  }
+
   return [newState, refresh(tree, newState)];
 }
 
