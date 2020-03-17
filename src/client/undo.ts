@@ -1,12 +1,12 @@
-import {Things} from "./data";
+import {State} from "./data";
 
-const stack: Things[] = [];
+const stack: State[] = [];
 
-function pushState(state: Things): void {
+function pushState(state: State): void {
   stack.push(state);
 }
 
-function popState(): Things | null {
+function popState(): State | null {
   if (stack.length === 0)
     return null;
   return stack?.pop() ?? null;

@@ -1,6 +1,6 @@
 import "regenerator-runtime/runtime";  // Required by Parcel for reasons that I do not understand.
 
-import {Things} from "./data";
+import {State} from "./data";
 import {Tree} from "./tree";
 
 import * as Data from "./data";
@@ -27,10 +27,10 @@ interface DragInfo {
 }
 
 interface Context {
-  state: Things;
-  setState(value: Things): void;
-  setLocalState(value: Things): void;
-  updateLocalState(f: (value: Things) => Things): void;
+  state: State;
+  setState(value: State): void;
+  setLocalState(value: State): void;
+  updateLocalState(f: (value: State) => State): void;
 
   setContent(thing: string, content: string): void;
 
@@ -105,7 +105,7 @@ function useBatched(cooldown: number): {update(key: string, callback: () => void
 // In theory, we would prefer to write our code such that we always know exactly
 // what to send to the server. In practice, we use diffState quite frequently.
 
-function diffState(oldState: Things, newState: Things): {added: string[]; deleted: string[]; changed: string[]} {
+function diffState(oldState: State, newState: State): {added: string[]; deleted: string[]; changed: string[]} {
   const added: string[] = [];
   const deleted: string[] = [];
   const changed: string[] = [];
@@ -129,7 +129,7 @@ function diffState(oldState: Things, newState: Things): {added: string[]; delete
   return {added, deleted, changed};
 }
 
-function useContext(initialState: Things, args?: {local: boolean}): Context {
+function useContext(initialState: State, args?: {local: boolean}): Context {
   const [state, setLocalState] = React.useState(initialState);
 
   const batched = useBatched(200);
@@ -143,7 +143,7 @@ function useContext(initialState: Things, args?: {local: boolean}): Context {
 
   // TODO: setState and undo should override timeouts from setContent.
 
-  function setState(newState: Things): void {
+  function setState(newState: State): void {
     if (newState !== state) {
       undo.pushState(state);
       setLocalState(newState);
@@ -210,7 +210,7 @@ function useContext(initialState: Things, args?: {local: boolean}): Context {
   return {state, setState, setLocalState, setContent, undo: undo_, updateLocalState: (update) => { setLocalState(update); setTree(T.refresh(tree, update(state))) }, selectedThing, setSelectedThing, tree, setTree, drag, setDrag};
 }
 
-function App({initialState, username, args}: {initialState: Things; username: string; args?: {local: boolean}}) {
+function App({initialState, username, args}: {initialState: State; username: string; args?: {local: boolean}}) {
   const context = useContext(initialState, args);
 
   // If the same user is connected through multiple clients, we want to be able
@@ -777,7 +777,7 @@ async function start(): Promise<void> {
   ReactDOM.render(
     isDemo ?
       <App initialState={Demo.initialState} username={"demo"} args={{local: true}}/> :
-      <App initialState={await Server.getFullState() as Things} username={await Server.getUsername()}/>,
+      <App initialState={await Server.getFullState() as State} username={await Server.getUsername()}/>,
     appElement
   );
 }

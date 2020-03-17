@@ -197,7 +197,7 @@ function isInline(element: Slate.Element): boolean {
   return element.type === "internalLink";
 }
 
-export function Content(props: {things: D.Things; focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string; getContentText(thing: string): string; openInternalLink?(thing: string): void; isLinkOpen?(thing: string): boolean}) {
+export function Content(props: {things: D.State; focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string; getContentText(thing: string): string; openInternalLink?(thing: string): void; isLinkOpen?(thing: string): boolean}) {
   const editor = React.useMemo(() => {
     const editor = SlateReact.withReact(Slate.createEditor());
     editor.isVoid = isVoid;
