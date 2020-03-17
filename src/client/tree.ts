@@ -284,13 +284,15 @@ export function move(state: D.Things, tree: Tree, node: NodeRef, destination: De
   newState = D.removeChild(newState, thing(tree, parent_), indexInParent(tree, node)!);
   newState = D.insertChild(newState, thing(tree, destination.parent), thing(tree, node), destination.index);
 
+  // Move node in tree
+  const oldIndex = indexInParent(tree, node);
+  newTree = I.updateChildren(newTree, parent_, ch => G.splice(ch, oldIndex, 1));
+  newTree = I.updateChildren(newTree, destination.parent, ch => G.splice(ch, destination.index, 0, node));
+
   // Keep focus
   if (hasFocus(tree, node)) {
     newTree = focus(newTree, children(newTree, destination.parent)[destination.index]);
   }
-
-  // Refresh tree
-  newTree = refresh(newTree, newState);
 
   return [newState, newTree];
 }
