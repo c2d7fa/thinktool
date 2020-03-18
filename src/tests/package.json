@@ -1,0 +1,10 @@
+{
+  "name": "thinktool",
+  "private": true,
+  "devDependencies": {
+    "typescript": "latest",
+    "jest": "latest",
+    "parcel-bundler": "latest",
+    "@types/jest": "latest"
+  }
+}

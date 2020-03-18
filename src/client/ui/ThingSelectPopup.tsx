@@ -3,11 +3,11 @@ import * as ReactDOM from "react-dom";
 
 import * as D from "../data";
 
-function search(state: D.Things, text: string, maxResults: number): [string, string][] {
+function search(state: D.State, text: string, maxResults: number): [string, string][] {
   return D.search(state, text).slice(0, maxResults).map(thing => [D.contentText(state, thing), thing]);
 }
 
-export default function ThingSelectPopup(props: {state: D.Things; hide(): void; submit(thing: string): void}) {
+export default function ThingSelectPopup(props: {state: D.State; hide(): void; submit(thing: string): void}) {
   const [text, setText_] = React.useState("");
   const [results, setResults] = React.useState<[string, string][]>([]);
   const [maxResults, setMaxResults] = React.useState<number>(50);

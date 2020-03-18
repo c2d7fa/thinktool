@@ -3,7 +3,7 @@ import * as React from "react";
 import ThingSelectPopup from "./ThingSelectPopup";
 
 interface Context {
-  state: D.Things;
+  state: D.State;
   setSelectedThing(value: string): void;
 }
 

@@ -1,6 +1,6 @@
 import * as D from "./data";
 
-export const initialState: D.Things = (() => {
+export const initialState: D.State = (() => {
   let result = D.empty;
 
   function add(parent: string, child: string, text: string) {

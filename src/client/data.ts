@@ -1,72 +1,104 @@
-export interface Things {
+import * as G from "../shared/general";
+
+export interface State {
   things: {[id: string]: ThingData};
+  connections: {[connectionId: number]: ConnectionData};
+  nextConnectionId: number;
 }
+
+type Connection = {connectionId: number};
 
 export interface ThingData {
   content: string;
-  children: string[];
+  connections: Connection[];
 }
 
-export interface Things {
+export interface ConnectionData {
+  parent: string;
+  child: string;
+}
+
+export interface State {
   things: {[id: string]: ThingData};
 }
 
 //#region Fundamental operations
 
-export const empty: Things = {things: {"0": {content: "root", children: []}}};
+export const empty: State = {things: {"0": {content: "root", connections: []}}, connections: {}, nextConnectionId: 0};
 
-export function children(things: Things, thing: string): string[] {
-  if (!exists(things, thing)) return [];
-  return things.things[thing].children;
+function connectionParent(state: State, connection: Connection): string { return state.connections[connection.connectionId].parent; }
+function connectionChild(state: State, connection: Connection): string { return state.connections[connection.connectionId].child; }
+
+export function children(state: State, thing: string): string[] {
+  if (!exists(state, thing)) return [];
+  return state.things[thing].connections.filter(c => connectionParent(state, c) === thing).map(c => connectionChild(state, c));
 }
 
-export function content(things: Things, thing: string): string {
+export function content(things: State, thing: string): string {
   if (!exists(things, thing)) return "";
   return things.things[thing].content;
 }
 
-export function setContent(things: Things, thing: string, newContent: string): Things {
-  return {...things, things: {...things.things, [thing]: {...things.things[thing], content: newContent}}};
+export function setContent(state: State, thing: string, newContent: string): State {
+  return {...state, things: {...state.things, [thing]: {...state.things[thing], content: newContent}}};
 }
 
-export function insertChild(state: Things, parent: string, child: string, index: number) {
-  const result = {...state, things: {...state.things, [parent]: {...state.things[parent], children: [...state.things[parent].children]}}};
-  result.things[parent].children.splice(index, 0, child);
+export function insertChild(state: State, parent: string, child: string, index: number) {
+  let result = {...state, nextConnectionId: state.nextConnectionId + 1};
+  result = {...result, connections: {...state.connections, [state.nextConnectionId]: {parent, child}}};
+  if (!exists(result, child)) {
+    // We must store the child-to-parent connection in the child node; however,
+    // sometimes it makes sense to add a parent before its child, for example
+    // when loading a cyclic structure. Thus, we may need to create the child
+    // first.
+    result = create(result, child)[0]
+  }
+  result = {...result, things: {...result.things, [child]: {...result.things[child], connections: G.splice(result.things[child].connections, index, 0, {connectionId: state.nextConnectionId})}}};
+  result = {...result, things: {...result.things, [parent]: {...result.things[parent], connections: G.splice(result.things[parent].connections, index, 0, {connectionId: state.nextConnectionId})}}};
   return result;
 }
 
-export function removeChild(state: Things, parent: string, index: number) {
-  const result = {...state, things: {...state.things, [parent]: {...state.things[parent], children: [...state.things[parent].children]}}};
-  result.things[parent].children.splice(index, 1);
+export function removeChild(state: State, parent: string, index: number) {
+  let result = state;
+  const removedConnection = state.things[parent].connections[index]; // Connection to remove
+  const child = connectionChild(state, removedConnection);
+  result = {...result, things: {...result.things, [parent]: {...result.things[parent], connections: G.removeBy(result.things[parent].connections, removedConnection, (x, y) => x.connectionId === y.connectionId)}}};
+  result = {...result, things: {...result.things, [child]: {...result.things[child], connections: G.removeBy(result.things[child].connections, removedConnection, (x, y) => x.connectionId === y.connectionId)}}};
+  result = {...result, connections: G.removeKeyNumeric(result.connections, removedConnection.connectionId)};
   return result;
 }
 
-export function create(state: Things, customId?: string): [Things, string] {
+export function create(state: State, customId?: string): [State, string] {
   const newId = customId ?? generateShortId();
-  return [{...state, things: {...state.things, [newId]: {content: "", children: []}}}, newId];
+  return [{...state, things: {...state.things, [newId]: {content: "", connections: []}}}, newId];
 }
 
-export function forget(state: Things, thing: string): Things {
+export function forget(state: State, thing: string): State {
   const result = {...state, things: {...state.things}};
   delete result[thing];
   return result;
 }
 
-export function exists(state: Things, thing: string): boolean {
+export function exists(state: State, thing: string): boolean {
   return typeof state.things[thing] === "object";
+}
+
+export function parents(state: State, child: string): string[] {
+  if (!exists(state, child)) return [];
+  return state.things[child].connections.filter(c => connectionChild(state, c) === child).map(c => connectionParent(state, c));
 }
 
 //#endregion
 
-export function hasChildren(things: Things, thing: string): boolean {
+export function hasChildren(things: State, thing: string): boolean {
   return children(things, thing).length !== 0;
 }
 
-export function addChild(things: Things, parent: string, child: string): Things {
+export function addChild(things: State, parent: string, child: string): State {
   return insertChild(things, parent, child, children(things, parent).length);
 }
 
-export function replaceChildren(state: Things, parent: string, newChildren: string[]) {
+export function replaceChildren(state: State, parent: string, newChildren: string[]) {
   let result = state;
 
   // Remove old children
@@ -89,36 +121,24 @@ function generateShortId(): string {
   return x.toString(36);
 }
 
-export function remove(state: Things, removedThing: string): Things {
+export function remove(state: State, removedThing: string): State {
   let newState = state;
-  for (const thing in state.things) {
-    if (!exists(state, thing)) continue;
-    const newChildren = children(state, thing).filter(child => child !== removedThing);
-    newState = replaceChildren(newState, thing, newChildren);
+  for (const parent of parents(newState, removedThing)) {
+    if (!exists(newState, parent)) continue;
+    while (children(newState, parent).includes(removedThing)) {
+      newState = removeChild(newState, parent, G.indexOfBy(children(newState, parent), removedThing));
+    }
   }
   return forget(newState, removedThing);
 }
 
-export function parents(state: Things, child: string): string[] {
-  const result: string[] = [];
-
-  for (const thing in state.things) {
-    if (!exists(state, thing))
-      continue;
-    if (children(state, thing).includes(child))
-      result.push(thing);
-  }
-
-  return result;
-}
-
-export function otherParents(state: Things, child: string, parent?: string): string[] {
+export function otherParents(state: State, child: string, parent?: string): string[] {
   return parents(state, child).filter(p => p !== parent);
 }
 
 // Search
 
-export function contentText(state: Things, thing: string): string {
+export function contentText(state: State, thing: string): string {
   function contentText_(thing: string, seen: string[]): string {
     return content(state, thing).replace(/#([a-z0-9]+)/g, (match: string, thing: string, offset: number, string: string) => {
       if (seen.includes(thing)) return "...";
@@ -132,7 +152,7 @@ export function contentText(state: Things, thing: string): string {
 // TODO: We should use some kind of streaming data structure for search results,
 // so that we don't have to wait for the entire thing before we can display
 // something to the user.
-export function search(state: Things, text: string): string[] {
+export function search(state: State, text: string): string[] {
   let results: string[] = [];
   for (const thing in state.things) {
     if (contentText(state, thing).toLowerCase().includes(text.toLowerCase())) {
@@ -151,7 +171,7 @@ export function search(state: Things, text: string): string[] {
 // simply stored as part of the string in the format '#<ITEM ID>', e.g.
 // '#q54vf530'.
 
-export function references(state: Things, thing: string): string[] {
+export function references(state: State, thing: string): string[] {
   let result: string[] = [];
   for (const referenceMatch of content(state, thing).matchAll(/#([a-z0-9]+)/g)) {
     if (typeof referenceMatch[1] !== "string") throw "bad programmer error";
@@ -160,7 +180,7 @@ export function references(state: Things, thing: string): string[] {
   return result;
 }
 
-export function backreferences(state: Things, thing: string): string[] {
+export function backreferences(state: State, thing: string): string[] {
   let result: string[] = [];
   for (const other in state.things) {
     if (references(state, other).includes(thing)) {
