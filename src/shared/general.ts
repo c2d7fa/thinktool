@@ -50,3 +50,14 @@ export function removeKey<V>(o: {[x: string]: V}, k: string): {[x: string]: V} {
   delete result[k];
   return result;
 }
+
+export function removeKeyNumeric<V>(o: {[x: number]: V}, k: number): {[x: string]: V} {
+  const result = {...o};
+  delete result[k];
+  return result;
+}
+
+export function removeBy<T>(a: T[], x: T, eq?: (x: T, y: T) => boolean): T[] {
+  const eq_ = eq ?? ((x, y) => x === y);
+  return a.filter(y => !eq_(x, y));
+}

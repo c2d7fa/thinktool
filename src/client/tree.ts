@@ -285,6 +285,8 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
   newState = D.insertChild(newState, thing(tree, destination.parent), thing(tree, node), destination.index);
 
   // Move node in tree
+
+  // [FIXME] We should do this for all nodes that relate to the given thing!
   const oldIndex = indexInParent(tree, node);
   newTree = I.updateChildren(newTree, parent_, ch => G.splice(ch, oldIndex, 1));
   newTree = I.updateChildren(newTree, destination.parent, ch => G.splice(ch, destination.index, 0, node));
@@ -427,7 +429,7 @@ export function removeThing(state: D.State, tree: Tree, node: NodeRef): [D.State
     }
   }
 
-  return [newState, refresh(tree, newState)];
+  return [newState, newTree];
 }
 
 export function clone(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {

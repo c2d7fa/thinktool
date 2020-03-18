@@ -22,10 +22,6 @@ export interface State {
   things: {[id: string]: ThingData};
 }
 
-// [TODO] We are transitioning into using Connections. Currently, we don't
-// properly manage connections from the parent to the child, but we also don't
-// rely on those connections anywhere, so it's OK. #connections
-
 //#region Fundamental operations
 
 export const empty: State = {things: {"0": {content: "root", connections: []}}, connections: {}, nextConnectionId: 0};
@@ -50,23 +46,25 @@ export function setContent(state: State, thing: string, newContent: string): Sta
 export function insertChild(state: State, parent: string, child: string, index: number) {
   let result = {...state, nextConnectionId: state.nextConnectionId + 1};
   result = {...result, connections: {...state.connections, [state.nextConnectionId]: {parent, child}}};
-  if (exists(result, child)) {
-    // [TODO] If the item does not exist, we should create it here, so we always have the relevant connections on each item! #connections
-    result = {...result, things: {...result.things, [child]: {...result.things[child], connections: G.splice(result.things[child].connections, index, 0, {connectionId: state.nextConnectionId})}}};
+  if (!exists(result, child)) {
+    // We must store the child-to-parent connection in the child node; however,
+    // sometimes it makes sense to add a parent before its child, for example
+    // when loading a cyclic structure. Thus, we may need to create the child
+    // first.
+    result = create(result, child)[0]
   }
+  result = {...result, things: {...result.things, [child]: {...result.things[child], connections: G.splice(result.things[child].connections, index, 0, {connectionId: state.nextConnectionId})}}};
   result = {...result, things: {...result.things, [parent]: {...result.things[parent], connections: G.splice(result.things[parent].connections, index, 0, {connectionId: state.nextConnectionId})}}};
   return result;
 }
 
 export function removeChild(state: State, parent: string, index: number) {
   let result = state;
-
-  // Remove from parent
-  result = {...result, things: {...result.things, [parent]: {...result.things[parent], connections: G.splice(result.things[parent].connections, index, 1)}}};
-
-  // [TODO] Remove from child #connections
-  // [TODO] Remove connection #connections
-
+  const removedConnection = state.things[parent].connections[index]; // Connection to remove
+  const child = connectionChild(state, removedConnection);
+  result = {...result, things: {...result.things, [parent]: {...result.things[parent], connections: G.removeBy(result.things[parent].connections, removedConnection, (x, y) => x.connectionId === y.connectionId)}}};
+  result = {...result, things: {...result.things, [child]: {...result.things[child], connections: G.removeBy(result.things[child].connections, removedConnection, (x, y) => x.connectionId === y.connectionId)}}};
+  result = {...result, connections: G.removeKeyNumeric(result.connections, removedConnection.connectionId)};
   return result;
 }
 
@@ -83,6 +81,11 @@ export function forget(state: State, thing: string): State {
 
 export function exists(state: State, thing: string): boolean {
   return typeof state.things[thing] === "object";
+}
+
+export function parents(state: State, child: string): string[] {
+  if (!exists(state, child)) return [];
+  return state.things[child].connections.filter(c => connectionChild(state, c) === child).map(c => connectionParent(state, c));
 }
 
 //#endregion
@@ -120,25 +123,13 @@ function generateShortId(): string {
 
 export function remove(state: State, removedThing: string): State {
   let newState = state;
-  for (const thing in state.things) {
-    if (!exists(state, thing)) continue;
-    const newChildren = children(state, thing).filter(child => child !== removedThing);
-    newState = replaceChildren(newState, thing, newChildren);
+  for (const parent of parents(newState, removedThing)) {
+    if (!exists(newState, parent)) continue;
+    while (children(newState, parent).includes(removedThing)) {
+      newState = removeChild(newState, parent, G.indexOfBy(children(newState, parent), removedThing));
+    }
   }
   return forget(newState, removedThing);
-}
-
-export function parents(state: State, child: string): string[] {
-  const result: string[] = [];
-
-  for (const thing in state.things) {
-    if (!exists(state, thing))
-      continue;
-    if (children(state, thing).includes(child))
-      result.push(thing);
-  }
-
-  return result;
 }
 
 export function otherParents(state: State, child: string, parent?: string): string[] {
