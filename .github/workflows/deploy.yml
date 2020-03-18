@@ -33,8 +33,10 @@ jobs:
         run: ./tools/build-client.sh && ./tools/build-static.sh
         env:
           DIAFORM_API_HOST: ${{secrets.api_host}}
-      - name: Deploy to Azure Storage
+      - name: Deploy to Azure Storage and purge Cloudflare cache
         run: ./tools/deploy-static.sh
         env:
           AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
           AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}
+          CLOUDFLARE_ZONE: ${{secrets.cloudflare_zone}}
+          CLOUDFLARE_TOKEN: ${{secrets.cloudflare_token}}
