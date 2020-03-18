@@ -191,7 +191,7 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
 
   // TODO: We should manage this in a cleaner way, in case anyone else also
   // wants to set onpopstate.
-  window.onpopstate = (ev) => {
+  window.onpopstate = (ev: PopStateEvent) => {
     setSelectedThing_(extractThingFromURL());
   };
 

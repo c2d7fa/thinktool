@@ -115,7 +115,7 @@ function renderLeaf(props: SlateReact.RenderLeafProps) {
     // That's good enough for now.
 
     const clickProps = {
-      onAuxClick: (ev) => {
+      onAuxClick: (ev: React.MouseEvent) => {
         if (ev.button === 1) { // Middle click
           window.open(props.leaf.link);
           ev.preventDefault();

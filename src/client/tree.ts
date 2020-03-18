@@ -239,7 +239,7 @@ export function indent(state: D.State, tree: Tree, node: NodeRef): [D.State, Tre
   if (oldParent === undefined || index === undefined || index === 0)
     return [state, tree];
 
-  const newParent = previousSibling(tree, node);
+  const newParent = previousSibling(tree, node)!; // Non-null because index !== 0.
 
   return move(state, tree, node, {parent: newParent, index: D.children(state, thing(tree, newParent)).length})
 }
@@ -293,7 +293,7 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
     // the same parent. Then, we want to remove those nodes from their parents.
 
     if (thing(newTree, n) === thing(tree, parent_)) {
-      newTree = I.updateChildren(newTree, n, ch => G.splice(ch, indexInParent(tree, node), 1));
+      newTree = I.updateChildren(newTree, n, ch => G.splice(ch, indexInParent(tree, node)!, 1));
     }
 
     // Add new nodes
@@ -432,7 +432,7 @@ export function remove(state: D.State, tree: Tree, node: NodeRef): [D.State, Tre
   // Remove nodes from tree to match state
   for (const n of I.allNodes(tree)) {
     if (thing(newTree, n) === thing(tree, parent_)) {
-      newTree = I.updateChildren(newTree, n, ch => G.splice(ch, indexInParent(tree, node), 1));
+      newTree = I.updateChildren(newTree, n, ch => G.splice(ch, indexInParent(tree, node)!, 1));
     }
   }
 
@@ -453,7 +453,7 @@ export function removeThing(state: D.State, tree: Tree, node: NodeRef): [D.State
     if (thing(newTree, n) === thing(tree, node)) {
       const p = parent(tree, n);
       if (p !== undefined) {
-        newTree = I.updateChildren(newTree, p, ch => G.splice(ch, indexInParent(newTree, n), 1));
+        newTree = I.updateChildren(newTree, p, ch => G.splice(ch, indexInParent(newTree, n)!, 1));
       }
     }
   }

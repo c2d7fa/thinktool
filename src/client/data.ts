@@ -75,7 +75,7 @@ export function create(state: State, customId?: string): [State, string] {
 
 export function forget(state: State, thing: string): State {
   const result = {...state, things: {...state.things}};
-  delete result[thing];
+  delete result.things[thing];
   return result;
 }
 
@@ -126,7 +126,7 @@ export function remove(state: State, removedThing: string): State {
   for (const parent of parents(newState, removedThing)) {
     if (!exists(newState, parent)) continue;
     while (children(newState, parent).includes(removedThing)) {
-      newState = removeChild(newState, parent, G.indexOfBy(children(newState, parent), removedThing));
+      newState = removeChild(newState, parent, G.indexOfBy(children(newState, parent), removedThing)!);
     }
   }
   return forget(newState, removedThing);
