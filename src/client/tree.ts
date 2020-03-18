@@ -284,12 +284,25 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
   newState = D.removeChild(newState, thing(tree, parent_), indexInParent(tree, node)!);
   newState = D.insertChild(newState, thing(tree, destination.parent), thing(tree, node), destination.index);
 
-  // Move node in tree
+  // Move nodes in tree
 
-  // [FIXME] We should do this for all nodes that relate to the given thing!
-  const oldIndex = indexInParent(tree, node);
-  newTree = I.updateChildren(newTree, parent_, ch => G.splice(ch, oldIndex, 1));
-  newTree = I.updateChildren(newTree, destination.parent, ch => G.splice(ch, destination.index, 0, node));
+  for (const n of I.allNodes(newTree)) {
+    // Remove old nodes
+
+    // We want to find all nodes that represent the same thing as node inside
+    // the same parent. Then, we want to remove those nodes from their parents.
+
+    if (thing(newTree, n) === thing(tree, parent_)) {
+      newTree = I.updateChildren(newTree, n, ch => G.splice(ch, indexInParent(tree, node), 1));
+    }
+
+    // Add new nodes
+    if (thing(newTree, n) === thing(newTree, destination.parent)) {
+        const [newNode, newTree_] = load(state, newTree, thing(newTree, node), destination.parent);
+        newTree = newTree_
+        newTree = I.updateChildren(newTree, n, ch => G.splice(ch, destination.index, 0, newNode));
+    }
+  }
 
   // Keep focus
   if (hasFocus(tree, node)) {
