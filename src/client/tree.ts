@@ -451,8 +451,10 @@ export function removeThing(state: D.State, tree: Tree, node: NodeRef): [D.State
   let newTree = tree;
   for (const n of I.allNodes(tree)) {
     if (thing(newTree, n) === thing(tree, node)) {
-      const p = parent(newTree, n);
-      newTree = I.updateChildren(newTree, p, ch => G.splice(ch, indexInParent(newTree, n), 1));
+      const p = parent(tree, n);
+      if (p !== undefined) {
+        newTree = I.updateChildren(newTree, p, ch => G.splice(ch, indexInParent(newTree, n), 1));
+      }
     }
   }
 

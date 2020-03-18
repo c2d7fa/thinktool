@@ -14,7 +14,7 @@ test("Creating a child is reflected in other parents in the tree.", () => {
 
   let tree = T.fromRoot(state, "0");
 
-  // [TODO] We realy on implementation details about what IDs are assigned in the tree.
+  // [TODO] We rely on implementation details about what IDs are assigned in the tree.
 
   expect(T.expanded(tree, {id: 1})).toBeTruthy();
   expect(T.expanded(tree, {id: 2})).toBeTruthy();
@@ -27,4 +27,28 @@ test("Creating a child is reflected in other parents in the tree.", () => {
 
   expect(T.children(tree, {id: 2}).filter(c => T.thing(tree, c) === thing).length).toBe(1);
   expect(T.children(tree, {id: 2}).length).toBe(1);
+});
+
+test("Indenting and removing item", () => {
+  let state = D.empty;
+  state = D.setContent(state, "0", "Root");
+  state = D.create(state, "a")[0];
+  state = D.create(state, "b")[0];
+  state = D.addChild(state, "0", "a");
+  state = D.addChild(state, "0", "b");
+
+  let tree = T.fromRoot(state, "0");
+
+  // [TODO] We rely on implementation details about what IDs are assigned in the tree.
+
+  expect(T.expanded(tree, {id: 1})).toBeTruthy();
+
+  // Indent
+  [state, tree] = T.indent(state, tree, {id: 2});
+  expect(T.children(tree, {id: 1}).length).toBe(1);
+  const indentedNode = T.children(tree, {id: 1})[0];
+
+  // Delete
+  [state, tree] = T.removeThing(state, tree, indentedNode);
+  expect(T.children(tree, {id: 1}).length).toBe(0);
 });
