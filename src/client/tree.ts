@@ -394,17 +394,31 @@ export function createSiblingAfter(state: D.State, tree: Tree, node: NodeRef): [
 }
 
 export function createChild(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree, string, NodeRef] {
+  let newState = state;
+  let newTree = tree;
+
   // Create item as child
-  const [state1, childThing] = D.create(state);
-  const state2 = D.addChild(state1, thing(tree, node), childThing);
+  const [newState_, childThing] = D.create(state);
+  newState = newState_;
+  newState = D.addChild(newState, thing(tree, node), childThing);
 
   // Load it into the tree
-  const tree1 = expand(state, tree, node);
-  const [childNode, tree2] = load(state2, tree1, childThing, node);
-  const tree3 = I.updateChildren(tree2, node, children => [...children, childNode]);
-  const tree4 = focus(tree3, childNode);
+  newTree = expand(newState, newTree, node);
+  const [childNode, newTree_] = load(newState, newTree, childThing, node);
+  newTree = newTree_;
+  newTree = I.updateChildren(newTree, node, children => [...children, childNode]);
+  newTree = focus(newTree, childNode);
 
-  return [state2, tree4, childThing, childNode];
+  // Also refresh other parents
+  for (const n of I.allNodes(newTree)) {
+    if (thing(newTree, n) === thing(tree, node) && !refEq(n, node)) {
+      const [otherChildNode, newTree_] = load(newState, newTree, childThing, n);
+      newTree = newTree_;
+      newTree = I.updateChildren(newTree, n, children => [...children, otherChildNode])
+    }
+  }
+
+  return [newState, newTree, childThing, childNode];
 }
 
 export function remove(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {
