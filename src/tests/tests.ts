@@ -52,3 +52,18 @@ test("Indenting and removing item", () => {
   [state, tree] = T.removeThing(state, tree, indentedNode);
   expect(T.children(tree, {id: 1}).length).toBe(0);
 });
+
+test("Removing a thing causes it to no longer exist.", () => {
+  let state = D.empty;
+  state = D.setContent(state, "0", "Root");
+  state = D.create(state, "a")[0];
+  state = D.addChild(state, "0", "a");
+
+  let tree = T.fromRoot(state, "0");
+
+  // [TODO] We rely on implementation details about what IDs are assigned in the tree.
+
+  expect(D.exists(state, "a")).toBeTruthy();
+  [state, tree] = T.removeThing(state, tree, {id: 1});
+  expect(D.exists(state, "a")).toBeFalsy();
+});
