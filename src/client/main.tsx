@@ -399,6 +399,12 @@ function actionsWith(context: Context, node: T.NodeRef) {
       context.setState(newState);
       context.setTree(newTree);
     },
+
+    setTag() {
+      const [newState, newTree] = T.setTag(context.state, context.tree, node, prompt("New tag:"));
+      context.setState(newState);
+      context.setTree(newTree);
+    },
   };
 }
 
@@ -422,6 +428,7 @@ function Toolbar(props: {context: Context}) {
       <button onClick={() => actions().createChild()} title="Create a new child of the selected item [alt+C]">New Child</button>
       <button onClick={() => actions().clone()} title="Create a copy of the selected item [ctrl+mouse drag]">Clone</button>
       <button onClick={() => actions().delete()} title="Delete the selected item. If this item has other parents, it will be removed from *all* parents. [alt+delete]">Delete</button>
+      <button onClick={() => actions().setTag()} title="Add or remove a tag with respect to the connection. [alt+t]">Delete</button>
     </div>
   );
 }
@@ -521,6 +528,10 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   );
 }
 
+function ConnectionTag(p: {tag: string}) {
+  return <span className="connection-tag">{p.tag}</span>;
+}
+
 function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRef; className?: string}) {
   function toggle() {
     p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
@@ -540,6 +551,8 @@ function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRe
   if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null)
     className += " drag-source";
 
+  const tag = T.tag(p.context.state, p.context.tree, p.node);
+
   const subtree =
     <Subtree
       context={p.context}
@@ -554,6 +567,7 @@ function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRe
           expanded={T.expanded(p.context.tree, p.node)}
           toggle={toggle}
           onMiddleClick={() => { p.context.setSelectedThing(T.thing(p.context.tree, p.node)) }}/>
+        { tag !== null && <ConnectionTag tag={tag}/> }
         <Content context={p.context} node={p.node}/>
       </span>
       { expanded && subtree }
@@ -632,6 +646,9 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       return true;
     } else if (ev.key === "c" && ev.altKey) {
       setShowChildPopup(true);
+      return true;
+    } else if (ev.key === "t" && ev.altKey) {
+      actions.setTag();
       return true;
     } else {
       return false;

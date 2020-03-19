@@ -6,11 +6,11 @@ export const initialState: D.State = (() => {
   function add(parent: string, child: string, text: string) {
     result = D.create(result, child)[0];
     result = D.setContent(result, child, text);
-    result = D.addChild(result, parent, child);
+    result = D.addChild(result, parent, child)[0];
   }
 
   function child(parent: string, child: string) {
-    result = D.addChild(result, parent, child);
+    result = D.addChild(result, parent, child)[0];
   }
 
   result = D.setContent(result, "0", "Thinktool Demo");

@@ -6,7 +6,7 @@ export interface State {
   nextConnectionId: number;
 }
 
-type Connection = {connectionId: number};
+export type Connection = {connectionId: number};
 
 export interface ThingData {
   content: string;
@@ -16,6 +16,7 @@ export interface ThingData {
 export interface ConnectionData {
   parent: string;
   child: string;
+  tag: string | null; // null is used for neutral parent-child relationship.
 }
 
 export interface State {
@@ -26,12 +27,12 @@ export interface State {
 
 export const empty: State = {things: {"0": {content: "root", connections: []}}, connections: {}, nextConnectionId: 0};
 
-function connectionParent(state: State, connection: Connection): string { return state.connections[connection.connectionId].parent; }
-function connectionChild(state: State, connection: Connection): string { return state.connections[connection.connectionId].child; }
+export function connectionParent(state: State, connection: Connection): string { return state.connections[connection.connectionId].parent; }
+export function connectionChild(state: State, connection: Connection): string { return state.connections[connection.connectionId].child; }
 
-export function children(state: State, thing: string): string[] {
+export function childConnections(state: State, thing: string): Connection[] {
   if (!exists(state, thing)) return [];
-  return state.things[thing].connections.filter(c => connectionParent(state, c) === thing).map(c => connectionChild(state, c));
+  return state.things[thing].connections.filter(c => connectionParent(state, c) === thing);
 }
 
 export function content(things: State, thing: string): string {
@@ -43,9 +44,9 @@ export function setContent(state: State, thing: string, newContent: string): Sta
   return {...state, things: {...state.things, [thing]: {...state.things[thing], content: newContent}}};
 }
 
-export function insertChild(state: State, parent: string, child: string, index: number) {
+export function insertChild(state: State, parent: string, child: string, index: number): [State, Connection] {
   let result = {...state, nextConnectionId: state.nextConnectionId + 1};
-  result = {...result, connections: {...state.connections, [state.nextConnectionId]: {parent, child}}};
+  result = {...result, connections: {...state.connections, [state.nextConnectionId]: {parent, child, tag: null}}};
   if (!exists(result, child)) {
     // We must store the child-to-parent connection in the child node; however,
     // sometimes it makes sense to add a parent before its child, for example
@@ -55,7 +56,7 @@ export function insertChild(state: State, parent: string, child: string, index: 
   }
   result = {...result, things: {...result.things, [child]: {...result.things[child], connections: G.splice(result.things[child].connections, index, 0, {connectionId: state.nextConnectionId})}}};
   result = {...result, things: {...result.things, [parent]: {...result.things[parent], connections: G.splice(result.things[parent].connections, index, 0, {connectionId: state.nextConnectionId})}}};
-  return result;
+  return [result, {connectionId: state.nextConnectionId}];
 }
 
 export function removeChild(state: State, parent: string, index: number) {
@@ -88,13 +89,25 @@ export function parents(state: State, child: string): string[] {
   return state.things[child].connections.filter(c => connectionChild(state, c) === child).map(c => connectionParent(state, c));
 }
 
+export function setTag(state: State, connection: Connection, tag: string | null): State {
+  return {...state, connections: {...state.connections, [connection.connectionId]: {...state.connections[connection.connectionId], tag}}};
+}
+
+export function tag(state: State, connection: Connection): string | null {
+  return state.connections[connection.connectionId].tag;
+}
+
 //#endregion
+
+export function children(state: State, thing: string): string[] {
+  return childConnections(state, thing).map(c => connectionChild(state, c));
+}
 
 export function hasChildren(things: State, thing: string): boolean {
   return children(things, thing).length !== 0;
 }
 
-export function addChild(things: State, parent: string, child: string): State {
+export function addChild(things: State, parent: string, child: string): [State, Connection] {
   return insertChild(things, parent, child, children(things, parent).length);
 }
 
@@ -108,7 +121,7 @@ export function replaceChildren(state: State, parent: string, newChildren: strin
 
   // Add new children
   for (const child of newChildren) {
-    result = addChild(result, parent, child);
+    result = addChild(result, parent, child)[0];
   }
 
   return result

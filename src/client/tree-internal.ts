@@ -1,7 +1,9 @@
 import * as G from "../shared/general";
+import * as D from "./data";
 
 export interface Node {
   thing: string;
+  connection?: D.Connection; // undefined for root item (and other non-applicable items)
   expanded: boolean;
   children: NodeRef[];
   backreferences: {expanded: boolean; children: NodeRef[]};
@@ -82,8 +84,8 @@ export function children(tree: Tree, node: NodeRef): NodeRef[] {
   return getNode(tree, node).children;
 }
 
-export function loadThing(tree: Tree, thing: string): [NodeRef, Tree] {
-  return [{id: tree.nextId}, {...tree, nextId: tree.nextId + 1, nodes: {...tree.nodes, [tree.nextId]: {thing, expanded: false, children: [], backreferences: {expanded: false, children: []}, otherParents: {expanded: false, children: []}, openedLinks: {}}}}];
+export function load(tree: Tree, thing: string, connection?: D.Connection): [NodeRef, Tree] {
+  return [{id: tree.nextId}, {...tree, nextId: tree.nextId + 1, nodes: {...tree.nodes, [tree.nextId]: {thing, connection, expanded: false, children: [], backreferences: {expanded: false, children: []}, otherParents: {expanded: false, children: []}, openedLinks: {}}}}];
 }
 
 export function* allNodes(tree: Tree): Generator<NodeRef> {
@@ -94,6 +96,10 @@ export function* allNodes(tree: Tree): Generator<NodeRef> {
 
 export function updateChildren(tree: Tree, node: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree {
   return updateNode(tree, node, n => ({...n, children: update(n.children)}));
+}
+
+export function connection(tree: Tree, node: NodeRef): D.Connection | undefined {
+  return tree.nodes[node.id].connection;
 }
 
 // Backreferences

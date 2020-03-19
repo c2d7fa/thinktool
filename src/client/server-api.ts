@@ -28,7 +28,7 @@ export async function getFullState(): Promise<D.State> {
         const [newState, _] = D.create(state, child);
         state = newState;
       }
-      state = D.addChild(state, thing.name, child)
+      state = D.addChild(state, thing.name, child)[0];
     }
   }
 
