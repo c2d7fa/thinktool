@@ -772,6 +772,8 @@ async function start(): Promise<void> {
       console.log("Got weird response from server, probably because we are not logged in. Redirecting to login page.");
       window.location.href = "/login.html";
     }
+  } else {
+    Server.ping("demo");
   }
 
   ReactDOM.render(
