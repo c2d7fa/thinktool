@@ -24,7 +24,7 @@ export interface State {
 
 //#region Fundamental operations
 
-export const empty: State = {things: {"0": {content: "root", connections: []}}, connections: {}, nextConnectionId: 0};
+export const empty: State = {things: {"0": {content: "Welcome", connections: []}}, connections: {}, nextConnectionId: 0};
 
 function connectionParent(state: State, connection: Connection): string { return state.connections[connection.connectionId].parent; }
 function connectionChild(state: State, connection: Connection): string { return state.connections[connection.connectionId].child; }
