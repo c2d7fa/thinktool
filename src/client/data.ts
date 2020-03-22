@@ -10,7 +10,8 @@ type Connection = {connectionId: number};
 
 export interface ThingData {
   content: string;
-  connections: Connection[];
+  children: Connection[];
+  parents: Connection[];
 }
 
 export interface ConnectionData {
@@ -24,14 +25,14 @@ export interface State {
 
 //#region Fundamental operations
 
-export const empty: State = {things: {"0": {content: "Welcome", connections: []}}, connections: {}, nextConnectionId: 0};
+export const empty: State = {things: {"0": {content: "Welcome", children: [], parents: []}}, connections: {}, nextConnectionId: 0};
 
 function connectionParent(state: State, connection: Connection): string { return state.connections[connection.connectionId].parent; }
 function connectionChild(state: State, connection: Connection): string { return state.connections[connection.connectionId].child; }
 
 export function children(state: State, thing: string): string[] {
   if (!exists(state, thing)) return [];
-  return state.things[thing].connections.filter(c => connectionParent(state, c) === thing).map(c => connectionChild(state, c));
+  return state.things[thing].children.map(c => connectionChild(state, c));
 }
 
 export function content(things: State, thing: string): string {
@@ -53,24 +54,24 @@ export function insertChild(state: State, parent: string, child: string, index: 
     // first.
     result = create(result, child)[0]
   }
-  result = {...result, things: {...result.things, [child]: {...result.things[child], connections: G.splice(result.things[child].connections, index, 0, {connectionId: state.nextConnectionId})}}};
-  result = {...result, things: {...result.things, [parent]: {...result.things[parent], connections: G.splice(result.things[parent].connections, index, 0, {connectionId: state.nextConnectionId})}}};
+  result = {...result, things: {...result.things, [child]: {...result.things[child], parents: [{connectionId: state.nextConnectionId}, ...result.things[child].parents]}}};
+  result = {...result, things: {...result.things, [parent]: {...result.things[parent], children: G.splice(result.things[parent].children, index, 0, {connectionId: state.nextConnectionId})}}};
   return result;
 }
 
 export function removeChild(state: State, parent: string, index: number) {
   let result = state;
-  const removedConnection = state.things[parent].connections[index]; // Connection to remove
+  const removedConnection = state.things[parent].children[index]; // Connection to remove
   const child = connectionChild(state, removedConnection);
-  result = {...result, things: {...result.things, [parent]: {...result.things[parent], connections: G.removeBy(result.things[parent].connections, removedConnection, (x, y) => x.connectionId === y.connectionId)}}};
-  result = {...result, things: {...result.things, [child]: {...result.things[child], connections: G.removeBy(result.things[child].connections, removedConnection, (x, y) => x.connectionId === y.connectionId)}}};
+  result = {...result, things: {...result.things, [parent]: {...result.things[parent], children: G.removeBy(result.things[parent].children, removedConnection, (x, y) => x.connectionId === y.connectionId)}}};
+  result = {...result, things: {...result.things, [child]: {...result.things[child], parents: G.removeBy(result.things[child].parents, removedConnection, (x, y) => x.connectionId === y.connectionId)}}};
   result = {...result, connections: G.removeKeyNumeric(result.connections, removedConnection.connectionId)};
   return result;
 }
 
 export function create(state: State, customId?: string): [State, string] {
   const newId = customId ?? generateShortId();
-  return [{...state, things: {...state.things, [newId]: {content: "", connections: []}}}, newId];
+  return [{...state, things: {...state.things, [newId]: {content: "", children: [], parents: []}}}, newId];
 }
 
 export function forget(state: State, thing: string): State {
@@ -85,7 +86,7 @@ export function exists(state: State, thing: string): boolean {
 
 export function parents(state: State, child: string): string[] {
   if (!exists(state, child)) return [];
-  return state.things[child].connections.filter(c => connectionChild(state, c) === child).map(c => connectionParent(state, c));
+  return state.things[child].parents.map(c => connectionParent(state, c));
 }
 
 //#endregion
