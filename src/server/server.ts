@@ -131,10 +131,18 @@ app.use((req, res, next) => {
 
 // Logging
 app.use((req, res, next) => {
+  function formatIp() {
+    if (req.header("x-forwarded-for")) {
+      return req.header("x-forwarded-for");
+    } else {
+      return req.ip;
+    }
+  }
+
   if (Object.keys(req.body).length > 0) {
-    console.log("%s %s %s %s", req.ip, req.method, req.url, util.inspect(req.body, {colors: true, breakLength: Infinity, compact: true}));
+    console.log("(%s) %s %s %s", formatIp(), req.method, req.url, util.inspect(req.body, {colors: true, breakLength: Infinity, compact: true}));
   } else {
-    console.log("%s %s %s", req.ip, req.method, req.url);
+    console.log("(%s) %s %s", formatIp(), req.method, req.url);
   }
   next();
 });
