@@ -30,14 +30,16 @@ export function fromRoot(thing: string): Tree {
   return {
     nextId: 1,
     root: {id: 0},
-    nodes: {0: {
-      thing,
-      expanded: false,
-      children: [],
-      backreferences: {expanded: false, children: []},
-      otherParents: {expanded: false, children: []},
-      openedLinks: {},
-    }},
+    nodes: {
+      0: {
+        thing,
+        expanded: false,
+        children: [],
+        backreferences: {expanded: false, children: []},
+        otherParents: {expanded: false, children: []},
+        openedLinks: {},
+      },
+    },
     focus: null,
   };
 }
@@ -75,7 +77,7 @@ export function unfocus(tree: Tree): Tree {
 }
 
 export function markExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree {
-  return updateNode(tree, node, n => ({...n, expanded}));
+  return updateNode(tree, node, (n) => ({...n, expanded}));
 }
 
 export function children(tree: Tree, node: NodeRef): NodeRef[] {
@@ -83,7 +85,24 @@ export function children(tree: Tree, node: NodeRef): NodeRef[] {
 }
 
 export function loadThing(tree: Tree, thing: string): [NodeRef, Tree] {
-  return [{id: tree.nextId}, {...tree, nextId: tree.nextId + 1, nodes: {...tree.nodes, [tree.nextId]: {thing, expanded: false, children: [], backreferences: {expanded: false, children: []}, otherParents: {expanded: false, children: []}, openedLinks: {}}}}];
+  return [
+    {id: tree.nextId},
+    {
+      ...tree,
+      nextId: tree.nextId + 1,
+      nodes: {
+        ...tree.nodes,
+        [tree.nextId]: {
+          thing,
+          expanded: false,
+          children: [],
+          backreferences: {expanded: false, children: []},
+          otherParents: {expanded: false, children: []},
+          openedLinks: {},
+        },
+      },
+    },
+  ];
 }
 
 export function* allNodes(tree: Tree): Generator<NodeRef> {
@@ -93,7 +112,7 @@ export function* allNodes(tree: Tree): Generator<NodeRef> {
 }
 
 export function updateChildren(tree: Tree, node: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree {
-  return updateNode(tree, node, n => ({...n, children: update(n.children)}));
+  return updateNode(tree, node, (n) => ({...n, children: update(n.children)}));
 }
 
 // Backreferences
@@ -107,11 +126,18 @@ export function backreferencesChildren(tree: Tree, node: NodeRef): NodeRef[] {
 }
 
 export function markBackreferencesExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree {
-  return updateNode(tree, node, n => ({...n, backreferences: {...n.backreferences, expanded}}));
+  return updateNode(tree, node, (n) => ({...n, backreferences: {...n.backreferences, expanded}}));
 }
 
-export function updateBackreferencesChildren(tree: Tree, node: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree {
-  return updateNode(tree, node, n => ({...n, backreferences: {...n.backreferences, children: update(n.backreferences.children)}}));
+export function updateBackreferencesChildren(
+  tree: Tree,
+  node: NodeRef,
+  update: (children: NodeRef[]) => NodeRef[],
+): Tree {
+  return updateNode(tree, node, (n) => ({
+    ...n,
+    backreferences: {...n.backreferences, children: update(n.backreferences.children)},
+  }));
 }
 
 // Parents as children ("other parents")
@@ -125,11 +151,18 @@ export function otherParentsChildren(tree: Tree, node: NodeRef): NodeRef[] {
 }
 
 export function markOtherParentsExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree {
-  return updateNode(tree, node, n => ({...n, otherParents: {...n.otherParents, expanded}}));
+  return updateNode(tree, node, (n) => ({...n, otherParents: {...n.otherParents, expanded}}));
 }
 
-export function updateOtherParentsChildren(tree: Tree, node: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree {
-  return updateNode(tree, node, n => ({...n, otherParents: {...n.otherParents, children: update(n.otherParents.children)}}));
+export function updateOtherParentsChildren(
+  tree: Tree,
+  node: NodeRef,
+  update: (children: NodeRef[]) => NodeRef[],
+): Tree {
+  return updateNode(tree, node, (n) => ({
+    ...n,
+    otherParents: {...n.otherParents, children: update(n.otherParents.children)},
+  }));
 }
 
 // Internal links
@@ -141,9 +174,9 @@ export function openedLinkNode(tree: Tree, node: NodeRef, link: string): NodeRef
 
 export function setOpenedLinkNode(tree: Tree, node: NodeRef, link: string, linkNode: NodeRef | null) {
   if (linkNode === null) {
-    return updateNode(tree, node, n => ({...n, openedLinks: G.removeKey(n.openedLinks, link)}));
+    return updateNode(tree, node, (n) => ({...n, openedLinks: G.removeKey(n.openedLinks, link)}));
   } else {
-    return updateNode(tree, node, n => ({...n, openedLinks: {...n.openedLinks, [link]: linkNode}}));
+    return updateNode(tree, node, (n) => ({...n, openedLinks: {...n.openedLinks, [link]: linkNode}}));
   }
 }
 

@@ -7,8 +7,7 @@ function pushState(state: State): void {
 }
 
 function popState(): State | null {
-  if (stack.length === 0)
-    return null;
+  if (stack.length === 0) return null;
   return stack?.pop() ?? null;
 }
 

@@ -20,12 +20,13 @@ test("Creating a child is reflected in other parents in the tree.", () => {
   expect(T.expanded(tree, {id: 2})).toBeTruthy();
 
   const [state_, tree_, thing, node] = T.createChild(state, tree, {id: 1});
-  state = state_; tree = tree_;
+  state = state_;
+  tree = tree_;
 
   expect(T.children(tree, {id: 1})).toEqual([node]);
   expect(T.children(tree, {id: 1}).length).toBe(1);
 
-  expect(T.children(tree, {id: 2}).filter(c => T.thing(tree, c) === thing).length).toBe(1);
+  expect(T.children(tree, {id: 2}).filter((c) => T.thing(tree, c) === thing).length).toBe(1);
   expect(T.children(tree, {id: 2}).length).toBe(1);
 });
 
