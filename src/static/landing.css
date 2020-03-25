@@ -140,3 +140,20 @@ p {
     color: #404040;
     background-color: #f8f8f8;
 }
+
+footer {
+  font-size: 0.9em;
+  padding: 2rem;
+  background: radial-gradient(circle at top, #f0f0f0 0%, #fcfcfc 150%);
+  color: #a0a0a0;
+  text-align: center;
+}
+
+footer a {
+  background-color: transparent;
+  padding: 0;
+}
+
+footer a > span {
+  border-color: #e0e0e0;
+}
