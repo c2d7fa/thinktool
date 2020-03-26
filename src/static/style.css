@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto:400,400i,500,500i,700,700i&display=swap&subset=cyrillic,greek,latin-ext');
 @import url('https://fonts.googleapis.com/css?family=Titillium+Web:400,400i,600&display=swap');
 @import url('https://fonts.googleapis.com/css?family=Raleway:400,400i,500,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Montserrat:500,500i,800,800i&display=swap&subset=cyrillic,latin-ext');
 
 body {
     margin: 0;
@@ -98,94 +99,6 @@ ul.outline-root-tree {
 
     margin-top: -0.15em; /* Hack to improve vertical centering of text */
     margin-bottom: 1.15em;
-}
-
-/* Login page */
-/* TODO: Move this to separate file */
-#login {
-    margin: 1em;
-    padding: 2em;
-    display: flex;
-    justify-content: center;
-    background: linear-gradient(180deg, #fafafa 0%, #ffffff calc(min(6em, 100%)));
-}
-
-#login form {
-    padding: 0em;
-}
-
-#login form .form-table {
-    display: table;
-}
-
-#login .entry {
-    display: table-row;
-}
-
-#login .entry > * {
-    display: table-cell;
-}
-
-#login label {
-    font-size: 0.8em;
-    font-family: "Titillium Web";
-    text-transform: uppercase;
-    color: #808080;
-
-    padding-bottom: 2em;
-    padding-right: 1em;
-}
-
-#login input {
-    padding: 6px;
-    background-color: inherit;
-    border: 1px solid #f0f0f0;
-    border-radius: 6px;
-    outline: none;
-
-    font-size: 1em;
-    font-family: "Roboto", sans-serif;
-    color: #202020;
-
-    transition: border-color 0.3s ease;
-}
-
-#login input:hover {
-    border-color: #dcdcdc;
-}
-
-#login input:focus {
-    border-color: #d0d0d0;
-}
-
-#login input[type="submit"] {
-    font-size: 0.8em;
-    font-family: "Titillium Web";
-    text-transform: uppercase;
-
-    margin-right: 1em;
-    padding: 1ex 1em;
-
-    border: none;
-    border-radius: 6px;
-    background: none;
-
-    color: #404040;
-
-    cursor: pointer;
-
-    transition: color 0.3s ease, background-color 0.3s ease;
-
-    border: 1px solid #f0f0f0;
-}
-
-#login input[type="submit"]:hover {
-    color: #606060;
-    background-color: #f8f8f8;
-}
-
-#login input[type="submit"]:active {
-    color: #404040;
 }
 
 a.plain-text-link {

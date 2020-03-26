@@ -2,7 +2,7 @@
   <head>
     <meta charset="utf-8">
     <title>Thinktool &ndash; Log In</title>
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/landing.css">
     <link rel="icon" href="/icon.png" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
@@ -15,21 +15,52 @@
     </script>
   </head>
   <body>
-    <div id="login">
-      <form action="{{apiUrl}}/" method="POST">
-        <div class="form-table">
-          <div class="entry">
-            <label>Username</label>
-            <input name="user" required/>
+    <header id="top-bar">
+      <span id="logo">Thinktool</span>
+    </header>
+    <main class="login">
+      <div>
+        <h1>Sign up or log in.</h1>
+        <form action="{{apiUrl}}/" method="POST">
+          <div class="form-table">
+            <div class="entry">
+              <label>Username</label>
+              <input name="user" required/>
+            </div>
+            <div class="entry">
+              <label for="password">Password</label>
+              <input id="password" type="password" name="password" required/>
+            </div>
           </div>
-          <div class="entry">
-            <label for="password">Password</label>
-            <input id="password" type="password" name="password" required/>
-          </div>
-        </div>
-        <input type="submit" name="login" value="Log in"/>
-        <input type="submit" name="signup" value="Sign up"/>
-      </form>
-    </div>
+          <input type="submit" name="login" value="Log in"/>
+          <input type="submit" name="signup" value="Sign up"/>
+        </form>
+      </div>
+
+      <aside class="disclaimer">
+        <h1>Thank you for trying Thinktool!</h1>
+        <p>
+          Before you do, I think it's only fair if I give you a bit of a
+          disclaimer:
+        </p>
+        <p>
+          I'm passionate making software that helps people be smarter; that's
+          why I'm making Thinktool, and I'm serious about this project.
+          However, I'm also one person doing this in my spare time, and I only
+          started a few months ago. <strong>Expect unstable, preview-quality
+          software that is filled with bugs and missing critical
+          features.</strong>
+        </p>
+        <p>
+          I totally understand if you don't want to commit to using Thinktool
+          for anything important. But, if you do decide to check it out, I
+          would <em>love</em> to hear what you think! Send me an email with
+          your feedback to <a class="email"
+          href="mailto:jonas@thinktool.io"><span>jonas@thinktool.io</span></a>.
+          If you like Thinktool, I want to hear what you like; if you give up
+          on it, I also want to hear about that. Send me your thoughts!
+        </p>
+      </aside>
+    </main>
   </body>
 </html>

@@ -115,7 +115,7 @@ p {
     user-select: none;
 }
 
-#top-bar #login {
+#top-bar #login-link {
     display: inline-block;
 
     text-transform: uppercase;
@@ -131,12 +131,12 @@ p {
     user-select: none;
 }
 
-#top-bar a#login:hover {
+#top-bar a#login-link:hover {
     color: #808080;
     background-color: #f8f8f8;
 }
 
-#top-bar a#login:active {
+#top-bar a#login-link:active {
     color: #404040;
     background-color: #f8f8f8;
 }
@@ -149,11 +149,135 @@ footer {
   text-align: center;
 }
 
-footer a {
+a.email {
   background-color: transparent;
   padding: 0;
 }
 
-footer a > span {
-  border-color: #e0e0e0;
+a.email > span {
+  border-color: #00000020;
+  transition: border-color 300ms;
+}
+
+a.email > span:hover {
+  border-color: #000000b0;
+}
+
+/* Login page */
+/* [TODO] Move this to separate file */
+
+.login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 2em;
+}
+
+.login > * {
+  box-sizing: border-box;
+  max-width: 65ex;
+  width: 100%;
+  margin-top: 2em;
+  padding: 2em;
+  border-radius: 6px;
+  background: radial-gradient(circle at bottom, #f4f4f4 0%, #fcfcfc 150%);
+}
+
+.disclaimer {
+  background: radial-gradient(circle at bottom, hsl(45, 80%, 90%), hsl(55, 75%, 95%));
+  color: hsl(50, 20%, 20%);
+}
+
+form {
+  margin-top: 2em;
+  padding: 0;
+}
+
+form .form-table {
+    display: table;
+}
+
+form .entry {
+    display: table-row;
+}
+
+form .entry > * {
+    display: table-cell;
+}
+
+@media (max-width: 480px) {
+  form .form-table {
+    display: flex;
+    flex-direction: column;
+  }
+
+  form .entry {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1em;
+  }
+
+  form .entry > * {
+    margin: 0;
+    padding: 0;
+    display: block;
+  }
+
+  form .entry input {
+    padding: 6px;
+  }
+}
+
+form label {
+    font-size: 0.8em;
+    font-family: "Titillium Web";
+    text-transform: uppercase;
+
+    padding-bottom: 2em;
+    padding-right: 1em;
+}
+
+form input {
+    padding: 6px;
+    background-color: #f0f0f0;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    outline: none;
+
+    font-size: 1em;
+    font-family: "Roboto", sans-serif;
+    color: #202020;
+
+    transition: border-color 0.3s ease;
+}
+
+.login input[type="submit"] {
+    font-size: 0.8em;
+    font-family: "Titillium Web";
+    text-transform: uppercase;
+
+    margin-right: 1em;
+    padding: 1ex 1em;
+
+    border: none;
+    border-radius: 6px;
+
+    background-color: #f0f0f0;
+    border: 1px solid #e0e0e0;
+
+    color: #404040;
+
+    cursor: pointer;
+
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.login input[type="submit"]:hover {
+    color: #202020;
+    background-color: #d8d8d8;
+}
+
+.login input[type="submit"]:active {
+    color: #606060;
+}
 }
