@@ -457,6 +457,36 @@ h1.link-section:first-child {
   overflow-x: auto;
 }
 
+.toolbar-group {
+  display: flex;
+}
+
+.toolbar-group + .toolbar-group::before {
+  content: "";
+  height: 100%;
+  border-left: 1px solid #d8d8d8;
+  margin-left: 0.5rem;
+}
+
+.toolbar-group h6 {
+  cursor: default;
+  display: inline-block;
+  color: #a0a0a0;
+  font-weight: normal;
+  font-size: 0.9em;
+  text-transform: uppercase;
+  font-family: "Titillium Web";
+  margin: 0;
+  padding: 0;
+  margin-left: 0.5rem;
+  align-self: center;
+  white-space: nowrap;
+}
+
+.toolbar-group > div {
+  display: flex;
+}
+
 .toolbar button {
   background: none;
   padding: 0;

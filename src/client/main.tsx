@@ -454,6 +454,23 @@ function actionsWith(context: Context, node: T.NodeRef) {
   };
 }
 
+function ToolbarGroup(props: {children: React.ReactNode; title?: string}) {
+  if (props.title === undefined) {
+    return (
+      <div className="toolbar-group unnamed-toolbar-group">
+        <div>{props.children}</div>
+      </div>
+    );
+  } else {
+    return (
+      <div className="toolbar-group named-toolbar-group">
+        <h6>{props.title}</h6>
+        <div>{props.children}</div>
+      </div>
+    );
+  }
+}
+
 function Toolbar(props: {context: Context}) {
   const focused = T.focused(props.context.tree);
 
@@ -490,62 +507,75 @@ function Toolbar(props: {context: Context}) {
 
   return (
     <div className="toolbar">
-      <button onClick={() => actions().zoom()} title="Zoom in on selected item [middle-click bullet]">
-        Zoom
-      </button>
-      <button
-        onClick={() => actions().createSiblingAfter()}
-        title="Create a new item as a sibling of the currently selected item [enter/ctrl+enter]"
-      >
-        New
-      </button>
-      <button
-        onClick={() => actions().removeFromParent()}
-        title="Remove the selected item from its parent. This does not delete the item. [alt+backspace]"
-      >
-        Remove
-      </button>
-      <button onClick={() => actions().unindent()} title="Unindent the selected item [ctrl+alt+left]">
-        Unindent
-      </button>
-      <button onClick={() => actions().indent()} title="Indent the selected item [ctrl+alt+right]">
-        Indent
-      </button>
-      <button onClick={() => actions().moveUp()} title="Move the selected item up [ctrl+alt+up]">
-        Up
-      </button>
-      <button onClick={() => actions().moveDown()} title="Move the selected item down [ctrl+alt+down]">
-        Down
-      </button>
-      <button
-        onClick={() => actions().createChild()}
-        title="Create a new child of the selected item [alt+enter]"
-      >
-        New Child
-      </button>
-      <button onClick={() => actions().clone()} title="Create a copy of the selected item [ctrl+mouse drag]">
-        Clone
-      </button>
-      <button
-        onClick={() => actions().delete()}
-        title="Delete the selected item. If this item has other parents, it will be removed from *all* parents. [alt+delete]"
-      >
-        Delete
-      </button>
-      <button
-        onClick={() => setShowPopup("child")}
-        title="Insert an existing item as a child of the currently selected item. [alt+c]"
-      >
-        Ins. Child
-      </button>
-      <button
-        onClick={() => {
-          alert("Not yet implemented. Use Alt+L to insert a link instead.");
-        }}
-        title="Insert an existing item as a link at the cursor position. [alt+l]"
-      >
-        Ins. Link
-      </button>
+      <ToolbarGroup>
+        <button onClick={() => actions().zoom()} title="Zoom in on selected item [middle-click bullet]">
+          Zoom
+        </button>
+      </ToolbarGroup>
+      <ToolbarGroup>
+        <button
+          onClick={() => actions().createSiblingAfter()}
+          title="Create a new item as a sibling of the currently selected item [enter/ctrl+enter]"
+        >
+          New
+        </button>
+        <button
+          onClick={() => actions().createChild()}
+          title="Create a new child of the selected item [alt+enter]"
+        >
+          New Child
+        </button>
+        <button
+          onClick={() => actions().removeFromParent()}
+          title="Remove the selected item from its parent. This does not delete the item. [alt+backspace]"
+        >
+          Remove
+        </button>
+        <button
+          onClick={() => actions().clone()}
+          title="Create a copy of the selected item [ctrl+mouse drag]"
+        >
+          Clone
+        </button>
+      </ToolbarGroup>
+      <ToolbarGroup title="Move">
+        <button onClick={() => actions().unindent()} title="Unindent the selected item [ctrl+alt+left]">
+          Unindent
+        </button>
+        <button onClick={() => actions().indent()} title="Indent the selected item [ctrl+alt+right]">
+          Indent
+        </button>
+        <button onClick={() => actions().moveUp()} title="Move the selected item up [ctrl+alt+up]">
+          Up
+        </button>
+        <button onClick={() => actions().moveDown()} title="Move the selected item down [ctrl+alt+down]">
+          Down
+        </button>
+      </ToolbarGroup>
+      <ToolbarGroup title="Insert">
+        <button
+          onClick={() => setShowPopup("child")}
+          title="Insert an existing item as a child of the currently selected item. [alt+c]"
+        >
+          Child
+        </button>
+        <button
+          onClick={() => {
+            alert("Not yet implemented. Use Alt+L to insert a link instead.");
+          }}
+          title="Insert an existing item as a link at the cursor position. [alt+l]"
+        >
+          Link
+        </button>
+      </ToolbarGroup>
+      <ToolbarGroup>
+        <button
+          onClick={() => actions().delete()}
+          title="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents. [alt+delete]"
+        >
+          Destroy
+        </button>
+      </ToolbarGroup>
       {popup}
     </div>
   );
