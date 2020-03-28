@@ -426,9 +426,8 @@ export function createSiblingBefore(
 
   const [newNode, newTree_] = loadConnection(newState, tree, newConnection, parent_);
   let newTree = newTree_;
-
   newTree = I.updateChildren(newTree, parent_, (children) => G.splice(children, index, 0, newNode));
-  newTree = refresh(newTree, newState);
+  newTree = focus(newTree, newNode);
 
   return [newState, newTree, newThing, newNode];
 }
@@ -455,7 +454,7 @@ export function createSiblingAfter(
   const [newNode, newTree_] = loadConnection(newState, tree, newConnection, parent_);
   let newTree = newTree_;
   newTree = I.updateChildren(newTree, parent_, (children) => G.splice(children, index, 0, newNode));
-  newTree = refreshChildren(newState, newTree, parent_);
+  newTree = focus(newTree, newNode);
 
   return [newState, newTree, newThing, newNode];
 }

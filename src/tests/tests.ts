@@ -90,3 +90,19 @@ test("Parents should not interfere when removing a child", () => {
   [state, tree] = T.remove(state, tree, {id: 1});
   expect(D.children(state, "0")).toEqual([]);
 });
+
+test("Newly created sibling should have focus", () => {
+  let state = D.empty;
+
+  state = D.create(state, "a")[0];
+  state = D.addChild(state, "0", "a")[0];
+
+  let tree = T.fromRoot(state, "0");
+  tree = T.focus(tree, T.children(tree, T.root(tree))[0]);
+
+  expect(T.hasFocus(tree, T.children(tree, T.root(tree))[0])).toBeTruthy();
+
+  [state, tree] = T.createSiblingAfter(state, tree, {id: 1});
+
+  expect(T.hasFocus(tree, T.children(tree, T.root(tree))[1])).toBeTruthy();
+});
