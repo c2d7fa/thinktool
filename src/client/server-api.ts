@@ -95,3 +95,7 @@ export const logOutUrl = `${apiHost}/logout`;
 export function ping(note: string): void {
   fetch(`${apiHost}/ping/${note}`, {mode: "no-cors"});
 }
+
+export async function deleteAccount(account: string): Promise<void> {
+  api(`account/${account}`, {method: "DELETE"});
+}

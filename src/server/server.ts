@@ -73,6 +73,14 @@ const session = (() => {
     });
   }
 
+  function invalidateUser(userId: DB.UserId): void {
+    for (const sessionId in sessions) {
+      if (user(sessionId).name === userId.name) {
+        delete sessions[sessionId];
+      }
+    }
+  }
+
   function user(sessionId: string): DB.UserId | null {
     if (sessions[sessionId] === undefined) return null;
     return sessions[sessionId].userId;
@@ -83,7 +91,7 @@ const session = (() => {
     return user(sessionId) !== null;
   }
 
-  return {create, user, validId};
+  return {create, user, validId, invalidateUser};
 })();
 
 function getCookie(cookies: string | undefined, key: string): string | null {
@@ -391,6 +399,38 @@ app.post("/", async (req, res) => {
       .type("text/plain")
       .send("400 Bad Request");
   }
+});
+
+app.options("/api/account/:account", async (req, res) => {
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .header("Access-Control-Allow-Methods", "DELETE, OPTIONS")
+    .send();
+});
+
+app.delete("/api/account/:account", requireSession, async (req, res) => {
+  if (req.params.account !== req.user.name) {
+    console.warn(`${req.user.name} tried to delete ${req.params.account}'s account`);
+    res
+      .status(401)
+      .type("text/plain")
+      .header("Access-Control-Allow-Origin", staticUrl)
+      .header("Access-Control-Allow-Credentials", "true")
+      .send("You don't own that account.");
+    return;
+  }
+
+  res
+    .status(200)
+    .header("Set-Cookie", "DiaformSession=; Max-Age=0") // [TODO] For some reason, this doesn't seem to do anything
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send();
+
+  session.invalidateUser(req.user!);
+
+  await DB.deleteAllUserData(req.user!);
 });
 
 // Error handling

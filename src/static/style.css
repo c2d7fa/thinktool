@@ -413,6 +413,7 @@ h1.link-section:first-child {
 }
 
 #current-user .username {
+  text-decoration: none;
   font-weight: bold;
   color: #b0b0b0;
 }

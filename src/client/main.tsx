@@ -380,7 +380,9 @@ function App({
       <div className="top-bar">
         <Search context={context} />
         <div id="current-user">
-          <span className="username">{username}</span>{" "}
+          <a className="username" href="/user.html">
+            {username}
+          </a>
           <a className="log-out" href={Server.logOutUrl}>
             log out
           </a>
@@ -976,33 +978,58 @@ function Subtree(p: {
   );
 }
 
-// ==
+// User Page
 
-async function start(): Promise<void> {
-  const appElement = document.querySelector("#app")! as HTMLDivElement;
-  const isDemo = appElement.dataset.demo === "true";
-
-  if (!isDemo) {
-    try {
-      await Server.getUsername();
-    } catch (e) {
-      console.log(
-        "Got weird response from server, probably because we are not logged in. Redirecting to login page.",
-      );
-      window.location.href = "/login.html";
-    }
-  } else {
-    Server.ping("demo");
-  }
-
-  ReactDOM.render(
-    isDemo ? (
-      <App initialState={Demo.initialState} username={"demo"} args={{local: true}} />
-    ) : (
-      <App initialState={(await Server.getFullState()) as State} username={await Server.getUsername()} />
-    ),
-    appElement,
+function UserPage(props: {username: string}) {
+  return (
+    <div>
+      <div>
+        You are <strong>{props.username}</strong>.
+      </div>
+      <button
+        onClick={async () => {
+          if (confirm("Are you sure you want to PERMANENTLY DELETE YOUR ACCOUNT AND ALL YOUR DATA?")) {
+            await Server.deleteAccount(props.username);
+          }
+          window.location.href = "/";
+        }}
+      >
+        Delete account and all data
+      </button>
+    </div>
   );
 }
 
-start();
+// ==
+
+(window as any).thinktoolApp = async () => {
+  const appElement = document.querySelector("#app")! as HTMLDivElement;
+
+  try {
+    await Server.getUsername();
+  } catch (e) {
+    console.log(
+      "Got weird response from server, probably because we are not logged in. Redirecting to login page.",
+    );
+    window.location.href = "/login.html";
+  }
+
+  ReactDOM.render(
+    <App initialState={(await Server.getFullState()) as State} username={await Server.getUsername()} />,
+    appElement,
+  );
+};
+
+(window as any).thinktoolDemo = async () => {
+  const appElement = document.querySelector("#app")! as HTMLDivElement;
+  Server.ping("demo");
+  ReactDOM.render(
+    <App initialState={Demo.initialState} username={"demo"} args={{local: true}} />,
+    appElement,
+  );
+};
+
+(window as any).thinktoolUser = async () => {
+  const userElement = document.querySelector("#user")! as HTMLDivElement;
+  ReactDOM.render(<UserPage username={await Server.getUsername()} />, userElement);
+};

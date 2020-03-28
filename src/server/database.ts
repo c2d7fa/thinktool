@@ -10,7 +10,7 @@ export type UserId = {name: string};
 let client: mongo.MongoClient = undefined as never;
 
 export async function initialize(uri: string): Promise<void> {
-  client = await await new mongo.MongoClient(uri, {useUnifiedTopology: true}).connect();
+  client = await new mongo.MongoClient(uri, {useUnifiedTopology: true}).connect();
 }
 
 export interface Users {
@@ -129,4 +129,15 @@ export async function getThingData(userId: UserId, thing: string): Promise<Commu
     .collection("things")
     .findOne({user: userId.name, name: thing});
   return {content: data.content ?? "", children: data.children ?? []};
+}
+
+export async function deleteAllUserData(userId: UserId): Promise<void> {
+  await client
+    .db("diaform")
+    .collection("users")
+    .deleteOne({name: userId.name});
+  await client
+    .db("diaform")
+    .collection("things")
+    .deleteMany({user: userId.name});
 }
