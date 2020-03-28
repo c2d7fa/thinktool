@@ -481,31 +481,7 @@ function Toolbar(props: {context: Context}) {
     return actionsWith(props.context, focused);
   }
 
-  const [showPopup, setShowPopup] = React.useState<"child" | null>(null);
-
-  const popup = (() => {
-    if (showPopup === null) return null;
-    if (focused === null) throw "invalid state"; // [TODO] Make it so that user can't click buttons here
-    return (
-      <ThingSelectPopup
-        hide={() => setShowPopup(null)}
-        state={props.context.state}
-        submit={(thing: string) => {
-          if (showPopup === "child") {
-            const [newState, newTree] = T.insertChild(
-              props.context.state,
-              props.context.tree,
-              focused,
-              thing,
-              0,
-            );
-            props.context.setState(newState);
-            props.context.setTree(newTree);
-          }
-        }}
-      />
-    );
-  })();
+  const [activePopup, setActivePopup] = React.useState<null | "child" | "sibling" | "parent">(null);
 
   return (
     <div className="toolbar">
@@ -556,10 +532,22 @@ function Toolbar(props: {context: Context}) {
       </ToolbarGroup>
       <ToolbarGroup title="Insert">
         <button
-          onClick={() => setShowPopup("child")}
+          onClick={() => setActivePopup("sibling")}
+          title="Insert an existing item as a sibling after the currently selected item. [alt+s]"
+        >
+          Sibling
+        </button>
+        <button
+          onClick={() => setActivePopup("child")}
           title="Insert an existing item as a child of the currently selected item. [alt+c]"
         >
           Child
+        </button>
+        <button
+          onClick={() => setActivePopup("parent")}
+          title="Insert an existing item as a parent of the currently selected item. [alt+p]"
+        >
+          Parent
         </button>
         <button
           onClick={() => {
@@ -578,7 +566,14 @@ function Toolbar(props: {context: Context}) {
           Destroy
         </button>
       </ToolbarGroup>
-      {popup}
+      {focused !== null && (
+        <GeneralPopup
+          active={activePopup}
+          hide={() => setActivePopup(null)}
+          context={props.context}
+          node={focused}
+        />
+      )}
     </div>
   );
 }
@@ -761,8 +756,54 @@ function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void
   );
 }
 
+function GeneralPopup(props: {
+  active: null | "child" | "sibling" | "parent";
+  hide: () => void;
+  context: Context;
+  node: T.NodeRef;
+}) {
+  if (props.active === null) return null;
+  return (
+    <ThingSelectPopup
+      hide={props.hide}
+      state={props.context.state}
+      submit={(thing: string) => {
+        if (props.active === "child") {
+          const [newState, newTree] = T.insertChild(
+            props.context.state,
+            props.context.tree,
+            props.node,
+            thing,
+            0,
+          );
+          props.context.setState(newState);
+          props.context.setTree(newTree);
+        } else if (props.active === "sibling") {
+          const [newState, newTree] = T.insertSiblingAfter(
+            props.context.state,
+            props.context.tree,
+            props.node,
+            thing,
+          );
+          props.context.setState(newState);
+          props.context.setTree(newTree);
+        } else if (props.active === "parent") {
+          const [newState, newTree] = T.insertParent(
+            props.context.state,
+            props.context.tree,
+            props.node,
+            thing,
+          );
+          props.context.setState(newState);
+          props.context.setTree(newTree);
+        }
+      }}
+    />
+  );
+}
+
 function Content(p: {context: Context; node: T.NodeRef}) {
-  const [showChildPopup, setShowChildPopup] = React.useState(false);
+  const [activePopup, setActivePopup] = React.useState<null | "child" | "sibling" | "parent">(null);
 
   const actions = actionsWith(p.context, p.node);
 
@@ -816,30 +857,18 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       actions.delete();
       return true;
     } else if (ev.key === "c" && ev.altKey) {
-      setShowChildPopup(true);
+      setActivePopup("child");
+      return true;
+    } else if (ev.key === "s" && ev.altKey) {
+      setActivePopup("sibling");
+      return true;
+    } else if (ev.key === "p" && ev.altKey) {
+      setActivePopup("parent");
       return true;
     } else {
       return false;
     }
   }
-
-  const insertChildPopup = (() => {
-    if (showChildPopup) {
-      return (
-        <ThingSelectPopup
-          hide={() => setShowChildPopup(false)}
-          state={p.context.state}
-          submit={(child: string) => {
-            const [newState, newTree] = T.insertChild(p.context.state, p.context.tree, p.node, child, 0);
-            p.context.setState(newState);
-            p.context.setTree(newTree);
-          }}
-        />
-      );
-    } else {
-      return null;
-    }
-  })();
 
   return (
     <>
@@ -861,7 +890,12 @@ function Content(p: {context: Context; node: T.NodeRef}) {
         }
         onKeyDown={onKeyDown}
       />
-      {insertChildPopup}
+      <GeneralPopup
+        active={activePopup}
+        hide={() => setActivePopup(null)}
+        context={p.context}
+        node={p.node}
+      />
     </>
   );
 }
