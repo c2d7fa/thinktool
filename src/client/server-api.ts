@@ -93,5 +93,5 @@ export async function getThingData(thing: string): Promise<Communication.ThingDa
 export const logOutUrl = `${apiHost}/logout`;
 
 export function ping(note: string): void {
-  fetch(`${apiHost}/ping/${note}`);
+  fetch(`${apiHost}/ping/${note}`, {mode: "no-cors"});
 }
