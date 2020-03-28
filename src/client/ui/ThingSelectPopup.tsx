@@ -4,7 +4,9 @@ import * as ReactDOM from "react-dom";
 import * as D from "../data";
 
 function search(state: D.State, text: string, maxResults: number): [string, string][] {
-  return D.search(state, text).slice(0, maxResults).map(thing => [D.contentText(state, thing), thing]);
+  return D.search(state, text)
+    .slice(0, maxResults)
+    .map((thing) => [D.contentText(state, thing), thing]);
 }
 
 export default function ThingSelectPopup(props: {state: D.State; hide(): void; submit(thing: string): void}) {
@@ -49,14 +51,20 @@ export default function ThingSelectPopup(props: {state: D.State; hide(): void; s
   }
 
   function Result(props: {result: [string, string]; selected: boolean}) {
-    return <li className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}><span className="link-autocomplete-popup-result-content">{props.result[0]} ({props.result[1]})</span></li>;
+    return (
+      <li className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}>
+        <span className="link-autocomplete-popup-result-content">
+          {props.result[0]} ({props.result[1]})
+        </span>
+      </li>
+    );
   }
 
   function onScroll(ev: React.UIEvent) {
-    const el = ev.target as HTMLUListElement
+    const el = ev.target as HTMLUListElement;
     if (el.scrollTop + el.clientHeight + 500 > el.scrollHeight) {
-      setMaxResults(maxResults => maxResults + 50)
-      setResults(search(props.state, text, maxResults))
+      setMaxResults((maxResults) => maxResults + 50);
+      setResults(search(props.state, text, maxResults));
     }
   }
 
@@ -70,11 +78,14 @@ export default function ThingSelectPopup(props: {state: D.State; hide(): void; s
         onBlur={props.hide}
         onKeyDown={onKeyDown}
       />
-      { results.length !== 0 &&
+      {results.length !== 0 && (
         <ul className="link-autocomplete-popup-results" onScroll={onScroll}>
-          {results.map((result, i) => <Result key={result[1]} selected={i === selectedIndex} result={result}/>)}
-        </ul> }
+          {results.map((result, i) => (
+            <Result key={result[1]} selected={i === selectedIndex} result={result} />
+          ))}
+        </ul>
+      )}
     </div>,
-    document.body
+    document.body,
   );
 }

@@ -94,7 +94,10 @@ function decorate([node, path]: [Slate.Node, Slate.Path]): Slate.Range[] {
       end -= 1;
     }
 
-    ranges = [...ranges, {anchor: {path, offset: start}, focus: {path, offset: end}, link: text.slice(start, end)}];
+    ranges = [
+      ...ranges,
+      {anchor: {path, offset: start}, focus: {path, offset: end}, link: text.slice(start, end)},
+    ];
   }
 
   return ranges;
@@ -116,7 +119,8 @@ function renderLeaf(props: SlateReact.RenderLeafProps) {
 
     const clickProps = {
       onAuxClick: (ev: React.MouseEvent) => {
-        if (ev.button === 1) { // Middle click
+        // Middle click
+        if (ev.button === 1) {
           window.open(props.leaf.link);
           ev.preventDefault();
         }
@@ -124,22 +128,44 @@ function renderLeaf(props: SlateReact.RenderLeafProps) {
       title: `${props.leaf.link}\n(Open with middle click)`,
     };
 
-    return <a className="plain-text-link" href={props.leaf.link} {...clickProps} {...props.attributes}>{props.children}</a>;
+    return (
+      <a className="plain-text-link" href={props.leaf.link} {...clickProps} {...props.attributes}>
+        {props.children}
+      </a>
+    );
   } else {
-    return <SlateReact.DefaultLeaf {...props}/>;
+    return <SlateReact.DefaultLeaf {...props} />;
   }
 }
 
-function renderElement(props: SlateReact.RenderElementProps & {getContentText(thing: string): string; openInternalLink(thing: string): void; isLinkOpen(thing: string): boolean}) {
+function renderElement(
+  props: SlateReact.RenderElementProps & {
+    getContentText(thing: string): string;
+    openInternalLink(thing: string): void;
+    isLinkOpen(thing: string): boolean;
+  },
+) {
   if (props.element.type === "internalLink") {
     const content = props.getContentText(props.element.internalLink);
     return (
-      <a className={`internal-link${ props.isLinkOpen(props.element.internalLink) ? " internal-link-open" : ""}`} href="#" onClick={(ev) => { props.openInternalLink(props.element.internalLink); ev.preventDefault() }} {...props.attributes} contentEditable={false}>
-        { content === "" ? <span className="empty-content">#{props.element.internalLink}</span> : content}
+      <a
+        className={`internal-link${
+          props.isLinkOpen(props.element.internalLink) ? " internal-link-open" : ""
+        }`}
+        href="#"
+        onClick={(ev) => {
+          props.openInternalLink(props.element.internalLink);
+          ev.preventDefault();
+        }}
+        {...props.attributes}
+        contentEditable={false}
+      >
+        {content === "" ? <span className="empty-content">#{props.element.internalLink}</span> : content}
         {props.children}
-      </a>);
+      </a>
+    );
   } else {
-    return <SlateReact.DefaultElement {...props}/>;
+    return <SlateReact.DefaultElement {...props} />;
   }
 }
 
@@ -197,7 +223,19 @@ function isInline(element: Slate.Element): boolean {
   return element.type === "internalLink";
 }
 
-export function Content(props: {things: D.State; focused?: boolean; text: string; setText(text: string): void; className?: string; onFocus?(ev: React.FocusEvent<{}>): void; onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean; placeholder?: string; getContentText(thing: string): string; openInternalLink?(thing: string): void; isLinkOpen?(thing: string): boolean}) {
+export function Content(props: {
+  things: D.State;
+  focused?: boolean;
+  text: string;
+  setText(text: string): void;
+  className?: string;
+  onFocus?(ev: React.FocusEvent<{}>): void;
+  onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
+  placeholder?: string;
+  getContentText(thing: string): string;
+  openInternalLink?(thing: string): void;
+  isLinkOpen?(thing: string): boolean;
+}) {
   const editor = React.useMemo(() => {
     const editor = SlateReact.withReact(Slate.createEditor());
     editor.isVoid = isVoid;
@@ -240,7 +278,7 @@ export function Content(props: {things: D.State; focused?: boolean; text: string
       // unable to "find a descendant at path [0,1,0] in node ...". These next
       // two lines fix this, but I haven't really looked into why, so it may be
       // a bad idea to do this:
-      editor.selection = { anchor: { path: [0,0], offset:0 }, focus: { path: [0,0], offset: 0 } };
+      editor.selection = {anchor: {path: [0, 0], offset: 0}, focus: {path: [0, 0], offset: 0}};
       SlateReact.ReactEditor.blur(editor);
 
       setValue(nodesFromText(props.text));
@@ -264,13 +302,20 @@ export function Content(props: {things: D.State; focused?: boolean; text: string
       return ev.preventDefault();
     }
 
-    if ((ev.key === "ArrowUp" && !atFirstLineInEditor() || ev.key === "ArrowDown" && !atLastLineInEditor()) && !(ev.ctrlKey || ev.altKey)) {
+    if (
+      ((ev.key === "ArrowUp" && !atFirstLineInEditor()) ||
+        (ev.key === "ArrowDown" && !atLastLineInEditor())) &&
+      !(ev.ctrlKey || ev.altKey)
+    ) {
       // Arrow key without modifiers inside text. Use normal action.
       return;
     }
 
     if (!editor.selection) throw "bad programmer error";
-    const startOfItem = Slate.Point.equals(Slate.Range.start(editor.selection), Slate.Editor.start(editor, []));
+    const startOfItem = Slate.Point.equals(
+      Slate.Range.start(editor.selection),
+      Slate.Editor.start(editor, []),
+    );
     const endOfItem = Slate.Point.equals(Slate.Range.end(editor.selection), Slate.Editor.end(editor, []));
 
     if (props.onKeyDown !== undefined && props.onKeyDown(ev, {startOfItem, endOfItem})) {
@@ -300,7 +345,7 @@ export function Content(props: {things: D.State; focused?: boolean; text: string
         editor.insertNode({type: "internalLink", internalLink: id, children: [{text: ""}]});
       }
 
-      return <ThingSelectPopup state={props.things} hide={() => setShowLinkPopup(false)} submit={submit}/>;
+      return <ThingSelectPopup state={props.things} hide={() => setShowLinkPopup(false)} submit={submit} />;
     } else {
       // TODO: This happens sometimes. Namely when the focus is moved to the
       // ThingSelectPopup we just created. We probably need to handle this case,
@@ -313,10 +358,18 @@ export function Content(props: {things: D.State; focused?: boolean; text: string
       <SlateReact.Slate editor={editor} value={value} onChange={onChange}>
         <SlateReact.Editable
           renderLeaf={renderLeaf}
-          renderElement={elementProps => renderElement({...elementProps, getContentText: props.getContentText, openInternalLink: props.openInternalLink ?? (() => {}), isLinkOpen: props.isLinkOpen ?? (_ => false)})}
+          renderElement={(elementProps) =>
+            renderElement({
+              ...elementProps,
+              getContentText: props.getContentText,
+              openInternalLink: props.openInternalLink ?? (() => {}),
+              isLinkOpen: props.isLinkOpen ?? ((_) => false),
+            })
+          }
           decorate={decorate}
           onKeyDown={onKeyDown}
-          onFocus={props.onFocus}/>
+          onFocus={props.onFocus}
+        />
         {linkPopup}
       </SlateReact.Slate>
     </div>

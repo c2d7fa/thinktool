@@ -10,7 +10,7 @@ export type UserId = {name: string};
 let client: mongo.MongoClient = undefined as never;
 
 export async function initialize(uri: string): Promise<void> {
-  client = await (await new mongo.MongoClient(uri, {useUnifiedTopology: true}).connect());
+  client = await new mongo.MongoClient(uri, {useUnifiedTopology: true}).connect();
 }
 
 export interface Users {
@@ -20,7 +20,10 @@ export interface Users {
 
 // Check password and return user ID.
 export async function userId(name: string, password: string): Promise<UserId | null> {
-  const user = await client.db("diaform").collection("users").findOne({_id: name});
+  const user = await client
+    .db("diaform")
+    .collection("users")
+    .findOne({_id: name});
 
   if (user === null) {
     return null;
@@ -34,21 +37,39 @@ export async function userId(name: string, password: string): Promise<UserId | n
 }
 
 export async function userName(userId: UserId): Promise<string | null> {
-  if (await client.db("diaform").collection("users").find({_id: userId.name}).count() > 0) {
+  if (
+    (await client
+      .db("diaform")
+      .collection("users")
+      .find({_id: userId.name})
+      .count()) > 0
+  ) {
     return userId.name;
   } else {
     return null;
   }
 }
 
-export async function createUser(user: string, password: string): Promise<{type: "success"; userId: UserId} | {type: "error"; error?: "user-exists"}> {
-  if (await client.db("diaform").collection("users").find({_id: user}).count() > 0) {
+export async function createUser(
+  user: string,
+  password: string,
+): Promise<{type: "success"; userId: UserId} | {type: "error"; error?: "user-exists"}> {
+  if (
+    (await client
+      .db("diaform")
+      .collection("users")
+      .find({_id: user})
+      .count()) > 0
+  ) {
     return {type: "error", error: "user-exists"};
   }
 
   const hashedPassword = await bcrypt.hash(password, 6);
 
-  const result = await client.db("diaform").collection("users").insertOne({_id: user, name: user, hashedPassword});
+  const result = await client
+    .db("diaform")
+    .collection("users")
+    .insertOne({_id: user, name: user, hashedPassword});
   if (result.result.ok) {
     return {type: "success", userId: {name: user}};
   } else {
@@ -56,28 +77,67 @@ export async function createUser(user: string, password: string): Promise<{type:
   }
 }
 
-export async function getAllThings(userId: UserId): Promise<{name: string; content?: string; children?: string[]}[]> {
-  const documents = client.db("diaform").collection("things").find({user: userId.name});
+export async function getAllThings(
+  userId: UserId,
+): Promise<{name: string; content?: string; children?: string[]}[]> {
+  const documents = client
+    .db("diaform")
+    .collection("things")
+    .find({user: userId.name});
   return documents.project({name: 1, content: 1, children: 1, _id: 0}).toArray();
 }
 
 export async function thingExists(userId: UserId, thing: string): Promise<boolean> {
-  return await client.db("diaform").collection("things").find({user: userId.name, name: thing}).count() > 0;
+  return (
+    (await client
+      .db("diaform")
+      .collection("things")
+      .find({user: userId.name, name: thing})
+      .count()) > 0
+  );
 }
 
-export async function updateThing(userId: UserId, thing: string, content: string, children: string[]): Promise<void> {
-  await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, {$set: {content, children}}, {upsert: true});
+export async function updateThing(
+  userId: UserId,
+  thing: string,
+  content: string,
+  children: string[],
+): Promise<void> {
+  await client
+    .db("diaform")
+    .collection("things")
+    .updateOne({user: userId.name, name: thing}, {$set: {content, children}}, {upsert: true});
 }
 
 export async function deleteThing(userId: UserId, thing: string): Promise<void> {
-  await client.db("diaform").collection("things").deleteOne({user: userId.name, name: thing});
+  await client
+    .db("diaform")
+    .collection("things")
+    .deleteOne({user: userId.name, name: thing});
 }
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
-  await client.db("diaform").collection("things").updateOne({user: userId.name, name: thing}, {$set: {content}}, {upsert: true});
+  await client
+    .db("diaform")
+    .collection("things")
+    .updateOne({user: userId.name, name: thing}, {$set: {content}}, {upsert: true});
 }
 
 export async function getThingData(userId: UserId, thing: string): Promise<Communication.ThingData> {
-  const data = await client.db("diaform").collection("things").findOne({user: userId.name, name: thing});
+  const data = await client
+    .db("diaform")
+    .collection("things")
+    .findOne({user: userId.name, name: thing});
   return {content: data.content ?? "", children: data.children ?? []};
+}
+
+export async function deleteAllUserData(userId: UserId): Promise<void> {
+  await client
+    .db("diaform")
+    .collection("users")
+    .deleteOne({name: userId.name});
+  await client
+    .db("diaform")
+    .collection("things")
+    .deleteMany({user: userId.name});
 }

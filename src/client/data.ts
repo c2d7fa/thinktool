@@ -10,7 +10,8 @@ export type Connection = {connectionId: number};
 
 export interface ThingData {
   content: string;
-  connections: Connection[];
+  children: Connection[];
+  parents: Connection[];
 }
 
 export interface ConnectionData {
@@ -25,14 +26,23 @@ export interface State {
 
 //#region Fundamental operations
 
-export const empty: State = {things: {"0": {content: "root", connections: []}}, connections: {}, nextConnectionId: 0};
+export const empty: State = {
+  things: {"0": {content: "Welcome", children: [], parents: []}},
+  connections: {},
+  nextConnectionId: 0,
+};
 
-export function connectionParent(state: State, connection: Connection): string { return state.connections[connection.connectionId].parent; }
-export function connectionChild(state: State, connection: Connection): string { return state.connections[connection.connectionId].child; }
+export function connectionParent(state: State, connection: Connection): string {
+  return state.connections[connection.connectionId].parent;
+}
+
+export function connectionChild(state: State, connection: Connection): string {
+  return state.connections[connection.connectionId].child;
+}
 
 export function childConnections(state: State, thing: string): Connection[] {
   if (!exists(state, thing)) return [];
-  return state.things[thing].connections.filter(c => connectionParent(state, c) === thing);
+  return state.things[thing].children;
 }
 
 export function content(things: State, thing: string): string {
@@ -46,32 +56,79 @@ export function setContent(state: State, thing: string, newContent: string): Sta
 
 export function insertChild(state: State, parent: string, child: string, index: number): [State, Connection] {
   let result = {...state, nextConnectionId: state.nextConnectionId + 1};
-  result = {...result, connections: {...state.connections, [state.nextConnectionId]: {parent, child, tag: null}}};
+  result = {
+    ...result,
+    connections: {...state.connections, [state.nextConnectionId]: {parent, child, tag: null}},
+  };
   if (!exists(result, child)) {
     // We must store the child-to-parent connection in the child node; however,
     // sometimes it makes sense to add a parent before its child, for example
     // when loading a cyclic structure. Thus, we may need to create the child
     // first.
-    result = create(result, child)[0]
+    result = create(result, child)[0];
   }
-  result = {...result, things: {...result.things, [child]: {...result.things[child], connections: G.splice(result.things[child].connections, index, 0, {connectionId: state.nextConnectionId})}}};
-  result = {...result, things: {...result.things, [parent]: {...result.things[parent], connections: G.splice(result.things[parent].connections, index, 0, {connectionId: state.nextConnectionId})}}};
+  result = {
+    ...result,
+    things: {
+      ...result.things,
+      [child]: {
+        ...result.things[child],
+        parents: [{connectionId: state.nextConnectionId}, ...result.things[child].parents],
+      },
+    },
+  };
+  result = {
+    ...result,
+    things: {
+      ...result.things,
+      [parent]: {
+        ...result.things[parent],
+        children: G.splice(result.things[parent].children, index, 0, {connectionId: state.nextConnectionId}),
+      },
+    },
+  };
   return [result, {connectionId: state.nextConnectionId}];
 }
 
 export function removeChild(state: State, parent: string, index: number) {
   let result = state;
-  const removedConnection = state.things[parent].connections[index]; // Connection to remove
+  const removedConnection = state.things[parent].children[index]; // Connection to remove
   const child = connectionChild(state, removedConnection);
-  result = {...result, things: {...result.things, [parent]: {...result.things[parent], connections: G.removeBy(result.things[parent].connections, removedConnection, (x, y) => x.connectionId === y.connectionId)}}};
-  result = {...result, things: {...result.things, [child]: {...result.things[child], connections: G.removeBy(result.things[child].connections, removedConnection, (x, y) => x.connectionId === y.connectionId)}}};
+  result = {
+    ...result,
+    things: {
+      ...result.things,
+      [parent]: {
+        ...result.things[parent],
+        children: G.removeBy(
+          result.things[parent].children,
+          removedConnection,
+          (x, y) => x.connectionId === y.connectionId,
+        ),
+      },
+    },
+  };
+  result = {
+    ...result,
+    things: {
+      ...result.things,
+      [child]: {
+        ...result.things[child],
+        parents: G.removeBy(
+          result.things[child].parents,
+          removedConnection,
+          (x, y) => x.connectionId === y.connectionId,
+        ),
+      },
+    },
+  };
   result = {...result, connections: G.removeKeyNumeric(result.connections, removedConnection.connectionId)};
   return result;
 }
 
 export function create(state: State, customId?: string): [State, string] {
   const newId = customId ?? generateShortId();
-  return [{...state, things: {...state.things, [newId]: {content: "", connections: []}}}, newId];
+  return [{...state, things: {...state.things, [newId]: {content: "", children: [], parents: []}}}, newId];
 }
 
 export function forget(state: State, thing: string): State {
@@ -86,11 +143,17 @@ export function exists(state: State, thing: string): boolean {
 
 export function parents(state: State, child: string): string[] {
   if (!exists(state, child)) return [];
-  return state.things[child].connections.filter(c => connectionChild(state, c) === child).map(c => connectionParent(state, c));
+  return state.things[child].parents.map((c) => connectionParent(state, c));
 }
 
 export function setTag(state: State, connection: Connection, tag: string | null): State {
-  return {...state, connections: {...state.connections, [connection.connectionId]: {...state.connections[connection.connectionId], tag}}};
+  return {
+    ...state,
+    connections: {
+      ...state.connections,
+      [connection.connectionId]: {...state.connections[connection.connectionId], tag},
+    },
+  };
 }
 
 export function tag(state: State, connection: Connection): string | null {
@@ -100,7 +163,7 @@ export function tag(state: State, connection: Connection): string | null {
 //#endregion
 
 export function children(state: State, thing: string): string[] {
-  return childConnections(state, thing).map(c => connectionChild(state, c));
+  return childConnections(state, thing).map((c) => connectionChild(state, c));
 }
 
 export function hasChildren(things: State, thing: string): boolean {
@@ -124,13 +187,13 @@ export function replaceChildren(state: State, parent: string, newChildren: strin
     result = addChild(result, parent, child)[0];
   }
 
-  return result
+  return result;
 }
 
 function generateShortId(): string {
-  const d = Math.floor((new Date().getTime()) / 1000) % (36 * 36 * 36 * 36 * 36 * 36);
+  const d = Math.floor(new Date().getTime() / 1000) % (36 * 36 * 36 * 36 * 36 * 36);
   const r = Math.floor(Math.random() * 36 * 36);
-  const x = (d * 36 * 36) + r;
+  const x = d * 36 * 36 + r;
   return x.toString(36);
 }
 
@@ -146,17 +209,20 @@ export function remove(state: State, removedThing: string): State {
 }
 
 export function otherParents(state: State, child: string, parent?: string): string[] {
-  return parents(state, child).filter(p => p !== parent);
+  return parents(state, child).filter((p) => p !== parent);
 }
 
 // Search
 
 export function contentText(state: State, thing: string): string {
   function contentText_(thing: string, seen: string[]): string {
-    return content(state, thing).replace(/#([a-z0-9]+)/g, (match: string, thing: string, offset: number, string: string) => {
-      if (seen.includes(thing)) return "...";
-      return contentText_(thing, [...seen, thing]);
-    });
+    return content(state, thing).replace(
+      /#([a-z0-9]+)/g,
+      (match: string, thing: string, offset: number, string: string) => {
+        if (seen.includes(thing)) return "...";
+        return contentText_(thing, [...seen, thing]);
+      },
+    );
   }
 
   return contentText_(thing, []);
@@ -168,7 +234,11 @@ export function contentText(state: State, thing: string): string {
 export function search(state: State, text: string): string[] {
   let results: string[] = [];
   for (const thing in state.things) {
-    if (contentText(state, thing).toLowerCase().includes(text.toLowerCase())) {
+    if (
+      contentText(state, thing)
+        .toLowerCase()
+        .includes(text.toLowerCase())
+    ) {
       results = [...results, thing];
     }
   }

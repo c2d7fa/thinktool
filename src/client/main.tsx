@@ -1,4 +1,4 @@
-import "regenerator-runtime/runtime";  // Required by Parcel for reasons that I do not understand.
+import "regenerator-runtime/runtime"; // Required by Parcel for reasons that I do not understand.
 
 import {State} from "./data";
 import {Tree} from "./tree";
@@ -105,7 +105,10 @@ function useBatched(cooldown: number): {update(key: string, callback: () => void
 // In theory, we would prefer to write our code such that we always know exactly
 // what to send to the server. In practice, we use diffState quite frequently.
 
-function diffState(oldState: State, newState: State): {added: string[]; deleted: string[]; changed: string[]} {
+function diffState(
+  oldState: State,
+  newState: State,
+): {added: string[]; deleted: string[]; changed: string[]} {
   const added: string[] = [];
   const deleted: string[] = [];
   const changed: string[] = [];
@@ -137,7 +140,9 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
   function setContent(thing: string, content: string): void {
     setLocalState(Data.setContent(state, thing, content));
     if (!args?.local) {
-      batched.update(`${thing}/content`, () => { Server.setContent(thing, content) });
+      batched.update(`${thing}/content`, () => {
+        Server.setContent(thing, content);
+      });
     }
   }
 
@@ -154,7 +159,10 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
           Server.deleteThing(thing);
         }
         for (const thing of [...diff.added, ...diff.changed]) {
-          Server.putThing(thing, {content: Data.content(newState, thing), children: Data.children(newState, thing)});
+          Server.putThing(thing, {
+            content: Data.content(newState, thing),
+            children: Data.children(newState, thing),
+          });
         }
       }
     }
@@ -174,7 +182,10 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
         Server.deleteThing(thing);
       }
       for (const thing of [...diff.added, ...diff.changed]) {
-        Server.putThing(thing, {content: Data.content(oldState, thing), children: Data.children(oldState, thing)});
+        Server.putThing(thing, {
+          content: Data.content(oldState, thing),
+          children: Data.children(oldState, thing),
+        });
       }
     }
   }
@@ -207,10 +218,34 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
 
   const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
 
-  return {state, setState, setLocalState, setContent, undo: undo_, updateLocalState: (update) => { setLocalState(update); setTree(T.refresh(tree, update(state))) }, selectedThing, setSelectedThing, tree, setTree, drag, setDrag};
+  return {
+    state,
+    setState,
+    setLocalState,
+    setContent,
+    undo: undo_,
+    updateLocalState: (update) => {
+      setLocalState(update);
+      setTree(T.refresh(tree, update(state)));
+    },
+    selectedThing,
+    setSelectedThing,
+    tree,
+    setTree,
+    drag,
+    setDrag,
+  };
 }
 
-function App({initialState, username, args}: {initialState: State; username: string; args?: {local: boolean}}) {
+function App({
+  initialState,
+  username,
+  args,
+}: {
+  initialState: State;
+  username: string;
+  args?: {local: boolean};
+}) {
   const context = useContext(initialState, args);
 
   // If the same user is connected through multiple clients, we want to be able
@@ -224,7 +259,7 @@ function App({initialState, username, args}: {initialState: State; username: str
   // dependencies makes it reconnect every time any change is made to the state
   // (e.g. editing the content of an item).
   React.useEffect(() => {
-    if (args?.local) return
+    if (args?.local) return;
 
     return Server.onChanges(async (changes) => {
       for (const changedThing of changes) {
@@ -232,15 +267,15 @@ function App({initialState, username, args}: {initialState: State; username: str
 
         if (thingData === null) {
           // Thing was deleted
-          context.updateLocalState(state => Data.remove(state, changedThing));
+          context.updateLocalState((state) => Data.remove(state, changedThing));
           continue;
         }
 
-        context.updateLocalState(state => {
+        context.updateLocalState((state) => {
           let newState = state;
 
           if (!Data.exists(newState, changedThing)) {
-          // A new item was created
+            // A new item was created
             newState = Data.create(newState, changedThing)[0];
           }
 
@@ -316,11 +351,21 @@ function App({initialState, username, args}: {initialState: State; username: str
     if (context.drag.finished) {
       if (context.drag.current !== null && context.drag.target !== null && context.drag.current.id !== null) {
         if (context.drag.finished === "copy") {
-          const [newState, newTree, newId] = T.copyToAbove(context.state, context.tree, context.drag.current, context.drag.target);
+          const [newState, newTree, newId] = T.copyToAbove(
+            context.state,
+            context.tree,
+            context.drag.current,
+            context.drag.target,
+          );
           context.setState(newState);
           context.setTree(T.focus(newTree, newId));
         } else {
-          const [newState, newTree] = T.moveToAbove(context.state, context.tree, context.drag.current, context.drag.target);
+          const [newState, newTree] = T.moveToAbove(
+            context.state,
+            context.tree,
+            context.drag.current,
+            context.drag.target,
+          );
           context.setState(newState);
           context.setTree(newTree);
         }
@@ -330,14 +375,23 @@ function App({initialState, username, args}: {initialState: State; username: str
     }
   }, [context.drag]);
 
-  return <>
-    <div className="top-bar">
-      <Search context={context}/>
-      <div id="current-user"><span className="username">{username}</span> <a className="log-out" href={Server.logOutUrl}>log out</a></div>
-    </div>
-    <ThingOverview context={context}/>
-    <Toolbar context={context}/>
-  </>;
+  return (
+    <>
+      <div className="top-bar">
+        <Search context={context} />
+        <div id="current-user">
+          <a className="username" href="/user.html">
+            {username}
+          </a>
+          <a className="log-out" href={Server.logOutUrl}>
+            log out
+          </a>
+        </div>
+      </div>
+      <ThingOverview context={context} />
+      <Toolbar context={context} />
+    </>
+  );
 }
 
 function actionsWith(context: Context, node: T.NodeRef) {
@@ -410,8 +464,25 @@ function actionsWith(context: Context, node: T.NodeRef) {
       const [newState, newTree] = T.setTag(context.state, context.tree, node, null);
       context.setState(newState);
       context.setTree(newTree);
-    }
+    },
   };
+}
+
+function ToolbarGroup(props: {children: React.ReactNode; title?: string}) {
+  if (props.title === undefined) {
+    return (
+      <div className="toolbar-group unnamed-toolbar-group">
+        <div>{props.children}</div>
+      </div>
+    );
+  } else {
+    return (
+      <div className="toolbar-group named-toolbar-group">
+        <h6>{props.title}</h6>
+        <div>{props.children}</div>
+      </div>
+    );
+  }
 }
 
 function Toolbar(props: {context: Context}) {
@@ -420,37 +491,133 @@ function Toolbar(props: {context: Context}) {
   const focused = T.focused(props.context.tree);
 
   function actions() {
-    if (focused === null) throw "invalid state"; // TODO: Make it so that user can't click buttons here
+    if (focused === null) throw "invalid state"; // [TODO] Make it so that user can't click buttons here
     return actionsWith(props.context, focused);
   }
 
-  return <>
-    <div className="toolbar">
-      <button onClick={() => actions().zoom()} title="Zoom in on selected item [middle-click bullet]">Zoom</button>
-      <button onClick={() => actions().createSiblingAfter()} title="Create a new item as a sibling of the currently selected item [enter/ctrl+enter]">New</button>
-      <button onClick={() => actions().removeFromParent()} title="Remove the selected item from its parent. This does not delete the item. [alt+backspace]">Remove</button>
-      <button onClick={() => actions().unindent()} title="Unindent the selected item [ctrl+alt+left]">Unindent</button>
-      <button onClick={() => actions().indent()} title="Indent the selected item [ctrl+alt+right]">Indent</button>
-      <button onClick={() => actions().moveUp()} title="Move the selected item up [ctrl+alt+up]">Up</button>
-      <button onClick={() => actions().moveDown()} title="Move the selected item down [ctrl+alt+down]">Down</button>
-      <button onClick={() => actions().createChild()} title="Create a new child of the selected item [alt+C]">New Child</button>
-      <button onClick={() => actions().clone()} title="Create a copy of the selected item [ctrl+mouse drag]">Clone</button>
-      <button onClick={() => actions().delete()} title="Delete the selected item. If this item has other parents, it will be removed from *all* parents. [alt+delete]">Delete</button>
-      <button onClick={() => setShowTagPopup(true)} title="Set the connection tag to an existing item. [alt+t]">Tag</button>
-      <button onClick={() => actions().untag()} title="Remove the current connection tag. [alt+shift+t]">Untag</button>
-    </div>
-    { showTagPopup &&
+  const [showPopup, setShowPopup] = React.useState<"child" | null>(null);
+
+  const popup = (() => {
+    if (showPopup === null) return null;
+    if (focused === null) throw "invalid state"; // [TODO] Make it so that user can't click buttons here
+    return (
       <ThingSelectPopup
-        hide={() => setShowTagPopup(false)}
-        state={props.context.state} submit={(tag: string) => {
-          if (focused === null) return;
-          const [newState, newTree] = T.setTag(props.context.state, props.context.tree, focused, tag);
-          props.context.setState(newState);
-          props.context.setTree(newTree);
+        hide={() => setShowPopup(null)}
+        state={props.context.state}
+        submit={(thing: string) => {
+          if (showPopup === "child") {
+            const [newState, newTree] = T.insertChild(
+              props.context.state,
+              props.context.tree,
+              focused,
+              thing,
+              0,
+            );
+            props.context.setState(newState);
+            props.context.setTree(newTree);
+          }
         }}
       />
-    }
-  </>;
+    );
+  })();
+
+  return (
+    <div className="toolbar">
+      <ToolbarGroup>
+        <button onClick={() => actions().zoom()} title="Zoom in on selected item [middle-click bullet]">
+          Zoom
+        </button>
+      </ToolbarGroup>
+      <ToolbarGroup>
+        <button
+          onClick={() => actions().createSiblingAfter()}
+          title="Create a new item as a sibling of the currently selected item [enter/ctrl+enter]"
+        >
+          New
+        </button>
+        <button
+          onClick={() => actions().createChild()}
+          title="Create a new child of the selected item [alt+enter]"
+        >
+          New Child
+        </button>
+        <button
+          onClick={() => actions().removeFromParent()}
+          title="Remove the selected item from its parent. This does not delete the item. [alt+backspace]"
+        >
+          Remove
+        </button>
+        <button
+          onClick={() => actions().clone()}
+          title="Create a copy of the selected item [ctrl+mouse drag]"
+        >
+          Clone
+        </button>
+      </ToolbarGroup>
+      <ToolbarGroup title="Move">
+        <button onClick={() => actions().unindent()} title="Unindent the selected item [ctrl+alt+left]">
+          Unindent
+        </button>
+        <button onClick={() => actions().indent()} title="Indent the selected item [ctrl+alt+right]">
+          Indent
+        </button>
+        <button onClick={() => actions().moveUp()} title="Move the selected item up [ctrl+alt+up]">
+          Up
+        </button>
+        <button onClick={() => actions().moveDown()} title="Move the selected item down [ctrl+alt+down]">
+          Down
+        </button>
+      </ToolbarGroup>
+      <ToolbarGroup title="Insert">
+        <button
+          onClick={() => setShowPopup("child")}
+          title="Insert an existing item as a child of the currently selected item. [alt+c]"
+        >
+          Child
+        </button>
+        <button
+          onClick={() => {
+            alert("Not yet implemented. Use Alt+L to insert a link instead.");
+          }}
+          title="Insert an existing item as a link at the cursor position. [alt+l]"
+        >
+          Link
+        </button>
+      </ToolbarGroup>
+      <ToolbarGroup>
+        <button
+          onClick={() => setShowTagPopup(true)}
+          title="Set the connection tag to an existing item. [alt+t]"
+        >
+          Tag
+        </button>
+        <button onClick={() => actions().untag()} title="Remove the current connection tag. [alt+shift+t]">
+          Untag
+        </button>
+      </ToolbarGroup>
+      <ToolbarGroup>
+        <button
+          onClick={() => actions().delete()}
+          title="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents. [alt+delete]"
+        >
+          Destroy
+        </button>
+      </ToolbarGroup>
+      {popup}
+      {showTagPopup && (
+        <ThingSelectPopup
+          hide={() => setShowTagPopup(false)}
+          state={props.context.state}
+          submit={(tag: string) => {
+            if (focused === null) return;
+            const [newState, newTree] = T.setTag(props.context.state, props.context.tree, focused, tag);
+            props.context.setState(newState);
+            props.context.setTree(newTree);
+          }}
+        />
+      )}
+    </div>
+  );
 }
 
 function ThingOverview(p: {context: Context}) {
@@ -458,26 +625,31 @@ function ThingOverview(p: {context: Context}) {
 
   return (
     <div className="overview">
-      <ParentsOutline context={p.context}/>
+      <ParentsOutline context={p.context} />
       <div className="overview-main">
         <C.Content
           things={p.context.state}
           className="selected-content"
-          getContentText={thing => Data.contentText(p.context.state, thing)}
+          getContentText={(thing) => Data.contentText(p.context.state, thing)}
           text={Data.content(p.context.state, p.context.selectedThing)}
-          setText={(text) => { p.context.setContent(p.context.selectedThing, text) }}/>
+          setText={(text) => {
+            p.context.setContent(p.context.selectedThing, text);
+          }}
+        />
         <div className="children">
-          <Outline context={p.context}/>
+          <Outline context={p.context} />
         </div>
       </div>
-      { hasReferences && <>
-        <div className="references">
-          <div className="references-inner">
-            <h1 className="link-section">References</h1>
-            <ReferencesOutline context={p.context}/>
+      {hasReferences && (
+        <>
+          <div className="references">
+            <div className="references-inner">
+              <h1 className="link-section">References</h1>
+              <ReferencesOutline context={p.context} />
+            </div>
           </div>
-        </div>
-      </> }
+        </>
+      )}
     </div>
   );
 }
@@ -487,32 +659,40 @@ function ThingOverview(p: {context: Context}) {
 // ParentsOutline should remove parent from child).
 
 function ParentsOutline(p: {context: Context}) {
-  const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map((child: T.NodeRef) => {
-    return <ExpandableItem key={child.id} node={child} context={p.context}/>;
-  });
+  const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map(
+    (child: T.NodeRef) => {
+      return <ExpandableItem key={child.id} node={child} context={p.context} />;
+    },
+  );
 
   const subtree = <ul className="outline-tree">{parentItems}</ul>;
 
   if (parentItems.length === 0) {
-    return <div className="parents">
-      <div className="parents-inner">
-        <span className="no-parents">No parents</span>
+    return (
+      <div className="parents">
+        <div className="parents-inner">
+          <span className="no-parents">No parents</span>
+        </div>
       </div>
-    </div>;
+    );
   } else {
-    return <div className="parents">
-      <div className="parents-inner">
-        <h1 className="link-section">Parents</h1>
-        {subtree}
+    return (
+      <div className="parents">
+        <div className="parents-inner">
+          <h1 className="link-section">Parents</h1>
+          {subtree}
+        </div>
       </div>
-    </div>;
+    );
   }
 }
 
 function ReferencesOutline(p: {context: Context}) {
-  const referenceItems = T.backreferencesChildren(p.context.tree, T.root(p.context.tree)).map((child: T.NodeRef) => {
-    return <ExpandableItem key={child.id} node={child} context={p.context}/>;
-  });
+  const referenceItems = T.backreferencesChildren(p.context.tree, T.root(p.context.tree)).map(
+    (child: T.NodeRef) => {
+      return <ExpandableItem key={child.id} node={child} context={p.context} />;
+    },
+  );
 
   if (referenceItems.length === 0) {
     return null;
@@ -524,14 +704,20 @@ function ReferencesOutline(p: {context: Context}) {
 function Outline(p: {context: Context}) {
   return (
     <Subtree context={p.context} parent={T.root(p.context.tree)} omitReferences={true}>
-      { T.children(p.context.tree, T.root(p.context.tree)).length === 0 && <PlaceholderItem context={p.context} parent={T.root(p.context.tree)}/> }
+      {T.children(p.context.tree, T.root(p.context.tree)).length === 0 && (
+        <PlaceholderItem context={p.context} parent={T.root(p.context.tree)} />
+      )}
     </Subtree>
   );
 }
 
 function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   function onFocus(ev: React.FocusEvent<HTMLDivElement>): void {
-    const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, T.root(p.context.tree));
+    const [newState, newTree, _, newId] = T.createChild(
+      p.context.state,
+      p.context.tree,
+      T.root(p.context.tree),
+    );
     p.context.setState(newState);
     p.context.setTree(T.focus(newTree, newId));
     ev.stopPropagation();
@@ -541,14 +727,24 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   return (
     <li className="outline-item">
       <span className="item-line">
-        <Bullet beginDrag={() => { return }} expanded={true} toggle={() => { return }}/>
-        <span className="content placeholder-child" onFocus={onFocus} tabIndex={0}>New Item</span>
+        <Bullet
+          beginDrag={() => {
+            return;
+          }}
+          expanded={true}
+          toggle={() => {
+            return;
+          }}
+        />
+        <span className="content placeholder-child" onFocus={onFocus} tabIndex={0}>
+          New Item
+        </span>
       </span>
     </li>
   );
 }
 
-function ConnectionTag(p: {context: Context, tag: string}) {
+function ConnectionTag(p: {context: Context; tag: string}) {
   return <span className="connection-tag">{Data.contentText(p.context.state, p.tag)}</span>;
 }
 
@@ -564,43 +760,39 @@ function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRe
   }
 
   let className = "item-line";
-  if (p.className)
-    className += " " + p.className;
-  if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id)
-    className += " drop-target";
-  if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null)
-    className += " drag-source";
+
+  if (p.className) className += " " + p.className;
+  if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id) className += " drop-target";
+  if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null) className += " drag-source";
 
   const tag = T.tag(p.context.state, p.context.tree, p.node);
 
-  const subtree =
-    <Subtree
-      context={p.context}
-      parent={p.node}
-      grandparent={p.parent}/>;
+  const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
 
   return (
     <li className="outline-item">
-      <span className={className} data-id={p.node.id}> {/* data-id is used for drag and drop. */}
+      <span className={className} data-id={p.node.id}>
+        {/* data-id is used for drag and drop. */}
         <Bullet
           beginDrag={beginDrag}
           expanded={T.expanded(p.context.tree, p.node)}
           toggle={toggle}
-          onMiddleClick={() => { p.context.setSelectedThing(T.thing(p.context.tree, p.node)) }}/>
-        { tag !== null && <ConnectionTag context={p.context} tag={tag}/> }
-        <Content context={p.context} node={p.node}/>
+          onMiddleClick={() => {
+            p.context.setSelectedThing(T.thing(p.context.tree, p.node));
+          }}
+        />
+        {tag !== null && <ConnectionTag context={p.context} tag={tag} />}
+        <Content context={p.context} node={p.node} />
       </span>
-      { expanded && subtree }
+      {expanded && subtree}
     </li>
   );
 }
 
 function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void; onMiddleClick?(): void}) {
   function onAuxClick(ev: React.MouseEvent<never>): void {
-    if (ev.button === 1) { // Middle click
-      if (p.onMiddleClick !== undefined)
-        p.onMiddleClick();
-    }
+    // ev.button === 1 checks for middle click.
+    if (ev.button === 1 && p.onMiddleClick !== undefined) p.onMiddleClick();
   }
 
   return (
@@ -609,7 +801,8 @@ function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void
       onMouseDown={p.beginDrag}
       onTouchStart={p.beginDrag}
       onClick={() => p.toggle()}
-      onAuxClick={onAuxClick}/>
+      onAuxClick={onAuxClick}
+    />
   );
 }
 
@@ -619,7 +812,10 @@ function Content(p: {context: Context; node: T.NodeRef}) {
 
   const actions = actionsWith(p.context, p.node);
 
-  function onKeyDown(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean {
+  function onKeyDown(
+    ev: React.KeyboardEvent<{}>,
+    notes: {startOfItem: boolean; endOfItem: boolean},
+  ): boolean {
     if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
       actions.indent();
       return true;
@@ -681,15 +877,17 @@ function Content(p: {context: Context; node: T.NodeRef}) {
 
   const insertChildPopup = (() => {
     if (showChildPopup) {
-      return <ThingSelectPopup
-        hide={() => setShowChildPopup(false)}
-        state={p.context.state}
-        submit={(child: string) => {
-          const [newState, newTree] = T.insertChild(p.context.state, p.context.tree, p.node, child, 0);
-          p.context.setState(newState);
-          p.context.setTree(newTree);
-        }}
-      />;
+      return (
+        <ThingSelectPopup
+          hide={() => setShowChildPopup(false)}
+          state={p.context.state}
+          submit={(child: string) => {
+            const [newState, newTree] = T.insertChild(p.context.state, p.context.tree, p.node, child, 0);
+            p.context.setState(newState);
+            p.context.setTree(newTree);
+          }}
+        />
+      );
     } else {
       return null;
     }
@@ -697,33 +895,45 @@ function Content(p: {context: Context; node: T.NodeRef}) {
 
   const tagPopup = (() => {
     if (showTagPopup) {
-      return <ThingSelectPopup
-        hide={() => setShowTagPopup(false)}
-        state={p.context.state} submit={(tag: string) => {
-          if (p.node === null) return;
-          const [newState, newTree] = T.setTag(p.context.state, p.context.tree, p.node, tag);
-          p.context.setState(newState);
-          p.context.setTree(newTree);
-        }}
-      />
+      return (
+        <ThingSelectPopup
+          hide={() => setShowTagPopup(false)}
+          state={p.context.state}
+          submit={(tag: string) => {
+            if (p.node === null) return;
+            const [newState, newTree] = T.setTag(p.context.state, p.context.tree, p.node, tag);
+            p.context.setState(newState);
+            p.context.setTree(newTree);
+          }}
+        />
+      );
     }
   })();
 
-  return <>
-    <C.Content
-      things={p.context.state}
-      className="content"
-      getContentText={thing => Data.contentText(p.context.state, thing)}
-      focused={T.hasFocus(p.context.tree, p.node)}
-      text={Data.content(p.context.state, T.thing(p.context.tree, p.node))}
-      setText={(text) => { p.context.setContent(T.thing(p.context.tree, p.node), text) }}
-      onFocus={() => { p.context.setTree(T.focus(p.context.tree, p.node)) }}
-      isLinkOpen={(thing) => T.isLinkOpen(p.context.tree, p.node, thing)}
-      openInternalLink={(thing) => p.context.setTree(T.toggleLink(p.context.state, p.context.tree, p.node, thing))}
-      onKeyDown={onKeyDown}/>
-    { insertChildPopup }
-    { tagPopup }
-  </>;
+  return (
+    <>
+      <C.Content
+        things={p.context.state}
+        className="content"
+        getContentText={(thing) => Data.contentText(p.context.state, thing)}
+        focused={T.hasFocus(p.context.tree, p.node)}
+        text={Data.content(p.context.state, T.thing(p.context.tree, p.node))}
+        setText={(text) => {
+          p.context.setContent(T.thing(p.context.tree, p.node), text);
+        }}
+        onFocus={() => {
+          p.context.setTree(T.focus(p.context.tree, p.node));
+        }}
+        isLinkOpen={(thing) => T.isLinkOpen(p.context.tree, p.node, thing)}
+        openInternalLink={(thing) =>
+          p.context.setTree(T.toggleLink(p.context.state, p.context.tree, p.node, thing))
+        }
+        onKeyDown={onKeyDown}
+      />
+      {insertChildPopup}
+      {tagPopup}
+    </>
+  );
 }
 
 function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
@@ -744,25 +954,27 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
         />
         <span className="backreferences-text">{backreferences.length} references</span>
       </span>
-      { T.backreferencesExpanded(p.context.tree, p.parent) && <BackreferencesSubtree parent={p.parent} context={p.context}/> }
+      {T.backreferencesExpanded(p.context.tree, p.parent) && (
+        <BackreferencesSubtree parent={p.parent} context={p.context} />
+      )}
     </li>
   );
 }
 
 function BackreferencesSubtree(p: {context: Context; parent: T.NodeRef}) {
-  const children = T.backreferencesChildren(p.context.tree, p.parent).map(child => {
-    return <ExpandableItem key={child.id} node={child} context={p.context}/>;
+  const children = T.backreferencesChildren(p.context.tree, p.parent).map((child) => {
+    return <ExpandableItem key={child.id} node={child} context={p.context} />;
   });
 
-  return (
-    <ul className="outline-tree">
-      {children}
-    </ul>
-  );
+  return <ul className="outline-tree">{children}</ul>;
 }
 
 function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef}) {
-  const otherParents = Data.otherParents(p.context.state, T.thing(p.context.tree, p.parent), p.grandparent && T.thing(p.context.tree, p.grandparent));
+  const otherParents = Data.otherParents(
+    p.context.state,
+    T.thing(p.context.tree, p.parent),
+    p.grandparent && T.thing(p.context.tree, p.grandparent),
+  );
 
   if (otherParents.length === 0) {
     return null;
@@ -776,32 +988,46 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
           expanded={T.otherParentsExpanded(p.context.tree, p.parent)}
           toggle={() => p.context.setTree(T.toggleOtherParents(p.context.state, p.context.tree, p.parent))}
         />
-        <span className="other-parents-text">{otherParents.length} {p.grandparent ? " other parents" : "parents"}</span>
+        <span className="other-parents-text">
+          {otherParents.length} {p.grandparent ? " other parents" : "parents"}
+        </span>
       </span>
-      { T.otherParentsExpanded(p.context.tree, p.parent) && <OtherParentsSubtree parent={p.parent} grandparent={p.grandparent} context={p.context}/>}
+      {T.otherParentsExpanded(p.context.tree, p.parent) && (
+        <OtherParentsSubtree parent={p.parent} grandparent={p.grandparent} context={p.context} />
+      )}
     </li>
   );
 }
 
 function OtherParentsSubtree(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef}) {
-  const children = T.otherParentsChildren(p.context.tree, p.parent).map(child => {
-    return <ExpandableItem key={child.id} node={child} context={p.context}/>;
+  const children = T.otherParentsChildren(p.context.tree, p.parent).map((child) => {
+    return <ExpandableItem key={child.id} node={child} context={p.context} />;
   });
 
-  return (
-    <ul className="outline-tree">
-      {children}
-    </ul>
-  );
+  return <ul className="outline-tree">{children}</ul>;
 }
 
-function Subtree(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef; children?: React.ReactNode[] | React.ReactNode; omitReferences?: boolean}) {
-  const children = T.children(p.context.tree, p.parent).map(child => {
-    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context}/>;
+function Subtree(p: {
+  context: Context;
+  parent: T.NodeRef;
+  grandparent?: T.NodeRef;
+  children?: React.ReactNode[] | React.ReactNode;
+  omitReferences?: boolean;
+}) {
+  const children = T.children(p.context.tree, p.parent).map((child) => {
+    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
   });
 
-  const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map(child => {
-    return <ExpandableItem className="opened-link" key={child.id} node={child} parent={p.parent} context={p.context}/>;
+  const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map((child) => {
+    return (
+      <ExpandableItem
+        className="opened-link"
+        key={child.id}
+        node={child}
+        parent={p.parent}
+        context={p.context}
+      />
+    );
   });
 
   return (
@@ -809,33 +1035,71 @@ function Subtree(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRe
       {openedLinksChildren}
       {children}
       {p.children}
-      { !p.omitReferences && <BackreferencesItem key="backreferences" parent={p.parent} context={p.context}/> }
-      { !p.omitReferences && <OtherParentsItem key="other-parents" parent={p.parent} grandparent={p.grandparent} context={p.context}/> }
+      {!p.omitReferences && <BackreferencesItem key="backreferences" parent={p.parent} context={p.context} />}
+      {!p.omitReferences && (
+        <OtherParentsItem
+          key="other-parents"
+          parent={p.parent}
+          grandparent={p.grandparent}
+          context={p.context}
+        />
+      )}
     </ul>
+  );
+}
+
+// User Page
+
+function UserPage(props: {username: string}) {
+  return (
+    <div>
+      <div>
+        You are <strong>{props.username}</strong>.
+      </div>
+      <button
+        onClick={async () => {
+          if (confirm("Are you sure you want to PERMANENTLY DELETE YOUR ACCOUNT AND ALL YOUR DATA?")) {
+            await Server.deleteAccount(props.username);
+          }
+          window.location.href = "/";
+        }}
+      >
+        Delete account and all data
+      </button>
+    </div>
   );
 }
 
 // ==
 
-async function start(): Promise<void> {
+(window as any).thinktoolApp = async () => {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
-  const isDemo = appElement.dataset.demo === "true";
 
-  if (!isDemo) {
-    try {
-      await Server.getUsername();
-    } catch (e) {
-      console.log("Got weird response from server, probably because we are not logged in. Redirecting to login page.");
-      window.location.href = "/login.html";
-    }
+  try {
+    await Server.getUsername();
+  } catch (e) {
+    console.log(
+      "Got weird response from server, probably because we are not logged in. Redirecting to login page.",
+    );
+    window.location.href = "/login.html";
   }
 
   ReactDOM.render(
-    isDemo ?
-      <App initialState={Demo.initialState} username={"demo"} args={{local: true}}/> :
-      <App initialState={await Server.getFullState() as State} username={await Server.getUsername()}/>,
-    appElement
+    <App initialState={(await Server.getFullState()) as State} username={await Server.getUsername()} />,
+    appElement,
   );
-}
+};
 
-start();
+(window as any).thinktoolDemo = async () => {
+  const appElement = document.querySelector("#app")! as HTMLDivElement;
+  Server.ping("demo");
+  ReactDOM.render(
+    <App initialState={Demo.initialState} username={"demo"} args={{local: true}} />,
+    appElement,
+  );
+};
+
+(window as any).thinktoolUser = async () => {
+  const userElement = document.querySelector("#user")! as HTMLDivElement;
+  ReactDOM.render(<UserPage username={await Server.getUsername()} />, userElement);
+};
