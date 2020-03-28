@@ -429,6 +429,13 @@ export function createSiblingBefore(
   newTree = I.updateChildren(newTree, parent_, (children) => G.splice(children, index, 0, newNode));
   newTree = focus(newTree, newNode);
 
+  // Also update other parents
+  for (const n of I.allNodes(newTree)) {
+    if (thing(newTree, n) === thing(tree, parent_) && !refEq(n, parent_)) {
+      newTree = refreshChildren(newState, newTree, n);
+    }
+  }
+
   return [newState, newTree, newThing, newNode];
 }
 
@@ -455,6 +462,13 @@ export function createSiblingAfter(
   let newTree = newTree_;
   newTree = I.updateChildren(newTree, parent_, (children) => G.splice(children, index, 0, newNode));
   newTree = focus(newTree, newNode);
+
+  // Also update other parents
+  for (const n of I.allNodes(newTree)) {
+    if (thing(newTree, n) === thing(tree, parent_) && !refEq(n, parent_)) {
+      newTree = refreshChildren(newState, newTree, n);
+    }
+  }
 
   return [newState, newTree, newThing, newNode];
 }
