@@ -454,12 +454,6 @@ function actionsWith(context: Context, node: T.NodeRef) {
       context.setTree(newTree);
     },
 
-    setTag() {
-      const [newState, newTree] = T.setTag(context.state, context.tree, node, prompt("New tag:"));
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
     untag() {
       const [newState, newTree] = T.setTag(context.state, context.tree, node, null);
       context.setState(newState);

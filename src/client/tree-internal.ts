@@ -86,7 +86,7 @@ export function children(tree: Tree, node: NodeRef): NodeRef[] {
   return getNode(tree, node).children;
 }
 
-export function loadThing(tree: Tree, thing: string): [NodeRef, Tree] {
+export function loadThing(tree: Tree, thing: string, connection?: D.Connection): [NodeRef, Tree] {
   return [
     {id: tree.nextId},
     {
@@ -96,6 +96,7 @@ export function loadThing(tree: Tree, thing: string): [NodeRef, Tree] {
         ...tree.nodes,
         [tree.nextId]: {
           thing,
+          connection,
           expanded: false,
           children: [],
           backreferences: {expanded: false, children: []},

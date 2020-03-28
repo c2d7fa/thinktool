@@ -222,7 +222,7 @@ export function loadConnection(
 ): [NodeRef, Tree] {
   const thing = D.connectionChild(state, connection);
 
-  let [newNode, newTree] = I.loadThing(tree, thing);
+  let [newNode, newTree] = I.loadThing(tree, thing, connection);
 
   // If the child has no children (including backreferences and other parents), it should be expanded by default
   if (
