@@ -530,6 +530,21 @@ export function insertChild(
   return [newState, refresh(tree, newState)];
 }
 
+export function insertSiblingAfter(
+  state: D.State,
+  tree: Tree,
+  node: NodeRef,
+  sibling: string,
+): [D.State, Tree] {
+  if (parent(tree, node) === undefined) return [state, tree];
+  return insertChild(state, tree, parent(tree, node)!, sibling, indexInParent(tree, node)! + 1);
+}
+
+export function insertParent(state: D.State, tree: Tree, node: NodeRef, parent: string): [D.State, Tree] {
+  const newState = D.addChild(state, parent, thing(tree, node))[0];
+  return [newState, refresh(tree, newState)];
+}
+
 export function removeThing(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {
   const newState = D.remove(state, thing(tree, node));
 
