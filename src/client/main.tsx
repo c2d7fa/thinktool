@@ -458,9 +458,35 @@ function Toolbar(props: {context: Context}) {
   const focused = T.focused(props.context.tree);
 
   function actions() {
-    if (focused === null) throw "invalid state"; // TODO: Make it so that user can't click buttons here
+    if (focused === null) throw "invalid state"; // [TODO] Make it so that user can't click buttons here
     return actionsWith(props.context, focused);
   }
+
+  const [showPopup, setShowPopup] = React.useState<"child" | null>(null);
+
+  const popup = (() => {
+    if (showPopup === null) return null;
+    if (focused === null) throw "invalid state"; // [TODO] Make it so that user can't click buttons here
+    return (
+      <ThingSelectPopup
+        hide={() => setShowPopup(null)}
+        state={props.context.state}
+        submit={(thing: string) => {
+          if (showPopup === "child") {
+            const [newState, newTree] = T.insertChild(
+              props.context.state,
+              props.context.tree,
+              focused,
+              thing,
+              0,
+            );
+            props.context.setState(newState);
+            props.context.setTree(newTree);
+          }
+        }}
+      />
+    );
+  })();
 
   return (
     <div className="toolbar">
@@ -491,7 +517,10 @@ function Toolbar(props: {context: Context}) {
       <button onClick={() => actions().moveDown()} title="Move the selected item down [ctrl+alt+down]">
         Down
       </button>
-      <button onClick={() => actions().createChild()} title="Create a new child of the selected item [alt+C]">
+      <button
+        onClick={() => actions().createChild()}
+        title="Create a new child of the selected item [alt+enter]"
+      >
         New Child
       </button>
       <button onClick={() => actions().clone()} title="Create a copy of the selected item [ctrl+mouse drag]">
@@ -503,6 +532,21 @@ function Toolbar(props: {context: Context}) {
       >
         Delete
       </button>
+      <button
+        onClick={() => setShowPopup("child")}
+        title="Insert an existing item as a child of the currently selected item. [alt+c]"
+      >
+        Ins. Child
+      </button>
+      <button
+        onClick={() => {
+          alert("Not yet implemented. Use Alt+L to insert a link instead.");
+        }}
+        title="Insert an existing item as a link at the cursor position. [alt+l]"
+      >
+        Ins. Link
+      </button>
+      {popup}
     </div>
   );
 }
@@ -652,7 +696,7 @@ function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRe
   return (
     <li className="outline-item">
       <span className={className} data-id={p.node.id}>
-        { /* data-id is used for drag and drop. */ }
+        {/* data-id is used for drag and drop. */}
         <Bullet
           beginDrag={beginDrag}
           expanded={T.expanded(p.context.tree, p.node)}
