@@ -2,11 +2,10 @@ import * as G from "../shared/general";
 
 export interface State {
   things: {[id: string]: ThingData};
-  connections: {[connectionId: number]: ConnectionData};
-  nextConnectionId: number;
+  connections: {[connectionId: string]: ConnectionData};
 }
 
-type Connection = {connectionId: number};
+export type Connection = {connectionId: string};
 
 export interface ThingData {
   content: string;
@@ -17,6 +16,7 @@ export interface ThingData {
 export interface ConnectionData {
   parent: string;
   child: string;
+  tag: string | null; // null is used for neutral parent-child relationship.
 }
 
 export interface State {
@@ -28,19 +28,19 @@ export interface State {
 export const empty: State = {
   things: {"0": {content: "Welcome", children: [], parents: []}},
   connections: {},
-  nextConnectionId: 0,
 };
 
-function connectionParent(state: State, connection: Connection): string {
+export function connectionParent(state: State, connection: Connection): string {
   return state.connections[connection.connectionId].parent;
 }
-function connectionChild(state: State, connection: Connection): string {
+
+export function connectionChild(state: State, connection: Connection): string {
   return state.connections[connection.connectionId].child;
 }
 
-export function children(state: State, thing: string): string[] {
+export function childConnections(state: State, thing: string): Connection[] {
   if (!exists(state, thing)) return [];
-  return state.things[thing].children.map((c) => connectionChild(state, c));
+  return state.things[thing].children;
 }
 
 export function content(things: State, thing: string): string {
@@ -52,9 +52,19 @@ export function setContent(state: State, thing: string, newContent: string): Sta
   return {...state, things: {...state.things, [thing]: {...state.things[thing], content: newContent}}};
 }
 
-export function insertChild(state: State, parent: string, child: string, index: number) {
-  let result = {...state, nextConnectionId: state.nextConnectionId + 1};
-  result = {...result, connections: {...state.connections, [state.nextConnectionId]: {parent, child}}};
+export function insertChild(
+  state: State,
+  parent: string,
+  child: string,
+  index: number,
+  customConnectionId?: string,
+): [State, Connection] {
+  let result = state;
+  const connectionId = customConnectionId ?? `c.${generateShortId()}`; // 'c.' prefix to tell where the ID came from when debugging.
+  result = {
+    ...result,
+    connections: {...state.connections, [connectionId]: {parent, child, tag: null}},
+  };
   if (!exists(result, child)) {
     // We must store the child-to-parent connection in the child node; however,
     // sometimes it makes sense to add a parent before its child, for example
@@ -68,7 +78,7 @@ export function insertChild(state: State, parent: string, child: string, index: 
       ...result.things,
       [child]: {
         ...result.things[child],
-        parents: [{connectionId: state.nextConnectionId}, ...result.things[child].parents],
+        parents: [{connectionId}, ...result.things[child].parents],
       },
     },
   };
@@ -78,11 +88,11 @@ export function insertChild(state: State, parent: string, child: string, index: 
       ...result.things,
       [parent]: {
         ...result.things[parent],
-        children: G.splice(result.things[parent].children, index, 0, {connectionId: state.nextConnectionId}),
+        children: G.splice(result.things[parent].children, index, 0, {connectionId}),
       },
     },
   };
-  return result;
+  return [result, {connectionId}];
 }
 
 export function removeChild(state: State, parent: string, index: number) {
@@ -117,7 +127,7 @@ export function removeChild(state: State, parent: string, index: number) {
       },
     },
   };
-  result = {...result, connections: G.removeKeyNumeric(result.connections, removedConnection.connectionId)};
+  result = {...result, connections: G.removeKey(result.connections, removedConnection.connectionId)};
   return result;
 }
 
@@ -141,13 +151,31 @@ export function parents(state: State, child: string): string[] {
   return state.things[child].parents.map((c) => connectionParent(state, c));
 }
 
+export function setTag(state: State, connection: Connection, tag: string | null): State {
+  return {
+    ...state,
+    connections: {
+      ...state.connections,
+      [connection.connectionId]: {...state.connections[connection.connectionId], tag},
+    },
+  };
+}
+
+export function tag(state: State, connection: Connection): string | null {
+  return state.connections[connection.connectionId].tag;
+}
+
 //#endregion
+
+export function children(state: State, thing: string): string[] {
+  return childConnections(state, thing).map((c) => connectionChild(state, c));
+}
 
 export function hasChildren(things: State, thing: string): boolean {
   return children(things, thing).length !== 0;
 }
 
-export function addChild(things: State, parent: string, child: string): State {
+export function addChild(things: State, parent: string, child: string): [State, Connection] {
   return insertChild(things, parent, child, children(things, parent).length);
 }
 
@@ -161,7 +189,7 @@ export function replaceChildren(state: State, parent: string, newChildren: strin
 
   // Add new children
   for (const child of newChildren) {
-    result = addChild(result, parent, child);
+    result = addChild(result, parent, child)[0];
   }
 
   return result;

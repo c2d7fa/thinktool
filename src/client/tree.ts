@@ -162,11 +162,22 @@ function genericRefreshChildren({
   };
 }
 
-const refreshChildren = genericRefreshChildren({
-  getStateChildren: D.children,
-  getTreeChildren: children,
-  updateChildren: I.updateChildren,
-});
+function refreshChildren(state: D.State, tree: Tree, parent: NodeRef): Tree {
+  if (!expanded(tree, parent)) return tree;
+
+  // [TODO] Check for equality and don't update if unnecessary. (See genericRefreshChildren.)
+  // [TODO] Check if one new item was added and optimize updates. (See genericRefreshChildren.)
+  // [TODO] Clean up removed children.
+
+  let result = I.updateChildren(tree, parent, (cs) => []);
+
+  for (const connection of D.childConnections(state, thing(tree, parent))) {
+    const [newChild, newResult] = loadConnection(state, result, connection, parent);
+    result = I.updateChildren(newResult, parent, (cs) => [...cs, newChild]);
+  }
+
+  return result;
+}
 
 export function expand(state: D.State, tree: Tree, node: NodeRef): Tree {
   if (!expanded(tree, node)) {
@@ -201,6 +212,28 @@ export function toggle(state: D.State, tree: Tree, node: NodeRef): Tree {
     }
     return result;
   }
+}
+
+export function loadConnection(
+  state: D.State,
+  tree: Tree,
+  connection: D.Connection,
+  parent?: NodeRef,
+): [NodeRef, Tree] {
+  const thing = D.connectionChild(state, connection);
+
+  let [newNode, newTree] = I.loadThing(tree, thing, connection);
+
+  // If the child has no children (including backreferences and other parents), it should be expanded by default
+  if (
+    !D.hasChildren(state, thing) &&
+    D.backreferences(state, thing).length === 0 &&
+    !hasOtherParents(state, newTree, newNode, parent)
+  ) {
+    newTree = I.markExpanded(newTree, newNode, true);
+  }
+
+  return [newNode, newTree];
 }
 
 export function load(state: D.State, tree: Tree, thing: string, parent?: NodeRef): [NodeRef, Tree] {
@@ -285,7 +318,19 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
   }
 
   newState = D.removeChild(newState, thing(tree, parent_), indexInParent(tree, node)!);
-  newState = D.insertChild(newState, thing(tree, destination.parent), thing(tree, node), destination.index);
+  const [newState_, newConnection] = D.insertChild(
+    newState,
+    thing(tree, destination.parent),
+    thing(tree, node),
+    destination.index,
+  );
+  newState = newState_;
+
+  // Preserve connection tag
+  const connection = I.connection(tree, node);
+  if (connection !== undefined) {
+    newState = D.setTag(newState, newConnection, D.tag(state, connection));
+  }
 
   // Move nodes in tree
 
@@ -301,7 +346,7 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
 
     // Add new nodes
     if (thing(newTree, n) === thing(newTree, destination.parent)) {
-      const [newNode, newTree_] = load(state, newTree, thing(newTree, node), destination.parent);
+      const [newNode, newTree_] = loadConnection(newState, newTree, newConnection, destination.parent);
       newTree = newTree_;
       newTree = I.updateChildren(newTree, n, (ch) => G.splice(ch, destination.index, 0, newNode));
     }
@@ -345,7 +390,7 @@ export function copy(
   node: NodeRef,
   destination: Destination,
 ): [D.State, Tree, NodeRef] {
-  const newState = D.insertChild(
+  const [newState, newConnection] = D.insertChild(
     state,
     thing(tree, destination.parent),
     thing(tree, node),
@@ -382,15 +427,22 @@ export function createSiblingBefore(
   const parentThing = thing(tree, parent_);
   const index = childIndex(tree, parent_, node);
 
-  newState = D.insertChild(newState, parentThing, newThing, index);
+  const [newState2, newConnection] = D.insertChild(newState, parentThing, newThing, index);
+  newState = newState2;
 
-  const [newId, newTree_] = load(newState, tree, newThing, parent_);
+  const [newNode, newTree_] = loadConnection(newState, tree, newConnection, parent_);
   let newTree = newTree_;
+  newTree = I.updateChildren(newTree, parent_, (children) => G.splice(children, index, 0, newNode));
+  newTree = focus(newTree, newNode);
 
-  newTree = I.updateChildren(newTree, parent_, (children) => G.splice(children, index, 0, newId));
-  newTree = refresh(newTree, newState);
+  // Also update other parents
+  for (const n of I.allNodes(newTree)) {
+    if (thing(newTree, n) === thing(tree, parent_) && !refEq(n, parent_)) {
+      newTree = refreshChildren(newState, newTree, n);
+    }
+  }
 
-  return [newState, newTree, newThing, newId];
+  return [newState, newTree, newThing, newNode];
 }
 
 export function createSiblingAfter(
@@ -409,12 +461,20 @@ export function createSiblingAfter(
   const parentThing = thing(tree, parent_);
   const index = childIndex(tree, parent_, node) + 1;
 
-  newState = D.insertChild(newState, parentThing, newThing, index);
+  const [newState2, newConnection] = D.insertChild(newState, parentThing, newThing, index);
+  newState = newState2;
 
-  const [newNode, newTree_] = load(newState, tree, newThing, parent_);
+  const [newNode, newTree_] = loadConnection(newState, tree, newConnection, parent_);
   let newTree = newTree_;
   newTree = I.updateChildren(newTree, parent_, (children) => G.splice(children, index, 0, newNode));
-  newTree = refreshChildren(newState, newTree, parent_);
+  newTree = focus(newTree, newNode);
+
+  // Also update other parents
+  for (const n of I.allNodes(newTree)) {
+    if (thing(newTree, n) === thing(tree, parent_) && !refEq(n, parent_)) {
+      newTree = refreshChildren(newState, newTree, n);
+    }
+  }
 
   return [newState, newTree, newThing, newNode];
 }
@@ -423,14 +483,16 @@ export function createChild(state: D.State, tree: Tree, node: NodeRef): [D.State
   let newState = state;
   let newTree = tree;
 
+  newTree = expand(newState, newTree, node); // Expand parent now; we want to manually add the new node to the tree
+
   // Create item as child
   const [newState_, childThing] = D.create(state);
   newState = newState_;
-  newState = D.addChild(newState, thing(tree, node), childThing);
+  const [newState2, newConnection] = D.addChild(newState, thing(tree, node), childThing);
+  newState = newState2;
 
   // Load it into the tree
-  newTree = expand(newState, newTree, node);
-  const [childNode, newTree_] = load(newState, newTree, childThing, node);
+  const [childNode, newTree_] = loadConnection(newState, newTree, newConnection, node);
   newTree = newTree_;
   newTree = I.updateChildren(newTree, node, (children) => [...children, childNode]);
   newTree = focus(newTree, childNode);
@@ -438,7 +500,7 @@ export function createChild(state: D.State, tree: Tree, node: NodeRef): [D.State
   // Also refresh other parents
   for (const n of I.allNodes(newTree)) {
     if (thing(newTree, n) === thing(tree, node) && !refEq(n, node)) {
-      const [otherChildNode, newTree_] = load(newState, newTree, childThing, n);
+      const [otherChildNode, newTree_] = loadConnection(newState, newTree, newConnection, n);
       newTree = newTree_;
       newTree = I.updateChildren(newTree, n, (children) => [...children, otherChildNode]);
     }
@@ -471,7 +533,7 @@ export function insertChild(
   child: string,
   position: number,
 ): [D.State, Tree] {
-  const newState = D.insertChild(state, thing(tree, node), child, position);
+  const newState = D.insertChild(state, thing(tree, node), child, position)[0];
   return [newState, refresh(tree, newState)];
 }
 
@@ -486,7 +548,7 @@ export function insertSiblingAfter(
 }
 
 export function insertParent(state: D.State, tree: Tree, node: NodeRef, parent: string): [D.State, Tree] {
-  const newState = D.addChild(state, parent, thing(tree, node));
+  const newState = D.addChild(state, parent, thing(tree, node))[0];
   return [newState, refresh(tree, newState)];
 }
 
@@ -577,3 +639,21 @@ export function toggleLink(state: D.State, tree: Tree, node: NodeRef, link: stri
 }
 
 export const openedLinksChildren = I.openedLinksChildren;
+
+// Tagged connections
+
+// In the Data module, tags are associated with connections. In the Tree module,
+// however, they are associated with nodes, since a given node actually
+// represents a connection to a thing, not just the thing.
+
+export function setTag(state: D.State, tree: Tree, node: NodeRef, tag: string | null): [D.State, Tree] {
+  const connection = I.connection(tree, node);
+  if (connection === undefined) return [state, tree];
+  return [D.setTag(state, connection, tag), tree];
+}
+
+export function tag(state: D.State, tree: Tree, node: NodeRef): string | null {
+  const connection = I.connection(tree, node);
+  if (connection === undefined) return null;
+  return D.tag(state, connection);
+}

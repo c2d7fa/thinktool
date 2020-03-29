@@ -9,8 +9,8 @@ test("Creating a child is reflected in other parents in the tree.", () => {
   let state = D.empty;
   state = D.setContent(state, "0", "Root");
   state = D.create(state, "a")[0];
-  state = D.addChild(state, "0", "a");
-  state = D.addChild(state, "0", "a");
+  state = D.addChild(state, "0", "a")[0];
+  state = D.addChild(state, "0", "a")[0];
 
   let tree = T.fromRoot(state, "0");
 
@@ -35,8 +35,8 @@ test("Indenting and removing item", () => {
   state = D.setContent(state, "0", "Root");
   state = D.create(state, "a")[0];
   state = D.create(state, "b")[0];
-  state = D.addChild(state, "0", "a");
-  state = D.addChild(state, "0", "b");
+  state = D.addChild(state, "0", "a")[0];
+  state = D.addChild(state, "0", "b")[0];
 
   let tree = T.fromRoot(state, "0");
 
@@ -58,7 +58,7 @@ test("Removing a thing causes it to no longer exist.", () => {
   let state = D.empty;
   state = D.setContent(state, "0", "Root");
   state = D.create(state, "a")[0];
-  state = D.addChild(state, "0", "a");
+  state = D.addChild(state, "0", "a")[0];
 
   let tree = T.fromRoot(state, "0");
 
@@ -79,8 +79,8 @@ test("Parents should not interfere when removing a child", () => {
   state = D.create(state, "child")[0];
   state = D.create(state, "parent")[0];
 
-  state = D.addChild(state, "0", "child");
-  state = D.addChild(state, "parent", "0");
+  state = D.addChild(state, "0", "child")[0];
+  state = D.addChild(state, "parent", "0")[0];
 
   let tree = T.fromRoot(state, "0");
 
@@ -89,4 +89,43 @@ test("Parents should not interfere when removing a child", () => {
   expect(D.children(state, "0")).toEqual(["child"]);
   [state, tree] = T.remove(state, tree, {id: 1});
   expect(D.children(state, "0")).toEqual([]);
+});
+
+test("Newly created sibling should have focus", () => {
+  let state = D.empty;
+
+  state = D.create(state, "a")[0];
+  state = D.addChild(state, "0", "a")[0];
+
+  let tree = T.fromRoot(state, "0");
+  tree = T.focus(tree, T.children(tree, T.root(tree))[0]);
+
+  expect(T.hasFocus(tree, T.children(tree, T.root(tree))[0])).toBeTruthy();
+
+  [state, tree] = T.createSiblingAfter(state, tree, {id: 1});
+
+  expect(T.hasFocus(tree, T.children(tree, T.root(tree))[1])).toBeTruthy();
+});
+
+// Bug: Creating a child inside a collapsed parent would add that child twice
+// in the tree.
+test("Creating a child inside collapsed parent adds exactly one child in the tree", () => {
+  let state = D.empty;
+
+  state = D.create(state, "a")[0];
+  state = D.create(state, "b")[0];
+  state = D.addChild(state, "0", "a")[0];
+  state = D.addChild(state, "a", "b")[0];
+
+  let tree = T.fromRoot(state, "0");
+
+  function a(): T.NodeRef {
+    return T.children(tree, T.root(tree))[0];
+  }
+
+  expect(T.expanded(tree, a())).toBeFalsy();
+
+  [state, tree] = T.createChild(state, tree, a());
+
+  expect(T.children(tree, a()).length).toBe(2);
 });

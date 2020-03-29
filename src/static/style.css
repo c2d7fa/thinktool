@@ -47,6 +47,23 @@ ul.outline-tree {
   background-image: url(/bullet-expanded.svg);
 }
 
+.connection-tag {
+    cursor: default;
+    display: inline-block;
+    margin-right: 0.8em;
+    padding: 0 0.25em;
+    border-radius: 6px;
+    font-family: "Titillium Web", sans-serif;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    background-color: #e9eef0;
+    color: #7d9196;
+    align-self: flex-start;
+    flex-shrink: 0;
+    max-width: 50%;
+    margin-bottom: 1rem;
+}
+
 li.outline-item > * {
   vertical-align: middle;
   margin-top: auto;

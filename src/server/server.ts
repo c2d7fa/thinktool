@@ -75,7 +75,7 @@ const session = (() => {
 
   function invalidateUser(userId: DB.UserId): void {
     for (const sessionId in sessions) {
-      if (user(sessionId).name === userId.name) {
+      if (user(sessionId)?.name === userId.name) {
         delete sessions[sessionId];
       }
     }
@@ -210,11 +210,7 @@ app.ws("/api/changes", async (ws, req) => {
 });
 
 app.get("/api/things", requireSession, async (req, res) => {
-  const result = (await DB.getAllThings(req.user!)).map((t) => ({
-    name: t.name,
-    content: t.content ?? "",
-    children: t.children ?? [],
-  }));
+  const result = await DB.getFullState(req.user!);
   res
     .type("json")
     .header("Access-Control-Allow-Origin", staticUrl)
@@ -309,7 +305,12 @@ app.put("/api/things/:thing", requireSession, parseThing, requireClientId, async
     return;
   }
   const data = req.body as Communication.ThingData;
-  await DB.updateThing(req.user!, res.locals.thing, data.content, data.children);
+  await DB.updateThing({
+    userId: req.user!,
+    thing: res.locals.thing,
+    content: data.content,
+    children: data.children,
+  });
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
   res
     .header("Access-Control-Allow-Origin", staticUrl)
@@ -410,8 +411,8 @@ app.options("/api/account/:account", async (req, res) => {
 });
 
 app.delete("/api/account/:account", requireSession, async (req, res) => {
-  if (req.params.account !== req.user.name) {
-    console.warn(`${req.user.name} tried to delete ${req.params.account}'s account`);
+  if (req.params.account !== req.user!.name) {
+    console.warn(`${req.user!.name} tried to delete ${req.params.account}'s account`);
     res
       .status(401)
       .type("text/plain")

@@ -453,6 +453,12 @@ function actionsWith(context: Context, node: T.NodeRef) {
       context.setState(newState);
       context.setTree(newTree);
     },
+
+    untag() {
+      const [newState, newTree] = T.setTag(context.state, context.tree, node, null);
+      context.setState(newState);
+      context.setTree(newTree);
+    },
   };
 }
 
@@ -474,6 +480,8 @@ function ToolbarGroup(props: {children: React.ReactNode; title?: string}) {
 }
 
 function Toolbar(props: {context: Context}) {
+  const [showTagPopup, setShowTagPopup] = React.useState(false);
+
   const focused = T.focused(props.context.tree);
 
   function actions() {
@@ -560,12 +568,35 @@ function Toolbar(props: {context: Context}) {
       </ToolbarGroup>
       <ToolbarGroup>
         <button
+          onClick={() => setShowTagPopup(true)}
+          title="Set the connection tag to an existing item. [alt+t]"
+        >
+          Tag
+        </button>
+        <button onClick={() => actions().untag()} title="Remove the current connection tag. [alt+shift+t]">
+          Untag
+        </button>
+      </ToolbarGroup>
+      <ToolbarGroup>
+        <button
           onClick={() => actions().delete()}
           title="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents. [alt+delete]"
         >
           Destroy
         </button>
       </ToolbarGroup>
+      {showTagPopup && (
+        <ThingSelectPopup
+          hide={() => setShowTagPopup(false)}
+          state={props.context.state}
+          submit={(tag: string) => {
+            if (focused === null) return;
+            const [newState, newTree] = T.setTag(props.context.state, props.context.tree, focused, tag);
+            props.context.setState(newState);
+            props.context.setTree(newTree);
+          }}
+        />
+      )}
       {focused !== null && (
         <GeneralPopup
           active={activePopup}
@@ -702,6 +733,10 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   );
 }
 
+function ConnectionTag(p: {context: Context; tag: string}) {
+  return <span className="connection-tag">{Data.contentText(p.context.state, p.tag)}</span>;
+}
+
 function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRef; className?: string}) {
   function toggle() {
     p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
@@ -714,9 +749,12 @@ function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRe
   }
 
   let className = "item-line";
+
   if (p.className) className += " " + p.className;
   if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id) className += " drop-target";
   if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null) className += " drag-source";
+
+  const tag = T.tag(p.context.state, p.context.tree, p.node);
 
   const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
 
@@ -732,6 +770,7 @@ function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRe
             p.context.setSelectedThing(T.thing(p.context.tree, p.node));
           }}
         />
+        {tag !== null && <ConnectionTag context={p.context} tag={tag} />}
         <Content context={p.context} node={p.node} />
       </span>
       {expanded && subtree}
@@ -803,6 +842,7 @@ function GeneralPopup(props: {
 }
 
 function Content(p: {context: Context; node: T.NodeRef}) {
+  const [showTagPopup, setShowTagPopup] = React.useState(false);
   const [activePopup, setActivePopup] = React.useState<null | "child" | "sibling" | "parent">(null);
 
   const actions = actionsWith(p.context, p.node);
@@ -865,10 +905,33 @@ function Content(p: {context: Context; node: T.NodeRef}) {
     } else if (ev.key === "p" && ev.altKey) {
       setActivePopup("parent");
       return true;
+    } else if (ev.key === "T" && ev.altKey && ev.shiftKey) {
+      actions.untag();
+      return true;
+    } else if (ev.key === "t" && ev.altKey) {
+      setShowTagPopup(true);
+      return true;
     } else {
       return false;
     }
   }
+
+  const tagPopup = (() => {
+    if (showTagPopup) {
+      return (
+        <ThingSelectPopup
+          hide={() => setShowTagPopup(false)}
+          state={p.context.state}
+          submit={(tag: string) => {
+            if (p.node === null) return;
+            const [newState, newTree] = T.setTag(p.context.state, p.context.tree, p.node, tag);
+            p.context.setState(newState);
+            p.context.setTree(newTree);
+          }}
+        />
+      );
+    }
+  })();
 
   return (
     <>
@@ -890,6 +953,7 @@ function Content(p: {context: Context; node: T.NodeRef}) {
         }
         onKeyDown={onKeyDown}
       />
+      {tagPopup}
       <GeneralPopup
         active={activePopup}
         hide={() => setActivePopup(null)}
