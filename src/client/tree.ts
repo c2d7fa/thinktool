@@ -483,6 +483,8 @@ export function createChild(state: D.State, tree: Tree, node: NodeRef): [D.State
   let newState = state;
   let newTree = tree;
 
+  newTree = expand(newState, newTree, node); // Expand parent now; we want to manually add the new node to the tree
+
   // Create item as child
   const [newState_, childThing] = D.create(state);
   newState = newState_;
@@ -490,7 +492,6 @@ export function createChild(state: D.State, tree: Tree, node: NodeRef): [D.State
   newState = newState2;
 
   // Load it into the tree
-  newTree = expand(newState, newTree, node);
   const [childNode, newTree_] = loadConnection(newState, newTree, newConnection, node);
   newTree = newTree_;
   newTree = I.updateChildren(newTree, node, (children) => [...children, childNode]);

@@ -106,3 +106,26 @@ test("Newly created sibling should have focus", () => {
 
   expect(T.hasFocus(tree, T.children(tree, T.root(tree))[1])).toBeTruthy();
 });
+
+// Bug: Creating a child inside a collapsed parent would add that child twice
+// in the tree.
+test("Creating a child inside collapsed parent adds exactly one child in the tree", () => {
+  let state = D.empty;
+
+  state = D.create(state, "a")[0];
+  state = D.create(state, "b")[0];
+  state = D.addChild(state, "0", "a")[0];
+  state = D.addChild(state, "a", "b")[0];
+
+  let tree = T.fromRoot(state, "0");
+
+  function a(): T.NodeRef {
+    return T.children(tree, T.root(tree))[0];
+  }
+
+  expect(T.expanded(tree, a())).toBeFalsy();
+
+  [state, tree] = T.createChild(state, tree, a());
+
+  expect(T.children(tree, a()).length).toBe(2);
+});
