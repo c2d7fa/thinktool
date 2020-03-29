@@ -28,12 +28,12 @@ export async function getFullState(): Promise<D.State> {
       state = newState;
     }
     state = D.setContent(state, thing.name, thing.content);
-    for (const child of thing.children) {
-      if (!D.exists(state, child)) {
-        const [newState, _] = D.create(state, child);
+    for (let i = 0; i < thing.children.length; ++i) {
+      if (!D.exists(state, thing.children[i])) {
+        const [newState, _] = D.create(state, thing.children[i]);
         state = newState;
       }
-      state = D.addChild(state, thing.name, child)[0];
+      state = D.insertChild(state, thing.name, thing.children[i], i, `${thing.name}.${i}`)[0];
     }
   }
 

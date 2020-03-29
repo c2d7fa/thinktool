@@ -52,9 +52,15 @@ export function setContent(state: State, thing: string, newContent: string): Sta
   return {...state, things: {...state.things, [thing]: {...state.things[thing], content: newContent}}};
 }
 
-export function insertChild(state: State, parent: string, child: string, index: number): [State, Connection] {
+export function insertChild(
+  state: State,
+  parent: string,
+  child: string,
+  index: number,
+  customConnectionId?: string,
+): [State, Connection] {
   let result = state;
-  const connectionId = `c.${generateShortId()}`; // 'c.' prefix to tell where the ID came from when debugging.
+  const connectionId = customConnectionId ?? `c.${generateShortId()}`; // 'c.' prefix to tell where the ID came from when debugging.
   result = {
     ...result,
     connections: {...state.connections, [connectionId]: {parent, child, tag: null}},
