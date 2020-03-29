@@ -4,6 +4,10 @@
 # this script, manually remove the old "children" property, which is no longer
 # used.
 
+# Make sure that a "connections" collection doesn't already exist before
+# running this script; otherwise, you may end up with an invalid state in the
+# DB!
+
 import pymongo
 import os
 

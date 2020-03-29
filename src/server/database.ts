@@ -77,14 +77,33 @@ export async function createUser(
   }
 }
 
-export async function getAllThings(
+export async function getFullState(
   userId: UserId,
-): Promise<{name: string; content?: string; children?: string[]}[]> {
-  const documents = client
+): Promise<{name: string; content: string; children: string[]}[]> {
+  const documents = await client
     .db("diaform")
     .collection("things")
-    .find({user: userId.name});
-  return documents.project({name: 1, content: 1, children: 1, _id: 0}).toArray();
+    .find({user: userId.name})
+    .map((t) => ({name: t.name, content: t.content ?? "", connections: t.connections ?? []}))
+    .toArray();
+
+  let result = [];
+
+  for (const document of documents) {
+    let children = [];
+    for (const connection of document.connections) {
+      const child = (
+        await client
+          .db("diaform")
+          .collection("connections")
+          .findOne({user: userId.name, name: connection})
+      ).child;
+      children.push(child);
+    }
+    result.push({name: document.name, content: document.content, children});
+  }
+
+  return result;
 }
 
 export async function thingExists(userId: UserId, thing: string): Promise<boolean> {
@@ -97,16 +116,42 @@ export async function thingExists(userId: UserId, thing: string): Promise<boolea
   );
 }
 
-export async function updateThing(
-  userId: UserId,
-  thing: string,
-  content: string,
-  children: string[],
-): Promise<void> {
+export async function updateThing({
+  userId,
+  thing,
+  content,
+  children,
+}: {
+  userId: UserId;
+  thing: string;
+  content: string;
+  children: string[];
+}): Promise<void> {
+  // We receive a list of children from the client, but we want to insert
+  // connections into the database. We handle this by first removing all
+  // existing connections from the DB, and then recreating the new connections
+  // from scratch.
+
+  await client
+    .db("diaform")
+    .collection("connections")
+    .deleteMany({user: userId.name, parent: thing});
+
+  let connections = [];
+  let i = 0;
+  for (const child of children) {
+    const connectionId = `${thing}.children.${i++}`;
+    connections.push(connectionId);
+    await client
+      .db("diaform")
+      .collection("connections")
+      .insertOne({user: userId.name, name: connectionId, parent: thing, child});
+  }
+
   await client
     .db("diaform")
     .collection("things")
-    .updateOne({user: userId.name, name: thing}, {$set: {content, children}}, {upsert: true});
+    .updateOne({user: userId.name, name: thing}, {$set: {content, connections}}, {upsert: true});
 }
 
 export async function deleteThing(userId: UserId, thing: string): Promise<void> {
@@ -123,12 +168,24 @@ export async function setContent(userId: UserId, thing: string, content: string)
     .updateOne({user: userId.name, name: thing}, {$set: {content}}, {upsert: true});
 }
 
-export async function getThingData(userId: UserId, thing: string): Promise<Communication.ThingData> {
+export async function getThingData(
+  userId: UserId,
+  thing: string,
+): Promise<{content: string; children: string[]}> {
   const data = await client
     .db("diaform")
     .collection("things")
     .findOne({user: userId.name, name: thing});
-  return {content: data.content ?? "", children: data.children ?? []};
+
+  const children = await client
+    .db("diaform")
+    .collection("connections")
+    .find({user: userId.name, parent: thing})
+    .map((c) => c.child)
+    .toArray();
+  console.log(children);
+
+  return {content: data.content ?? "", children};
 }
 
 export async function deleteAllUserData(userId: UserId): Promise<void> {
@@ -139,5 +196,9 @@ export async function deleteAllUserData(userId: UserId): Promise<void> {
   await client
     .db("diaform")
     .collection("things")
+    .deleteMany({user: userId.name});
+  await client
+    .db("diaform")
+    .collection("connections")
     .deleteMany({user: userId.name});
 }
