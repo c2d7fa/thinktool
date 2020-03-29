@@ -326,6 +326,12 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
   );
   newState = newState_;
 
+  // Preserve connection tag
+  const connection = I.connection(tree, node);
+  if (connection !== undefined) {
+    newState = D.setTag(newState, newConnection, D.tag(state, connection));
+  }
+
   // Move nodes in tree
 
   for (const n of I.allNodes(newTree)) {
