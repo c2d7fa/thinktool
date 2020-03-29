@@ -20,7 +20,7 @@ export async function getFullState(): Promise<D.State> {
     return D.empty;
   }
 
-  let state: D.State = {things: {}, connections: {}, nextConnectionId: 0};
+  let state: D.State = {things: {}, connections: {}};
 
   for (const thing of response) {
     if (!D.exists(state, thing.name)) {

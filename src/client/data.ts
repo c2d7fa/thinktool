@@ -2,11 +2,10 @@ import * as G from "../shared/general";
 
 export interface State {
   things: {[id: string]: ThingData};
-  connections: {[connectionId: number]: ConnectionData};
-  nextConnectionId: number;
+  connections: {[connectionId: string]: ConnectionData};
 }
 
-export type Connection = {connectionId: number};
+export type Connection = {connectionId: string};
 
 export interface ThingData {
   content: string;
@@ -29,7 +28,6 @@ export interface State {
 export const empty: State = {
   things: {"0": {content: "Welcome", children: [], parents: []}},
   connections: {},
-  nextConnectionId: 0,
 };
 
 export function connectionParent(state: State, connection: Connection): string {
@@ -55,10 +53,11 @@ export function setContent(state: State, thing: string, newContent: string): Sta
 }
 
 export function insertChild(state: State, parent: string, child: string, index: number): [State, Connection] {
-  let result = {...state, nextConnectionId: state.nextConnectionId + 1};
+  let result = state;
+  const connectionId = `c.${generateShortId()}`; // 'c.' prefix to tell where the ID came from when debugging.
   result = {
     ...result,
-    connections: {...state.connections, [state.nextConnectionId]: {parent, child, tag: null}},
+    connections: {...state.connections, [connectionId]: {parent, child, tag: null}},
   };
   if (!exists(result, child)) {
     // We must store the child-to-parent connection in the child node; however,
@@ -73,7 +72,7 @@ export function insertChild(state: State, parent: string, child: string, index: 
       ...result.things,
       [child]: {
         ...result.things[child],
-        parents: [{connectionId: state.nextConnectionId}, ...result.things[child].parents],
+        parents: [{connectionId}, ...result.things[child].parents],
       },
     },
   };
@@ -83,11 +82,11 @@ export function insertChild(state: State, parent: string, child: string, index: 
       ...result.things,
       [parent]: {
         ...result.things[parent],
-        children: G.splice(result.things[parent].children, index, 0, {connectionId: state.nextConnectionId}),
+        children: G.splice(result.things[parent].children, index, 0, {connectionId}),
       },
     },
   };
-  return [result, {connectionId: state.nextConnectionId}];
+  return [result, {connectionId}];
 }
 
 export function removeChild(state: State, parent: string, index: number) {
@@ -122,7 +121,7 @@ export function removeChild(state: State, parent: string, index: number) {
       },
     },
   };
-  result = {...result, connections: G.removeKeyNumeric(result.connections, removedConnection.connectionId)};
+  result = {...result, connections: G.removeKey(result.connections, removedConnection.connectionId)};
   return result;
 }
 
