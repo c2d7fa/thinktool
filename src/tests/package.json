@@ -2,9 +2,9 @@
   "name": "thinktool",
   "private": true,
   "devDependencies": {
-    "typescript": "latest",
+    "@types/jest": "latest",
     "jest": "latest",
     "parcel-bundler": "latest",
-    "@types/jest": "latest"
+    "typescript": "^3.8.3"
   }
 }
