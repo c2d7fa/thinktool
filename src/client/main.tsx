@@ -225,8 +225,13 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
     setContent,
     undo: undo_,
     updateLocalState: (update) => {
-      setLocalState(update);
-      setTree(T.refresh(tree, update(state)));
+      // [TODO] I'm almost certain that this is not how things are supposed to
+      // be done.
+      setLocalState((state) => {
+        const newState = update(state);
+        setTree((tree) => T.refresh(tree, newState));
+        return newState;
+      });
     },
     selectedThing,
     setSelectedThing,

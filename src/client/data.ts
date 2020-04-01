@@ -162,6 +162,8 @@ export function setTag(state: State, connection: Connection, tag: string | null)
 }
 
 export function tag(state: State, connection: Connection): string | null {
+  if (state.connections[connection.connectionId] === undefined)
+    throw `No such connection '${connection.connectionId}'`;
   return state.connections[connection.connectionId].tag;
 }
 
@@ -239,11 +241,7 @@ export function contentText(state: State, thing: string): string {
 export function search(state: State, text: string): string[] {
   let results: string[] = [];
   for (const thing in state.things) {
-    if (
-      contentText(state, thing)
-        .toLowerCase()
-        .includes(text.toLowerCase())
-    ) {
+    if (contentText(state, thing).toLowerCase().includes(text.toLowerCase())) {
       results = [...results, thing];
     }
   }
