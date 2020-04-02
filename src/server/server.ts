@@ -206,13 +206,12 @@ app.ws("/changes", async (ws, req) => {
   };
 });
 
-app.get("/api/things", requireSession, async (req, res) => {
-  const result = await DB.getFullState(req.user!);
+app.get("/state", requireSession, async (req, res) => {
   res
     .type("json")
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
-    .send(result as Communication.FullStateResponse);
+    .send((await DB.getFullState(req.user!)) as Communication.FullStateResponse);
 });
 
 app.get("/username", requireSession, async (req, res) => {

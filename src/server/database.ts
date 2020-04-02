@@ -20,10 +20,7 @@ export interface Users {
 
 // Check password and return user ID.
 export async function userId(name: string, password: string): Promise<UserId | null> {
-  const user = await client
-    .db("diaform")
-    .collection("users")
-    .findOne({_id: name});
+  const user = await client.db("diaform").collection("users").findOne({_id: name});
 
   if (user === null) {
     return null;
@@ -37,13 +34,7 @@ export async function userId(name: string, password: string): Promise<UserId | n
 }
 
 export async function userName(userId: UserId): Promise<string | null> {
-  if (
-    (await client
-      .db("diaform")
-      .collection("users")
-      .find({_id: userId.name})
-      .count()) > 0
-  ) {
+  if ((await client.db("diaform").collection("users").find({_id: userId.name}).count()) > 0) {
     return userId.name;
   } else {
     return null;
@@ -54,13 +45,7 @@ export async function createUser(
   user: string,
   password: string,
 ): Promise<{type: "success"; userId: UserId} | {type: "error"; error?: "user-exists"}> {
-  if (
-    (await client
-      .db("diaform")
-      .collection("users")
-      .find({_id: user})
-      .count()) > 0
-  ) {
+  if ((await client.db("diaform").collection("users").find({_id: user}).count()) > 0) {
     return {type: "error", error: "user-exists"};
   }
 
@@ -79,41 +64,30 @@ export async function createUser(
 
 export async function getFullState(
   userId: UserId,
-): Promise<{name: string; content: string; children: string[]}[]> {
-  const documents = await client
+): Promise<{
+  things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[];
+}> {
+  const things = await client
     .db("diaform")
     .collection("things")
-    .find({user: userId.name})
-    .map((t) => ({name: t.name, content: t.content ?? "", connections: t.connections ?? []}))
+    .aggregate([
+      {$match: {user: userId.name}},
+      {
+        $lookup: {
+          from: "connections",
+          localField: "connections",
+          foreignField: "name",
+          as: "children",
+        },
+      },
+      {$project: {_id: 0, name: 1, content: 1, children: {name: 1, child: 1, tag: 1}}},
+    ])
     .toArray();
-
-  let result = [];
-
-  for (const document of documents) {
-    let children = [];
-    for (const connection of document.connections) {
-      const child = (
-        await client
-          .db("diaform")
-          .collection("connections")
-          .findOne({user: userId.name, name: connection})
-      ).child;
-      children.push(child);
-    }
-    result.push({name: document.name, content: document.content, children});
-  }
-
-  return result;
+  return {things};
 }
 
 export async function thingExists(userId: UserId, thing: string): Promise<boolean> {
-  return (
-    (await client
-      .db("diaform")
-      .collection("things")
-      .find({user: userId.name, name: thing})
-      .count()) > 0
-  );
+  return (await client.db("diaform").collection("things").find({user: userId.name, name: thing}).count()) > 0;
 }
 
 export async function updateThing({
@@ -132,10 +106,7 @@ export async function updateThing({
   // existing connections from the DB, and then recreating the new connections
   // from scratch.
 
-  await client
-    .db("diaform")
-    .collection("connections")
-    .deleteMany({user: userId.name, parent: thing});
+  await client.db("diaform").collection("connections").deleteMany({user: userId.name, parent: thing});
 
   let connections = [];
   let i = 0;
@@ -155,10 +126,7 @@ export async function updateThing({
 }
 
 export async function deleteThing(userId: UserId, thing: string): Promise<void> {
-  await client
-    .db("diaform")
-    .collection("things")
-    .deleteOne({user: userId.name, name: thing});
+  await client.db("diaform").collection("things").deleteOne({user: userId.name, name: thing});
 }
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
@@ -172,10 +140,7 @@ export async function getThingData(
   userId: UserId,
   thing: string,
 ): Promise<{content: string; children: string[]}> {
-  const data = await client
-    .db("diaform")
-    .collection("things")
-    .findOne({user: userId.name, name: thing});
+  const data = await client.db("diaform").collection("things").findOne({user: userId.name, name: thing});
 
   const children = await client
     .db("diaform")
@@ -189,16 +154,7 @@ export async function getThingData(
 }
 
 export async function deleteAllUserData(userId: UserId): Promise<void> {
-  await client
-    .db("diaform")
-    .collection("users")
-    .deleteOne({name: userId.name});
-  await client
-    .db("diaform")
-    .collection("things")
-    .deleteMany({user: userId.name});
-  await client
-    .db("diaform")
-    .collection("connections")
-    .deleteMany({user: userId.name});
+  await client.db("diaform").collection("users").deleteOne({name: userId.name});
+  await client.db("diaform").collection("things").deleteMany({user: userId.name});
+  await client.db("diaform").collection("connections").deleteMany({user: userId.name});
 }

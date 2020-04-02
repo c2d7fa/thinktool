@@ -14,26 +14,22 @@ function api(endpoint: string, args?: object) {
 const clientId = Math.floor(Math.random() * Math.pow(36, 6)).toString(36);
 
 export async function getFullState(): Promise<D.State> {
-  const response = (await (await api("api/things")).json()) as Communication.FullStateResponse;
+  const response = (await (await api("state")).json()) as Communication.FullStateResponse;
 
-  if (response.length === 0) {
+  if (response.things.length === 0) {
     return D.empty;
   }
 
   let state: D.State = {things: {}, connections: {}};
 
-  for (const thing of response) {
+  for (const thing of response.things) {
     if (!D.exists(state, thing.name)) {
       const [newState, _] = D.create(state, thing.name);
       state = newState;
     }
     state = D.setContent(state, thing.name, thing.content);
-    for (let i = 0; i < thing.children.length; ++i) {
-      if (!D.exists(state, thing.children[i])) {
-        const [newState, _] = D.create(state, thing.children[i]);
-        state = newState;
-      }
-      state = D.insertChild(state, thing.name, thing.children[i], i, `${thing.name}.${i}`)[0];
+    for (const childConnection of thing.children) {
+      state = D.addChild(state, thing.name, childConnection.child, childConnection.name)[0];
     }
   }
 

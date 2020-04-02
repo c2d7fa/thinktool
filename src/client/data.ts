@@ -177,8 +177,13 @@ export function hasChildren(things: State, thing: string): boolean {
   return children(things, thing).length !== 0;
 }
 
-export function addChild(things: State, parent: string, child: string): [State, Connection] {
-  return insertChild(things, parent, child, children(things, parent).length);
+export function addChild(
+  things: State,
+  parent: string,
+  child: string,
+  customConnectionId?: string,
+): [State, Connection] {
+  return insertChild(things, parent, child, children(things, parent).length, customConnectionId);
 }
 
 export function replaceChildren(state: State, parent: string, newChildren: string[]) {
