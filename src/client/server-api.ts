@@ -6,7 +6,7 @@ import * as Configuration from "../../conf/client.json";
 const apiHost = Configuration.apiHost;
 
 function api(endpoint: string, args?: object) {
-  return fetch(`${apiHost}/api/${endpoint}`, {credentials: "include", ...args});
+  return fetch(`${apiHost}/${endpoint}`, {credentials: "include", ...args});
 }
 
 // The server expects us to identify ourselves. This way, the server will not
@@ -14,7 +14,7 @@ function api(endpoint: string, args?: object) {
 const clientId = Math.floor(Math.random() * Math.pow(36, 6)).toString(36);
 
 export async function getFullState(): Promise<D.State> {
-  const response = (await (await api("things")).json()) as Communication.FullStateResponse;
+  const response = (await (await api("api/things")).json()) as Communication.FullStateResponse;
 
   if (response.length === 0) {
     return D.empty;
@@ -45,7 +45,7 @@ export async function getUsername(): Promise<string> {
 }
 
 export async function setContent(thing: string, content: string): Promise<void> {
-  await api(`things/${thing}/content`, {
+  await api(`api/things/${thing}/content`, {
     method: "put",
     body: content,
     headers: {"Thinktool-Client-Id": clientId},
@@ -53,11 +53,11 @@ export async function setContent(thing: string, content: string): Promise<void> 
 }
 
 export async function deleteThing(thing: string): Promise<void> {
-  await api(`things/${thing}`, {method: "delete", headers: {"Thinktool-Client-Id": clientId}});
+  await api(`api/things/${thing}`, {method: "delete", headers: {"Thinktool-Client-Id": clientId}});
 }
 
 export async function putThing(thing: string, data: Communication.ThingData): Promise<void> {
-  await api(`things/${thing}`, {
+  await api(`api/things/${thing}`, {
     method: "put",
     headers: {"Content-Type": "application/json", "Thinktool-Client-Id": clientId},
     body: JSON.stringify(data),
@@ -65,10 +65,8 @@ export async function putThing(thing: string, data: Communication.ThingData): Pr
 }
 
 export function onChanges(callback: (changes: string[]) => void): () => void {
-  // TODO: This is a bit awkward. We do this so it works both on localhost:8080
-  // and on a "real" domain.
   const apiHostUrl = new URL(apiHost);
-  const url = `${apiHostUrl.protocol === "https:" ? "wss" : "ws"}://${apiHostUrl.host}/api/changes`;
+  const url = `${apiHostUrl.protocol === "https:" ? "wss" : "ws"}://${apiHostUrl.host}/changes`;
 
   const socket = new WebSocket(url);
   socket.onopen = () => {
@@ -85,7 +83,7 @@ export function onChanges(callback: (changes: string[]) => void): () => void {
 }
 
 export async function getThingData(thing: string): Promise<Communication.ThingData | null> {
-  const response = await api(`things/${thing}`);
+  const response = await api(`api/things/${thing}`);
   if (response.status === 404) return null;
   return (await response.json()) as Communication.ThingData;
 }
@@ -97,5 +95,5 @@ export function ping(note: string): void {
 }
 
 export async function deleteAccount(account: string): Promise<void> {
-  api(`account/${account}`, {method: "DELETE"});
+  api(`api/account/${account}`, {method: "DELETE"});
 }
