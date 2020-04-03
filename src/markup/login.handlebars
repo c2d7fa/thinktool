@@ -6,7 +6,7 @@
     <link rel="icon" href="/icon.png" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
-      fetch("{{apiUrl}}/api/username", {"credentials": "include"}).then((response) => {
+      fetch("{{apiUrl}}/username", {"credentials": "include"}).then((response) => {
         if (response.status === 200) {
           console.log("Already logged in. Redirecting to app page.");
           window.location = "/app.html";

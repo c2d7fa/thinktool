@@ -120,6 +120,12 @@ function diffState(
       } else if (JSON.stringify(oldState.things[thing]) !== JSON.stringify(newState.things[thing])) {
         changed.push(thing);
       }
+    } else {
+      for (const connection of oldState.things[thing].children) {
+        if (oldState.connections[connection.connectionId] !== newState.connections[connection.connectionId]) {
+          changed.push(thing);
+        }
+      }
     }
   }
 
@@ -159,9 +165,15 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
           Server.deleteThing(thing);
         }
         for (const thing of [...diff.added, ...diff.changed]) {
-          Server.putThing(thing, {
+          Server.updateThing(thing, {
             content: Data.content(newState, thing),
-            children: Data.children(newState, thing),
+            children: Data.childConnections(newState, thing).map((c) => {
+              return {
+                name: c.connectionId,
+                child: Data.connectionChild(newState, c),
+                tag: Data.tag(newState, c) ?? undefined,
+              };
+            }),
           });
         }
       }
@@ -182,9 +194,15 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
         Server.deleteThing(thing);
       }
       for (const thing of [...diff.added, ...diff.changed]) {
-        Server.putThing(thing, {
+        Server.updateThing(thing, {
           content: Data.content(oldState, thing),
-          children: Data.children(oldState, thing),
+          children: Data.childConnections(oldState, thing).map((c) => {
+            return {
+              name: c.connectionId,
+              child: Data.connectionChild(oldState, c),
+              tag: Data.tag(oldState, c) ?? undefined,
+            };
+          }),
         });
       }
     }
@@ -285,7 +303,16 @@ function App({
           }
 
           newState = Data.setContent(newState, changedThing, thingData.content);
-          newState = Data.replaceChildren(newState, changedThing, thingData.children);
+
+          const nChildren = Data.children(newState, changedThing).length;
+          for (let i = 0; i < nChildren; ++i) {
+            newState = Data.removeChild(newState, changedThing, 0);
+          }
+          for (const childConnection of thingData.children) {
+            newState = Data.addChild(newState, changedThing, childConnection.child, childConnection.name)[0];
+            if (childConnection.tag !== undefined)
+              newState = Data.setTag(newState, {connectionId: childConnection.name}, childConnection.tag);
+          }
 
           return newState;
         });

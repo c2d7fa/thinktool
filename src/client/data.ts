@@ -177,24 +177,13 @@ export function hasChildren(things: State, thing: string): boolean {
   return children(things, thing).length !== 0;
 }
 
-export function addChild(things: State, parent: string, child: string): [State, Connection] {
-  return insertChild(things, parent, child, children(things, parent).length);
-}
-
-export function replaceChildren(state: State, parent: string, newChildren: string[]) {
-  let result = state;
-
-  // Remove old children
-  for (let i = 0; i < children(state, parent).length; ++i) {
-    result = removeChild(result, parent, 0);
-  }
-
-  // Add new children
-  for (const child of newChildren) {
-    result = addChild(result, parent, child)[0];
-  }
-
-  return result;
+export function addChild(
+  things: State,
+  parent: string,
+  child: string,
+  customConnectionId?: string,
+): [State, Connection] {
+  return insertChild(things, parent, child, children(things, parent).length, customConnectionId);
 }
 
 function generateShortId(): string {

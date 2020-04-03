@@ -166,10 +166,7 @@ app.use((req, res, next) => {
 });
 
 function sendRedirect(res: express.Response, location: string): void {
-  res
-    .status(303)
-    .header("Location", location)
-    .end();
+  res.status(303).header("Location", location).end();
 }
 
 app.get("/logout", async (req, res) => {
@@ -181,7 +178,7 @@ app.get("/ping/*", async (req, res) => {
   res.send();
 });
 
-app.ws("/api/changes", async (ws, req) => {
+app.ws("/changes", async (ws, req) => {
   if (req.user === undefined) return ws.close();
 
   let subscription: number | null = null;
@@ -209,16 +206,15 @@ app.ws("/api/changes", async (ws, req) => {
   };
 });
 
-app.get("/api/things", requireSession, async (req, res) => {
-  const result = await DB.getFullState(req.user!);
+app.get("/state", requireSession, async (req, res) => {
   res
     .type("json")
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
-    .send(result as Communication.FullStateResponse);
+    .send((await DB.getFullState(req.user!)) as Communication.FullStateResponse);
 });
 
-app.get("/api/username", requireSession, async (req, res) => {
+app.get("/username", requireSession, async (req, res) => {
   res
     .type("json")
     .header("Access-Control-Allow-Origin", staticUrl)
@@ -229,17 +225,11 @@ app.get("/api/username", requireSession, async (req, res) => {
 async function parseThingExists(req: express.Request, res: express.Response, next: express.NextFunction) {
   const thing = req.params.thing;
   if (thing.length === 0) {
-    res
-      .status(400)
-      .type("text/plain")
-      .send("400 Bad Request");
+    res.status(400).type("text/plain").send("400 Bad Request");
     next("router");
   }
   if (!DB.thingExists(req.user!, thing)) {
-    res
-      .type("text/plain")
-      .status(404)
-      .send("404 Not Found");
+    res.type("text/plain").status(404).send("404 Not Found");
     return;
   }
   res.locals.thing = thing;
@@ -249,10 +239,7 @@ async function parseThingExists(req: express.Request, res: express.Response, nex
 async function parseThing(req: express.Request, res: express.Response, next: express.NextFunction) {
   const thing = req.params.thing;
   if (thing.length === 0) {
-    res
-      .status(400)
-      .type("text/plain")
-      .send("400 Bad Request");
+    res.status(400).type("text/plain").send("400 Bad Request");
     next("router");
   }
   res.locals.thing = thing;
@@ -266,10 +253,7 @@ async function requireClientId(req: express.Request, res: express.Response, next
 
   if (typeof header !== "string") {
     console.log(header, req.headers);
-    res
-      .status(400)
-      .type("text/plain")
-      .send("400 Bad Request: Missing client ID header");
+    res.status(400).type("text/plain").send("400 Bad Request: Missing client ID header");
     return next("router");
   }
 
@@ -278,7 +262,7 @@ async function requireClientId(req: express.Request, res: express.Response, next
   next();
 }
 
-app.options("/api/things/:thing", async (req, res) => {
+app.options("/state/things/:thing", async (req, res) => {
   res
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
@@ -296,21 +280,20 @@ app.options("/api/things/:thing/content", async (req, res) => {
     .send();
 });
 
-app.put("/api/things/:thing", requireSession, parseThing, requireClientId, async (req, res) => {
+app.put("/state/things/:thing", requireSession, parseThing, requireClientId, async (req, res) => {
   if (typeof req.body !== "object") {
-    res
-      .status(400)
-      .type("text/plain")
-      .send("400 Bad Request");
+    res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
   const data = req.body as Communication.ThingData;
+
   await DB.updateThing({
     userId: req.user!,
     thing: res.locals.thing,
     content: data.content,
     children: data.children,
   });
+
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
   res
     .header("Access-Control-Allow-Origin", staticUrl)
@@ -318,7 +301,7 @@ app.put("/api/things/:thing", requireSession, parseThing, requireClientId, async
     .end();
 });
 
-app.delete("/api/things/:thing", requireSession, parseThingExists, requireClientId, async (req, res) => {
+app.delete("/state/things/:thing", requireSession, parseThingExists, requireClientId, async (req, res) => {
   await DB.deleteThing(req.user!, res.locals.thing);
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
   res
@@ -329,10 +312,7 @@ app.delete("/api/things/:thing", requireSession, parseThingExists, requireClient
 
 app.put("/api/things/:thing/content", requireSession, parseThingExists, requireClientId, async (req, res) => {
   if (typeof req.body !== "string") {
-    res
-      .status(400)
-      .type("text/plain")
-      .send("400 Bad Request");
+    res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
 
@@ -347,7 +327,7 @@ app.put("/api/things/:thing/content", requireSession, parseThingExists, requireC
 
 // #endregion
 
-app.get("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
+app.get("/state/things/:thing", requireSession, parseThingExists, async (req, res) => {
   const thingData = await DB.getThingData(req.user!, res.locals.thing);
   res
     .type("json")
@@ -362,10 +342,7 @@ app.post("/", async (req, res) => {
     typeof req.body.user !== "string" ||
     typeof req.body.password !== "string"
   ) {
-    res
-      .status(400)
-      .type("text/plain")
-      .send("400 Bad Request");
+    res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
 
@@ -373,10 +350,7 @@ app.post("/", async (req, res) => {
     const {user, password} = req.body;
     const userId = await DB.userId(user, password);
     if (userId === null) {
-      res
-        .status(401)
-        .type("text/plain")
-        .send("Invalid username and password combination. Please try again.");
+      res.status(401).type("text/plain").send("Invalid username and password combination. Please try again.");
       return;
     }
     const sessionId = await session.create(userId);
@@ -385,20 +359,14 @@ app.post("/", async (req, res) => {
     const {user, password} = req.body;
     const result = await DB.createUser(user, password);
     if (result.type === "error") {
-      res
-        .status(409)
-        .type("text/plain")
-        .send(`Unable to create user: The user "${user}" already exists.`);
+      res.status(409).type("text/plain").send(`Unable to create user: The user "${user}" already exists.`);
     } else {
       const {userId} = result;
       const sessionId = await session.create(userId);
       sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
     }
   } else {
-    res
-      .status(400)
-      .type("text/plain")
-      .send("400 Bad Request");
+    res.status(400).type("text/plain").send("400 Bad Request");
   }
 });
 
@@ -436,11 +404,7 @@ app.delete("/api/account/:account", requireSession, async (req, res) => {
 
 // Error handling
 app.use((req, res, next) => {
-  if (!res.headersSent)
-    res
-      .type("text/plain")
-      .status(404)
-      .send("404 Not Found");
+  if (!res.headersSent) res.type("text/plain").status(404).send("404 Not Found");
 });
 
 // Start app
