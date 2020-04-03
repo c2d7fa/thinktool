@@ -118,30 +118,35 @@ export async function updateThing({
   userId: UserId;
   thing: string;
   content: string;
-  children: string[];
+  children: {name: string; child: string; tag?: string}[];
 }): Promise<void> {
-  // We receive a list of children from the client, but we want to insert
-  // connections into the database. We handle this by first removing all
-  // existing connections from the DB, and then recreating the new connections
-  // from scratch.
-
-  await client.db("diaform").collection("connections").deleteMany({user: userId.name, parent: thing});
-
-  let connections = [];
-  let i = 0;
-  for (const child of children) {
-    const connectionId = `${thing}.children.${i++}`;
-    connections.push(connectionId);
+  // Create/update child connections
+  for (const connection of children) {
     await client
       .db("diaform")
       .collection("connections")
-      .updateOne({user: userId.name, name: connectionId}, {$set: {parent: thing, child}}, {upsert: true});
+      .updateOne(
+        {user: userId.name, name: connection.name},
+        {$set: {parent: thing, child: connection.child, tag: connection.tag}},
+        {upsert: true},
+      );
   }
 
+  // Remove old connections
+  await client
+    .db("diaform")
+    .collection("connections")
+    .deleteMany({user: userId.name, parent: thing, name: {$nin: children.map((c) => c.name)}});
+
+  // Update the item itself
   await client
     .db("diaform")
     .collection("things")
-    .updateOne({user: userId.name, name: thing}, {$set: {content, connections}}, {upsert: true});
+    .updateOne(
+      {user: userId.name, name: thing},
+      {$set: {content, connections: children.map((ch) => ch.name)}},
+      {upsert: true},
+    );
 }
 
 export async function deleteThing(userId: UserId, thing: string): Promise<void> {

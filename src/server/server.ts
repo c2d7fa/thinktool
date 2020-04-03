@@ -262,7 +262,7 @@ async function requireClientId(req: express.Request, res: express.Response, next
   next();
 }
 
-app.options("/api/things/:thing", async (req, res) => {
+app.options("/state/things/:thing", async (req, res) => {
   res
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
@@ -280,18 +280,20 @@ app.options("/api/things/:thing/content", async (req, res) => {
     .send();
 });
 
-app.put("/api/things/:thing", requireSession, parseThing, requireClientId, async (req, res) => {
+app.put("/state/things/:thing", requireSession, parseThing, requireClientId, async (req, res) => {
   if (typeof req.body !== "object") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
   const data = req.body as Communication.ThingData;
-  await DB.updateThing({
+
+  DB.updateThing({
     userId: req.user!,
     thing: res.locals.thing,
     content: data.content,
     children: data.children,
   });
+
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
   res
     .header("Access-Control-Allow-Origin", staticUrl)

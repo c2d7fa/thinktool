@@ -8,4 +8,4 @@ export type FullStateResponse = {
   }[];
 };
 
-export type ThingData = {content: string; children: string[]};
+export type ThingData = {content: string; children: {name: string; child: string; tag?: string}[]};
