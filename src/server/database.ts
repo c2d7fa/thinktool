@@ -146,6 +146,13 @@ export async function updateThing({
 
 export async function deleteThing(userId: UserId, thing: string): Promise<void> {
   await client.db("diaform").collection("things").deleteOne({user: userId.name, name: thing});
+
+  await client.db("diaform").collection("connections").deleteMany({user: userId.name, child: thing});
+  await client.db("diaform").collection("connections").deleteMany({user: userId.name, parent: thing});
+  await client
+    .db("diaform")
+    .collection("connections")
+    .updateMany({user: userId.name, tag: thing}, {$unset: {tag: ""}});
 }
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {

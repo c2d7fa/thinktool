@@ -49,7 +49,7 @@ export async function setContent(thing: string, content: string): Promise<void> 
 }
 
 export async function deleteThing(thing: string): Promise<void> {
-  await api(`api/things/${thing}`, {method: "delete", headers: {"Thinktool-Client-Id": clientId}});
+  await api(`state/things/${thing}`, {method: "delete", headers: {"Thinktool-Client-Id": clientId}});
 }
 
 export async function putThing(thing: string, data: Communication.ThingData): Promise<void> {

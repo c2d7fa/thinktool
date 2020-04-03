@@ -299,7 +299,7 @@ app.put("/api/things/:thing", requireSession, parseThing, requireClientId, async
     .end();
 });
 
-app.delete("/api/things/:thing", requireSession, parseThingExists, requireClientId, async (req, res) => {
+app.delete("/state/things/:thing", requireSession, parseThingExists, requireClientId, async (req, res) => {
   await DB.deleteThing(req.user!, res.locals.thing);
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
   res
