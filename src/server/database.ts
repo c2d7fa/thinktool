@@ -67,11 +67,19 @@ export async function getFullState(
 ): Promise<{
   things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[];
 }> {
+  // We want to join the with connections, putting the relevant connections
+  // inline in the returned array. We use a hack where we start by replacing
+  // all connections with the correct name, then narrow down to just the
+  // connections from the correct user. This kinda makes me wish I had just gone
+  // with SQL...
   const things = await client
     .db("diaform")
     .collection("things")
     .aggregate([
       {$match: {user: userId.name}},
+      // Replace "connections" with inline "children", which now contains *all*
+      // connections with the same name, whether or not they are by the same
+      // user!
       {
         $lookup: {
           from: "connections",
@@ -80,7 +88,18 @@ export async function getFullState(
           as: "children",
         },
       },
-      {$project: {_id: 0, name: 1, content: 1, children: {name: 1, child: 1, tag: 1}}},
+      // Filter to connections by the correct user.
+      {
+        $project: {
+          _id: 0,
+          name: 1,
+          content: 1,
+          children: {
+            $filter: {input: "$children", as: "child", cond: {$eq: ["$$child.user", userId.name]}},
+          },
+        },
+      },
+      {$project: {_id: 0, name: 1, content: 1, children: {user: 1, name: 1, child: 1, tag: 1}}},
     ])
     .toArray();
   return {things};
@@ -116,7 +135,7 @@ export async function updateThing({
     await client
       .db("diaform")
       .collection("connections")
-      .insertOne({user: userId.name, name: connectionId, parent: thing, child});
+      .updateOne({user: userId.name, name: connectionId}, {$set: {parent: thing, child}}, {upsert: true});
   }
 
   await client
