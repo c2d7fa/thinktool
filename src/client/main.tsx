@@ -194,9 +194,15 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
         Server.deleteThing(thing);
       }
       for (const thing of [...diff.added, ...diff.changed]) {
-        Server.putThing(thing, {
+        Server.updateThing(thing, {
           content: Data.content(oldState, thing),
-          children: Data.children(oldState, thing),
+          children: Data.childConnections(oldState, thing).map((c) => {
+            return {
+              name: c.connectionId,
+              child: Data.connectionChild(oldState, c),
+              tag: Data.tag(oldState, c) ?? undefined,
+            };
+          }),
         });
       }
     }
