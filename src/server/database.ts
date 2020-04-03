@@ -130,6 +130,12 @@ export async function updateThing({
         {$set: {parent: thing, child: connection.child, tag: connection.tag}},
         {upsert: true},
       );
+    if (connection.tag === undefined) {
+      await client
+        .db("diaform")
+        .collection("connection")
+        .updateOne({user: userId.name, name: connection.name}, {$unset: {tag: ""}});
+    }
   }
 
   // Remove old connections
