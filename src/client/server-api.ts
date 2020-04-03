@@ -30,6 +30,8 @@ export async function getFullState(): Promise<D.State> {
     state = D.setContent(state, thing.name, thing.content);
     for (const childConnection of thing.children) {
       state = D.addChild(state, thing.name, childConnection.child, childConnection.name)[0];
+      if (childConnection.tag !== undefined)
+        state = D.setTag(state, {connectionId: childConnection.name}, childConnection.tag);
     }
   }
 
