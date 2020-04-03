@@ -287,7 +287,7 @@ app.put("/state/things/:thing", requireSession, parseThing, requireClientId, asy
   }
   const data = req.body as Communication.ThingData;
 
-  DB.updateThing({
+  await DB.updateThing({
     userId: req.user!,
     thing: res.locals.thing,
     content: data.content,
@@ -327,7 +327,7 @@ app.put("/api/things/:thing/content", requireSession, parseThingExists, requireC
 
 // #endregion
 
-app.get("/api/things/:thing", requireSession, parseThingExists, async (req, res) => {
+app.get("/state/things/:thing", requireSession, parseThingExists, async (req, res) => {
   const thingData = await DB.getThingData(req.user!, res.locals.thing);
   res
     .type("json")

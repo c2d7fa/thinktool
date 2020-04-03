@@ -84,7 +84,7 @@ export function onChanges(callback: (changes: string[]) => void): () => void {
 }
 
 export async function getThingData(thing: string): Promise<Communication.ThingData | null> {
-  const response = await api(`api/things/${thing}`);
+  const response = await api(`state/things/${thing}`);
   if (response.status === 404) return null;
   return (await response.json()) as Communication.ThingData;
 }

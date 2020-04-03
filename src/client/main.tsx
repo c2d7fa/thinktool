@@ -303,7 +303,16 @@ function App({
           }
 
           newState = Data.setContent(newState, changedThing, thingData.content);
-          newState = Data.replaceChildren(newState, changedThing, thingData.children);
+
+          const nChildren = Data.children(newState, changedThing).length;
+          for (let i = 0; i < nChildren; ++i) {
+            newState = Data.removeChild(newState, changedThing, 0);
+          }
+          for (const childConnection of thingData.children) {
+            newState = Data.addChild(newState, changedThing, childConnection.child, childConnection.name)[0];
+            if (childConnection.tag !== undefined)
+              newState = Data.setTag(newState, {connectionId: childConnection.name}, childConnection.tag);
+          }
 
           return newState;
         });

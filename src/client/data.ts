@@ -186,22 +186,6 @@ export function addChild(
   return insertChild(things, parent, child, children(things, parent).length, customConnectionId);
 }
 
-export function replaceChildren(state: State, parent: string, newChildren: string[]) {
-  let result = state;
-
-  // Remove old children
-  for (let i = 0; i < children(state, parent).length; ++i) {
-    result = removeChild(result, parent, 0);
-  }
-
-  // Add new children
-  for (const child of newChildren) {
-    result = addChild(result, parent, child)[0];
-  }
-
-  return result;
-}
-
 function generateShortId(): string {
   const d = Math.floor(new Date().getTime() / 1000) % (36 * 36 * 36 * 36 * 36 * 36);
   const r = Math.floor(Math.random() * 36 * 36);

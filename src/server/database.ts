@@ -67,41 +67,29 @@ export async function getFullState(
 ): Promise<{
   things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[];
 }> {
-  // We want to join the with connections, putting the relevant connections
-  // inline in the returned array. We use a hack where we start by replacing
-  // all connections with the correct name, then narrow down to just the
-  // connections from the correct user. This kinda makes me wish I had just gone
-  // with SQL...
-  const things = await client
-    .db("diaform")
-    .collection("things")
-    .aggregate([
-      {$match: {user: userId.name}},
-      // Replace "connections" with inline "children", which now contains *all*
-      // connections with the same name, whether or not they are by the same
-      // user!
-      {
-        $lookup: {
-          from: "connections",
-          localField: "connections",
-          foreignField: "name",
-          as: "children",
-        },
-      },
-      // Filter to connections by the correct user.
-      {
-        $project: {
-          _id: 0,
-          name: 1,
-          content: 1,
-          children: {
-            $filter: {input: "$children", as: "child", cond: {$eq: ["$$child.user", userId.name]}},
-          },
-        },
-      },
-      {$project: {_id: 0, name: 1, content: 1, children: {user: 1, name: 1, child: 1, tag: 1}}},
-    ])
-    .toArray();
+  // [TODO] This is absurdly inefficient. It's weirdly difficult to do stuff
+  // like this in MongoDB. Maybe we should just switch to SQL?
+
+  const documents = await client.db("diaform").collection("things").find({user: userId.name}).toArray();
+
+  let things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[] = [];
+
+  for (const document of documents) {
+    let children = [];
+    for (const connection of document.connections) {
+      const connectionDocument = await client
+        .db("diaform")
+        .collection("connections")
+        .findOne({user: userId.name, name: connection});
+      children.push({
+        name: connection,
+        child: connectionDocument.child,
+        tag: connectionDocument.tag ?? undefined,
+      });
+    }
+    things.push({name: document.name, content: document.content ?? "", children});
+  }
+
   return {things};
 }
 
@@ -176,18 +164,23 @@ export async function setContent(userId: UserId, thing: string, content: string)
 export async function getThingData(
   userId: UserId,
   thing: string,
-): Promise<{content: string; children: string[]}> {
-  const data = await client.db("diaform").collection("things").findOne({user: userId.name, name: thing});
+): Promise<{content: string; children: {name: string; child: string; tag?: string}[]}> {
+  const document = await client.db("diaform").collection("things").findOne({user: userId.name, name: thing});
 
-  const children = await client
-    .db("diaform")
-    .collection("connections")
-    .find({user: userId.name, parent: thing})
-    .map((c) => c.child)
-    .toArray();
-  console.log(children);
+  let children = [];
+  for (const connection of document.connections) {
+    const connectionDocument = await client
+      .db("diaform")
+      .collection("connections")
+      .findOne({user: userId.name, name: connection});
+    children.push({
+      name: connection,
+      child: connectionDocument.child,
+      tag: connectionDocument.tag ?? undefined,
+    });
+  }
 
-  return {content: data.content ?? "", children};
+  return {content: document.content ?? "", children};
 }
 
 export async function deleteAllUserData(userId: UserId): Promise<void> {
