@@ -120,6 +120,12 @@ function diffState(
       } else if (JSON.stringify(oldState.things[thing]) !== JSON.stringify(newState.things[thing])) {
         changed.push(thing);
       }
+    } else {
+      for (const connection of oldState.things[thing].children) {
+        if (oldState.connections[connection.connectionId] !== newState.connections[connection.connectionId]) {
+          changed.push(thing);
+        }
+      }
     }
   }
 
