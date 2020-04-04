@@ -158,8 +158,10 @@ export async function setContent(userId: UserId, thing: string, content: string)
 export async function getThingData(
   userId: UserId,
   thing: string,
-): Promise<{content: string; children: {name: string; child: string; tag?: string}[]}> {
+): Promise<{content: string; children: {name: string; child: string; tag?: string}[]} | null> {
   const document = await client.db("diaform").collection("things").findOne({user: userId.name, name: thing});
+
+  if (document === null) return null;
 
   let children = [];
   for (const connection of document.connections) {

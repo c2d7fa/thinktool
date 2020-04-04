@@ -329,11 +329,13 @@ app.put("/api/things/:thing/content", requireSession, parseThingExists, requireC
 
 app.get("/state/things/:thing", requireSession, parseThingExists, async (req, res) => {
   const thingData = await DB.getThingData(req.user!, res.locals.thing);
-  res
-    .type("json")
-    .header("Access-Control-Allow-Origin", staticUrl)
-    .header("Access-Control-Allow-Credentials", "true")
-    .send(thingData as Communication.ThingData);
+
+  res.header("Access-Control-Allow-Origin", staticUrl).header("Access-Control-Allow-Credentials", "true");
+  if (thingData === null) {
+    res.status(404).send();
+  } else {
+    res.type("json").send(thingData as Communication.ThingData);
+  }
 });
 
 app.post("/", async (req, res) => {
