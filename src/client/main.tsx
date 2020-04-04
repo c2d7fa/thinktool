@@ -10,6 +10,8 @@ import * as Server from "./server-api";
 import * as C from "./ui/content";
 import Search from "./ui/Search";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
+import TableView from "./ui/TableView";
+import ToggleButton from "./ui/ToggleButton";
 
 import * as Demo from "./demo";
 
@@ -44,6 +46,9 @@ interface Context {
 
   selectedThing: string;
   setSelectedThing(value: string): void;
+
+  viewMode: "outline" | "table";
+  setViewMode(viewMode: "outline" | "table"): void;
 }
 
 // == Components ==
@@ -236,6 +241,9 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
 
   const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
 
+  // View mode:
+  const [viewMode, setViewMode] = React.useState<"outline" | "table">("outline");
+
   return {
     state,
     setState,
@@ -257,6 +265,8 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
     setTree,
     drag,
     setDrag,
+    viewMode,
+    setViewMode,
   };
 }
 
@@ -411,6 +421,12 @@ function App({
     <>
       <div className="top-bar">
         <Search context={context} />
+        <ToggleButton
+          leftLabel="Outline"
+          rightLabel="Table"
+          chooseLeft={() => context.setViewMode("outline")}
+          chooseRight={() => context.setViewMode("table")}
+        />
         <div id="current-user">
           <a className="username" href="/user.html">
             {username}
@@ -657,9 +673,13 @@ function ThingOverview(p: {context: Context}) {
             p.context.setContent(p.context.selectedThing, text);
           }}
         />
-        <div className="children">
-          <Outline context={p.context} />
-        </div>
+        {p.context.viewMode === "table" ? (
+          <TableView />
+        ) : (
+          <div className="children">
+            <Outline context={p.context} />
+          </div>
+        )}
       </div>
       {hasReferences && (
         <>
