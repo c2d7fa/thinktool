@@ -28,7 +28,7 @@ interface DragInfo {
   finished: boolean | "copy";
 }
 
-interface Context {
+export interface Context {
   state: State;
   setState(value: State): void;
   setLocalState(value: State): void;
@@ -674,7 +674,7 @@ function ThingOverview(p: {context: Context}) {
           }}
         />
         {p.context.viewMode === "table" ? (
-          <TableView />
+          <TableView context={p.context} />
         ) : (
           <div className="children">
             <Outline context={p.context} />
@@ -789,7 +789,12 @@ function ConnectionTag(p: {context: Context; tag: string}) {
   return <span className="connection-tag">{Data.contentText(p.context.state, p.tag)}</span>;
 }
 
-function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRef; className?: string}) {
+export function ExpandableItem(p: {
+  context: Context;
+  node: T.NodeRef;
+  parent?: T.NodeRef;
+  className?: string;
+}) {
   function toggle() {
     p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
   }
