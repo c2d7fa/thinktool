@@ -795,6 +795,7 @@ export function ExpandableItem(p: {
   parent?: T.NodeRef;
   className?: string;
   hideTagged?: boolean;
+  hideTag?: boolean;
 }) {
   function toggle() {
     p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
@@ -830,7 +831,7 @@ export function ExpandableItem(p: {
             p.context.setSelectedThing(T.thing(p.context.tree, p.node));
           }}
         />
-        {tag !== null && <ConnectionTag context={p.context} tag={tag} />}
+        {tag !== null && !p.hideTag && <ConnectionTag context={p.context} tag={tag} />}
         <Content context={p.context} node={p.node} />
       </span>
       {expanded && subtree}
