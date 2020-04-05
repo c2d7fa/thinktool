@@ -794,6 +794,7 @@ export function ExpandableItem(p: {
   node: T.NodeRef;
   parent?: T.NodeRef;
   className?: string;
+  hideTagged?: boolean;
 }) {
   function toggle() {
     p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
@@ -813,7 +814,9 @@ export function ExpandableItem(p: {
 
   const tag = T.tag(p.context.state, p.context.tree, p.node);
 
-  const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
+  const subtree = (
+    <Subtree hideTagged={p.hideTagged} context={p.context} parent={p.node} grandparent={p.parent} />
+  );
 
   return (
     <li className="outline-item">
@@ -1098,10 +1101,15 @@ function Subtree(p: {
   grandparent?: T.NodeRef;
   children?: React.ReactNode[] | React.ReactNode;
   omitReferences?: boolean;
+  hideTagged?: boolean;
 }) {
-  const children = T.children(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
-  });
+  const children = T.children(p.context.tree, p.parent)
+    .filter((child) => {
+      return !(p.hideTagged && T.tag(p.context.state, p.context.tree, child));
+    })
+    .map((child) => {
+      return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
+    });
 
   const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map((child) => {
     return (
