@@ -17,7 +17,12 @@ export default function TableView(props: {context: Main.Context}) {
           <td key={column}>
             <ul>
               {cellNodes.map((node) => (
-                <Main.ExpandableItem key={JSON.stringify(node)} context={props.context} node={node} />
+                <Main.ExpandableItem
+                  key={JSON.stringify(node)}
+                  context={props.context}
+                  node={node}
+                  parent={childNode}
+                />
               ))}
             </ul>
           </td>
@@ -29,7 +34,12 @@ export default function TableView(props: {context: Main.Context}) {
       <tr key={JSON.stringify(childNode)}>
         <td>
           <ul>
-            <Main.ExpandableItem hideTagged={true} context={props.context} node={childNode} />
+            <Main.ExpandableItem
+              hideTagged={true}
+              context={props.context}
+              node={childNode}
+              parent={T.root(props.context.tree)}
+            />
           </ul>
         </td>
         {cells}
