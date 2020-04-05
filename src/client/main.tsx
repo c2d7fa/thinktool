@@ -5,6 +5,7 @@ import {Tree} from "./tree";
 
 import * as Data from "./data";
 import * as T from "./tree";
+import * as Tb from "./table";
 import * as Server from "./server-api";
 
 import * as C from "./ui/content";
@@ -425,7 +426,10 @@ function App({
           leftLabel="Outline"
           rightLabel="Table"
           chooseLeft={() => context.setViewMode("outline")}
-          chooseRight={() => context.setViewMode("table")}
+          chooseRight={() => {
+            context.setTree(Tb.prepareTreeForTableView(context.state, context.tree));
+            context.setViewMode("table");
+          }}
         />
         <div id="current-user">
           <a className="username" href="/user.html">
