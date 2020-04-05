@@ -5,11 +5,14 @@ import {Tree} from "./tree";
 
 import * as Data from "./data";
 import * as T from "./tree";
+import * as Tb from "./table";
 import * as Server from "./server-api";
 
 import * as C from "./ui/content";
 import Search from "./ui/Search";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
+import TableView from "./ui/TableView";
+import ToggleButton from "./ui/ToggleButton";
 
 import * as Demo from "./demo";
 
@@ -26,7 +29,7 @@ interface DragInfo {
   finished: boolean | "copy";
 }
 
-interface Context {
+export interface Context {
   state: State;
   setState(value: State): void;
   setLocalState(value: State): void;
@@ -44,6 +47,9 @@ interface Context {
 
   selectedThing: string;
   setSelectedThing(value: string): void;
+
+  viewMode: "outline" | "table";
+  setViewMode(viewMode: "outline" | "table"): void;
 }
 
 // == Components ==
@@ -236,6 +242,9 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
 
   const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
 
+  // View mode:
+  const [viewMode, setViewMode] = React.useState<"outline" | "table">("outline");
+
   return {
     state,
     setState,
@@ -257,6 +266,8 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
     setTree,
     drag,
     setDrag,
+    viewMode,
+    setViewMode,
   };
 }
 
@@ -411,6 +422,15 @@ function App({
     <>
       <div className="top-bar">
         <Search context={context} />
+        <ToggleButton
+          leftLabel="Outline"
+          rightLabel="Table"
+          chooseLeft={() => context.setViewMode("outline")}
+          chooseRight={() => {
+            context.setTree(Tb.prepareTreeForTableView(context.state, context.tree));
+            context.setViewMode("table");
+          }}
+        />
         <div id="current-user">
           <a className="username" href="/user.html">
             {username}
@@ -657,9 +677,13 @@ function ThingOverview(p: {context: Context}) {
             p.context.setContent(p.context.selectedThing, text);
           }}
         />
-        <div className="children">
-          <Outline context={p.context} />
-        </div>
+        {p.context.viewMode === "table" ? (
+          <TableView context={p.context} />
+        ) : (
+          <div className="children">
+            <Outline context={p.context} />
+          </div>
+        )}
       </div>
       {hasReferences && (
         <>
@@ -769,7 +793,14 @@ function ConnectionTag(p: {context: Context; tag: string}) {
   return <span className="connection-tag">{Data.contentText(p.context.state, p.tag)}</span>;
 }
 
-function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRef; className?: string}) {
+export function ExpandableItem(p: {
+  context: Context;
+  node: T.NodeRef;
+  parent?: T.NodeRef;
+  className?: string;
+  hideTagged?: boolean;
+  hideTag?: boolean;
+}) {
   function toggle() {
     p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
   }
@@ -788,7 +819,9 @@ function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRe
 
   const tag = T.tag(p.context.state, p.context.tree, p.node);
 
-  const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
+  const subtree = (
+    <Subtree hideTagged={p.hideTagged} context={p.context} parent={p.node} grandparent={p.parent} />
+  );
 
   return (
     <li className="outline-item">
@@ -802,7 +835,7 @@ function ExpandableItem(p: {context: Context; node: T.NodeRef; parent?: T.NodeRe
             p.context.setSelectedThing(T.thing(p.context.tree, p.node));
           }}
         />
-        {tag !== null && <ConnectionTag context={p.context} tag={tag} />}
+        {tag !== null && !p.hideTag && <ConnectionTag context={p.context} tag={tag} />}
         <Content context={p.context} node={p.node} />
       </span>
       {expanded && subtree}
@@ -1073,10 +1106,15 @@ function Subtree(p: {
   grandparent?: T.NodeRef;
   children?: React.ReactNode[] | React.ReactNode;
   omitReferences?: boolean;
+  hideTagged?: boolean;
 }) {
-  const children = T.children(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
-  });
+  const children = T.children(p.context.tree, p.parent)
+    .filter((child) => {
+      return !(p.hideTagged && T.tag(p.context.state, p.context.tree, child));
+    })
+    .map((child) => {
+      return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
+    });
 
   const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map((child) => {
     return (

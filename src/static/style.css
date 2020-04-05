@@ -18,6 +18,27 @@ ul.outline-tree {
   padding-left: 1.6em;
 }
 
+/* General UI elements */
+
+.toggle-button {
+  display: inline-flex;
+}
+
+.toggle-button button:first-child {
+  margin-right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+.toggle-button button:last-child {
+  margin-left: 0;
+  border-radius: 0 3px 3px 0;
+}
+
+.toggle-button .active-toggle {
+  background-color: #e4e4e4;
+  color: #787878;
+}
+
 /* Root tree */
 :not(.outline-item) > .outline-tree {
   padding-left: 1em;
@@ -48,20 +69,20 @@ ul.outline-tree {
 }
 
 .connection-tag {
-    cursor: default;
-    display: inline-block;
-    margin-right: 0.8em;
-    padding: 0 0.25em;
-    border-radius: 6px;
-    font-family: "Titillium Web", sans-serif;
-    font-size: 0.8em;
-    text-transform: uppercase;
-    background-color: #e9eef0;
-    color: #7d9196;
-    align-self: flex-start;
-    flex-shrink: 0;
-    max-width: 50%;
-    margin-bottom: 1rem;
+  cursor: default;
+  display: inline-block;
+  margin-right: 0.8em;
+  padding: 0 0.25em;
+  border-radius: 6px;
+  font-family: "Titillium Web", sans-serif;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  background-color: #e9eef0;
+  color: #7d9196;
+  align-self: flex-start;
+  flex-shrink: 0;
+  max-width: 50%;
+  margin-bottom: 1rem;
 }
 
 li.outline-item > * {
@@ -379,13 +400,13 @@ h1.link-section:first-child {
 .top-bar {
   padding: 0.35em;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
 
   background: linear-gradient(180deg, #fcfcfc 0%, #fafafa 100%);
   color: #a0a0a0;
 }
 
-.search {
+.top-bar button {
   background: none;
   padding: 0;
   margin: 0;
@@ -405,22 +426,25 @@ h1.link-section:first-child {
   border-radius: 3px;
 
   transition: color 0.3s ease, background-color 0.3s ease;
+
+  margin-right: 0.5em;
 }
 
-.search:hover {
+.top-bar button:hover {
   cursor: pointer;
 
   color: #606060;
   background-color: #e8e8e8;
 }
 
-.search:active {
+.top-bar button:active {
   background-color: #dcdcdc;
 }
 
 /* Current user */
 
 #current-user {
+  margin-left: auto; /* Right align */
   cursor: default;
   font-size: 0.8em;
   font-family: "Titillium Web";
@@ -538,4 +562,59 @@ h1.link-section:first-child {
 
 .toolbar button:active {
   background-color: #c0c0c0;
+}
+
+/* Table view */
+
+.children-table table {
+  margin-top: 1em;
+  /*border-collapse: collapse;*/
+  width: 100%;
+
+  border-spacing: 0 1em;
+}
+
+.children-table table td {
+  vertical-align: top;
+  padding: 0.5em;
+  border: 1px solid #f0f0f0;
+  border-left: none;
+}
+
+.children-table tbody tr td:first-child {
+  border-radius: 6px 0 0 6px;
+  border-left: 1px solid #f0f0f0;
+}
+
+.children-table tbody tr td:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+.children-table table td > ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  margin-bottom: -0.8em; /* Cancel out padding on list item */
+}
+
+.children-table table td > ul > li {
+  margin: 0;
+  padding: 0;
+}
+
+.children-table thead td {
+  border: none;
+  padding: 0;
+}
+
+.children-table thead td > span {
+  cursor: default;
+  padding: 0 0.25em;
+  border-radius: 6px;
+  font-family: "Titillium Web", sans-serif;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  background-color: #e9eef0;
+  color: #7d9196;
 }
