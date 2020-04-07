@@ -211,6 +211,12 @@ a.internal-link-open:hover {
   font-size: 1em;
 }
 
+.editor-inactive {
+  white-space: pre-wrap;
+
+  color: #606060;
+}
+
 /* THING SELECTION POPUP */
 
 .link-autocomplete-popup {

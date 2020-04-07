@@ -153,13 +153,34 @@ function nodesToText(nodes: Slate.Node[]): string {
 
 */
 
-export function Content(props: {
+function RenderedContent(props: {
   things: D.State;
   focused?: boolean;
   text: string;
   setText(text: string): void;
   className?: string;
   onFocus?(ev: React.FocusEvent<{}>): void;
+  onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
+  placeholder?: string;
+  getContentText(thing: string): string;
+  openInternalLink?(thing: string): void;
+  isLinkOpen?(thing: string): boolean;
+}) {
+  return (
+    <div tabIndex={-1} onFocus={props.onFocus} className={`editor-inactive ${props.className}`}>
+      {props.text}
+    </div>
+  );
+}
+
+export function ContentEditor(props: {
+  things: D.State;
+  focused?: boolean;
+  text: string;
+  setText(text: string): void;
+  className?: string;
+  onFocus?(ev: React.FocusEvent<{}>): void;
+  onBlur?(): void;
   onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
   getContentText(thing: string): string;
@@ -266,9 +287,31 @@ export function Content(props: {
         value={props.text}
         onChange={(ev) => props.setText(ev.target.value)}
         onFocus={(ev) => props.onFocus !== undefined && props.onFocus(ev)}
+        onBlur={props.onBlur}
         onKeyDown={onKeyDown}
       />
       {linkPopup}
     </div>
   );
+}
+
+export function Content(props: {
+  things: D.State;
+  focused?: boolean;
+  text: string;
+  setText(text: string): void;
+  className?: string;
+  onFocus?(ev: React.FocusEvent<{}>): void;
+  onBlur?(): void;
+  onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
+  placeholder?: string;
+  getContentText(thing: string): string;
+  openInternalLink?(thing: string): void;
+  isLinkOpen?(thing: string): boolean;
+}) {
+  if (props.focused) {
+    return <ContentEditor {...props} />;
+  } else {
+    return <RenderedContent {...props} />;
+  }
 }
