@@ -192,6 +192,25 @@ a.internal-link-open:hover {
   box-decoration-break: clone;
 }
 
+/* EDITOR */
+
+.editor textarea {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  resize: none;
+  border: none;
+  background: none;
+  outline: none;
+
+  line-height: 150%;
+  height: 1.5em; /* Will be overwritten in JS */
+  overflow: hidden; /* Shouldn't matter, since we resize automatically */
+
+  font-family: "Roboto", sans-serif;
+  font-size: 1em;
+}
+
 /* THING SELECTION POPUP */
 
 .link-autocomplete-popup {

@@ -7,8 +7,6 @@
     "parcel-bundler": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "slate": "latest",
-    "slate-react": "latest",
     "typescript": "latest"
   }
 }

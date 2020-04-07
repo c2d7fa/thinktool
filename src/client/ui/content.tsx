@@ -1,75 +1,10 @@
 import * as React from "react";
 
-import * as Slate from "slate";
-import * as SlateReact from "slate-react";
-
 import * as D from "../data";
 
 import ThingSelectPopup from "./ThingSelectPopup";
 
-// #region Lines in the editor
-
-// The editor may contain multiple lines of text. When it makes sense to do so,
-// the user should be able to navigate up and down the editor using the arrow up
-// and down keys.
-//
-// However, on the first and last line, we want to allow our parent to handle
-// arrow up and arrow down key events, respectively. Unfortunately, there is no
-// easy way to check whether the selection is currently on the first or the last
-// line of a Slate editor, so we use the following code instead.
-
-function currentSelectionIsOnFirstLineOfSelectedElement(): boolean {
-  const selection = window.getSelection();
-  if (selection == undefined) return false;
-
-  const range = selection.getRangeAt(0);
-  const rect = range.getBoundingClientRect();
-
-  const testRange = document.createRange();
-  testRange.setStart(range.startContainer, 0);
-  testRange.collapse();
-  selection.removeAllRanges();
-  selection.addRange(testRange);
-
-  const testRect = testRange.getBoundingClientRect();
-
-  selection.removeAllRanges();
-  selection.addRange(range);
-
-  return rect.top === testRect.top;
-}
-
-function currentSelectionIsOnLastLineOfSelectedElement(): boolean {
-  const selection = window.getSelection();
-  if (selection == undefined) return false;
-
-  const range = selection.getRangeAt(0);
-  const rect = range.getBoundingClientRect();
-
-  const testRange = document.createRange();
-  testRange.setStart(range.startContainer, (range.startContainer as Text).length);
-  testRange.collapse();
-  selection.removeAllRanges();
-  selection.addRange(testRange);
-
-  const testRect = testRange.getBoundingClientRect();
-
-  selection.removeAllRanges();
-  selection.addRange(range);
-
-  return rect.top === testRect.top;
-}
-
-function atFirstLineInEditor(): boolean {
-  return currentSelectionIsOnFirstLineOfSelectedElement();
-}
-
-function atLastLineInEditor(): boolean {
-  return currentSelectionIsOnLastLineOfSelectedElement();
-}
-
-// #endregion
-
+/*
 function decorate([node, path]: [Slate.Node, Slate.Path]): Slate.Range[] {
   // TODO: I don't understand what the point of this is, but if we don't add it,
   // Slate makes empty copies of the decorators. Taken from
@@ -80,9 +15,10 @@ function decorate([node, path]: [Slate.Node, Slate.Path]): Slate.Range[] {
 
   let ranges: Slate.Range[] = [];
 
-  // External links
+  // External links*/
 
-  const linkRegex = /https?:\/\S*/g;
+//const linkRegex = /https?:\/\S*/g;
+/*
   for (const match of [...text.matchAll(linkRegex)]) {
     if (match.index === undefined) throw "bad programmer error";
 
@@ -215,13 +151,7 @@ function nodesToText(nodes: Slate.Node[]): string {
   return result;
 }
 
-function isVoid(element: Slate.Element): boolean {
-  return element.type === "internalLink";
-}
-
-function isInline(element: Slate.Element): boolean {
-  return element.type === "internalLink";
-}
+*/
 
 export function Content(props: {
   things: D.State;
@@ -236,142 +166,109 @@ export function Content(props: {
   openInternalLink?(thing: string): void;
   isLinkOpen?(thing: string): boolean;
 }) {
-  const editor = React.useMemo(() => {
-    const editor = SlateReact.withReact(Slate.createEditor());
-    editor.isVoid = isVoid;
-    editor.isInline = isInline;
-    return editor;
-  }, []);
-  const [value, setValue] = React.useState(nodesFromText(props.text));
-  const divRef = React.useRef<HTMLDivElement>(null);
-
-  const [inactiveEditorSelection, setInactiveEditorSelection] = React.useState<Slate.Range | null>(null);
   const [showLinkPopup, setShowLinkPopup] = React.useState(false);
 
-  // I don't entirely understand how focus is supposed to be handled in Slate,
-  // so we use a bit of a hack (or at least, I think it's a hack).
-  //
-  // Basically, the parent can pass the "focused" property. When this is updated
-  // such that it becomes true, we manually transfer focus to the Slate editor
-  // using the Effect below.
-  //
-  // I would have thought that simply calling SlateReact.ReactEditor.focus(editor)
-  // would be enough, but apparently this is not the case, so we do some other
-  // stuff as well.
+  const preservedSelectionRef = React.useRef<[number, number] | null>(null);
 
   React.useEffect(() => {
-    if (props.focused) {
-      if (!SlateReact.ReactEditor.isFocused(editor)) {
-        SlateReact.ReactEditor.focus(editor);
-        Slate.Transforms.select(editor, editor.selection ?? Slate.Editor.start(editor, []));
-      }
-    }
+    if (props.focused) textareaRef.current?.focus();
   }, [props.focused]);
 
-  React.useEffect(() => {
-    if (props.text !== nodesToText(value)) {
-      // TODO
-      //
-      // Workaround for https://github.com/ianstormtaylor/slate/issues/3477
-      //
-      // Sometimes when we follow a link, we get an error about Slate being
-      // unable to "find a descendant at path [0,1,0] in node ...". These next
-      // two lines fix this, but I haven't really looked into why, so it may be
-      // a bad idea to do this:
-      editor.selection = {anchor: {path: [0, 0], offset: 0}, focus: {path: [0, 0], offset: 0}};
-      SlateReact.ReactEditor.blur(editor);
-
-      setValue(nodesFromText(props.text));
-    }
-  }, [props.text]);
-
-  function onChange(nodes: Slate.Node[]): void {
-    if (nodesToText(nodes) !== props.text) {
-      props.setText(nodesToText(nodes));
-    }
-    setValue(nodes);
-  }
-
   function onKeyDown(ev: React.KeyboardEvent): void {
-    if (ev.key === "l" && ev.altKey) {
-      // Before we show the link popup, we want to remember the old selection,
-      // so we can restore it afterwards.
-      setInactiveEditorSelection(editor.selection);
+    // When the user presses up on the first line or down on the last line, we
+    // want to let the parent handle the event. Unfortunately, there is not
+    // easy way to check which line the cursor is on, so we must use a hack
+    // here.
+    //
+    // We choose to *always* the the standard cursor movement event fire, but
+    // once the cursor has been moved, we check to see if it is in the first
+    // character (which will be true if it was moved up from the first line),
+    // or on the last character (which will happen if it was moved  down from
+    // the last line).
+    //
+    // This breaks if the user presses up on the first column of the second
+    // line, or if they press down on the last column of the penultimate line.
+    // We don't handle that case.
+    if ((ev.key === "ArrowUp" || ev.key === "ArrowDown") && !(ev.ctrlKey || ev.altKey)) {
+      // Only handle event after cursor has been moved.
+      if (props.onKeyDown !== undefined) {
+        ev.persist(); // So they can access ev after timeout.
+        setTimeout(() => {
+          if (textareaRef.current?.selectionStart === 0) {
+            props.onKeyDown!(ev, {startOfItem: true, endOfItem: false});
+          } else if (textareaRef.current?.selectionEnd === textareaRef.current?.value.length) {
+            props.onKeyDown!(ev, {startOfItem: false, endOfItem: true});
+          }
+        });
+      }
+      return;
+    }
 
+    if (ev.key === "l" && ev.altKey) {
+      if (textareaRef.current === null) return;
+
+      // Preserve selection so it can be restored when we insert the link.
+      preservedSelectionRef.current = [textareaRef.current.selectionStart, textareaRef.current.selectionEnd];
       setShowLinkPopup(true);
       return ev.preventDefault();
     }
 
-    if (
-      ((ev.key === "ArrowUp" && !atFirstLineInEditor()) ||
-        (ev.key === "ArrowDown" && !atLastLineInEditor())) &&
-      !(ev.ctrlKey || ev.altKey)
-    ) {
-      // Arrow key without modifiers inside text. Use normal action.
-      return;
-    }
-
-    if (!editor.selection) throw "bad programmer error";
-    const startOfItem = Slate.Point.equals(
-      Slate.Range.start(editor.selection),
-      Slate.Editor.start(editor, []),
-    );
-    const endOfItem = Slate.Point.equals(Slate.Range.end(editor.selection), Slate.Editor.end(editor, []));
-
-    if (props.onKeyDown !== undefined && props.onKeyDown(ev, {startOfItem, endOfItem})) {
+    if (props.onKeyDown !== undefined && props.onKeyDown(ev, {startOfItem: false, endOfItem: false})) {
       // The event was handled by our parent.
       ev.preventDefault();
-      return;
-    } else {
-      if (ev.key === "Enter") {
-        editor.insertText("\n");
-        ev.preventDefault();
-      }
-
-      return;
     }
   }
 
   const linkPopup = (() => {
     if (!showLinkPopup) return null;
 
-    if (editor.selection !== null) {
-      function submit(id: string): void {
-        // When we focus the popup, Slate will have forgotten the old selection,
-        // so we need to restore it first:
-        editor.selection = inactiveEditorSelection;
-        SlateReact.ReactEditor.focus(editor);
+    return (
+      <ThingSelectPopup
+        state={props.things}
+        hide={() => setShowLinkPopup(false)}
+        submit={(link: string) => {
+          if (textareaRef.current === null) {
+            console.error("Can't get textarea; exiting early.");
+            return;
+          }
 
-        editor.insertNode({type: "internalLink", internalLink: id, children: [{text: ""}]});
-      }
+          if (preservedSelectionRef.current === null) {
+            console.error("No selection preserved; exiting early.");
+            return;
+          }
+          textareaRef.current.selectionStart = preservedSelectionRef.current[0];
+          textareaRef.current.selectionEnd = preservedSelectionRef.current[1];
 
-      return <ThingSelectPopup state={props.things} hide={() => setShowLinkPopup(false)} submit={submit} />;
-    } else {
-      // TODO: This happens sometimes. Namely when the focus is moved to the
-      // ThingSelectPopup we just created. We probably need to handle this case,
-      // right?
-    }
+          props.setText(
+            props.text.substring(0, textareaRef.current.selectionStart) +
+              link +
+              props.text.substring(textareaRef.current.selectionEnd),
+          );
+        }}
+      />
+    );
   })();
 
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // Automatically resize textarea to fit content.
+  React.useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "0"; // Necessary for shrinking
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    }
+  }, [props.text]);
+
   return (
-    <div ref={divRef} className={`content-editable-plain-text ${props.className}`}>
-      <SlateReact.Slate editor={editor} value={value} onChange={onChange}>
-        <SlateReact.Editable
-          renderLeaf={renderLeaf}
-          renderElement={(elementProps) =>
-            renderElement({
-              ...elementProps,
-              getContentText: props.getContentText,
-              openInternalLink: props.openInternalLink ?? (() => {}),
-              isLinkOpen: props.isLinkOpen ?? ((_) => false),
-            })
-          }
-          decorate={decorate}
-          onKeyDown={onKeyDown}
-          onFocus={props.onFocus}
-        />
-        {linkPopup}
-      </SlateReact.Slate>
+    <div className={`editor ${props.className}`}>
+      <textarea
+        ref={textareaRef}
+        value={props.text}
+        onChange={(ev) => props.setText(ev.target.value)}
+        onFocus={(ev) => props.onFocus !== undefined && props.onFocus(ev)}
+        onKeyDown={onKeyDown}
+      />
+      {linkPopup}
     </div>
   );
 }
