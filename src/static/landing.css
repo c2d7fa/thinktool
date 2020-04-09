@@ -25,6 +25,8 @@ main {
   background: radial-gradient(circle at bottom, #f4f4f4 0%, #fcfcfc 150%);
 
   flex: 1 1 100%;
+
+  box-shadow: 0 3px 6px -3px #808080;
 }
 
 .centered {
@@ -36,29 +38,88 @@ main {
   max-width: 34rem;
 }
 
-.wrapping {
-  flex-wrap: wrap;
-}
-
-.wrapping > * {
-  margin-bottom: 2rem;
+.wide {
+  max-width: 92rem;
 }
 
 .feature {
-  height: 20rem;
-  width: 16rem;
+  display: flex;
+  flex-direction: column;
 
   border-radius: 6px;
-  background-color: hsl(120, 40%, 85%);
+  background: radial-gradient(circle at top, #f4f4f4 0%, #fcfcfc 150%);
+
+  line-height: 175%;
+
+  box-shadow: 0 3px 6px -3px #808080;
+}
+
+.feature .description {
+  padding: 1rem;
+}
+
+.feature h1 {
+  font-size: 1em;
+}
+
+.feature h1 + p {
+  margin-top: 0;
+}
+
+.feature .screenshot {
+  margin-top: auto;
+  border-radius: 0 0 6px 6px;
+  height: 240px;
+  background-color: #ffffff;
+  border-top: 1px solid #f0f0f0;
+}
+
+@media (max-width: 1380px) {
+  .features {
+    flex-direction: column;
+  }
+
+  .feature {
+    flex-direction: row;
+    height: 240px;
+    width: 54rem;
+  }
+
+  .feature .screenshot {
+    min-width: 426px;
+    border-radius: 0 6px 6px 0;
+    border-top: none;
+    border-left: 1px solid #f0f0f0;
+  }
+}
+
+@media (max-width: 900px) {
+  .feature {
+    flex-direction: column;
+    height: auto;
+    width: auto;
+    max-width: 426px;
+  }
+
+  .feature .screenshot {
+    min-width: 20px;
+    width: auto;
+    border-radius: 0 0 6px 6px;
+    border-left: none;
+    border-top: 1px solid #f0f0f0;
+  }
 }
 
 .horizontal {
   display: flex;
   justify-content: center;
+
+  margin: -1rem;
 }
 
 .horizontal > * {
   margin: 1rem;
+  flex: 1 1 100%;
 }
 
 @media (max-width: 900px) {
@@ -71,7 +132,6 @@ main {
 .nolist {
   list-style: none;
   padding: 0;
-  margin: 0;
 }
 
 a {
@@ -139,7 +199,7 @@ p {
 
 .demo-big {
   margin: 0 auto;
-  margin-top: 1rem;
+  margin-top: 2rem;
   display: block;
   font-size: 1.2em;
 }
@@ -165,6 +225,8 @@ p {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+
+  box-shadow: 0 0 6px 0 #b0b0b0;
 }
 
 #top-bar #logo {
@@ -212,7 +274,13 @@ p {
   }
 }
 
-@media (max-width: 460px) {
+@media (max-width: 420px) {
+  #top-bar {
+    font-size: 0.8em;
+  }
+}
+
+@media (max-width: 300px) {
   #top-bar .demo {
     display: none;
   }
@@ -224,6 +292,8 @@ footer {
   background: radial-gradient(circle at top, #f0f0f0 0%, #fcfcfc 150%);
   color: #a0a0a0;
   text-align: center;
+
+  box-shadow: inset 0 3px 6px -3px #b0b0b0;
 }
 
 a.email {
