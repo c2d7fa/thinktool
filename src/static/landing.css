@@ -16,7 +16,7 @@ main {
 }
 
 .block:not(:last-of-type) {
-  margin-bottom: 2rem;
+  margin-bottom: 4rem;
 }
 
 .box {
@@ -35,7 +35,7 @@ main {
 }
 
 .small {
-  max-width: 34rem;
+  max-width: 37rem;
 }
 
 .wide {
