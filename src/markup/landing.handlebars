@@ -9,42 +9,71 @@
   <body>
     <div id="top-bar">
       <span id="logo">Thinktool</span>
+      <a href="/demo.html" class="demo demo-small">Demo</a>
       <a id="login-link" href="/login.html">Log in</a>
     </div>
-    <div id="main-text">
-      <div class="section" id="explore-connections">
-        <section>
-          <h1>An outliner without the hierarchy.</h1>
+    <main>
+      <div class="block small centered">
+        <h1>An outliner without the hierarchy.</h1>
 
-          <p>Outliners like <a
-          href="https://workflowy.com/" class="external-app-link"><span>Workflowy</span></a> are more
-          convenient than other note-taking tools, but they have one problem:
-          people don't think in lists. Thinktool looks like an outliner, but it
-          structures your thoughts like a graph, so you can freely connect any
-          item to any other item.</p>
-
-          <div class="video-container">
-            <iframe src="https://www.youtube.com/embed/anFFddA4Fm4" frameborder="0" allowfullscreen></iframe>
-          </div>
-        </section>
+        <p>Outliners are great for taking notes, but they have one problem:
+        People don't think in lists. Thinktool looks like an outliner but lets
+        you freely connect related items without worrying about how to organize
+        them in a hierarchy.</p>
       </div>
 
-      <div class="section" id="try-it">
-        <section>
-          <h1>Give it a try.</h1>
+      <div class="block wide centered">
+        <div class="horizontal features">
+          <div class="feature">
+            <div class="description">
+              <h1>Explore your ideas.</h1>
+              <p>Easily jump between linked items. If an item is a member of
+              multiple categories, Thinktool automatically lists all related
+              items.</p>
+            </div>
+            <div class="screenshot">
+              <img src="/feature-explore.png"/>
+            </div>
+          </div>
+          <div class="feature">
+            <div class="description">
+              <h1>Structure your thoughts naturally.</h1>
+              <p>One item can be in multiple places at once. Use this feature to
+              accurately categorize items, so you can easily find the information
+              you need.</p>
+            </div>
+            <div class="screenshot">
+              <img src="/feature-parents.png"/>
+            </div>
+          </div>
+          <div class="feature">
+            <div class="description">
+              <h1>Summarize what you know.</h1>
+              <p>Use the table view to summarize structured information. The
+              columns are automatically created based on relationships between
+              items.</p>
+            </div>
+            <div class="screenshot">
+              <img src="/feature-tables.png"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="block horizontal flip-900">
+        <div class="box small">
+          <h1>Try it.</h1>
           <p>I'm currently developing Thinktool. Therefore, it's quite
           unstable, and the current preview is mainly intended for testing.</p>
-          <p>That being said, you can try it out now, and if you like it, you
+          <p>That being said, you can check it out now, and if you like it, you
           can <a href="/login.html"><span>sign up</span></a> for an account.
           The preview is currently free, but Thinktool may become a paid
           subscription service in the future. Click the button below to check
           out a free demo in your browser:</p> <a href="/demo.html"
-          class="demo">Open demo</a>
-        </section>
-      </div>
+          class="demo demo-big">Go to demo</a>
+        </div>
 
-      <div class="section" id="similar-tools">
-        <section>
+        <div class="box small">
           <h1>Alternatives to Thinktool.</h1>
 
           <p>Thinktool is directly inspired by outliners like
@@ -62,13 +91,15 @@
           href="https://thebrain.com/"
           class="external-app-link"><span>TheBrain</span></a>, but while
           Thinktool looks like an outliner, TheBrain looks like a mind-map.</p>
-        </section>
+        </div>
       </div>
-      <footer>
-        Made by <a href="https://johv.dk/"><span>Jonas Hvid</span></a>. Message me at <a
-        class="email" href="mailto:jonas@thinktool.io"><span>jonas@thinktool.io</span></a>.
-      </footer>
-      <script>fetch(`{{apiUrl}}/ping`, {mode: "no-cors"});</script>
-    </div>
+    </main>
+
+    <footer>
+      Made by <a href="https://johv.dk/"><span>Jonas Hvid</span></a>. Message me at <a
+      class="email" href="mailto:jonas@thinktool.io"><span>jonas@thinktool.io</span></a>.
+    </footer>
+
+    <script>fetch(`{{apiUrl}}/ping`, {mode: "no-cors"});</script>
   </body>
 </html>
