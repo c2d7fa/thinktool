@@ -26,7 +26,8 @@ main {
 
   flex: 1 1 100%;
 
-  box-shadow: 0 3px 6px -3px #808080;
+  box-shadow: 0 3px 6px -3px #c0c0c0;
+  border: 1px solid #f4f4f4;
 }
 
 .centered {
@@ -51,7 +52,8 @@ main {
 
   line-height: 175%;
 
-  box-shadow: 0 3px 6px -3px #808080;
+  box-shadow: 0 3px 6px -3px #c0c0c0;
+  border: 1px solid #f4f4f4;
 }
 
 .feature .description {
@@ -219,7 +221,7 @@ p {
   justify-content: flex-end;
   align-items: center;
 
-  box-shadow: 0 0 6px 0 #b0b0b0;
+  box-shadow: 0 0 6px 0 #d8d8d8;
 }
 
 #top-bar #logo {
@@ -286,7 +288,7 @@ footer {
   color: #a0a0a0;
   text-align: center;
 
-  box-shadow: inset 0 3px 6px -3px #b0b0b0;
+  box-shadow: inset 0 3px 6px -3px #c0c0c0;
 }
 
 /* Login page */
