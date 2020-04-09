@@ -9,17 +9,69 @@ body {
   font-size: 110%;
 }
 
-.section {
-  margin: 2em 1em;
+main {
+  display: flex;
+  flex-direction: column;
+  padding: 4rem 2rem;
 }
 
-section {
-  margin: auto;
-  max-width: 65ex;
+.block:not(:last-of-type) {
+  margin-bottom: 2rem;
+}
 
-  background: radial-gradient(circle at bottom, #f4f4f4 0%, #fcfcfc 150%);
+.box {
+  padding: 2rem;
   border-radius: 6px;
-  padding: 2em;
+  background: radial-gradient(circle at bottom, #f4f4f4 0%, #fcfcfc 150%);
+
+  flex: 1 1 100%;
+}
+
+.centered {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.small {
+  max-width: 34rem;
+}
+
+.wrapping {
+  flex-wrap: wrap;
+}
+
+.wrapping > * {
+  margin-bottom: 2rem;
+}
+
+.feature {
+  height: 20rem;
+  width: 16rem;
+
+  border-radius: 6px;
+  background-color: hsl(120, 40%, 85%);
+}
+
+.horizontal {
+  display: flex;
+  justify-content: center;
+}
+
+.horizontal > * {
+  margin: 1rem;
+}
+
+@media (max-width: 900px) {
+  .horizontal.flip-900 {
+    align-items: center;
+    flex-direction: column;
+  }
+}
+
+.nolist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 a {
@@ -66,14 +118,9 @@ p {
 }
 
 .demo {
-  display: block;
+  display: inline-block;
   width: max-content;
-  margin: 0 auto;
   -webkit-user-drag: none;
-
-  margin-top: 2em;
-
-  font-size: 1.2em;
 
   padding: 0.8em 1em;
   border-radius: 6px;
@@ -86,6 +133,20 @@ p {
   box-shadow: #00000040 0 0 6px;
 
   transition: box-shadow 150ms ease, transform 150ms ease;
+
+  white-space: nowrap;
+}
+
+.demo-big {
+  margin: 0 auto;
+  margin-top: 1rem;
+  display: block;
+  font-size: 1.2em;
+}
+
+.demo-small {
+  font-size: 0.8em;
+  margin-right: 2rem;
 }
 
 .demo:hover {
@@ -102,7 +163,7 @@ p {
   padding: 1em 2em;
   background: radial-gradient(circle at bottom, #f0f0f0 0%, #fcfcfc 150%);
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
 }
 
@@ -113,6 +174,8 @@ p {
   display: inline-block;
   cursor: default;
   user-select: none;
+
+  margin-right: auto;
 }
 
 #top-bar #login-link {
@@ -129,6 +192,8 @@ p {
   transition: color 0.3s ease, background-color 0.3s ease;
 
   user-select: none;
+
+  white-space: nowrap;
 }
 
 #top-bar a#login-link:hover {
@@ -139,6 +204,18 @@ p {
 #top-bar a#login-link:active {
   color: #404040;
   background-color: #f8f8f8;
+}
+
+@media (max-width: 600px) {
+  #top-bar #logo {
+    font-size: 1.2em;
+  }
+}
+
+@media (max-width: 460px) {
+  #top-bar .demo {
+    display: none;
+  }
 }
 
 footer {
@@ -161,24 +238,6 @@ a.email > span {
 
 a.email > span:hover {
   border-color: #000000b0;
-}
-
-.video-container {
-  position: relative;
-  width: 100%;
-  height: 0;
-  padding-bottom: 56.25%; /* 16:9 */
-  overflow: hidden;
-  border-radius: 6px;
-  margin-top: 2rem;
-}
-
-.video-container iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
 }
 
 /* Login page */
