@@ -156,6 +156,7 @@ export function ContentEditor(props: {
   getContentText(thing: string): string;
   openInternalLink?(thing: string): void;
   isLinkOpen?(thing: string): boolean;
+  setForceEditor(forceEditor: boolean): void;
 }) {
   const [showLinkPopup, setShowLinkPopup] = React.useState(false);
 
@@ -201,6 +202,7 @@ export function ContentEditor(props: {
       // Preserve selection so it can be restored when we insert the link.
       preservedSelectionRef.current = [textareaRef.current.selectionStart, textareaRef.current.selectionEnd];
       setShowLinkPopup(true);
+      props.setForceEditor(true);
       return ev.preventDefault();
     }
 
@@ -221,6 +223,8 @@ export function ContentEditor(props: {
         state={props.things}
         hide={() => setShowLinkPopup(false)}
         submit={(link: string) => {
+          props.setForceEditor(false);
+
           if (textareaRef.current === null) {
             console.error("Can't get textarea; exiting early.");
             return;
@@ -235,9 +239,11 @@ export function ContentEditor(props: {
 
           props.setText(
             props.text.substring(0, textareaRef.current.selectionStart) +
-              link +
+              `#${link}` +
               props.text.substring(textareaRef.current.selectionEnd),
           );
+
+          textareaRef.current.focus();
         }}
       />
     );
@@ -282,8 +288,10 @@ export function Content(props: {
   openInternalLink?(thing: string): void;
   isLinkOpen?(thing: string): boolean;
 }) {
-  if (props.focused) {
-    return <ContentEditor {...props} />;
+  const [forceEditor, setForceEditor] = React.useState<boolean>(false);
+
+  if (props.focused || forceEditor) {
+    return <ContentEditor {...props} setForceEditor={setForceEditor} />;
   } else {
     return <RenderedContent {...props} />;
   }
