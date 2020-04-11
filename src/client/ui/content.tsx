@@ -204,7 +204,10 @@ export function ContentEditor(props: {
       return ev.preventDefault();
     }
 
-    if (props.onKeyDown !== undefined && props.onKeyDown(ev, {startOfItem: false, endOfItem: false})) {
+    const startOfItem = textareaRef.current?.selectionStart === 0;
+    const endOfItem = textareaRef.current?.selectionEnd === textareaRef.current?.value.length;
+
+    if (props.onKeyDown !== undefined && props.onKeyDown(ev, {startOfItem, endOfItem})) {
       // The event was handled by our parent.
       ev.preventDefault();
     }
