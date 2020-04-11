@@ -673,6 +673,14 @@ function ThingOverview(p: {context: Context}) {
           className="selected-content"
           getContentText={(thing) => Data.contentText(p.context.state, thing)}
           text={Data.content(p.context.state, p.context.selectedThing)}
+          onFocus={() => {
+            p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)));
+          }}
+          focused={T.hasFocus(p.context.tree, T.root(p.context.tree))}
+          onBlur={() => {
+            if (T.hasFocus(p.context.tree, T.root(p.context.tree)))
+              p.context.setTree(T.unfocus(p.context.tree));
+          }}
           setText={(text) => {
             p.context.setContent(p.context.selectedThing, text);
           }}
@@ -1011,6 +1019,11 @@ function Content(p: {context: Context; node: T.NodeRef}) {
         }}
         onFocus={() => {
           p.context.setTree(T.focus(p.context.tree, p.node));
+        }}
+        onBlur={() => {
+          if (T.hasFocus(p.context.tree, p.node)) {
+            p.context.setTree(T.unfocus(p.context.tree));
+          }
         }}
         isLinkOpen={(thing) => T.isLinkOpen(p.context.tree, p.node, thing)}
         openInternalLink={(thing) =>
