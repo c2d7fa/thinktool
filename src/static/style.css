@@ -218,6 +218,7 @@ a.internal-link-open:hover {
 
 .editor-inactive {
   white-space: pre-wrap;
+  line-height: 150%;
 }
 
 /* THING SELECTION POPUP */
