@@ -4,21 +4,16 @@ import * as D from "../data";
 
 import ThingSelectPopup from "./ThingSelectPopup";
 
-/*
-function decorate([node, path]: [Slate.Node, Slate.Path]): Slate.Range[] {
-  // TODO: I don't understand what the point of this is, but if we don't add it,
-  // Slate makes empty copies of the decorators. Taken from
-  // https://github.com/ianstormtaylor/slate/blob/master/site/examples/markdown-preview.js.
-  if (!Slate.Text.isText(node)) return [];
+type Annotation = {externalLink: string} | {internalLink: string};
+type Range = {start: number; end: number; annotation?: Annotation};
 
-  const text = Slate.Node.string(node);
+function annotate(text: string): Range[] {
+  let ranges: Range[] = [];
 
-  let ranges: Slate.Range[] = [];
+  // External links
 
-  // External links*/
+  const linkRegex = /https?:\/\S*/g;
 
-//const linkRegex = /https?:\/\S*/g;
-/*
   for (const match of [...text.matchAll(linkRegex)]) {
     if (match.index === undefined) throw "bad programmer error";
 
@@ -30,128 +25,67 @@ function decorate([node, path]: [Slate.Node, Slate.Path]): Slate.Range[] {
       end -= 1;
     }
 
-    ranges = [
-      ...ranges,
-      {anchor: {path, offset: start}, focus: {path, offset: end}, link: text.slice(start, end)},
-    ];
+    ranges = [...ranges, {start, end, annotation: {externalLink: text.slice(start, end)}}];
   }
 
-  return ranges;
-}
+  // Internal links
 
-function renderLeaf(props: SlateReact.RenderLeafProps) {
-  if (props.leaf.link) {
-    // Since the link is inside an element with contenteditable="true" and does
-    // not itself have contenteditable="false", it cannot be clicked, so we need
-    // to add some special UI to allow the link to be clicked.
-    //
-    // TODO: It would be nice if it were possible to click the link when the
-    // item is not being edited, but I'm not sure how to implement this. Setting
-    // readOnly on the editor should do the job, but how do we detect when the
-    // user is actively editing the item?
-    //
-    // Anyway, we just let the user open the link by middle clicking on it.
-    // That's good enough for now.
+  const internalLinkRegex = /#([a-z0-9]+)/g;
 
-    const clickProps = {
-      onAuxClick: (ev: React.MouseEvent) => {
-        // Middle click
-        if (ev.button === 1) {
-          window.open(props.leaf.link);
-          ev.preventDefault();
-        }
-      },
-      title: `${props.leaf.link}\n(Open with middle click)`,
-    };
+  for (const match of [...text.matchAll(internalLinkRegex)]) {
+    if (match.index === undefined) throw "bad programmer error";
 
-    return (
-      <a className="plain-text-link" href={props.leaf.link} {...clickProps} {...props.attributes}>
-        {props.children}
-      </a>
-    );
-  } else {
-    return <SlateReact.DefaultLeaf {...props} />;
-  }
-}
+    const start = match.index;
+    let end = match.index + match[0].length;
 
-function renderElement(
-  props: SlateReact.RenderElementProps & {
-    getContentText(thing: string): string;
-    openInternalLink(thing: string): void;
-    isLinkOpen(thing: string): boolean;
-  },
-) {
-  if (props.element.type === "internalLink") {
-    const content = props.getContentText(props.element.internalLink);
-    return (
-      <a
-        className={`internal-link${
-          props.isLinkOpen(props.element.internalLink) ? " internal-link-open" : ""
-        }`}
-        href="#"
-        onClick={(ev) => {
-          props.openInternalLink(props.element.internalLink);
-          ev.preventDefault();
-        }}
-        {...props.attributes}
-        contentEditable={false}
-      >
-        {content === "" ? <span className="empty-content">#{props.element.internalLink}</span> : content}
-        {props.children}
-      </a>
-    );
-  } else {
-    return <SlateReact.DefaultElement {...props} />;
-  }
-}
-
-// We store nodes as text like this: "Text text text #abcdefgh text text\nMore
-// text." That is, internal linkes are stored like "#<THING NAME>", and
-// paragraphs are separated by a newline.
-
-function nodesFromText(text: string): Slate.Node[] {
-  let nodes: Slate.Node[] = [];
-
-  const segments = text.split(/(#[a-z0-9]+)/g);
-
-  for (const segment of segments) {
-    const match = segment.match(/#([a-z0-9]+)/);
-    if (match && match[0] === segment) {
-      nodes = [...nodes, {type: "internalLink", internalLink: match[1], children: [{text: ""}]}];
-    } else {
-      nodes = [...nodes, {text: segment}];
-    }
+    ranges = [...ranges, {start, end, annotation: {internalLink: text.slice(start + 1, end)}}];
   }
 
-  return [{type: "paragraph", children: nodes}];
-}
+  // Fill out missing ranges with text and sort them
 
-function nodesToText(nodes: Slate.Node[]): string {
-  let result = "";
+  ranges.sort((a, b) => a.start - b.start);
 
-  function addNodes(nodes: Slate.Node[]) {
-    for (const node of nodes) {
-      if (node.type === "paragraph") {
-        if (node === nodes[0]) {
-          addNodes(node.children);
-        } else {
-          result += "\n";
-          addNodes(node.children);
-        }
-      } else if (node.type === "internalLink") {
-        result += "#" + node.internalLink;
-      } else {
-        result += Slate.Node.string(node);
-      }
-    }
+  let fullRanges = [];
+
+  let i = 0;
+  for (const range of ranges) {
+    if (i !== range.start) fullRanges.push({start: i, end: range.start});
+    fullRanges.push(range);
+    i = range.end;
   }
+  if (i !== text.length) fullRanges.push({start: i, end: text.length});
 
-  addNodes(nodes);
-
-  return result;
+  return fullRanges;
 }
 
-*/
+function ExternalLink(props: {link: string}) {
+  return (
+    <a className="plain-text-link" href={props.link}>
+      {props.link}
+    </a>
+  );
+}
+
+function InternalLink(props: {
+  getContentText(thing: string): string;
+  openInternalLink(thing: string): void;
+  isLinkOpen(thing: string): boolean;
+  thing: string;
+}) {
+  const content = props.getContentText(props.thing);
+  return (
+    <a
+      className={`internal-link${props.isLinkOpen(props.thing) ? " internal-link-open" : ""}`}
+      href="#"
+      onClick={(ev) => {
+        props.openInternalLink(props.thing);
+        ev.preventDefault();
+      }}
+    >
+      {content === "" ? <span className="empty-content">#{props.thing}</span> : content}
+    </a>
+  );
+}
 
 function RenderedContent(props: {
   things: D.State;
@@ -166,9 +100,45 @@ function RenderedContent(props: {
   openInternalLink?(thing: string): void;
   isLinkOpen?(thing: string): boolean;
 }) {
+  let fragments: React.ReactNode[] = [];
+
+  let i = 0; // Node key
+  for (const range of annotate(props.text)) {
+    const text = props.text.substring(range.start, range.end);
+
+    if (!range.annotation) {
+      fragments.push(text);
+    } else if ("internalLink" in range.annotation) {
+      fragments.push(
+        <InternalLink
+          key={i++}
+          thing={range.annotation.internalLink}
+          getContentText={props.getContentText}
+          openInternalLink={props.openInternalLink ?? (() => {})}
+          isLinkOpen={props.isLinkOpen ?? (() => false)}
+        />,
+      );
+    } else if ("externalLink" in range.annotation) {
+      fragments.push(<ExternalLink key={i++} link={range.annotation.externalLink} />);
+    }
+  }
+
+  const divRef = React.useRef<HTMLDivElement>(null);
+
   return (
-    <div tabIndex={-1} onFocus={props.onFocus} className={`editor-inactive ${props.className}`}>
-      {props.text}
+    <div
+      ref={divRef}
+      tabIndex={-1}
+      onFocus={(ev) => {
+        // Don't take focus when target of event was a child such as an
+        // external link.
+        if (ev.target === divRef.current) {
+          props.onFocus && props.onFocus(ev);
+        }
+      }}
+      className={`editor-inactive ${props.className}`}
+    >
+      {fragments}
     </div>
   );
 }
