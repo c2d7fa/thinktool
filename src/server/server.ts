@@ -228,7 +228,7 @@ async function parseThingExists(req: express.Request, res: express.Response, nex
     res.status(400).type("text/plain").send("400 Bad Request");
     next("router");
   }
-  if (!DB.thingExists(req.user!, thing)) {
+  if ((await DB.getThingData(req.user!, thing)) === null) {
     res.type("text/plain").status(404).send("404 Not Found");
     return;
   }

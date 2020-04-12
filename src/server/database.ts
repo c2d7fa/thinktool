@@ -66,18 +66,33 @@ export async function getFullState(
 ): Promise<{
   things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[];
 }> {
+  // [TODO] Can we do all this in one transaction? Can we optimize it?
+
   const thingsResult = await client.query(`SELECT name, content FROM things WHERE "user" = $1`, [
     userId.name,
   ]);
 
-  return {things: thingsResult.rows.map((r) => ({name: r.name, content: r.content ?? "", children: []}))};
+  let things: {
+    name: string;
+    content: string;
+    children: {name: string; child: string; tag?: string}[];
+  }[] = [];
 
-  // [TODO] Get children
-}
+  for (const thing of thingsResult.rows) {
+    things.push({name: thing.name, content: thing.content ?? "", children: []});
+  }
 
-export async function thingExists(userId: UserId, thing: string): Promise<boolean> {
-  return false;
-  // return (await client.db("diaform").collection("things").find({user: userId.name, name: thing}).count()) > 0;
+  for (const thing of things) {
+    const childrenResult = await client.query(
+      `SELECT name, child, tag FROM connections WHERE "user" = $1 AND parent = $2 ORDER BY parent_index ASC`,
+      [userId.name, thing.name],
+    );
+    for (const connection of childrenResult.rows) {
+      thing.children.push({name: connection.name, child: connection.child, tag: connection.tag ?? undefined});
+    }
+  }
+
+  return {things};
 }
 
 export async function updateThing({
@@ -91,13 +106,24 @@ export async function updateThing({
   content: string;
   children: {name: string; child: string; tag?: string}[];
 }): Promise<void> {
+  // [TODO] Can we do all this in one transaction? Can we optimize it?
+
   await client.query(
     `INSERT INTO things ("user", name, content) VALUES ($1, $2, $3) ON CONFLICT ("user", name) DO UPDATE SET content = EXCLUDED.content`,
     [userId.name, thing, content],
   );
 
-  // [TOOD] Create/update child connections
-  // [TODO] Remove old connections
+  // Delete old connections
+  await client.query(`DELETE FROM connections WHERE "user" = $1 AND parent = $2`, [userId.name, thing]);
+
+  // Store new connections
+  for (let i = 0; i < children.length; ++i) {
+    const connection = children[i];
+    await client.query(
+      `INSERT INTO connections ("user", name, parent, child, tag, parent_index) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [userId.name, connection.name, thing, connection.child, connection.tag, i],
+    );
+  }
 }
 
 export async function deleteThing(userId: UserId, thing: string): Promise<void> {
