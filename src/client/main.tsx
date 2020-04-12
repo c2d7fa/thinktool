@@ -50,6 +50,9 @@ export interface Context {
 
   viewMode: "outline" | "table";
   setViewMode(viewMode: "outline" | "table"): void;
+
+  activePopup: null | "child" | "parent" | "sibling" | "link";
+  setActivePopup(activePopup: null | "child" | "parent" | "sibling" | "link"): void;
 }
 
 // == Components ==
@@ -245,6 +248,9 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
   // View mode:
   const [viewMode, setViewMode] = React.useState<"outline" | "table">("outline");
 
+  // Popup:
+  const [activePopup, setActivePopup] = React.useState<null | "child" | "parent" | "sibling" | "link">(null);
+
   return {
     state,
     setState,
@@ -268,6 +274,8 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
     setDrag,
     viewMode,
     setViewMode,
+    activePopup,
+    setActivePopup,
   };
 }
 
@@ -541,8 +549,6 @@ function Toolbar(props: {context: Context}) {
     return actionsWith(props.context, focused);
   }
 
-  const [activePopup, setActivePopup] = React.useState<null | "child" | "sibling" | "parent">(null);
-
   return (
     <div className="toolbar">
       <ToolbarGroup>
@@ -592,27 +598,30 @@ function Toolbar(props: {context: Context}) {
       </ToolbarGroup>
       <ToolbarGroup title="Insert">
         <button
-          onClick={() => setActivePopup("sibling")}
+          onClick={() => props.context.setActivePopup("sibling")}
           title="Insert an existing item as a sibling after the currently selected item. [alt+s]"
         >
           Sibling
         </button>
         <button
-          onClick={() => setActivePopup("child")}
+          onClick={() => props.context.setActivePopup("child")}
           title="Insert an existing item as a child of the currently selected item. [alt+c]"
         >
           Child
         </button>
         <button
-          onClick={() => setActivePopup("parent")}
+          onClick={() => props.context.setActivePopup("parent")}
           title="Insert an existing item as a parent of the currently selected item. [alt+p]"
         >
           Parent
         </button>
         <button
-          onClick={() => {
-            alert("Not yet implemented. Use Alt+L to insert a link instead.");
-          }}
+          onPointerUp={
+            // [TODO] Using onPointerUp instead of onClick to work around focus
+            // being lost from popup. Is there are smarter way of accomplishing
+            // the same thing?
+            () => props.context.setActivePopup("link")
+          }
           title="Insert an existing item as a link at the cursor position. [alt+l]"
         >
           Link
@@ -651,8 +660,8 @@ function Toolbar(props: {context: Context}) {
       )}
       {focused !== null && (
         <GeneralPopup
-          active={activePopup}
-          hide={() => setActivePopup(null)}
+          active={props.context.activePopup === "link" ? null : props.context.activePopup}
+          hide={() => props.context.setActivePopup(null)}
           context={props.context}
           node={focused}
         />
@@ -689,6 +698,8 @@ function ThingOverview(p: {context: Context}) {
           openInternalLink={(thing) =>
             p.context.setTree(T.toggleLink(p.context.state, p.context.tree, T.root(p.context.tree), thing))
           }
+          showLinkPopup={p.context.activePopup === "link"}
+          hideLinkPopup={() => p.context.setActivePopup(null)}
         />
         {p.context.viewMode === "table" ? (
           <TableView context={p.context} />
@@ -921,7 +932,6 @@ function GeneralPopup(props: {
 
 function Content(p: {context: Context; node: T.NodeRef}) {
   const [showTagPopup, setShowTagPopup] = React.useState(false);
-  const [activePopup, setActivePopup] = React.useState<null | "child" | "sibling" | "parent">(null);
 
   const actions = actionsWith(p.context, p.node);
 
@@ -975,13 +985,16 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       actions.delete();
       return true;
     } else if (ev.key === "c" && ev.altKey) {
-      setActivePopup("child");
+      p.context.setActivePopup("child");
       return true;
     } else if (ev.key === "s" && ev.altKey) {
-      setActivePopup("sibling");
+      p.context.setActivePopup("sibling");
       return true;
     } else if (ev.key === "p" && ev.altKey) {
-      setActivePopup("parent");
+      p.context.setActivePopup("parent");
+      return true;
+    } else if (ev.key === "l" && ev.altKey) {
+      p.context.setActivePopup("link");
       return true;
     } else if (ev.key === "T" && ev.altKey && ev.shiftKey) {
       actions.untag();
@@ -1039,11 +1052,13 @@ function Content(p: {context: Context; node: T.NodeRef}) {
           p.context.setTree(T.toggleLink(p.context.state, p.context.tree, p.node, thing))
         }
         onKeyDown={onKeyDown}
+        showLinkPopup={p.context.activePopup === "link"}
+        hideLinkPopup={() => p.context.setActivePopup(null)}
       />
       {tagPopup}
       <GeneralPopup
-        active={activePopup}
-        hide={() => setActivePopup(null)}
+        active={p.context.activePopup === "link" ? null : p.context.activePopup}
+        hide={() => p.context.setActivePopup(null)}
         context={p.context}
         node={p.node}
       />

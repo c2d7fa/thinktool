@@ -157,10 +157,24 @@ export function ContentEditor(props: {
   openInternalLink?(thing: string): void;
   isLinkOpen?(thing: string): boolean;
   setForceEditor(forceEditor: boolean): void;
+  showLinkPopup: boolean;
+  hideLinkPopup(): void;
 }) {
-  const [showLinkPopup, setShowLinkPopup] = React.useState(false);
-
+  const [showLinkPopup, setShowLinkPopup] = React.useState<boolean>(props.showLinkPopup);
   const preservedSelectionRef = React.useRef<[number, number] | null>(null);
+
+  React.useEffect(() => {
+    if (props.showLinkPopup) {
+      if (textareaRef.current === null) return;
+
+      // Preserve selection so it can be restored when we insert the link.
+      preservedSelectionRef.current = [textareaRef.current.selectionStart, textareaRef.current.selectionEnd];
+      setShowLinkPopup(true);
+      props.setForceEditor(true);
+    } else {
+      setShowLinkPopup(false);
+    }
+  }, [props.showLinkPopup]);
 
   React.useEffect(() => {
     if (props.focused) textareaRef.current?.focus();
@@ -196,16 +210,6 @@ export function ContentEditor(props: {
       return;
     }
 
-    if (ev.key === "l" && ev.altKey) {
-      if (textareaRef.current === null) return;
-
-      // Preserve selection so it can be restored when we insert the link.
-      preservedSelectionRef.current = [textareaRef.current.selectionStart, textareaRef.current.selectionEnd];
-      setShowLinkPopup(true);
-      props.setForceEditor(true);
-      return ev.preventDefault();
-    }
-
     const startOfItem = textareaRef.current?.selectionStart === 0;
     const endOfItem = textareaRef.current?.selectionEnd === textareaRef.current?.value.length;
 
@@ -221,7 +225,7 @@ export function ContentEditor(props: {
     return (
       <ThingSelectPopup
         state={props.things}
-        hide={() => setShowLinkPopup(false)}
+        hide={() => props.hideLinkPopup()}
         submit={(link: string) => {
           props.setForceEditor(false);
 
@@ -287,8 +291,12 @@ export function Content(props: {
   getContentText(thing: string): string;
   openInternalLink?(thing: string): void;
   isLinkOpen?(thing: string): boolean;
+  showLinkPopup: boolean;
+  hideLinkPopup(): void;
 }) {
   const [forceEditor, setForceEditor] = React.useState<boolean>(false);
+
+  console.log(props.focused, forceEditor);
 
   if (props.focused || forceEditor) {
     return <ContentEditor {...props} setForceEditor={setForceEditor} />;
