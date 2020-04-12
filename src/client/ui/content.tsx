@@ -294,8 +294,6 @@ export function Content(props: {
 }) {
   const [forceEditor, setForceEditor] = React.useState<boolean>(false);
 
-  console.log(props.focused, forceEditor);
-
   if (props.focused || forceEditor) {
     return <ContentEditor {...props} setForceEditor={setForceEditor} />;
   } else {
