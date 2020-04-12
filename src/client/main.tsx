@@ -685,6 +685,10 @@ function ThingOverview(p: {context: Context}) {
           setText={(text) => {
             p.context.setContent(p.context.selectedThing, text);
           }}
+          isLinkOpen={(thing) => T.isLinkOpen(p.context.tree, T.root(p.context.tree), thing)}
+          openInternalLink={(thing) =>
+            p.context.setTree(T.toggleLink(p.context.state, p.context.tree, T.root(p.context.tree), thing))
+          }
         />
         {p.context.viewMode === "table" ? (
           <TableView context={p.context} />
