@@ -559,26 +559,22 @@ function Toolbar(props: {context: Context}) {
       <ToolbarGroup>
         <button
           onClick={() => actions().createSiblingAfter()}
-          title="Create a new item as a sibling of the currently selected item [enter/ctrl+enter]"
-        >
+          title="Create a new item as a sibling of the currently selected item [enter/ctrl+enter]">
           New
         </button>
         <button
           onClick={() => actions().createChild()}
-          title="Create a new child of the selected item [alt+enter]"
-        >
+          title="Create a new child of the selected item [alt+enter]">
           New Child
         </button>
         <button
           onClick={() => actions().removeFromParent()}
-          title="Remove the selected item from its parent. This does not delete the item. [alt+backspace]"
-        >
+          title="Remove the selected item from its parent. This does not delete the item. [alt+backspace]">
           Remove
         </button>
         <button
           onClick={() => actions().clone()}
-          title="Create a copy of the selected item [ctrl+mouse drag]"
-        >
+          title="Create a copy of the selected item [ctrl+mouse drag]">
           Clone
         </button>
       </ToolbarGroup>
@@ -599,20 +595,17 @@ function Toolbar(props: {context: Context}) {
       <ToolbarGroup title="Insert">
         <button
           onClick={() => props.context.setActivePopup("sibling")}
-          title="Insert an existing item as a sibling after the currently selected item. [alt+s]"
-        >
+          title="Insert an existing item as a sibling after the currently selected item. [alt+s]">
           Sibling
         </button>
         <button
           onClick={() => props.context.setActivePopup("child")}
-          title="Insert an existing item as a child of the currently selected item. [alt+c]"
-        >
+          title="Insert an existing item as a child of the currently selected item. [alt+c]">
           Child
         </button>
         <button
           onClick={() => props.context.setActivePopup("parent")}
-          title="Insert an existing item as a parent of the currently selected item. [alt+p]"
-        >
+          title="Insert an existing item as a parent of the currently selected item. [alt+p]">
           Parent
         </button>
         <button
@@ -622,16 +615,14 @@ function Toolbar(props: {context: Context}) {
             // the same thing?
             () => props.context.setActivePopup("link")
           }
-          title="Insert an existing item as a link at the cursor position. [alt+l]"
-        >
+          title="Insert an existing item as a link at the cursor position. [alt+l]">
           Link
         </button>
       </ToolbarGroup>
       <ToolbarGroup>
         <button
           onClick={() => setShowTagPopup(true)}
-          title="Set the connection tag to an existing item. [alt+t]"
-        >
+          title="Set the connection tag to an existing item. [alt+t]">
           Tag
         </button>
         <button onClick={() => actions().untag()} title="Remove the current connection tag. [alt+shift+t]">
@@ -641,8 +632,7 @@ function Toolbar(props: {context: Context}) {
       <ToolbarGroup>
         <button
           onClick={() => actions().delete()}
-          title="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents. [alt+delete]"
-        >
+          title="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents. [alt+delete]">
           Destroy
         </button>
       </ToolbarGroup>
@@ -1197,8 +1187,7 @@ function UserPage(props: {username: string}) {
             await Server.deleteAccount(props.username);
           }
           window.location.href = "/";
-        }}
-      >
+        }}>
         Delete account and all data
       </button>
     </div>

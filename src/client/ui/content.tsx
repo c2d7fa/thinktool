@@ -80,8 +80,7 @@ function InternalLink(props: {
       onClick={(ev) => {
         props.openInternalLink(props.thing);
         ev.preventDefault();
-      }}
-    >
+      }}>
       {content === "" ? <span className="empty-content">#{props.thing}</span> : content}
     </a>
   );
@@ -136,8 +135,7 @@ function RenderedContent(props: {
           props.onFocus && props.onFocus(ev);
         }
       }}
-      className={`editor-inactive ${props.className}`}
-    >
+      className={`editor-inactive ${props.className}`}>
       <span>{fragments}</span>
     </div>
   );
