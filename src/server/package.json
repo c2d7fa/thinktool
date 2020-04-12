@@ -3,15 +3,15 @@
   "private": true,
   "devDependencies": {
     "@types/bcrypt": "latest",
-    "@types/express": "latest",
     "@types/express-ws": "latest",
-    "@types/mongodb": "latest",
+    "@types/express": "latest",
     "@types/node": "latest",
+    "@types/pg": "latest",
     "bcrypt": "latest",
-    "express": "latest",
     "express-ws": "latest",
-    "mongodb": "latest",
+    "express": "latest",
     "parcel-bundler": "latest",
+    "pg": "latest",
     "typescript": "latest"
   }
 }

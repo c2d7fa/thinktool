@@ -412,9 +412,13 @@ app.use((req, res, next) => {
 // Start app
 
 (async () => {
-  const databaseUri = process.env.DIAFORM_DATABASE ?? "mongodb://localhost:27017";
   const listenPort = +(process.env.DIAFORM_PORT ?? 80);
-  await DB.initialize(databaseUri);
+  await DB.initialize(
+    process.env.DIAFORM_POSTGRES_HOST ?? "localhost",
+    process.env.DIAFORM_POSTGRES_USERNAME ?? "postgres",
+    process.env.DIAFORM_POSTGRES_PASSWORD ?? "postgres",
+    +(process.env.DIAFORM_POSTGRES_PORT ?? "5432"),
+  );
   app.listen(listenPort, () => {
     console.log(`Listening on http://localhost:${listenPort}/`);
   });
