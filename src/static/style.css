@@ -319,6 +319,18 @@ a.internal-link-open:hover {
   background-color: #e8e8e8;
 }
 
+.link-autocomplete-popup-id {
+  color: #c0c0c0;
+  font-family: "Titillium Web";
+  font-size: 0.8em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.link-autocomplete-popup-id::before {
+  content: "#";
+}
+
 /* OVERVIEW */
 
 .overview {

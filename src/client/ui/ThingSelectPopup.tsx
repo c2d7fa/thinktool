@@ -54,7 +54,7 @@ export default function ThingSelectPopup(props: {state: D.State; hide(): void; s
     return (
       <li className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}>
         <span className="link-autocomplete-popup-result-content">
-          {props.result[0]} ({props.result[1]})
+          {props.result[0]} <span className="link-autocomplete-popup-id">{props.result[1]}</span>
         </span>
       </li>
     );
