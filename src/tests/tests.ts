@@ -129,3 +129,28 @@ test("Creating a child inside collapsed parent adds exactly one child in the tre
 
   expect(T.children(tree, a()).length).toBe(2);
 });
+
+// Bug: Adding a child would cause all items to be collapsed.
+test("Inserting a child should not cause all items to be collapsed", () => {
+  let state = D.empty;
+
+  state = D.create(state, "a")[0];
+  state = D.create(state, "b")[0];
+  state = D.create(state, "c")[0];
+  state = D.addChild(state, "0", "a")[0];
+  state = D.addChild(state, "0", "a")[0];
+  state = D.addChild(state, "a", "b")[0];
+
+  let tree = T.fromRoot(state, "0");
+
+  tree = T.expand(state, tree, T.children(tree, T.root(tree))[0]);
+  tree = T.expand(state, tree, T.children(tree, T.root(tree))[1]);
+
+  expect(T.expanded(tree, T.children(tree, T.root(tree))[0])).toBeTruthy();
+  expect(T.expanded(tree, T.children(tree, T.root(tree))[1])).toBeTruthy();
+
+  [state, tree] = T.insertChild(state, tree, T.children(tree, T.root(tree))[0], "c", 0);
+
+  expect(T.expanded(tree, T.children(tree, T.root(tree))[0])).toBeTruthy();
+  expect(T.expanded(tree, T.children(tree, T.root(tree))[1])).toBeTruthy();
+});

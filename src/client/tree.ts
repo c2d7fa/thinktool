@@ -480,33 +480,9 @@ export function createSiblingAfter(
 }
 
 export function createChild(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree, string, NodeRef] {
-  let newState = state;
-  let newTree = tree;
-
-  newTree = expand(newState, newTree, node); // Expand parent now; we want to manually add the new node to the tree
-
-  // Create item as child
-  const [newState_, childThing] = D.create(state);
-  newState = newState_;
-  const [newState2, newConnection] = D.addChild(newState, thing(tree, node), childThing);
-  newState = newState2;
-
-  // Load it into the tree
-  const [childNode, newTree_] = loadConnection(newState, newTree, newConnection, node);
-  newTree = newTree_;
-  newTree = I.updateChildren(newTree, node, (children) => [...children, childNode]);
-  newTree = focus(newTree, childNode);
-
-  // Also refresh other parents
-  for (const n of I.allNodes(newTree)) {
-    if (thing(newTree, n) === thing(tree, node) && !refEq(n, node)) {
-      const [otherChildNode, newTree_] = loadConnection(newState, newTree, newConnection, n);
-      newTree = newTree_;
-      newTree = I.updateChildren(newTree, n, (children) => [...children, otherChildNode]);
-    }
-  }
-
-  return [newState, newTree, childThing, childNode];
+  const [newState, childThing] = D.create(state);
+  const [newState2, newTree2, newNode] = insertChild(newState, tree, node, childThing, 0);
+  return [newState2, newTree2, childThing, newNode];
 }
 
 export function remove(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {
@@ -532,9 +508,27 @@ export function insertChild(
   node: NodeRef,
   child: string,
   position: number,
-): [D.State, Tree] {
-  const newState = D.insertChild(state, thing(tree, node), child, position)[0];
-  return [newState, refresh(tree, newState)];
+): [D.State, Tree, NodeRef] {
+  const [newState, newConnection] = D.insertChild(state, thing(tree, node), child, position);
+
+  let newTree = expand(state, tree, node); // Expand parent now; we want to manually add the new node to the tree
+
+  // Load node into the tree
+  const [childNode, newTree_] = loadConnection(newState, newTree, newConnection, node);
+  newTree = newTree_;
+  newTree = I.updateChildren(newTree, node, (children) => G.splice(children, position, 0, childNode));
+  newTree = focus(newTree, childNode);
+
+  // Also refresh other parents
+  for (const n of I.allNodes(newTree)) {
+    if (thing(newTree, n) === thing(tree, node) && !refEq(n, node)) {
+      const [otherChildNode, newTree_] = loadConnection(newState, newTree, newConnection, n);
+      newTree = newTree_;
+      newTree = I.updateChildren(newTree, n, (children) => [...children, otherChildNode]);
+    }
+  }
+
+  return [newState, newTree, childNode];
 }
 
 export function insertSiblingAfter(
@@ -544,7 +538,8 @@ export function insertSiblingAfter(
   sibling: string,
 ): [D.State, Tree] {
   if (parent(tree, node) === undefined) return [state, tree];
-  return insertChild(state, tree, parent(tree, node)!, sibling, indexInParent(tree, node)! + 1);
+  const result = insertChild(state, tree, parent(tree, node)!, sibling, indexInParent(tree, node)! + 1);
+  return [result[0], result[1]];
 }
 
 export function insertParent(state: D.State, tree: Tree, node: NodeRef, parent: string): [D.State, Tree] {
