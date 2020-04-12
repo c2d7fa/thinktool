@@ -138,7 +138,7 @@ function RenderedContent(props: {
       }}
       className={`editor-inactive ${props.className}`}
     >
-      {fragments}
+      <span>{fragments}</span>
     </div>
   );
 }
