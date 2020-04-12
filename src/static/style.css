@@ -311,11 +311,13 @@ a.internal-link-open:hover {
 }
 
 .link-autocomplete-popup-result {
+  cursor: pointer;
   padding: 0.3em 1em;
   border-bottom: 1px solid #f0f0f0;
 }
 
-.link-autocomplete-popup-result.selected-result {
+.link-autocomplete-popup-result.selected-result,
+.link-autocomplete-popup-result:hover {
   background-color: #e8e8e8;
 }
 

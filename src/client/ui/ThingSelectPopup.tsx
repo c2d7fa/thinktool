@@ -50,9 +50,14 @@ export default function ThingSelectPopup(props: {state: D.State; hide(): void; s
     }
   }
 
-  function Result(props: {result: [string, string]; selected: boolean}) {
+  function Result(props: {result: [string, string]; selected: boolean; submit: () => void}) {
+    // Using onPointerDown instead of onClick to circumvent parent getting blur
+    // event before we get our events.
     return (
-      <li className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}>
+      <li
+        onPointerDown={props.submit}
+        className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}
+      >
         <span className="link-autocomplete-popup-result-content">
           {props.result[0]} <span className="link-autocomplete-popup-id">{props.result[1]}</span>
         </span>
@@ -75,13 +80,18 @@ export default function ThingSelectPopup(props: {state: D.State; hide(): void; s
         type="text"
         value={text}
         onChange={(ev: React.ChangeEvent<HTMLInputElement>) => setText(ev.target.value)}
-        onBlur={props.hide}
+        onBlur={() => setTimeout(() => props.hide())}
         onKeyDown={onKeyDown}
       />
       {results.length !== 0 && (
         <ul className="link-autocomplete-popup-results" onScroll={onScroll}>
           {results.map((result, i) => (
-            <Result key={result[1]} selected={i === selectedIndex} result={result} />
+            <Result
+              key={result[1]}
+              selected={i === selectedIndex}
+              result={result}
+              submit={() => props.submit(result[1])}
+            />
           ))}
         </ul>
       )}
