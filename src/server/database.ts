@@ -66,32 +66,13 @@ export async function getFullState(
 ): Promise<{
   things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[];
 }> {
-  return {things: []};
+  const thingsResult = await client.query(`SELECT name, content FROM things WHERE "user" = $1`, [
+    userId.name,
+  ]);
 
-  // // [TODO] This is absurdly inefficient. It's weirdly difficult to do stuff
-  // // like this in MongoDB. Maybe we should just switch to SQL?
+  return {things: thingsResult.rows.map((r) => ({name: r.name, content: r.content ?? "", children: []}))};
 
-  // const documents = await client.db("diaform").collection("things").find({user: userId.name}).toArray();
-
-  // let things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[] = [];
-
-  // for (const document of documents) {
-  //   let children = [];
-  //   for (const connection of document.connections) {
-  //     const connectionDocument = await client
-  //       .db("diaform")
-  //       .collection("connections")
-  //       .findOne({user: userId.name, name: connection});
-  //     children.push({
-  //       name: connection,
-  //       child: connectionDocument.child,
-  //       tag: connectionDocument.tag ?? undefined,
-  //     });
-  //   }
-  //   things.push({name: document.name, content: document.content ?? "", children});
-  // }
-
-  // return {things};
+  // [TODO] Get children
 }
 
 export async function thingExists(userId: UserId, thing: string): Promise<boolean> {
@@ -110,34 +91,13 @@ export async function updateThing({
   content: string;
   children: {name: string; child: string; tag?: string}[];
 }): Promise<void> {
-  return;
-  // // Create/update child connections
-  // for (const connection of children) {
-  //   await client
-  //     .db("diaform")
-  //     .collection("connections")
-  //     .updateOne(
-  //       {user: userId.name, name: connection.name},
-  //       {$set: {parent: thing, child: connection.child, tag: connection.tag}},
-  //       {upsert: true},
-  //     );
-  // }
+  await client.query(
+    `INSERT INTO things ("user", name, content) VALUES ($1, $2, $3) ON CONFLICT ("user", name) DO UPDATE SET content = EXCLUDED.content`,
+    [userId.name, thing, content],
+  );
 
-  // // Remove old connections
-  // await client
-  //   .db("diaform")
-  //   .collection("connections")
-  //   .deleteMany({user: userId.name, parent: thing, name: {$nin: children.map((c) => c.name)}});
-
-  // // Update the item itself
-  // await client
-  //   .db("diaform")
-  //   .collection("things")
-  //   .updateOne(
-  //     {user: userId.name, name: thing},
-  //     {$set: {content, connections: children.map((ch) => ch.name)}},
-  //     {upsert: true},
-  //   );
+  // [TOOD] Create/update child connections
+  // [TODO] Remove old connections
 }
 
 export async function deleteThing(userId: UserId, thing: string): Promise<void> {
@@ -151,36 +111,28 @@ export async function deleteThing(userId: UserId, thing: string): Promise<void> 
 }
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
-  // await client
-  //   .db("diaform")
-  //   .collection("things")
-  //   .updateOne({user: userId.name, name: thing}, {$set: {content}}, {upsert: true});
+  await client.query(`UPDATE things SET content = $3 WHERE "user" = $1 AND name = $2`, [
+    userId.name,
+    thing,
+    content,
+  ]);
 }
 
 export async function getThingData(
   userId: UserId,
   thing: string,
 ): Promise<{content: string; children: {name: string; child: string; tag?: string}[]} | null> {
-  return null;
+  const thingResult = await client.query(`SELECT content FROM things WHERE "user" = $1 AND name = $2`, [
+    userId.name,
+    thing,
+  ]);
 
-  // const document = await client.db("diaform").collection("things").findOne({user: userId.name, name: thing});
+  if (thingResult.rowCount !== 1) return null;
+  const row = thingResult.rows[0];
 
-  // if (document === null) return null;
+  // [TODO] Get children
 
-  // let children = [];
-  // for (const connection of document.connections) {
-  //   const connectionDocument = await client
-  //     .db("diaform")
-  //     .collection("connections")
-  //     .findOne({user: userId.name, name: connection});
-  //   children.push({
-  //     name: connection,
-  //     child: connectionDocument.child,
-  //     tag: connectionDocument.tag ?? undefined,
-  //   });
-  // }
-
-  // return {content: document.content ?? "", children};
+  return {content: row.content ?? "", children: []};
 }
 
 export async function deleteAllUserData(userId: UserId): Promise<void> {
