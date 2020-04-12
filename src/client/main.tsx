@@ -678,8 +678,9 @@ function ThingOverview(p: {context: Context}) {
           }}
           focused={T.hasFocus(p.context.tree, T.root(p.context.tree))}
           onBlur={() => {
-            if (T.hasFocus(p.context.tree, T.root(p.context.tree)))
+            if (T.hasFocus(p.context.tree, T.root(p.context.tree))) {
               p.context.setTree(T.unfocus(p.context.tree));
+            }
           }}
           setText={(text) => {
             p.context.setContent(p.context.selectedThing, text);
@@ -1022,7 +1023,11 @@ function Content(p: {context: Context; node: T.NodeRef}) {
         }}
         onBlur={() => {
           if (T.hasFocus(p.context.tree, p.node)) {
-            p.context.setTree(T.unfocus(p.context.tree));
+            // [TODO] We should unfocus this node here, but doing so would
+            // cause the toolbar to stop functioning, because this would be
+            // called when the user pressed a button on the toolbar, before the
+            // action could be executed.
+            //p.context.setTree(T.unfocus(p.context.tree));
           }
         }}
         isLinkOpen={(thing) => T.isLinkOpen(p.context.tree, p.node, thing)}
