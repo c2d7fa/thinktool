@@ -633,7 +633,11 @@ export function toggleLink(state: D.State, tree: Tree, node: NodeRef, link: stri
     return I.setOpenedLinkNode(tree, node, link, null);
   } else {
     const [linkNode, result0] = load(state, tree, link);
-    const result = I.setOpenedLinkNode(result0, node, link, linkNode);
+    let result = I.setOpenedLinkNode(result0, node, link, linkNode);
+
+    // Automatically expand newly opened link
+    result = toggle(state, result, linkNode);
+
     return result;
   }
 }
