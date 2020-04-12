@@ -25,50 +25,40 @@ export interface Users {
 
 // Check password and return user ID.
 export async function userId(name: string, password: string): Promise<UserId | null> {
-  return null;
-  // const user = await client.db("diaform").collection("users").findOne({_id: name});
+  const result = await client.query(`SELECT name, password FROM users WHERE name = $1`, [name]);
 
-  // if (user === null) {
-  //   return null;
-  // } else {
-  //   if (await bcrypt.compare(password, user.hashedPassword as string)) {
-  //     return {name: user._id as string};
-  //   } else {
-  //     return null;
-  //   }
-  // }
+  if (result.rowCount !== 1) return null;
+
+  if (await bcrypt.compare(password, result.rows[0].password)) {
+    return {name: result.rows[0].name};
+  } else {
+    return null;
+  }
 }
 
 export async function userName(userId: UserId): Promise<string | null> {
-  return null;
-  // if ((await client.db("diaform").collection("users").find({_id: userId.name}).count()) > 0) {
-  //   return userId.name;
-  // } else {
-  //   return null;
-  // }
+  const result = await client.query(`SELECT name FROM users WHERE name = $1`, [userId.name]);
+  if (result.rowCount !== 1) return null;
+  return result.rows[0].name;
 }
 
 export async function createUser(
   user: string,
   password: string,
-): Promise<{type: "success"; userId: UserId} | {type: "error"; error?: "user-exists"}> {
-  return {type: "error"};
+): Promise<{type: "success"; userId: UserId} | {type: "error"}> {
+  const hashedPassword = await bcrypt.hash(password, 6);
 
-  // if ((await client.db("diaform").collection("users").find({_id: user}).count()) > 0) {
-  //   return {type: "error", error: "user-exists"};
-  // }
-
-  // const hashedPassword = await bcrypt.hash(password, 6);
-
-  // const result = await client
-  //   .db("diaform")
-  //   .collection("users")
-  //   .insertOne({_id: user, name: user, hashedPassword});
-  // if (result.result.ok) {
-  //   return {type: "success", userId: {name: user}};
-  // } else {
-  //   return {type: "error"};
-  // }
+  try {
+    const row = (
+      await client.query(`INSERT INTO users (name, password) VALUES ($1, $2) RETURNING name`, [
+        user,
+        hashedPassword,
+      ])
+    ).rows[0];
+    return row.name;
+  } catch (e) {
+    return {type: "error"};
+  }
 }
 
 export async function getFullState(
