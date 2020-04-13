@@ -190,7 +190,15 @@ export async function getThingData(
 }
 
 export async function deleteAllUserData(userId: UserId): Promise<void> {
-  // await client.db("diaform").collection("users").deleteOne({name: userId.name});
-  // await client.db("diaform").collection("things").deleteMany({user: userId.name});
-  // await client.db("diaform").collection("connections").deleteMany({user: userId.name});
+  const client = await pool.connect();
+
+  await client.query("BEGIN");
+
+  await client.query(`DELETE FROM connections WHERE "user" = $1`, [userId.name]);
+  await client.query(`DELETE FROM things WHERE "user" = $1`, [userId.name]);
+  await client.query(`DELETE FROM users WHERE name = $1`, [userId.name]);
+
+  await client.query("COMMIT");
+
+  client.release();
 }
