@@ -5,7 +5,7 @@ export type UserId = {name: string};
 
 // We require the consumer of this module to call initialize() before doing
 // anything else.
-let client: pg.Client = undefined as never;
+let pool: pg.Pool = undefined as never;
 
 export async function initialize(
   host: string,
@@ -14,8 +14,7 @@ export async function initialize(
   port: number,
 ): Promise<void> {
   console.log("Database: Connecting to database at %s:%s as user %s", host, port, username);
-  client = new pg.Client({host, user: username, password, database: "postgres", port});
-  await client.connect();
+  pool = new pg.Pool({host, user: username, password, database: "postgres", port});
 }
 
 export interface Users {
@@ -25,7 +24,9 @@ export interface Users {
 
 // Check password and return user ID.
 export async function userId(name: string, password: string): Promise<UserId | null> {
+  const client = await pool.connect();
   const result = await client.query(`SELECT name, password FROM users WHERE name = $1`, [name]);
+  client.release();
 
   if (result.rowCount !== 1) return null;
 
@@ -37,7 +38,9 @@ export async function userId(name: string, password: string): Promise<UserId | n
 }
 
 export async function userName(userId: UserId): Promise<string | null> {
+  const client = await pool.connect();
   const result = await client.query(`SELECT name FROM users WHERE name = $1`, [userId.name]);
+  client.release();
   if (result.rowCount !== 1) return null;
   return result.rows[0].name;
 }
@@ -47,6 +50,8 @@ export async function createUser(
   password: string,
 ): Promise<{type: "success"; userId: UserId} | {type: "error"}> {
   const hashedPassword = await bcrypt.hash(password, 6);
+
+  const client = await pool.connect();
 
   try {
     const row = (
@@ -58,6 +63,8 @@ export async function createUser(
     return row.name;
   } catch (e) {
     return {type: "error"};
+  } finally {
+    client.release();
   }
 }
 
@@ -66,6 +73,7 @@ export async function getFullState(
 ): Promise<{
   things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[];
 }> {
+  const client = await pool.connect();
   const result = await client.query(
     `
     SELECT things.name, things.content, connections.name as connection_name, connections.child, connections.tag, connections.parent_index
@@ -76,8 +84,7 @@ export async function getFullState(
   `,
     [userId.name],
   );
-
-  console.log(result.rows);
+  client.release();
 
   let thingsObject: {
     [name: string]: {content: string; children: {name: string; child: string; tag?: string}[]};
@@ -118,7 +125,8 @@ export async function updateThing({
   content: string;
   children: {name: string; child: string; tag?: string}[];
 }): Promise<void> {
-  // [TODO] Can we do all this in one transaction? Can we optimize it?
+  const client = await pool.connect();
+  await client.query("BEGIN");
 
   await client.query(
     `INSERT INTO things ("user", name, content) VALUES ($1, $2, $3) ON CONFLICT ("user", name) DO UPDATE SET content = EXCLUDED.content`,
@@ -136,6 +144,10 @@ export async function updateThing({
       [userId.name, connection.name, thing, connection.child, connection.tag, i],
     );
   }
+
+  await client.query("COMMIT");
+
+  client.release();
 }
 
 export async function deleteThing(userId: UserId, thing: string): Promise<void> {
@@ -149,21 +161,25 @@ export async function deleteThing(userId: UserId, thing: string): Promise<void> 
 }
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
+  const client = await pool.connect();
   await client.query(`UPDATE things SET content = $3 WHERE "user" = $1 AND name = $2`, [
     userId.name,
     thing,
     content,
   ]);
+  client.release();
 }
 
 export async function getThingData(
   userId: UserId,
   thing: string,
 ): Promise<{content: string; children: {name: string; child: string; tag?: string}[]} | null> {
+  const client = await pool.connect();
   const thingResult = await client.query(`SELECT content FROM things WHERE "user" = $1 AND name = $2`, [
     userId.name,
     thing,
   ]);
+  client.release();
 
   if (thingResult.rowCount !== 1) return null;
   const row = thingResult.rows[0];
