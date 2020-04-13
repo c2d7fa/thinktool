@@ -78,7 +78,7 @@ export async function getFullState(
     `
     SELECT things.name, things.content, connections.name as connection_name, connections.child, connections.tag, connections.parent_index
     FROM things
-    LEFT JOIN connections ON connections.parent = things.name
+    LEFT JOIN connections ON connections.parent = things.name AND connections.user = things.user
     WHERE things.user = $1
     ORDER BY things.name ASC, parent_index ASC
   `,
