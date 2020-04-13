@@ -66,30 +66,42 @@ export async function getFullState(
 ): Promise<{
   things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[];
 }> {
-  // [TODO] Can we do all this in one transaction? Can we optimize it?
+  const result = await client.query(
+    `
+    SELECT things.name, things.content, connections.name as connection_name, connections.child, connections.tag, connections.parent_index
+    FROM things
+    LEFT JOIN connections ON connections.parent = things.name
+    WHERE things.user = $1
+    ORDER BY things.name ASC, parent_index ASC
+  `,
+    [userId.name],
+  );
 
-  const thingsResult = await client.query(`SELECT name, content FROM things WHERE "user" = $1`, [
-    userId.name,
-  ]);
+  console.log(result.rows);
 
-  let things: {
-    name: string;
-    content: string;
-    children: {name: string; child: string; tag?: string}[];
-  }[] = [];
+  let thingsObject: {
+    [name: string]: {content: string; children: {name: string; child: string; tag?: string}[]};
+  } = {};
 
-  for (const thing of thingsResult.rows) {
-    things.push({name: thing.name, content: thing.content ?? "", children: []});
+  for (const row of result.rows) {
+    if (!(row.name in thingsObject)) {
+      thingsObject[row.name] = {content: row.content, children: []};
+    }
+
+    if (row.connection_name !== null) {
+      thingsObject[row.name].children.push({
+        name: row.connection_name,
+        child: row.child,
+        tag: row.tag ?? undefined,
+      });
+    }
   }
 
-  for (const thing of things) {
-    const childrenResult = await client.query(
-      `SELECT name, child, tag FROM connections WHERE "user" = $1 AND parent = $2 ORDER BY parent_index ASC`,
-      [userId.name, thing.name],
-    );
-    for (const connection of childrenResult.rows) {
-      thing.children.push({name: connection.name, child: connection.child, tag: connection.tag ?? undefined});
-    }
+  // [TODO] We should just change the signature, so we can return the dictionary
+  // we've already made.
+  let things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[] = [];
+  for (const thing in thingsObject) {
+    things.push({name: thing, ...thingsObject[thing]});
   }
 
   return {things};
