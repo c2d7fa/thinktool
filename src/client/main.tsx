@@ -653,7 +653,9 @@ function Toolbar(props: {context: Context}) {
       {focused !== null && (
         <GeneralPopup
           active={props.context.activePopup === "link" ? null : props.context.activePopup}
-          hide={() => props.context.setActivePopup(null)}
+          hide={() => {
+            props.context.setActivePopup(null);
+          }}
           context={props.context}
           node={focused}
         />
@@ -691,7 +693,9 @@ function ThingOverview(p: {context: Context}) {
             p.context.setTree(T.toggleLink(p.context.state, p.context.tree, T.root(p.context.tree), thing))
           }
           showLinkPopup={p.context.activePopup === "link"}
-          hideLinkPopup={() => p.context.setActivePopup(null)}
+          hideLinkPopup={() => {
+            p.context.setActivePopup(null);
+          }}
         />
         {p.context.viewMode === "table" ? (
           <TableView context={p.context} />
@@ -1045,15 +1049,11 @@ function Content(p: {context: Context; node: T.NodeRef}) {
         }
         onKeyDown={onKeyDown}
         showLinkPopup={p.context.activePopup === "link"}
-        hideLinkPopup={() => p.context.setActivePopup(null)}
+        hideLinkPopup={() => {
+          p.context.setActivePopup(null);
+        }}
       />
       {tagPopup}
-      <GeneralPopup
-        active={p.context.activePopup === "link" ? null : p.context.activePopup}
-        hide={() => p.context.setActivePopup(null)}
-        context={p.context}
-        node={p.node}
-      />
     </>
   );
 }
