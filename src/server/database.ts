@@ -151,13 +151,19 @@ export async function updateThing({
 }
 
 export async function deleteThing(userId: UserId, thing: string): Promise<void> {
-  // await client.db("diaform").collection("things").deleteOne({user: userId.name, name: thing});
-  // await client.db("diaform").collection("connections").deleteMany({user: userId.name, child: thing});
-  // await client.db("diaform").collection("connections").deleteMany({user: userId.name, parent: thing});
-  // await client
-  //   .db("diaform")
-  //   .collection("connections")
-  //   .updateMany({user: userId.name, tag: thing}, {$unset: {tag: ""}});
+  const client = await pool.connect();
+
+  await client.query(`DELETE FROM connections WHERE "user" = $1 AND (parent = $2 OR child = $2)`, [
+    userId.name,
+    thing,
+  ]);
+  await client.query(`UPDATE connections SET tag = NULL WHERE "user" = $1 AND tag = $2`, [
+    userId.name,
+    thing,
+  ]);
+  await client.query(`DELETE FROM things WHERE "user" = $1 AND name = $2`, [userId.name, thing]);
+
+  client.release();
 }
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
