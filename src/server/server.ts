@@ -266,7 +266,7 @@ app.options("/state/things/:thing", async (req, res) => {
   res
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
-    .header("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
+    .header("Access-Control-Allow-Methods", "GET, DELETE, OPTIONS")
     .header("Access-Control-Allow-Headers", "Thinktool-Client-Id, Content-Type")
     .send();
 });
@@ -280,21 +280,35 @@ app.options("/api/things/:thing/content", async (req, res) => {
     .send();
 });
 
-app.put("/state/things/:thing", requireSession, parseThing, requireClientId, async (req, res) => {
+app.options("/state/things", async (req, res) => {
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .header("Access-Control-Allow-Methods", "POST, OPTIONS")
+    .header("Access-Control-Allow-Headers", "Thinktool-Client-Id, Content-Type")
+    .send();
+});
+
+app.post("/state/things", requireSession, requireClientId, async (req, res) => {
   if (typeof req.body !== "object") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
-  const data = req.body as Communication.ThingData;
+  const data = req.body as Communication.UpdateThings;
 
-  await DB.updateThing({
-    userId: req.user!,
-    thing: res.locals.thing,
-    content: data.content,
-    children: data.children,
-  });
+  for (const thing of data) {
+    await DB.updateThing({
+      userId: req.user!,
+      thing: thing.name,
+      content: thing.content,
+      children: thing.children,
+    });
+  }
 
-  changes.updated(req.user!, res.locals.thing, res.locals.clientId);
+  for (const thing of data) {
+    changes.updated(req.user!, thing.name, res.locals.clientId);
+  }
+
   res
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")

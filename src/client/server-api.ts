@@ -54,14 +54,13 @@ export async function deleteThing(thing: string): Promise<void> {
   await api(`state/things/${thing}`, {method: "delete", headers: {"Thinktool-Client-Id": clientId}});
 }
 
-export async function updateThing(
-  thing: string,
-  data: {content: string; children: {name: string; child: string; tag?: string}[]},
+export async function updateThings(
+  things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[],
 ): Promise<void> {
-  await api(`state/things/${thing}`, {
-    method: "put",
+  await api(`state/things`, {
+    method: "post",
     headers: {"Content-Type": "application/json", "Thinktool-Client-Id": clientId},
-    body: JSON.stringify(data as Communication.ThingData),
+    body: JSON.stringify(things as Communication.UpdateThings),
   });
 }
 
