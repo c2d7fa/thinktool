@@ -181,18 +181,28 @@ export async function getThingData(
   thing: string,
 ): Promise<{content: string; children: {name: string; child: string; tag?: string}[]} | null> {
   const client = await pool.connect();
-  const thingResult = await client.query(`SELECT content FROM things WHERE "user" = $1 AND name = $2`, [
-    userId.name,
-    thing,
-  ]);
+
+  const result = await client.query(
+    `
+    SELECT things.name, things.content, connections.name as connection_name, connections.child, connections.tag
+    FROM things
+    LEFT JOIN connections ON connections.user = things.user AND connections.parent = things.name
+    WHERE things.user = $1 AND things.name = $2
+    ORDER BY parent_index ASC
+    `,
+    [userId.name, thing],
+  );
+
   client.release();
 
-  if (thingResult.rowCount !== 1) return null;
-  const row = thingResult.rows[0];
+  let children = [];
+  for (const row of result.rows) {
+    if (row.connection_name !== null) {
+      children.push({name: row.connection_name, child: row.child, tag: row.tag ?? undefined});
+    }
+  }
 
-  // [TODO] Get children
-
-  return {content: row.content ?? "", children: []};
+  return {content: result.rows[0].content ?? "", children};
 }
 
 export async function deleteAllUserData(userId: UserId): Promise<void> {
