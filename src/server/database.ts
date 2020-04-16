@@ -1,16 +1,20 @@
-import * as mongo from "mongodb";
+import * as pg from "pg";
 import * as bcrypt from "bcrypt";
-
-import * as Communication from "../shared/communication";
 
 export type UserId = {name: string};
 
-// This is a hack. We require the consumer of this module to call initialize()
-// before doing anything else.
-let client: mongo.MongoClient = undefined as never;
+// We require the consumer of this module to call initialize() before doing
+// anything else.
+let pool: pg.Pool = undefined as never;
 
-export async function initialize(uri: string): Promise<void> {
-  client = await new mongo.MongoClient(uri, {useUnifiedTopology: true}).connect();
+export async function initialize(
+  host: string,
+  username: string,
+  password: string,
+  port: number,
+): Promise<void> {
+  console.log("Database: Connecting to database at %s:%s as user %s", host, port, username);
+  pool = new pg.Pool({host, user: username, password, database: "postgres", port});
 }
 
 export interface Users {
@@ -20,45 +24,47 @@ export interface Users {
 
 // Check password and return user ID.
 export async function userId(name: string, password: string): Promise<UserId | null> {
-  const user = await client.db("diaform").collection("users").findOne({_id: name});
+  const client = await pool.connect();
+  const result = await client.query(`SELECT name, password FROM users WHERE name = $1`, [name]);
+  client.release();
 
-  if (user === null) {
-    return null;
+  if (result.rowCount !== 1) return null;
+
+  if (await bcrypt.compare(password, result.rows[0].password)) {
+    return {name: result.rows[0].name};
   } else {
-    if (await bcrypt.compare(password, user.hashedPassword as string)) {
-      return {name: user._id as string};
-    } else {
-      return null;
-    }
+    return null;
   }
 }
 
 export async function userName(userId: UserId): Promise<string | null> {
-  if ((await client.db("diaform").collection("users").find({_id: userId.name}).count()) > 0) {
-    return userId.name;
-  } else {
-    return null;
-  }
+  const client = await pool.connect();
+  const result = await client.query(`SELECT name FROM users WHERE name = $1`, [userId.name]);
+  client.release();
+  if (result.rowCount !== 1) return null;
+  return result.rows[0].name;
 }
 
 export async function createUser(
   user: string,
   password: string,
-): Promise<{type: "success"; userId: UserId} | {type: "error"; error?: "user-exists"}> {
-  if ((await client.db("diaform").collection("users").find({_id: user}).count()) > 0) {
-    return {type: "error", error: "user-exists"};
-  }
-
+): Promise<{type: "success"; userId: UserId} | {type: "error"}> {
   const hashedPassword = await bcrypt.hash(password, 6);
 
-  const result = await client
-    .db("diaform")
-    .collection("users")
-    .insertOne({_id: user, name: user, hashedPassword});
-  if (result.result.ok) {
-    return {type: "success", userId: {name: user}};
-  } else {
+  const client = await pool.connect();
+
+  try {
+    const row = (
+      await client.query(`INSERT INTO users (name, password) VALUES ($1, $2) RETURNING name`, [
+        user,
+        hashedPassword,
+      ])
+    ).rows[0];
+    return row.name;
+  } catch (e) {
     return {type: "error"};
+  } finally {
+    client.release();
   }
 }
 
@@ -67,34 +73,45 @@ export async function getFullState(
 ): Promise<{
   things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[];
 }> {
-  // [TODO] This is absurdly inefficient. It's weirdly difficult to do stuff
-  // like this in MongoDB. Maybe we should just switch to SQL?
+  const client = await pool.connect();
+  const result = await client.query(
+    `
+    SELECT things.name, things.content, connections.name as connection_name, connections.child, connections.tag, connections.parent_index
+    FROM things
+    LEFT JOIN connections ON connections.parent = things.name AND connections.user = things.user
+    WHERE things.user = $1
+    ORDER BY things.name ASC, parent_index ASC
+  `,
+    [userId.name],
+  );
+  client.release();
 
-  const documents = await client.db("diaform").collection("things").find({user: userId.name}).toArray();
+  let thingsObject: {
+    [name: string]: {content: string; children: {name: string; child: string; tag?: string}[]};
+  } = {};
 
-  let things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[] = [];
+  for (const row of result.rows) {
+    if (!(row.name in thingsObject)) {
+      thingsObject[row.name] = {content: row.content, children: []};
+    }
 
-  for (const document of documents) {
-    let children = [];
-    for (const connection of document.connections) {
-      const connectionDocument = await client
-        .db("diaform")
-        .collection("connections")
-        .findOne({user: userId.name, name: connection});
-      children.push({
-        name: connection,
-        child: connectionDocument.child,
-        tag: connectionDocument.tag ?? undefined,
+    if (row.connection_name !== null) {
+      thingsObject[row.name].children.push({
+        name: row.connection_name,
+        child: row.child,
+        tag: row.tag ?? undefined,
       });
     }
-    things.push({name: document.name, content: document.content ?? "", children});
+  }
+
+  // [TODO] We should just change the signature, so we can return the dictionary
+  // we've already made.
+  let things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[] = [];
+  for (const thing in thingsObject) {
+    things.push({name: thing, ...thingsObject[thing]});
   }
 
   return {things};
-}
-
-export async function thingExists(userId: UserId, thing: string): Promise<boolean> {
-  return (await client.db("diaform").collection("things").find({user: userId.name, name: thing}).count()) > 0;
 }
 
 export async function updateThing({
@@ -108,79 +125,96 @@ export async function updateThing({
   content: string;
   children: {name: string; child: string; tag?: string}[];
 }): Promise<void> {
-  // Create/update child connections
-  for (const connection of children) {
-    await client
-      .db("diaform")
-      .collection("connections")
-      .updateOne(
-        {user: userId.name, name: connection.name},
-        {$set: {parent: thing, child: connection.child, tag: connection.tag}},
-        {upsert: true},
-      );
+  const client = await pool.connect();
+  await client.query("BEGIN");
+
+  await client.query(
+    `INSERT INTO things ("user", name, content) VALUES ($1, $2, $3) ON CONFLICT ("user", name) DO UPDATE SET content = EXCLUDED.content`,
+    [userId.name, thing, content],
+  );
+
+  // Delete old connections
+  await client.query(`DELETE FROM connections WHERE "user" = $1 AND parent = $2`, [userId.name, thing]);
+
+  // Store new connections
+  for (let i = 0; i < children.length; ++i) {
+    const connection = children[i];
+    await client.query(
+      `INSERT INTO connections ("user", name, parent, child, tag, parent_index) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [userId.name, connection.name, thing, connection.child, connection.tag, i],
+    );
   }
 
-  // Remove old connections
-  await client
-    .db("diaform")
-    .collection("connections")
-    .deleteMany({user: userId.name, parent: thing, name: {$nin: children.map((c) => c.name)}});
+  await client.query("COMMIT");
 
-  // Update the item itself
-  await client
-    .db("diaform")
-    .collection("things")
-    .updateOne(
-      {user: userId.name, name: thing},
-      {$set: {content, connections: children.map((ch) => ch.name)}},
-      {upsert: true},
-    );
+  client.release();
 }
 
 export async function deleteThing(userId: UserId, thing: string): Promise<void> {
-  await client.db("diaform").collection("things").deleteOne({user: userId.name, name: thing});
+  const client = await pool.connect();
 
-  await client.db("diaform").collection("connections").deleteMany({user: userId.name, child: thing});
-  await client.db("diaform").collection("connections").deleteMany({user: userId.name, parent: thing});
-  await client
-    .db("diaform")
-    .collection("connections")
-    .updateMany({user: userId.name, tag: thing}, {$unset: {tag: ""}});
+  await client.query(`DELETE FROM connections WHERE "user" = $1 AND (parent = $2 OR child = $2)`, [
+    userId.name,
+    thing,
+  ]);
+  await client.query(`UPDATE connections SET tag = NULL WHERE "user" = $1 AND tag = $2`, [
+    userId.name,
+    thing,
+  ]);
+  await client.query(`DELETE FROM things WHERE "user" = $1 AND name = $2`, [userId.name, thing]);
+
+  client.release();
 }
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
-  await client
-    .db("diaform")
-    .collection("things")
-    .updateOne({user: userId.name, name: thing}, {$set: {content}}, {upsert: true});
+  const client = await pool.connect();
+  await client.query(`UPDATE things SET content = $3 WHERE "user" = $1 AND name = $2`, [
+    userId.name,
+    thing,
+    content,
+  ]);
+  client.release();
 }
 
 export async function getThingData(
   userId: UserId,
   thing: string,
 ): Promise<{content: string; children: {name: string; child: string; tag?: string}[]} | null> {
-  const document = await client.db("diaform").collection("things").findOne({user: userId.name, name: thing});
+  const client = await pool.connect();
 
-  if (document === null) return null;
+  const result = await client.query(
+    `
+    SELECT things.name, things.content, connections.name as connection_name, connections.child, connections.tag
+    FROM things
+    LEFT JOIN connections ON connections.user = things.user AND connections.parent = things.name
+    WHERE things.user = $1 AND things.name = $2
+    ORDER BY parent_index ASC
+    `,
+    [userId.name, thing],
+  );
+
+  client.release();
 
   let children = [];
-  for (const connection of document.connections) {
-    const connectionDocument = await client
-      .db("diaform")
-      .collection("connections")
-      .findOne({user: userId.name, name: connection});
-    children.push({
-      name: connection,
-      child: connectionDocument.child,
-      tag: connectionDocument.tag ?? undefined,
-    });
+  for (const row of result.rows) {
+    if (row.connection_name !== null) {
+      children.push({name: row.connection_name, child: row.child, tag: row.tag ?? undefined});
+    }
   }
 
-  return {content: document.content ?? "", children};
+  return {content: result.rows[0].content ?? "", children};
 }
 
 export async function deleteAllUserData(userId: UserId): Promise<void> {
-  await client.db("diaform").collection("users").deleteOne({name: userId.name});
-  await client.db("diaform").collection("things").deleteMany({user: userId.name});
-  await client.db("diaform").collection("connections").deleteMany({user: userId.name});
+  const client = await pool.connect();
+
+  await client.query("BEGIN");
+
+  await client.query(`DELETE FROM connections WHERE "user" = $1`, [userId.name]);
+  await client.query(`DELETE FROM things WHERE "user" = $1`, [userId.name]);
+  await client.query(`DELETE FROM users WHERE name = $1`, [userId.name]);
+
+  await client.query("COMMIT");
+
+  client.release();
 }

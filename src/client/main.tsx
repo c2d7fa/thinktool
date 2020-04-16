@@ -173,8 +173,9 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
         for (const thing of diff.deleted) {
           Server.deleteThing(thing);
         }
-        for (const thing of [...diff.added, ...diff.changed]) {
-          Server.updateThing(thing, {
+        Server.updateThings(
+          [...diff.added, ...diff.changed].map((thing) => ({
+            name: thing,
             content: Data.content(newState, thing),
             children: Data.childConnections(newState, thing).map((c) => {
               return {
@@ -183,8 +184,8 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
                 tag: Data.tag(newState, c) ?? undefined,
               };
             }),
-          });
-        }
+          })),
+        );
       }
     }
   }
@@ -202,8 +203,9 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
       for (const thing of diff.deleted) {
         Server.deleteThing(thing);
       }
-      for (const thing of [...diff.added, ...diff.changed]) {
-        Server.updateThing(thing, {
+      Server.updateThings(
+        [...diff.added, ...diff.changed].map((thing) => ({
+          name: thing,
           content: Data.content(oldState, thing),
           children: Data.childConnections(oldState, thing).map((c) => {
             return {
@@ -212,8 +214,8 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
               tag: Data.tag(oldState, c) ?? undefined,
             };
           }),
-        });
-      }
+        })),
+      );
     }
   }
 

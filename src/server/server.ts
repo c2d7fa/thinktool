@@ -228,7 +228,7 @@ async function parseThingExists(req: express.Request, res: express.Response, nex
     res.status(400).type("text/plain").send("400 Bad Request");
     next("router");
   }
-  if (!DB.thingExists(req.user!, thing)) {
+  if ((await DB.getThingData(req.user!, thing)) === null) {
     res.type("text/plain").status(404).send("404 Not Found");
     return;
   }
@@ -266,7 +266,7 @@ app.options("/state/things/:thing", async (req, res) => {
   res
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
-    .header("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
+    .header("Access-Control-Allow-Methods", "GET, DELETE, OPTIONS")
     .header("Access-Control-Allow-Headers", "Thinktool-Client-Id, Content-Type")
     .send();
 });
@@ -280,21 +280,35 @@ app.options("/api/things/:thing/content", async (req, res) => {
     .send();
 });
 
-app.put("/state/things/:thing", requireSession, parseThing, requireClientId, async (req, res) => {
+app.options("/state/things", async (req, res) => {
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .header("Access-Control-Allow-Methods", "POST, OPTIONS")
+    .header("Access-Control-Allow-Headers", "Thinktool-Client-Id, Content-Type")
+    .send();
+});
+
+app.post("/state/things", requireSession, requireClientId, async (req, res) => {
   if (typeof req.body !== "object") {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }
-  const data = req.body as Communication.ThingData;
+  const data = req.body as Communication.UpdateThings;
 
-  await DB.updateThing({
-    userId: req.user!,
-    thing: res.locals.thing,
-    content: data.content,
-    children: data.children,
-  });
+  for (const thing of data) {
+    await DB.updateThing({
+      userId: req.user!,
+      thing: thing.name,
+      content: thing.content,
+      children: thing.children,
+    });
+  }
 
-  changes.updated(req.user!, res.locals.thing, res.locals.clientId);
+  for (const thing of data) {
+    changes.updated(req.user!, thing.name, res.locals.clientId);
+  }
+
   res
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
@@ -412,9 +426,13 @@ app.use((req, res, next) => {
 // Start app
 
 (async () => {
-  const databaseUri = process.env.DIAFORM_DATABASE ?? "mongodb://localhost:27017";
   const listenPort = +(process.env.DIAFORM_PORT ?? 80);
-  await DB.initialize(databaseUri);
+  await DB.initialize(
+    process.env.DIAFORM_POSTGRES_HOST ?? "localhost",
+    process.env.DIAFORM_POSTGRES_USERNAME ?? "postgres",
+    process.env.DIAFORM_POSTGRES_PASSWORD ?? "postgres",
+    +(process.env.DIAFORM_POSTGRES_PORT ?? "5432"),
+  );
   app.listen(listenPort, () => {
     console.log(`Listening on http://localhost:${listenPort}/`);
   });

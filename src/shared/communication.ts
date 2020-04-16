@@ -9,3 +9,9 @@ export type FullStateResponse = {
 };
 
 export type ThingData = {content: string; children: {name: string; child: string; tag?: string}[]};
+
+export type UpdateThings = {
+  name: string;
+  content: string;
+  children: {name: string; child: string; tag: string}[];
+}[];
