@@ -1,8 +1,16 @@
 import * as React from "react";
 
 import * as D from "../data";
+import * as T from "../tree";
 
 import ThingSelectPopup from "./ThingSelectPopup";
+
+export interface Context {
+  state: D.State;
+  setState(value: D.State): void;
+  tree: T.Tree;
+  setTree(value: T.Tree): void;
+}
 
 type Annotation = {externalLink: string} | {internalLink: string};
 type Range = {start: number; end: number; annotation?: Annotation};
@@ -66,55 +74,49 @@ function ExternalLink(props: {link: string}) {
   );
 }
 
-function InternalLink(props: {
-  getContentText(thing: string): string;
-  openInternalLink(thing: string): void;
-  isLinkOpen(thing: string): boolean;
-  thing: string;
-}) {
-  const content = props.getContentText(props.thing);
+function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) {
+  const content = D.contentText(props.context.state, props.link);
   return (
     <a
-      className={`internal-link${props.isLinkOpen(props.thing) ? " internal-link-open" : ""}`}
+      className={`internal-link${
+        T.isLinkOpen(props.context.tree, props.node, props.link) ? " internal-link-open" : ""
+      }`}
       href="#"
       onClick={(ev) => {
-        props.openInternalLink(props.thing);
+        props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, props.link));
         ev.preventDefault();
       }}>
-      {content === "" ? <span className="empty-content">#{props.thing}</span> : content}
+      {content === "" ? <span className="empty-content">#{props.link}</span> : content}
     </a>
   );
 }
 
 function RenderedContent(props: {
-  things: D.State;
-  focused?: boolean;
-  text: string;
-  setText(text: string): void;
+  context: Context;
+  node: T.NodeRef;
   className?: string;
-  onFocus?(ev: React.FocusEvent<{}>): void;
   onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
-  getContentText(thing: string): string;
-  openInternalLink?(thing: string): void;
-  isLinkOpen?(thing: string): boolean;
+  showLinkPopup: boolean;
+  hideLinkPopup(): void;
 }) {
   let fragments: React.ReactNode[] = [];
 
+  const text = D.content(props.context.state, T.thing(props.context.tree, props.node));
+
   let i = 0; // Node key
-  for (const range of annotate(props.text)) {
-    const text = props.text.substring(range.start, range.end);
+  for (const range of annotate(text)) {
+    const rangeText = text.substring(range.start, range.end);
 
     if (!range.annotation) {
-      fragments.push(text);
+      fragments.push(rangeText);
     } else if ("internalLink" in range.annotation) {
       fragments.push(
         <InternalLink
           key={i++}
-          thing={range.annotation.internalLink}
-          getContentText={props.getContentText}
-          openInternalLink={props.openInternalLink ?? (() => {})}
-          isLinkOpen={props.isLinkOpen ?? (() => false)}
+          link={range.annotation.internalLink}
+          node={props.node}
+          context={props.context}
         />,
       );
     } else if ("externalLink" in range.annotation) {
@@ -132,7 +134,7 @@ function RenderedContent(props: {
         // Don't take focus when target of event was a child such as an
         // external link.
         if (ev.target === divRef.current) {
-          props.onFocus && props.onFocus(ev);
+          props.context.setTree(T.focus(props.context.tree, props.node));
         }
       }}
       className={`editor-inactive ${props.className}`}>
@@ -142,21 +144,14 @@ function RenderedContent(props: {
 }
 
 export function ContentEditor(props: {
-  things: D.State;
-  focused?: boolean;
-  text: string;
-  setText(text: string): void;
+  context: Context;
+  node: T.NodeRef;
   className?: string;
-  onFocus?(ev: React.FocusEvent<{}>): void;
-  onBlur?(): void;
   onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
-  getContentText(thing: string): string;
-  openInternalLink?(thing: string): void;
-  isLinkOpen?(thing: string): boolean;
-  setForceEditor(forceEditor: boolean): void;
   showLinkPopup: boolean;
   hideLinkPopup(): void;
+  setForceEditor(forceEditor: boolean): void;
 }) {
   const [showLinkPopup, setShowLinkPopup] = React.useState<boolean>(props.showLinkPopup);
   const preservedSelectionRef = React.useRef<[number, number] | null>(null);
@@ -175,8 +170,8 @@ export function ContentEditor(props: {
   }, [props.showLinkPopup]);
 
   React.useEffect(() => {
-    if (props.focused) textareaRef.current?.focus();
-  }, [props.focused]);
+    if (T.hasFocus(props.context.tree, props.node)) textareaRef.current?.focus();
+  }, [props.context.tree]);
 
   function onKeyDown(ev: React.KeyboardEvent): void {
     // When the user presses up on the first line or down on the last line, we
@@ -224,7 +219,7 @@ export function ContentEditor(props: {
 
     return (
       <ThingSelectPopup
-        state={props.things}
+        state={props.context.state}
         hide={() => props.hideLinkPopup()}
         seedText={
           textareaRef.current && textareaRef.current.selectionStart !== textareaRef.current.selectionEnd
@@ -234,6 +229,37 @@ export function ContentEditor(props: {
               )
             : undefined
         }
+        create={(content: string) => {
+          props.setForceEditor(false);
+
+          if (textareaRef.current === null) {
+            console.error("Can't get textarea; exiting early.");
+            return;
+          }
+
+          if (preservedSelectionRef.current === null) {
+            console.error("No selection preserved; exiting early.");
+            return;
+          }
+          textareaRef.current.selectionStart = preservedSelectionRef.current[0];
+          textareaRef.current.selectionEnd = preservedSelectionRef.current[1];
+
+          const [state0, thing] = D.create(props.context.state);
+          const state1 = D.setContent(state0, thing, content);
+
+          const text = D.content(state1, T.thing(props.context.tree, props.node));
+          const state2 = D.setContent(
+            state1,
+            T.thing(props.context.tree, props.node),
+            text.substring(0, textareaRef.current.selectionStart) +
+              `#${thing}` +
+              text.substring(textareaRef.current.selectionEnd),
+          );
+
+          props.context.setState(state2);
+
+          textareaRef.current.focus();
+        }}
         submit={(link: string) => {
           props.setForceEditor(false);
 
@@ -249,11 +275,16 @@ export function ContentEditor(props: {
           textareaRef.current.selectionStart = preservedSelectionRef.current[0];
           textareaRef.current.selectionEnd = preservedSelectionRef.current[1];
 
-          props.setText(
-            props.text.substring(0, textareaRef.current.selectionStart) +
+          const text = D.content(props.context.state, T.thing(props.context.tree, props.node));
+          const state2 = D.setContent(
+            props.context.state,
+            T.thing(props.context.tree, props.node),
+            text.substring(0, textareaRef.current.selectionStart) +
               `#${link}` +
-              props.text.substring(textareaRef.current.selectionEnd),
+              text.substring(textareaRef.current.selectionEnd),
           );
+
+          props.context.setState(state2);
 
           textareaRef.current.focus();
         }}
@@ -261,22 +292,44 @@ export function ContentEditor(props: {
     );
   })();
 
+  const [text, setText_] = React.useState<string>(
+    D.content(props.context.state, T.thing(props.context.tree, props.node)),
+  );
+  function setText(text: string) {
+    setText_(text);
+    props.context.setState(D.setContent(props.context.state, T.thing(props.context.tree, props.node), text));
+  }
+
+  React.useEffect(() => {
+    if (D.content(props.context.state, T.thing(props.context.tree, props.node)) !== text) {
+      setText_(D.content(props.context.state, T.thing(props.context.tree, props.node)));
+    }
+  }, [props.context.state]);
+
   // Automatically resize textarea to fit content.
   React.useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "0"; // Necessary for shrinking
       textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
-  }, [props.text]);
+  }, [text]);
 
   return (
     <div className={`editor ${props.className}`}>
       <textarea
         ref={textareaRef}
-        value={props.text}
-        onChange={(ev) => props.setText(ev.target.value)}
-        onFocus={(ev) => props.onFocus !== undefined && props.onFocus(ev)}
-        onBlur={props.onBlur}
+        value={text}
+        onChange={(ev) => setText(ev.target.value)}
+        onFocus={(ev) => props.context.setTree(T.focus(props.context.tree, props.node))}
+        onBlur={() => {
+          if (T.hasFocus(props.context.tree, props.node)) {
+            // [TODO] We should unfocus this node here, but doing so would
+            // cause the toolbar to stop functioning, because this would be
+            // called when the user pressed a button on the toolbar, before the
+            // action could be executed.
+            // props.context.setTree(T.unfocus(props.context.tree));
+          }
+        }}
         onKeyDown={onKeyDown}
       />
       {linkPopup}
@@ -285,24 +338,17 @@ export function ContentEditor(props: {
 }
 
 export function Content(props: {
-  things: D.State;
-  focused?: boolean;
-  text: string;
-  setText(text: string): void;
+  context: Context;
+  node: T.NodeRef;
   className?: string;
-  onFocus?(ev: React.FocusEvent<{}>): void;
-  onBlur?(): void;
   onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
-  getContentText(thing: string): string;
-  openInternalLink?(thing: string): void;
-  isLinkOpen?(thing: string): boolean;
   showLinkPopup: boolean;
   hideLinkPopup(): void;
 }) {
   const [forceEditor, setForceEditor] = React.useState<boolean>(false);
 
-  if (props.focused || forceEditor) {
+  if (T.hasFocus(props.context.tree, props.node) || forceEditor) {
     return <ContentEditor {...props} setForceEditor={setForceEditor} />;
   } else {
     return <RenderedContent {...props} />;

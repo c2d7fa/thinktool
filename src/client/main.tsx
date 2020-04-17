@@ -642,6 +642,14 @@ function Toolbar(props: {context: Context}) {
         <ThingSelectPopup
           hide={() => setShowTagPopup(false)}
           state={props.context.state}
+          create={(content: string) => {
+            if (focused === null) return;
+            const [state2, thing] = Data.create(props.context.state);
+            const state3 = Data.setContent(state2, thing, content);
+            const [state4, tree2] = T.setTag(state3, props.context.tree, focused, thing);
+            props.context.setState(state4);
+            props.context.setTree(tree2);
+          }}
           submit={(tag: string) => {
             if (focused === null) return;
             const [newState, newTree] = T.setTag(props.context.state, props.context.tree, focused, tag);
@@ -672,26 +680,9 @@ function ThingOverview(p: {context: Context}) {
       <ParentsOutline context={p.context} />
       <div className="overview-main">
         <C.Content
-          things={p.context.state}
+          context={p.context}
+          node={T.root(p.context.tree)}
           className="selected-content"
-          getContentText={(thing) => Data.contentText(p.context.state, thing)}
-          text={Data.content(p.context.state, p.context.selectedThing)}
-          onFocus={() => {
-            p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)));
-          }}
-          focused={T.hasFocus(p.context.tree, T.root(p.context.tree))}
-          onBlur={() => {
-            if (T.hasFocus(p.context.tree, T.root(p.context.tree))) {
-              p.context.setTree(T.unfocus(p.context.tree));
-            }
-          }}
-          setText={(text) => {
-            p.context.setContent(p.context.selectedThing, text);
-          }}
-          isLinkOpen={(thing) => T.isLinkOpen(p.context.tree, T.root(p.context.tree), thing)}
-          openInternalLink={(thing) =>
-            p.context.setTree(T.toggleLink(p.context.state, p.context.tree, T.root(p.context.tree), thing))
-          }
           showLinkPopup={p.context.activePopup === "link"}
           hideLinkPopup={() => {
             p.context.setActivePopup(null);
@@ -891,6 +882,26 @@ function GeneralPopup(props: {
     <ThingSelectPopup
       hide={props.hide}
       state={props.context.state}
+      create={(content: string) => {
+        if (!props.active || !["child", "sibling", "parent"].includes(props.active)) return;
+
+        const [state0, newThing] = Data.create(props.context.state);
+        const state1 = Data.setContent(state0, newThing, content);
+
+        if (props.active === "child") {
+          const [newState, newTree] = T.insertChild(state1, props.context.tree, props.node, newThing, 0);
+          props.context.setState(newState);
+          props.context.setTree(newTree);
+        } else if (props.active === "sibling") {
+          const [newState, newTree] = T.insertSiblingAfter(state1, props.context.tree, props.node, newThing);
+          props.context.setState(newState);
+          props.context.setTree(newTree);
+        } else if (props.active === "parent") {
+          const [newState, newTree] = T.insertParent(state1, props.context.tree, props.node, newThing);
+          props.context.setState(newState);
+          props.context.setTree(newTree);
+        }
+      }}
       submit={(thing: string) => {
         if (props.active === "child") {
           const [newState, newTree] = T.insertChild(
@@ -1009,6 +1020,14 @@ function Content(p: {context: Context; node: T.NodeRef}) {
         <ThingSelectPopup
           hide={() => setShowTagPopup(false)}
           state={p.context.state}
+          create={(content: string) => {
+            if (p.node === null) return;
+            const [state2, thing] = Data.create(p.context.state);
+            const state3 = Data.setContent(state2, thing, content);
+            const [state4, tree2] = T.setTag(state3, p.context.tree, p.node, thing);
+            p.context.setState(state4);
+            p.context.setTree(tree2);
+          }}
           submit={(tag: string) => {
             if (p.node === null) return;
             const [newState, newTree] = T.setTag(p.context.state, p.context.tree, p.node, tag);
@@ -1023,30 +1042,9 @@ function Content(p: {context: Context; node: T.NodeRef}) {
   return (
     <>
       <C.Content
-        things={p.context.state}
+        context={p.context}
+        node={p.node}
         className="content"
-        getContentText={(thing) => Data.contentText(p.context.state, thing)}
-        focused={T.hasFocus(p.context.tree, p.node)}
-        text={Data.content(p.context.state, T.thing(p.context.tree, p.node))}
-        setText={(text) => {
-          p.context.setContent(T.thing(p.context.tree, p.node), text);
-        }}
-        onFocus={() => {
-          p.context.setTree(T.focus(p.context.tree, p.node));
-        }}
-        onBlur={() => {
-          if (T.hasFocus(p.context.tree, p.node)) {
-            // [TODO] We should unfocus this node here, but doing so would
-            // cause the toolbar to stop functioning, because this would be
-            // called when the user pressed a button on the toolbar, before the
-            // action could be executed.
-            //p.context.setTree(T.unfocus(p.context.tree));
-          }
-        }}
-        isLinkOpen={(thing) => T.isLinkOpen(p.context.tree, p.node, thing)}
-        openInternalLink={(thing) =>
-          p.context.setTree(T.toggleLink(p.context.state, p.context.tree, p.node, thing))
-        }
         onKeyDown={onKeyDown}
         showLinkPopup={p.context.activePopup === "link"}
         hideLinkPopup={() => {

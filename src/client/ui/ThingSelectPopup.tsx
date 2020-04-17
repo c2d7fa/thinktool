@@ -13,6 +13,7 @@ export default function ThingSelectPopup(props: {
   state: D.State;
   hide(): void;
   submit(thing: string): void;
+  create(content: string): void;
   seedText?: string;
 }) {
   const [text, setText_] = React.useState("");
@@ -44,7 +45,12 @@ export default function ThingSelectPopup(props: {
 
   function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
     if (ev.key === "Enter") {
-      props.submit(results[selectedIndex][1]);
+      if (selectedIndex === -1) {
+        console.log(props);
+        props.create(text);
+      } else {
+        props.submit(results[selectedIndex][1]);
+      }
       props.hide();
       ev.preventDefault();
     } else if (ev.key === "Escape") {
@@ -81,6 +87,14 @@ export default function ThingSelectPopup(props: {
     }
   }
 
+  const createResult = (
+    <li
+      onPointerDown={() => props.create(text)}
+      className={`link-autocomplete-popup-result${selectedIndex === -1 ? " selected-result" : ""}`}>
+      Create: <i>{text}</i>
+    </li>
+  );
+
   return ReactDOM.createPortal(
     <div className="link-autocomplete-popup">
       <input
@@ -91,8 +105,9 @@ export default function ThingSelectPopup(props: {
         onBlur={() => setTimeout(() => props.hide())}
         onKeyDown={onKeyDown}
       />
-      {results.length !== 0 && (
+      {text !== "" && (
         <ul className="link-autocomplete-popup-results" onScroll={onScroll}>
+          {createResult}
           {results.map((result, i) => (
             <Result
               key={result[1]}
