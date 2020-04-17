@@ -365,7 +365,7 @@ app.post("/login", async (req, res) => {
 
   const {user, password} = req.body;
 
-  const userId = await DB.userId(user, password);
+  const userId = await DB.userId(user.toLowerCase(), password);
   if (userId === null)
     return res
       .status(401)
@@ -383,6 +383,7 @@ app.post("/signup", async (req, res) => {
       typeof req.body.user === "string" &&
       req.body.user.length > 0 &&
       req.body.user.length <= 32 &&
+      /^[a-z][a-z0-9]*$/.test(req.body.user) &&
       typeof req.body.password === "string" &&
       req.body.password.length > 0 &&
       req.body.password.length <= 256 &&
