@@ -1178,17 +1178,33 @@ function Subtree(p: {
 // User Page
 
 function UserPage(props: {username: string}) {
+  const [emailField, setEmailField] = React.useState<string>("(Loading...)");
+
+  React.useEffect(() => {
+    Server.getEmail().then((email) => setEmailField(email));
+  }, []);
+
   return (
     <div>
       <div>
         You are <strong>{props.username}</strong>.
       </div>
+      <hr />
+      <input value={emailField} onChange={(ev) => setEmailField(ev.target.value)} />
+      <button
+        onClick={async () => {
+          await Server.setEmail(emailField);
+          window.location.reload();
+        }}>
+        Change email
+      </button>
+      <hr />
       <button
         onClick={async () => {
           if (confirm("Are you sure you want to PERMANENTLY DELETE YOUR ACCOUNT AND ALL YOUR DATA?")) {
             await Server.deleteAccount(props.username);
+            window.location.href = "/";
           }
-          window.location.href = "/";
         }}>
         Delete account and all data
       </button>

@@ -218,3 +218,16 @@ export async function deleteAllUserData(userId: UserId): Promise<void> {
 
   client.release();
 }
+
+export async function getEmail(userId: UserId): Promise<string | null> {
+  const client = await pool.connect();
+  const result = await client.query(`SELECT email FROM users WHERE name = $1`, [userId.name]);
+  client.release();
+  return result.rows[0].email;
+}
+
+export async function setEmail(userId: UserId, email: string): Promise<void> {
+  const client = await pool.connect();
+  await client.query(`UPDATE users SET email = $2 WHERE name = $1`, [userId.name, email]);
+  return client.release();
+}

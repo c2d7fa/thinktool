@@ -95,5 +95,15 @@ export function ping(note: string): void {
 }
 
 export async function deleteAccount(account: string): Promise<void> {
-  api(`api/account/${account}`, {method: "DELETE"});
+  // We require the account name here to make it harder to accidentally send a
+  // request to delete the user's entire account.
+  api(`api/account/everything/${account}`, {method: "DELETE"});
+}
+
+export async function getEmail(): Promise<string> {
+  return (await api(`api/account/email`, {method: "GET"})).text();
+}
+
+export async function setEmail(email: string): Promise<void> {
+  await api(`api/account/email`, {method: "PUT", body: email});
 }
