@@ -572,11 +572,24 @@ export function clone(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree
 
 // Backreferences:
 
-const refreshBackreferencesChildren = genericRefreshChildren({
-  getStateChildren: D.backreferences,
-  getTreeChildren: I.backreferencesChildren,
-  updateChildren: I.updateBackreferencesChildren,
-});
+const refreshBackreferencesChildren = (state: D.State, tree: Tree, node: NodeRef) => {
+  let result = genericRefreshChildren({
+    getStateChildren: D.backreferences,
+    getTreeChildren: I.backreferencesChildren,
+    updateChildren: I.updateBackreferencesChildren,
+  })(state, tree, node);
+
+  // If a backreference contains just a link and nothing else, automatically
+  // show its children.
+  for (const backreferenceNode of backreferencesChildren(result, node)) {
+    console.log("one child");
+    if (/^#[a-z0-9]+$/.test(D.content(state, thing(result, backreferenceNode)))) {
+      result = expand(state, result, backreferenceNode);
+    }
+  }
+
+  return result;
+};
 
 export function toggleBackreferences(state: D.State, tree: Tree, node: NodeRef): Tree {
   let result = I.markBackreferencesExpanded(tree, node, !backreferencesExpanded(tree, node));
