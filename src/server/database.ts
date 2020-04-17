@@ -48,6 +48,7 @@ export async function userName(userId: UserId): Promise<string | null> {
 export async function createUser(
   user: string,
   password: string,
+  email: string,
 ): Promise<{type: "success"; userId: UserId} | {type: "error"}> {
   const hashedPassword = await bcrypt.hash(password, 6);
 
@@ -55,12 +56,13 @@ export async function createUser(
 
   try {
     const row = (
-      await client.query(`INSERT INTO users (name, password) VALUES ($1, $2) RETURNING name`, [
+      await client.query(`INSERT INTO users (name, password, email) VALUES ($1, $2, $3) RETURNING name`, [
         user,
         hashedPassword,
+        email,
       ])
     ).rows[0];
-    return row.name;
+    return {type: "success", userId: row.name};
   } catch (e) {
     return {type: "error"};
   } finally {
@@ -217,4 +219,17 @@ export async function deleteAllUserData(userId: UserId): Promise<void> {
   await client.query("COMMIT");
 
   client.release();
+}
+
+export async function getEmail(userId: UserId): Promise<string | null> {
+  const client = await pool.connect();
+  const result = await client.query(`SELECT email FROM users WHERE name = $1`, [userId.name]);
+  client.release();
+  return result.rows[0].email;
+}
+
+export async function setEmail(userId: UserId, email: string): Promise<void> {
+  const client = await pool.connect();
+  await client.query(`UPDATE users SET email = $2 WHERE name = $1`, [userId.name, email]);
+  return client.release();
 }

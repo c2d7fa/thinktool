@@ -1,58 +1,83 @@
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Thinktool &ndash; Log In</title>
-    <link rel="stylesheet" href="/landing.css">
-    <link rel="icon" href="/icon.png" type="image/png">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script>
-      fetch("{{apiUrl}}/username", {"credentials": "include"}).then((response) => {
-        if (response.status === 200) {
-          console.log("Already logged in. Redirecting to app page.");
-          window.location = "/app.html";
-        }
-      })
-    </script>
-  </head>
-  <body>
-    <header id="top-bar">
-      <span id="logo">Thinktool</span>
-    </header>
-    <main class="login">
-      <div>
-        <h1>Sign up or log in.</h1>
-        <form action="{{apiUrl}}/" method="POST">
-          <div class="form-table">
-            <div class="entry">
-              <label>Username</label>
-              <input name="user" required/>
-            </div>
-            <div class="entry">
-              <label for="password">Password</label>
-              <input id="password" type="password" name="password" required/>
+
+<head>
+  <meta charset="utf-8">
+  <title>Thinktool &ndash; Log In</title>
+  <link rel="stylesheet" href="/landing.css">
+  <link rel="icon" href="/icon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    fetch("{{apiUrl}}/username", { "credentials": "include" }).then((response) => {
+      if (response.status === 200) {
+        console.log("Already logged in. Redirecting to app page.");
+        window.location = "/app.html";
+      }
+    })
+  </script>
+</head>
+
+<body>
+  <header id="top-bar">
+    <span id="logo">Thinktool</span>
+  </header>
+  <main class="login">
+    <div>
+      <h1>Log in.</h1>
+      <form action="{{apiUrl}}/login" method="POST">
+        <div class="form-table">
+          <div class="entry">
+            <label for="login-user">Username</label>
+            <input id="login-user" name="user" maxlength="32" required />
+          </div>
+          <div class="entry">
+            <label for="login-password">Password</label>
+            <input id="login-password" type="password" name="password" maxlength="256" required />
+          </div>
+        </div>
+        <input type="submit" value="Log in" />
+      </form>
+    </div>
+
+    <div>
+      <h1>Sign up.</h1>
+      <form action="{{apiUrl}}/signup" method="POST">
+        <div class="form-table">
+          <div class="entry">
+            <label for="signup-user">Username</label>
+            <input id="signup-user" placeholder="e.g. 'username123'" name="user" maxlength="32" pattern="[a-z][a-z0-9]*"
+              required />
+            <div class="invalid-username">
+              Username may only contain lowercase letters and numbers. The first
+              character must be a letter.
             </div>
           </div>
-          <input type="submit" name="login" value="Log in"/>
-          <input type="submit" name="signup" value="Sign up"/>
-        </form>
-      </div>
+          <div class="entry">
+            <label for="signup-password">Password</label>
+            <input id="signup-password" placeholder="e.g. 'correct horse battery staple'" type="password"
+              name="password" maxlength="256" required />
+          </div>
+          <div class="entry">
+            <label for="signup-email">Email</label>
+            <input id="signup-email" placeholder="e.g. 'user@example.com'" type="email" name="email" maxlength="1024"
+              required />
+          </div>
+        </div>
+        <input type="submit" value="Sign up" />
+      </form>
+    </div>
 
-      <aside class="disclaimer">
-        <h1>Thank you for trying Thinktool!</h1>
-        <p>
-          I'm passionate making software that helps people be smarter; that's
-          why I'm making Thinktool.  However, I'm also one person doing this in
-          my spare time.
-          <strong>Expect unstable, preview-quality software that is filled with
-          bugs and missing critical features.</strong>
-        </p>
-        <p>
-          If you do decide to check it out, I would <em>love</em> hear your
-          opinions! Send me an email with your feedback to
-          <a class="email" href="mailto:jonas@thinktool.io"><span>jonas@thinktool.io</span></a>.
-          Also feel free to message me if you need help with anything.
-        </p>
-      </aside>
-    </main>
-  </body>
+    <aside class="disclaimer">
+      <h1>Thank you for trying Thinktool!</h1>
+      <p>
+        I'm working on Thinktool in my free time, and I use it every day.
+        However, it's currently preview-quality software. If you decide to try
+        it out anyway, I would love to hear from you. Send me feedback, bug
+        reports, questions, or anything else at <a class="email"
+          href="mailto:jonas@thinktool.io"><span>jonas@thinktool.io</span></a>.
+        Also feel free to message me if you need help with anything.
+      </p>
+    </aside>
+  </main>
+</body>
+
 </html>

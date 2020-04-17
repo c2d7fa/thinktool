@@ -336,6 +336,7 @@ form {
 
 form .form-table {
   display: table;
+  width: 100%;
 }
 
 form .entry {
@@ -344,6 +345,14 @@ form .entry {
 
 form .entry > * {
   display: table-cell;
+}
+
+form .entry > label {
+  width: 5em;
+}
+
+form .entry > input {
+  width: 100%;
 }
 
 @media (max-width: 480px) {
@@ -420,4 +429,16 @@ form input {
 
 .login input[type="submit"]:active {
   color: #606060;
+}
+
+.login .invalid-username {
+  display: none;
+
+  padding: 1em 0;
+  color: #606060;
+  font-size: 0.9em;
+}
+
+.login input:invalid:not(:placeholder-shown) + .invalid-username {
+  display: inline-block;
 }

@@ -352,41 +352,64 @@ app.get("/state/things/:thing", requireSession, parseThingExists, async (req, re
   }
 });
 
-app.post("/", async (req, res) => {
+app.post("/login", async (req, res) => {
   if (
-    typeof req.body !== "object" ||
-    typeof req.body.user !== "string" ||
-    typeof req.body.password !== "string"
+    !(
+      typeof req.body === "object" &&
+      typeof req.body.user === "string" &&
+      typeof req.body.password === "string"
+    )
   ) {
-    res.status(400).type("text/plain").send("400 Bad Request");
-    return;
+    return res.status(400).type("text/plain").send("400 Bad Request");
   }
 
-  if (req.body.login) {
-    const {user, password} = req.body;
-    const userId = await DB.userId(user, password);
-    if (userId === null) {
-      res.status(401).type("text/plain").send("Invalid username and password combination. Please try again.");
-      return;
-    }
-    const sessionId = await session.create(userId);
-    sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
-  } else if (req.body.signup) {
-    const {user, password} = req.body;
-    const result = await DB.createUser(user, password);
-    if (result.type === "error") {
-      res.status(409).type("text/plain").send(`Unable to create user: The user "${user}" already exists.`);
-    } else {
-      const {userId} = result;
-      const sessionId = await session.create(userId);
-      sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
-    }
-  } else {
-    res.status(400).type("text/plain").send("400 Bad Request");
-  }
+  const {user, password} = req.body;
+
+  const userId = await DB.userId(user.toLowerCase(), password);
+  if (userId === null)
+    return res
+      .status(401)
+      .type("text/plain")
+      .send("Invalid username and password combination. Please try again.");
+
+  const sessionId = await session.create(userId);
+  sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
 });
 
-app.options("/api/account/:account", async (req, res) => {
+app.post("/signup", async (req, res) => {
+  if (
+    !(
+      typeof req.body === "object" &&
+      typeof req.body.user === "string" &&
+      req.body.user.length > 0 &&
+      req.body.user.length <= 32 &&
+      /^[a-z][a-z0-9]*$/.test(req.body.user) &&
+      typeof req.body.password === "string" &&
+      req.body.password.length > 0 &&
+      req.body.password.length <= 256 &&
+      typeof req.body.email === "string" &&
+      req.body.email.length > 0 &&
+      req.body.email.length < 1024
+    )
+  ) {
+    return res.status(400).type("text/plain").send("400 Bad Request");
+  }
+
+  const {user, password, email} = req.body;
+
+  const result = await DB.createUser(user, password, email);
+  if (result.type === "error")
+    return res
+      .status(409)
+      .type("text/plain")
+      .send(`Unable to create user: The user "${user}" already exists. (Or a different error occurred.)`);
+
+  const {userId} = result;
+  const sessionId = await session.create(userId);
+  sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
+});
+
+app.options("/api/account/everything/:account", async (req, res) => {
   res
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
@@ -394,7 +417,7 @@ app.options("/api/account/:account", async (req, res) => {
     .send();
 });
 
-app.delete("/api/account/:account", requireSession, async (req, res) => {
+app.delete("/api/account/everything/:account", requireSession, async (req, res) => {
   if (req.params.account !== req.user!.name) {
     console.warn(`${req.user!.name} tried to delete ${req.params.account}'s account`);
     res
@@ -416,6 +439,38 @@ app.delete("/api/account/:account", requireSession, async (req, res) => {
   session.invalidateUser(req.user!);
 
   await DB.deleteAllUserData(req.user!);
+});
+
+app.options("/api/account/email", async (req, res) => {
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .header("Access-Control-Allow-Methods", "GET, PUT, OPTIONS")
+    .send();
+});
+
+app.get("/api/account/email", requireSession, async (req, res) => {
+  res
+    .status(200)
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send((await DB.getEmail(req.user!)) ?? "");
+});
+
+app.put("/api/account/email", requireSession, async (req, res) => {
+  if (typeof req.body !== "string") {
+    res.status(400).send();
+  }
+
+  if (req.body !== "") {
+    await DB.setEmail(req.user!, req.body);
+  }
+
+  res
+    .status(200)
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send();
 });
 
 // Error handling
