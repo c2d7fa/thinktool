@@ -1182,7 +1182,6 @@ function Subtree(p: {
       {openedLinksChildren}
       {children}
       {p.children}
-      {!p.omitReferences && <BackreferencesItem key="backreferences" parent={p.parent} context={p.context} />}
       {!p.omitReferences && (
         <OtherParentsItem
           key="other-parents"
@@ -1191,6 +1190,7 @@ function Subtree(p: {
           context={p.context}
         />
       )}
+      {!p.omitReferences && <BackreferencesItem key="backreferences" parent={p.parent} context={p.context} />}
     </ul>
   );
 }
