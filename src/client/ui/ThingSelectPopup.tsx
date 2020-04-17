@@ -9,7 +9,12 @@ function search(state: D.State, text: string, maxResults: number): [string, stri
     .map((thing) => [D.contentText(state, thing), thing]);
 }
 
-export default function ThingSelectPopup(props: {state: D.State; hide(): void; submit(thing: string): void}) {
+export default function ThingSelectPopup(props: {
+  state: D.State;
+  hide(): void;
+  submit(thing: string): void;
+  seedText?: string;
+}) {
   const [text, setText_] = React.useState("");
   const [results, setResults] = React.useState<[string, string][]>([]);
   const [maxResults, setMaxResults] = React.useState<number>(50);
@@ -32,6 +37,10 @@ export default function ThingSelectPopup(props: {state: D.State; hide(): void; s
       setResults(search(props.state, text, maxResults));
     }
   }
+
+  React.useEffect(() => {
+    if (props.seedText !== undefined) setText(props.seedText);
+  }, []);
 
   function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
     if (ev.key === "Enter") {
@@ -56,8 +65,7 @@ export default function ThingSelectPopup(props: {state: D.State; hide(): void; s
     return (
       <li
         onPointerDown={props.submit}
-        className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}
-      >
+        className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}>
         <span className="link-autocomplete-popup-result-content">
           {props.result[0]} <span className="link-autocomplete-popup-id">{props.result[1]}</span>
         </span>

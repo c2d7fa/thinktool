@@ -217,6 +217,8 @@ export function ContentEditor(props: {
     }
   }
 
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
   const linkPopup = (() => {
     if (!showLinkPopup) return null;
 
@@ -224,6 +226,14 @@ export function ContentEditor(props: {
       <ThingSelectPopup
         state={props.things}
         hide={() => props.hideLinkPopup()}
+        seedText={
+          textareaRef.current && textareaRef.current.selectionStart !== textareaRef.current.selectionEnd
+            ? textareaRef.current.value.substring(
+                textareaRef.current.selectionStart,
+                textareaRef.current.selectionEnd,
+              )
+            : undefined
+        }
         submit={(link: string) => {
           props.setForceEditor(false);
 
@@ -250,8 +260,6 @@ export function ContentEditor(props: {
       />
     );
   })();
-
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   // Automatically resize textarea to fit content.
   React.useEffect(() => {
