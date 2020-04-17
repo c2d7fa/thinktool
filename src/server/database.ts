@@ -48,6 +48,7 @@ export async function userName(userId: UserId): Promise<string | null> {
 export async function createUser(
   user: string,
   password: string,
+  email: string,
 ): Promise<{type: "success"; userId: UserId} | {type: "error"}> {
   const hashedPassword = await bcrypt.hash(password, 6);
 
@@ -55,12 +56,13 @@ export async function createUser(
 
   try {
     const row = (
-      await client.query(`INSERT INTO users (name, password) VALUES ($1, $2) RETURNING name`, [
+      await client.query(`INSERT INTO users (name, password, email) VALUES ($1, $2, $3) RETURNING name`, [
         user,
         hashedPassword,
+        email,
       ])
     ).rows[0];
-    return row.name;
+    return {type: "success", userId: row.name};
   } catch (e) {
     return {type: "error"};
   } finally {

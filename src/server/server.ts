@@ -352,38 +352,60 @@ app.get("/state/things/:thing", requireSession, parseThingExists, async (req, re
   }
 });
 
-app.post("/", async (req, res) => {
+app.post("/login", async (req, res) => {
   if (
-    typeof req.body !== "object" ||
-    typeof req.body.user !== "string" ||
-    typeof req.body.password !== "string"
+    !(
+      typeof req.body === "object" &&
+      typeof req.body.user === "string" &&
+      typeof req.body.password === "string"
+    )
   ) {
-    res.status(400).type("text/plain").send("400 Bad Request");
-    return;
+    return res.status(400).type("text/plain").send("400 Bad Request");
   }
 
-  if (req.body.login) {
-    const {user, password} = req.body;
-    const userId = await DB.userId(user, password);
-    if (userId === null) {
-      res.status(401).type("text/plain").send("Invalid username and password combination. Please try again.");
-      return;
-    }
-    const sessionId = await session.create(userId);
-    sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
-  } else if (req.body.signup) {
-    const {user, password} = req.body;
-    const result = await DB.createUser(user, password);
-    if (result.type === "error") {
-      res.status(409).type("text/plain").send(`Unable to create user: The user "${user}" already exists.`);
-    } else {
-      const {userId} = result;
-      const sessionId = await session.create(userId);
-      sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
-    }
-  } else {
-    res.status(400).type("text/plain").send("400 Bad Request");
+  const {user, password} = req.body;
+
+  const userId = await DB.userId(user, password);
+  if (userId === null)
+    return res
+      .status(401)
+      .type("text/plain")
+      .send("Invalid username and password combination. Please try again.");
+
+  const sessionId = await session.create(userId);
+  sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
+});
+
+app.post("/signup", async (req, res) => {
+  if (
+    !(
+      typeof req.body === "object" &&
+      typeof req.body.user === "string" &&
+      req.body.user.length > 0 &&
+      req.body.user.length <= 32 &&
+      typeof req.body.password === "string" &&
+      req.body.password.length > 0 &&
+      req.body.password.length <= 256 &&
+      typeof req.body.email === "string" &&
+      req.body.email.length > 0 &&
+      req.body.email.length < 1024
+    )
+  ) {
+    return res.status(400).type("text/plain").send("400 Bad Request");
   }
+
+  const {user, password, email} = req.body;
+
+  const result = await DB.createUser(user, password, email);
+  if (result.type === "error")
+    return res
+      .status(409)
+      .type("text/plain")
+      .send(`Unable to create user: The user "${user}" already exists. (Or a different error occurred.)`);
+
+  const {userId} = result;
+  const sessionId = await session.create(userId);
+  sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
 });
 
 app.options("/api/account/everything/:account", async (req, res) => {
