@@ -210,6 +210,11 @@ export function toggle(state: D.State, tree: Tree, node: NodeRef): Tree {
     if (children(tree, node).length === 0) {
       result = refreshChildren(state, result, node);
     }
+
+    // This is only necessary because when there are 2 parents or fewer, we show
+    // them as children, rather than nesting them inside their own item.
+    result = refreshOtherParentsChildren(state, result, node);
+
     return result;
   }
 }
@@ -582,10 +587,13 @@ const refreshBackreferencesChildren = (state: D.State, tree: Tree, node: NodeRef
   // If a backreference contains just a link and nothing else, automatically
   // show its children.
   for (const backreferenceNode of backreferencesChildren(result, node)) {
-    console.log("one child");
     if (/^#[a-z0-9]+$/.test(D.content(state, thing(result, backreferenceNode)))) {
       result = expand(state, result, backreferenceNode);
     }
+
+    // We also need to update its other parents, in case they should be
+    // displayed inline.
+    result = refreshOtherParentsChildren(state, result, backreferenceNode);
   }
 
   return result;

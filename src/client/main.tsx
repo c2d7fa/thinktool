@@ -811,6 +811,7 @@ export function ExpandableItem(p: {
   className?: string;
   hideTagged?: boolean;
   hideTag?: boolean;
+  otherParentText?: string;
 }) {
   function toggle() {
     p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
@@ -846,6 +847,7 @@ export function ExpandableItem(p: {
             p.context.setSelectedThing(T.thing(p.context.tree, p.node));
           }}
         />
+        {p.otherParentText !== undefined && <span className="other-parents-text">{p.otherParentText}</span>}
         {tag !== null && !p.hideTag && <ConnectionTag context={p.context} tag={tag} />}
         <Content context={p.context} node={p.node} />
       </span>
@@ -1098,6 +1100,26 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
 
   if (otherParents.length === 0) {
     return null;
+  }
+
+  if (otherParents.length <= 2) {
+    let newTree = p.context.tree;
+    const otherParentNodes = T.otherParentsChildren(newTree, p.parent);
+    return (
+      <>
+        {otherParentNodes.map((otherParentNode) => {
+          return (
+            <ExpandableItem
+              key={JSON.stringify(otherParentNode)}
+              otherParentText={p.grandparent ? "other parent" : "parent"}
+              context={p.context}
+              node={otherParentNode}
+              parent={p.parent}
+            />
+          );
+        })}
+      </>
+    );
   }
 
   return (
