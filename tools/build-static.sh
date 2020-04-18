@@ -15,39 +15,21 @@ cp -r src/static/*.html dist/static/
 
 echo "Building HTML templates..."
 npm ci
-node <<EOF
+
+node <<"EOF"
 const h = require("handlebars")
 const fs = require("fs")
 
-const template = fs.readFileSync("src/markup/login.handlebars", "utf8")
-const html = h.compile(template)({apiUrl: process.env.DIAFORM_API_HOST})
+const options = {apiUrl: process.env.DIAFORM_API_HOST}
 
-fs.writeFileSync("dist/static/login.html", html)
-EOF
-node <<EOF
-const h = require("handlebars")
-const fs = require("fs")
+for (const file of fs.readdirSync("src/markup")) {
+  const template = fs.readFileSync(`src/markup/${file}`, "utf8")
+  const html = h.compile(template)(options)
 
-const template = fs.readFileSync("src/markup/landing.handlebars", "utf8")
-const html = h.compile(template)({apiUrl: process.env.DIAFORM_API_HOST})
+  const name = file.replace(/\..*$/, "")
+  const outPath = name === "landing" ? `dist/static/index.html` : `dist/static/${name}.html`
 
-fs.writeFileSync("dist/static/index.html", html)
-EOF
-node <<EOF
-const h = require("handlebars")
-const fs = require("fs")
-
-const template = fs.readFileSync("src/markup/forgot-password.handlebars", "utf8")
-const html = h.compile(template)({apiUrl: process.env.DIAFORM_API_HOST})
-
-fs.writeFileSync("dist/static/forgot-password.html", html)
-EOF
-node <<EOF
-const h = require("handlebars")
-const fs = require("fs")
-
-const template = fs.readFileSync("src/markup/recover-account.handlebars", "utf8")
-const html = h.compile(template)({apiUrl: process.env.DIAFORM_API_HOST})
-
-fs.writeFileSync("dist/static/recover-account.html", html)
+  console.log(`  Writing ${outPath}`)
+  fs.writeFileSync(outPath, html)
+}
 EOF
