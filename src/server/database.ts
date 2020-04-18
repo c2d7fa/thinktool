@@ -1,21 +1,12 @@
-import * as pg from "pg";
 import * as bcrypt from "bcrypt";
-
-export type UserId = {name: string};
 
 // We require the consumer of this module to call initialize() before doing
 // anything else.
-let pool: pg.Pool = undefined as never;
 
-export async function initialize(
-  host: string,
-  username: string,
-  password: string,
-  port: number,
-): Promise<void> {
-  console.log("Database: Connecting to database at %s:%s as user %s", host, port, username);
-  pool = new pg.Pool({host, user: username, password, database: "postgres", port});
-}
+export {UserId, initialize} from "./database/core";
+export * as Session from "./database/session";
+
+import {UserId, pool} from "./database/core";
 
 export interface Users {
   nextId: number;

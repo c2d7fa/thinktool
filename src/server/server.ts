@@ -55,46 +55,6 @@ const changes = (() => {
 
 // #endregion
 
-const session = (() => {
-  interface SessionData {
-    userId: DB.UserId;
-    lastPolled: Date | null;
-  }
-
-  const sessions: {[id: string]: SessionData} = {};
-
-  async function create(userId: DB.UserId): Promise<string> {
-    return new Promise((resolve, reject) => {
-      crypto.randomBytes(24, (err, buffer) => {
-        if (err) reject(err);
-        const id = buffer.toString("base64");
-        sessions[id] = {userId, lastPolled: null};
-        resolve(id);
-      });
-    });
-  }
-
-  function invalidateUser(userId: DB.UserId): void {
-    for (const sessionId in sessions) {
-      if (user(sessionId)?.name === userId.name) {
-        delete sessions[sessionId];
-      }
-    }
-  }
-
-  function user(sessionId: string): DB.UserId | null {
-    if (sessions[sessionId] === undefined) return null;
-    return sessions[sessionId].userId;
-  }
-
-  function validId(sessionId: string | null): boolean {
-    if (typeof sessionId !== "string") return false;
-    return user(sessionId) !== null;
-  }
-
-  return {create, user, validId, invalidateUser};
-})();
-
 function getCookie(cookies: string | undefined, key: string): string | null {
   // TODO: This seems like a really horrible way of doing this.
   if (cookies === undefined) return null;
@@ -133,9 +93,9 @@ app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
 // Authentication
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   const sessionId = getCookie(req.get("Cookie"), "DiaformSession");
-  const userId = sessionId === null ? null : session.user(sessionId);
+  const userId = sessionId === null ? null : await DB.Session.authenticate(sessionId);
   req.user = userId ?? undefined;
   req.session = sessionId ?? undefined;
   req.hasSession = userId !== null;
@@ -373,7 +333,7 @@ app.post("/login", async (req, res) => {
       .type("text/plain")
       .send("Invalid username and password combination. Please try again.");
 
-  const sessionId = await session.create(userId);
+  const sessionId = await DB.Session.create(userId);
   sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
 });
 
@@ -406,7 +366,7 @@ app.post("/signup", async (req, res) => {
       .send(`Unable to create user: The user "${user}" already exists. (Or a different error occurred.)`);
 
   const {userId} = result;
-  const sessionId = await session.create(userId);
+  const sessionId = await DB.Session.create(userId);
   sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
 });
 
@@ -437,7 +397,7 @@ app.delete("/api/account/everything/:account", requireSession, async (req, res) 
     .header("Access-Control-Allow-Credentials", "true")
     .send();
 
-  session.invalidateUser(req.user!);
+  DB.Session.invalidateUser(req.user!);
 
   await DB.deleteAllUserData(req.user!);
 });
