@@ -473,6 +473,30 @@ app.put("/api/account/email", requireSession, async (req, res) => {
     .send();
 });
 
+app.options("/api/account/password", async (req, res) => {
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .header("Access-Control-Allow-Methods", "PUT, OPTIONS")
+    .send();
+});
+
+app.put("/api/account/password", requireSession, async (req, res) => {
+  if (typeof req.body !== "string") {
+    res.status(400).send();
+  }
+
+  if (req.body !== "") {
+    await DB.setPassword(req.user!, req.body);
+  }
+
+  res
+    .status(200)
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send();
+});
+
 // Error handling
 app.use((req, res, next) => {
   if (!res.headersSent) res.type("text/plain").status(404).send("404 Not Found");

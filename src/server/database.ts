@@ -70,6 +70,13 @@ export async function createUser(
   }
 }
 
+export async function setPassword(userId: UserId, password: string): Promise<void> {
+  const hashedPassword = await bcrypt.hash(password, 6);
+  const client = await pool.connect();
+  await client.query(`UPDATE users SET password = $2 WHERE name = $1`, [userId.name, hashedPassword]);
+  client.release();
+}
+
 export async function getFullState(
   userId: UserId,
 ): Promise<{

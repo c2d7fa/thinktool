@@ -107,3 +107,7 @@ export async function getEmail(): Promise<string> {
 export async function setEmail(email: string): Promise<void> {
   await api(`api/account/email`, {method: "PUT", body: email});
 }
+
+export async function setPassword(password: string): Promise<void> {
+  await api(`api/account/password`, {method: "PUT", body: password});
+}

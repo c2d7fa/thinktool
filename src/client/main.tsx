@@ -1199,6 +1199,7 @@ function Subtree(p: {
 
 function UserPage(props: {username: string}) {
   const [emailField, setEmailField] = React.useState<string>("(Loading...)");
+  const [passwordField, setPasswordField] = React.useState<string>("");
 
   React.useEffect(() => {
     Server.getEmail().then((email) => setEmailField(email));
@@ -1210,14 +1211,26 @@ function UserPage(props: {username: string}) {
         You are <strong>{props.username}</strong>.
       </div>
       <hr />
-      <input value={emailField} onChange={(ev) => setEmailField(ev.target.value)} />
-      <button
-        onClick={async () => {
-          await Server.setEmail(emailField);
-          window.location.reload();
-        }}>
-        Change email
-      </button>
+      <div>
+        <input value={emailField} onChange={(ev) => setEmailField(ev.target.value)} />
+        <button
+          onClick={async () => {
+            await Server.setEmail(emailField);
+            window.location.reload();
+          }}>
+          Change email
+        </button>
+      </div>
+      <div>
+        <input value={passwordField} onChange={(ev) => setPasswordField(ev.target.value)} type="password" />
+        <button
+          onClick={async () => {
+            await Server.setPassword(passwordField);
+            window.location.reload();
+          }}>
+          Change password
+        </button>
+      </div>
       <hr />
       <button
         onClick={async () => {
