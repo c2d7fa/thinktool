@@ -4,6 +4,7 @@ import expressWs from "express-ws";
 import * as util from "util";
 
 import * as DB from "./database";
+import * as Mail from "./mail";
 import * as Communication from "../shared/communication";
 
 const staticUrl = process.env.DIAFORM_STATIC_HOST;
@@ -514,11 +515,11 @@ app.post("/forgot-password", async (req, res) => {
     await DB.registerResetKey({user: req.body.user, key});
 
     // [TODO] Send email
-    const email = {
+    await Mail.send({
       to: req.body.email,
+      subject: "Reset your password",
       message: `You requested to be sent this email because you forgot your password.\nTo recover your account, go to this URL: ${staticUrl}/recover-account.html\n\Use this secret Reset Key: ${key}\n\nThe key will expire in 2 hours.`,
-    };
-    console.log(email);
+    });
   } else {
     console.warn(
       "Someone tried to recover account with invalid user/email pair: %o, %o",
