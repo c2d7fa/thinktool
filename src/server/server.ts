@@ -487,7 +487,7 @@ app.put("/api/account/password", requireSession, async (req, res) => {
   }
 
   if (req.body !== "") {
-    await DB.setPassword(req.user!, req.body);
+    await DB.setPassword(req.user!.name, req.body);
   }
 
   res
@@ -495,6 +495,77 @@ app.put("/api/account/password", requireSession, async (req, res) => {
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
     .send();
+});
+
+app.post("/forgot-password", async (req, res) => {
+  if (
+    !(typeof req.body === "object" && typeof req.body.user === "string" && typeof req.body.email === "string")
+  ) {
+    return res.status(400).type("text/plain").send("400 Bad Request");
+  }
+
+  if (await DB.knownUserEmailPair({user: req.body.user, email: req.body.email})) {
+    const key = await new Promise<string>((resolve, reject) => {
+      crypto.randomBytes(32, (err, buffer) => {
+        if (err) reject(err);
+        resolve(buffer.toString("base64"));
+      });
+    });
+    await DB.registerResetKey({user: req.body.user, key});
+
+    // [TODO] Send email
+    const email = {
+      to: req.body.email,
+      message: `You requested to be sent this email because you forgot your password.\nTo recover your account, go to this URL: ${staticUrl}/recover-account.html\n\Use this secret Reset Key: ${key}\n\nThe key will expire in 2 hours.`,
+    };
+    console.log(email);
+  } else {
+    console.warn(
+      "Someone tried to recover account with invalid user/email pair: %o, %o",
+      req.body.user,
+      req.body.email,
+    );
+  }
+
+  res
+    .status(200)
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send(
+      "If a user with that username and email exists, we have sent them an email with instructions on how to recover their account. Remember to check your spam folder!",
+    );
+});
+
+app.post("/recover-account", async (req, res) => {
+  if (
+    !(
+      typeof req.body === "object" &&
+      typeof req.body.user === "string" &&
+      typeof req.body.key === "string" &&
+      typeof req.body.password === "string" &&
+      req.body.password.length > 0 &&
+      req.body.password.length <= 256
+    )
+  ) {
+    return res.status(400).type("text/plain").send("400 Bad Request");
+  }
+
+  if (await DB.isValidResetKey(req.body.user, req.body.key)) {
+    await DB.setPassword(req.body.user, req.body.password);
+    return res
+      .status(200)
+      .header("Access-Control-Allow-Origin", staticUrl)
+      .header("Access-Control-Allow-Credentials", "true")
+      .send(`Successfully reset your password. Try logging in with the new password.`);
+  } else {
+    return res
+      .status(401)
+      .header("Access-Control-Allow-Origin", staticUrl)
+      .header("Access-Control-Allow-Credentials", "true")
+      .send(
+        `Your Reset Key is invalid. If you need support, see ${staticUrl}/index.html for contact information.`,
+      );
+  }
 });
 
 // Error handling

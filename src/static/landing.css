@@ -348,7 +348,7 @@ form .entry > * {
 }
 
 form .entry > label {
-  width: 5em;
+  width: 8em;
 }
 
 form .entry > input {
@@ -439,6 +439,18 @@ form input {
   font-size: 0.9em;
 }
 
+.login input::placeholder {
+  color: #a0a0a0;
+}
+
 .login input:invalid:not(:placeholder-shown) + .invalid-username {
+  display: inline-block;
+}
+
+.login .forgot-password {
+  color: #c0c0c0;
+  font-size: 0.9em;
+  text-align: right;
+  margin-top: 1rem;
   display: inline-block;
 }
