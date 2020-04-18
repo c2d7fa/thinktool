@@ -33,3 +33,21 @@ const html = h.compile(template)({apiUrl: process.env.DIAFORM_API_HOST})
 
 fs.writeFileSync("dist/static/index.html", html)
 EOF
+node <<EOF
+const h = require("handlebars")
+const fs = require("fs")
+
+const template = fs.readFileSync("src/markup/forgot-password.handlebars", "utf8")
+const html = h.compile(template)({apiUrl: process.env.DIAFORM_API_HOST})
+
+fs.writeFileSync("dist/static/forgot-password.html", html)
+EOF
+node <<EOF
+const h = require("handlebars")
+const fs = require("fs")
+
+const template = fs.readFileSync("src/markup/recover-account.handlebars", "utf8")
+const html = h.compile(template)({apiUrl: process.env.DIAFORM_API_HOST})
+
+fs.writeFileSync("dist/static/recover-account.html", html)
+EOF

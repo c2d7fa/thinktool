@@ -6,10 +6,12 @@
     "@types/express-ws": "latest",
     "@types/express": "latest",
     "@types/node": "latest",
+    "@types/nodemailer": "latest",
     "@types/pg": "latest",
     "bcrypt": "latest",
     "express-ws": "latest",
     "express": "latest",
+    "nodemailer": "latest",
     "parcel-bundler": "latest",
     "pg": "latest",
     "typescript": "latest"

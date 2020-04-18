@@ -70,11 +70,45 @@ export async function createUser(
   }
 }
 
-export async function setPassword(userId: UserId, password: string): Promise<void> {
+export async function setPassword(user: string, password: string): Promise<void> {
   const hashedPassword = await bcrypt.hash(password, 6);
   const client = await pool.connect();
-  await client.query(`UPDATE users SET password = $2 WHERE name = $1`, [userId.name, hashedPassword]);
+  await client.query(`UPDATE users SET password = $2 WHERE name = $1`, [user, hashedPassword]);
   client.release();
+}
+
+export async function knownUserEmailPair({user, email}: {user: string; email: string}): Promise<boolean> {
+  const client = await pool.connect();
+  const result = await client.query(`SELECT name, email FROM users WHERE name = $1 AND email = $2`, [
+    user,
+    email,
+  ]);
+  client.release();
+  if (result.rowCount === 1) {
+    // Should always be true, but just to be safe...
+    return result.rows[0].name === user && result.rows[0].email === email;
+  } else {
+    return false;
+  }
+}
+
+export async function registerResetKey({user, key}: {user: string; key: string}): Promise<void> {
+  const client = await pool.connect();
+  await client.query(
+    `INSERT INTO reset_keys ("user", key, expire) VALUES ($1, $2, NOW() + INTERVAL '2 hours')`,
+    [user, key],
+  );
+  client.release();
+}
+
+export async function isValidResetKey(user: string, key: string): Promise<boolean> {
+  const client = await pool.connect();
+  const result = await client.query(
+    `SELECT "user", key FROM reset_keys WHERE "user" = $1 AND key = $2 AND expire > NOW()`,
+    [user, key],
+  );
+  client.release();
+  return result.rowCount === 1;
 }
 
 export async function getFullState(
