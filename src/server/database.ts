@@ -53,7 +53,7 @@ export async function createUser(
         email,
       ])
     ).rows[0];
-    return {type: "success", userId: row.name};
+    return {type: "success", userId: {name: row.name}};
   } catch (e) {
     return {type: "error"};
   } finally {
