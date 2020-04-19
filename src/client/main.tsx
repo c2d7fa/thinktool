@@ -547,11 +547,26 @@ function ToolbarGroup(props: {children: React.ReactNode; title?: string}) {
 function Toolbar(props: {context: Context}) {
   const [showTagPopup, setShowTagPopup] = React.useState(false);
 
-  const focused = T.focused(props.context.tree);
+  // The actions in the toolbar use the currently focused item to figure out how
+  // they should act. Unfortunately, this item is onfocused when the content box
+  // is blurred. To work around this issue, we just remember the last focused
+  // item, and then we always apply the actions to this item.
+  //
+  // Of course, this also means that clicking the buttons in the toolbar with
+  // *no* item selected has an effect, which is probably not what we want.
+  //
+  // We would prefer it if the toolbar was only active when an item was actually
+  // selected.
+
+  const [target, setTarget] = React.useState<T.NodeRef | null>(null);
+
+  React.useEffect(() => {
+    if (T.focused(props.context.tree) !== null) setTarget(T.focused(props.context.tree));
+  }, [T.focused(props.context.tree)]);
 
   function actions() {
-    if (focused === null) throw "invalid state"; // [TODO] Make it so that user can't click buttons here
-    return actionsWith(props.context, focused);
+    if (target === null) throw "invalid state";
+    return actionsWith(props.context, target);
   }
 
   return (
@@ -646,29 +661,29 @@ function Toolbar(props: {context: Context}) {
           hide={() => setShowTagPopup(false)}
           state={props.context.state}
           create={(content: string) => {
-            if (focused === null) return;
+            if (target === null) return;
             const [state2, thing] = Data.create(props.context.state);
             const state3 = Data.setContent(state2, thing, content);
-            const [state4, tree2] = T.setTag(state3, props.context.tree, focused, thing);
+            const [state4, tree2] = T.setTag(state3, props.context.tree, target, thing);
             props.context.setState(state4);
             props.context.setTree(tree2);
           }}
           submit={(tag: string) => {
-            if (focused === null) return;
-            const [newState, newTree] = T.setTag(props.context.state, props.context.tree, focused, tag);
+            if (target === null) return;
+            const [newState, newTree] = T.setTag(props.context.state, props.context.tree, target, tag);
             props.context.setState(newState);
             props.context.setTree(newTree);
           }}
         />
       )}
-      {focused !== null && (
+      {target !== null && (
         <GeneralPopup
           active={props.context.activePopup === "link" ? null : props.context.activePopup}
           hide={() => {
             props.context.setActivePopup(null);
           }}
           context={props.context}
-          node={focused}
+          node={target}
         />
       )}
     </div>

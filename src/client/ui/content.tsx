@@ -323,11 +323,7 @@ export function ContentEditor(props: {
         onFocus={(ev) => props.context.setTree(T.focus(props.context.tree, props.node))}
         onBlur={() => {
           if (T.hasFocus(props.context.tree, props.node)) {
-            // [TODO] We should unfocus this node here, but doing so would
-            // cause the toolbar to stop functioning, because this would be
-            // called when the user pressed a button on the toolbar, before the
-            // action could be executed.
-            // props.context.setTree(T.unfocus(props.context.tree));
+            props.context.setTree(T.unfocus(props.context.tree));
           }
         }}
         onKeyDown={onKeyDown}
