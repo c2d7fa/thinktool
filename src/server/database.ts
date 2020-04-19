@@ -229,6 +229,8 @@ export async function getThingData(
 
   client.release();
 
+  if (result.rowCount === 0) return null;
+
   let children = [];
   for (const row of result.rows) {
     if (row.connection_name !== null) {

@@ -190,8 +190,13 @@ async function parseThingExists(req: express.Request, res: express.Response, nex
     next("router");
   }
   if ((await DB.getThingData(req.user!, thing)) === null) {
-    res.type("text/plain").status(404).send("404 Not Found");
-    return;
+    res
+      .type("text/plain")
+      .status(404)
+      .header("Access-Control-Allow-Origin", staticUrl)
+      .header("Access-Control-Allow-Credentials", "true")
+      .send("404 Not Found");
+    return next("router");
   }
   res.locals.thing = thing;
   next();
@@ -274,6 +279,15 @@ app.post("/state/things", requireSession, requireClientId, async (req, res) => {
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
     .end();
+});
+
+app.options("/state/things/:thing", async (req, res) => {
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .header("Access-Control-Allow-Methods", "GET, PUT, DELETE, OPTIONS")
+    .header("Access-Control-Allow-Headers", "Thinktool-Client-Id, Content-Type")
+    .send();
 });
 
 app.delete("/state/things/:thing", requireSession, parseThingExists, requireClientId, async (req, res) => {
