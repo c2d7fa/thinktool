@@ -7,6 +7,7 @@ import * as Data from "./data";
 import * as T from "./tree";
 import * as Tb from "./table";
 import * as Server from "./server-api";
+import * as G from "../shared/general";
 
 import * as C from "./ui/content";
 import Search from "./ui/Search";
@@ -34,8 +35,6 @@ export interface Context {
   setState(value: State): void;
   setLocalState(value: State): void;
   updateLocalState(f: (value: State) => State): void;
-
-  setContent(thing: string, content: string): void;
 
   undo(): void;
 
@@ -117,17 +116,26 @@ function useBatched(cooldown: number): {update(key: string, callback: () => void
 function diffState(
   oldState: State,
   newState: State,
-): {added: string[]; deleted: string[]; changed: string[]} {
+): {added: string[]; deleted: string[]; changed: string[]; changedContent: string[]} {
   const added: string[] = [];
   const deleted: string[] = [];
   const changed: string[] = [];
+  const changedContent: string[] = [];
 
   for (const thing in oldState.things) {
     if (oldState.things[thing] !== newState.things[thing]) {
       if (newState.things[thing] === undefined) {
         deleted.push(thing);
       } else if (JSON.stringify(oldState.things[thing]) !== JSON.stringify(newState.things[thing])) {
-        changed.push(thing);
+        if (
+          // [TODO] Can we get better typechecking here?
+          JSON.stringify(G.removeKey(oldState.things[thing] as any, "content")) ===
+          JSON.stringify(G.removeKey(newState.things[thing] as any, "content"))
+        ) {
+          changedContent.push(thing);
+        } else {
+          changed.push(thing);
+        }
       }
     } else {
       for (const connection of oldState.things[thing].children) {
@@ -144,24 +152,13 @@ function diffState(
     }
   }
 
-  return {added, deleted, changed};
+  return {added, deleted, changed, changedContent};
 }
 
 function useContext(initialState: State, args?: {local: boolean}): Context {
   const [state, setLocalState] = React.useState(initialState);
 
   const batched = useBatched(200);
-
-  function setContent(thing: string, content: string): void {
-    setLocalState(Data.setContent(state, thing, content));
-    if (!args?.local) {
-      batched.update(`${thing}/content`, () => {
-        Server.setContent(thing, content);
-      });
-    }
-  }
-
-  // TODO: setState and undo should override timeouts from setContent.
 
   function setState(newState: State): void {
     if (newState !== state) {
@@ -173,19 +170,26 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
         for (const thing of diff.deleted) {
           Server.deleteThing(thing);
         }
-        Server.updateThings(
-          [...diff.added, ...diff.changed].map((thing) => ({
-            name: thing,
-            content: Data.content(newState, thing),
-            children: Data.childConnections(newState, thing).map((c) => {
-              return {
-                name: c.connectionId,
-                child: Data.connectionChild(newState, c),
-                tag: Data.tag(newState, c) ?? undefined,
-              };
-            }),
-          })),
-        );
+        for (const thing of diff.changedContent) {
+          batched.update(thing, () => {
+            Server.setContent(thing, Data.content(newState, thing));
+          });
+        }
+        if (diff.added.length !== 0 || diff.changed.length !== 0) {
+          Server.updateThings(
+            [...diff.added, ...diff.changed].map((thing) => ({
+              name: thing,
+              content: Data.content(newState, thing),
+              children: Data.childConnections(newState, thing).map((c) => {
+                return {
+                  name: c.connectionId,
+                  child: Data.connectionChild(newState, c),
+                  tag: Data.tag(newState, c) ?? undefined,
+                };
+              }),
+            })),
+          );
+        }
       }
     }
   }
@@ -257,7 +261,6 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
     state,
     setState,
     setLocalState,
-    setContent,
     undo: undo_,
     updateLocalState: (update) => {
       // [TODO] I'm almost certain that this is not how things are supposed to
