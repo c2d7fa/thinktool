@@ -6,7 +6,7 @@ import * as bcrypt from "bcrypt";
 export {UserId, initialize} from "./database/core";
 export * as Session from "./database/session";
 
-import {UserId, pool} from "./database/core";
+import {UserId, pool, connect} from "./database/core";
 
 export interface Users {
   nextId: number;
@@ -266,4 +266,10 @@ export async function setEmail(userId: UserId, email: string): Promise<void> {
   const client = await pool.connect();
   await client.query(`UPDATE users SET email = $2 WHERE name = $1`, [userId.name, email]);
   return client.release();
+}
+
+export async function subscribeToNewsletter(email: string): Promise<void> {
+  const client = await pool.connect();
+  await client.query(`INSERT INTO newsletter_subscriptions (email, registered) VALUES ($1, NOW())`, [email]);
+  client.release();
 }

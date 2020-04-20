@@ -543,6 +543,29 @@ app.post("/recover-account", async (req, res) => {
   }
 });
 
+app.options("/newsletter/subscribe", async (req, res) => {
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .header("Access-Control-Allow-Methods", "POST, OPTIONS")
+    .send();
+});
+
+app.post("/newsletter/subscribe", async (req, res) => {
+  console.log(req.body);
+  if (typeof req.body !== "object" || typeof req.body.email !== "string") {
+    return res.status(400).type("text/plain").send("400 Bad Request");
+  }
+
+  await DB.subscribeToNewsletter(req.body.email);
+
+  return res
+    .status(200)
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send(`${req.body.email} is now subscribed to the newsletter.`);
+});
+
 // Error handling
 app.use((req, res, next) => {
   if (!res.headersSent) res.type("text/plain").status(404).send("404 Not Found");
