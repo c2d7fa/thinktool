@@ -70,8 +70,8 @@
             and get a look behind the scenes at Thinktool by subscribing to the
             newsletter. You can unsubscribe at any time.</p>
         </div>
-        <form action="{{apiUrl}}/newsletter" method="POST">
-          <input type="email" required placeholder="you@example.com" />
+        <form action="{{apiUrl}}/newsletter/subscribe" method="POST">
+          <input type="email" name="email" required placeholder="you@example.com" />
           <input type="submit" value="Subcribe" />
         </form>
       </div>

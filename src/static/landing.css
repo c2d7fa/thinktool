@@ -329,8 +329,8 @@ p {
 
 .newsletter input {
   background-color: #00000008;
-  border: 1px solid #00000008;
-  color: #000000c0;
+  border: none;
+  color: #000000a0;
 
   flex-shrink: 1;
   width: auto;
@@ -344,6 +344,8 @@ p {
   text-transform: uppercase;
   padding-top: 0.525em;
   padding-bottom: 0.525em;
+
+  border: none;
 
   margin-left: 0.5em;
   flex-shrink: 0;
