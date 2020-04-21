@@ -138,7 +138,7 @@ function RenderedContent(props: {
         }
       }}
       className={`editor-inactive ${props.className}`}>
-      <span>{fragments}</span>
+      {fragments.length === 0 ? <span className="placeholder-empty">(Empty)</span> : <span>{fragments}</span>}
     </div>
   );
 }

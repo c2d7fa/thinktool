@@ -129,6 +129,10 @@ ul.outline-root-tree {
   color: #b0b0b0;
 }
 
+.placeholder-empty {
+  color: #c8c8c8;
+}
+
 .item-line .bullet {
   flex-shrink: 0;
 }
