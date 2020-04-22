@@ -639,14 +639,16 @@ function Toolbar(props: {context: Context}) {
           Link
         </button>
       </ToolbarGroup>
-      <ToolbarGroup>
+      <ToolbarGroup title="Connection type">
         <button
           onClick={() => setShowTagPopup(true)}
-          title="Set the connection tag to an existing item. [alt+t]">
-          Tag
+          title="Set the connection type. (Use table mode on an item whose children's children have connection types set.) [alt+t]">
+          Set
         </button>
-        <button onClick={() => actions().untag()} title="Remove the current connection tag. [alt+shift+t]">
-          Untag
+        <button
+          onClick={() => actions().untag()}
+          title="Revert to the default connection type. [alt+shift+t]">
+          Unset
         </button>
       </ToolbarGroup>
       <ToolbarGroup>
