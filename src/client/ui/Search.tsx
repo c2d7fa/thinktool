@@ -14,7 +14,7 @@ export default function Search(props: {context: Context}) {
   return (
     <>
       <button className="search" onClick={() => setShowPopup(true)}>
-        Go to item
+        Find
       </button>
       {showPopup && (
         <ThingSelectPopup

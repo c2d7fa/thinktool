@@ -434,6 +434,9 @@ function App({
   return (
     <>
       <div className="top-bar">
+        <a className="logo" href="/">
+          Thinktool
+        </a>
         <Search context={context} />
         <ToggleButton
           leftLabel="Outline"
@@ -460,6 +463,16 @@ function App({
 }
 
 function actionsWith(context: Context, node: T.NodeRef) {
+  // Q: Why do we set T.focus(context.tree, node) in some of these?
+  //
+  // A: This is a hack for the fact that when the user clicks a button in the
+  // toolbar, the focus is lost. So instead the consumer of this function passes
+  // in a special "target", which is the item that is *supposed* to be focused.
+  //
+  // Some of the functions we call here, e.g. indent(), have special behavior
+  // depending on the currently focused item, so in those cases we need to
+  // actually set the focus.
+
   return {
     createSiblingAfter(): void {
       const [newState, newTree, _, newId] = T.createSiblingAfter(context.state, context.tree, node);
@@ -472,25 +485,25 @@ function actionsWith(context: Context, node: T.NodeRef) {
     },
 
     indent() {
-      const [newState, newTree] = T.indent(context.state, context.tree, node);
+      const [newState, newTree] = T.indent(context.state, T.focus(context.tree, node), node);
       context.setState(newState);
       context.setTree(newTree);
     },
 
     unindent() {
-      const [newState, newTree] = T.unindent(context.state, context.tree, node);
+      const [newState, newTree] = T.unindent(context.state, T.focus(context.tree, node), node);
       context.setState(newState);
       context.setTree(newTree);
     },
 
     moveDown() {
-      const [newState, newTree] = T.moveDown(context.state, context.tree, node);
+      const [newState, newTree] = T.moveDown(context.state, T.focus(context.tree, node), node);
       context.setState(newState);
       context.setTree(newTree);
     },
 
     moveUp() {
-      const [newState, newTree] = T.moveUp(context.state, context.tree, node);
+      const [newState, newTree] = T.moveUp(context.state, T.focus(context.tree, node), node);
       context.setState(newState);
       context.setTree(newTree);
     },
@@ -548,20 +561,29 @@ function Toolbar(props: {context: Context}) {
   const [showTagPopup, setShowTagPopup] = React.useState(false);
 
   // The actions in the toolbar use the currently focused item to figure out how
-  // they should act. Unfortunately, this item is onfocused when the content box
+  // they should act. Unfortunately, this item is unfocused when the content box
   // is blurred. To work around this issue, we just remember the last focused
   // item, and then we always apply the actions to this item.
   //
-  // Of course, this also means that clicking the buttons in the toolbar with
-  // *no* item selected has an effect, which is probably not what we want.
-  //
-  // We would prefer it if the toolbar was only active when an item was actually
-  // selected.
+  // This "target" item should be exactly the focused item, except for the
+  // duration between a button on the toolbar being focused and that button
+  // being activated. We use 'onPointerDown', which is triggered before the
+  // toolbar gains focus and 'onPointerUp', which is triggered after the
+  // button's 'onClick' event.
 
+  const [toolbarActive, setToolbarActive] = React.useState<boolean>(false);
   const [target, setTarget] = React.useState<T.NodeRef | null>(null);
 
   React.useEffect(() => {
-    if (T.focused(props.context.tree) !== null) setTarget(T.focused(props.context.tree));
+    let toolbarActive_ = toolbarActive;
+
+    // Partial workaround for bug where 'toolbarActive' is sometimes wrong.
+    if (T.focused(props.context.tree) !== null) {
+      setToolbarActive(false);
+      toolbarActive_ = false;
+    }
+
+    if (!toolbarActive_) setTarget(T.focused(props.context.tree));
   }, [T.focused(props.context.tree)]);
 
   function actions() {
@@ -569,8 +591,13 @@ function Toolbar(props: {context: Context}) {
     return actionsWith(props.context, target);
   }
 
+  if (target === null) return null;
+
   return (
-    <div className="toolbar">
+    <div
+      className={`toolbar${target === null ? " toolbar-inactive" : ""}`}
+      onPointerDown={() => setToolbarActive(true)}
+      onPointerUp={() => setToolbarActive(false)}>
       <ToolbarGroup>
         <button onClick={() => actions().zoom()} title="Zoom in on selected item [middle-click bullet]">
           Zoom
