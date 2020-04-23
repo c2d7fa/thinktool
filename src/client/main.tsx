@@ -460,6 +460,16 @@ function App({
 }
 
 function actionsWith(context: Context, node: T.NodeRef) {
+  // Q: Why do we set T.focus(context.tree, node) in some of these?
+  //
+  // A: This is a hack for the fact that when the user clicks a button in the
+  // toolbar, the focus is lost. So instead the consumer of this function passes
+  // in a special "target", which is the item that is *supposed* to be focused.
+  //
+  // Some of the functions we call here, e.g. indent(), have special behavior
+  // depending on the currently focused item, so in those cases we need to
+  // actually set the focus.
+
   return {
     createSiblingAfter(): void {
       const [newState, newTree, _, newId] = T.createSiblingAfter(context.state, context.tree, node);
@@ -472,25 +482,25 @@ function actionsWith(context: Context, node: T.NodeRef) {
     },
 
     indent() {
-      const [newState, newTree] = T.indent(context.state, context.tree, node);
+      const [newState, newTree] = T.indent(context.state, T.focus(context.tree, node), node);
       context.setState(newState);
       context.setTree(newTree);
     },
 
     unindent() {
-      const [newState, newTree] = T.unindent(context.state, context.tree, node);
+      const [newState, newTree] = T.unindent(context.state, T.focus(context.tree, node), node);
       context.setState(newState);
       context.setTree(newTree);
     },
 
     moveDown() {
-      const [newState, newTree] = T.moveDown(context.state, context.tree, node);
+      const [newState, newTree] = T.moveDown(context.state, T.focus(context.tree, node), node);
       context.setState(newState);
       context.setTree(newTree);
     },
 
     moveUp() {
-      const [newState, newTree] = T.moveUp(context.state, context.tree, node);
+      const [newState, newTree] = T.moveUp(context.state, T.focus(context.tree, node), node);
       context.setState(newState);
       context.setTree(newTree);
     },
