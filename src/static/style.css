@@ -555,6 +555,10 @@ h1.link-section:first-child {
   overflow-x: auto;
 }
 
+.toolbar-inactive {
+  display: none;
+}
+
 .toolbar-group {
   display: flex;
 }
