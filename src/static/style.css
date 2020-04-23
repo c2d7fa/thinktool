@@ -462,6 +462,28 @@ h1.link-section:first-child {
   color: #a0a0a0;
 }
 
+.logo {
+  font-family: "Montserrat";
+  margin-left: 0.5em;
+  margin-right: 1em;
+  color: #606060;
+  text-transform: uppercase;
+  font-weight: bold;
+  display: inline-block;
+  user-select: none;
+  text-decoration: none;
+}
+
+.logo:hover {
+  color: #202020;
+}
+
+@media (max-width: 480px) {
+  .top-bar .logo {
+    display: none;
+  }
+}
+
 .top-bar button {
   background: none;
   padding: 0;

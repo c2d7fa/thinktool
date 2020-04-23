@@ -434,6 +434,9 @@ function App({
   return (
     <>
       <div className="top-bar">
+        <a className="logo" href="/">
+          Thinktool
+        </a>
         <Search context={context} />
         <ToggleButton
           leftLabel="Outline"
