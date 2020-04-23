@@ -570,8 +570,8 @@ export function removeThing(state: D.State, tree: Tree, node: NodeRef): [D.State
 }
 
 export function clone(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {
-  const [newState, newTree, _] = copyToAbove(state, tree, node, node);
-  const newTree2 = focus(newTree, node);
+  const [newState, newTree, newNode] = copyToAbove(state, tree, node, node);
+  const newTree2 = focus(newTree, newNode);
   return [newState, newTree2];
 }
 
