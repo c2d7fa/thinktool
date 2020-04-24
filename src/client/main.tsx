@@ -598,61 +598,76 @@ function Toolbar(props: {context: Context}) {
       className={`toolbar${target === null ? " toolbar-inactive" : ""}`}
       onPointerDown={() => setToolbarActive(true)}
       onPointerUp={() => setToolbarActive(false)}>
-      <ToolbarGroup>
+      <ToolbarGroup title="Navigate">
         <button onClick={() => actions().zoom()} title="Zoom in on selected item [middle-click bullet]">
-          Zoom
+          <span className="icon gg-maximize-alt"></span>Zoom
         </button>
       </ToolbarGroup>
-      <ToolbarGroup>
+      <ToolbarGroup title="Item">
         <button
           onClick={() => actions().createSiblingAfter()}
           title="Create a new item as a sibling of the currently selected item [enter/ctrl+enter]">
+          <span className="icon gg-add-r"></span>
           New
         </button>
         <button
           onClick={() => actions().createChild()}
           title="Create a new child of the selected item [alt+enter]">
+          <span className="icon gg-arrow-bottom-right-r"></span>
           New Child
         </button>
         <button
           onClick={() => actions().removeFromParent()}
           title="Remove the selected item from its parent. This does not delete the item. [alt+backspace]">
-          Remove
+          <span className="icon gg-remove-r"></span>Remove
         </button>
         <button
           onClick={() => actions().clone()}
           title="Create a copy of the selected item [ctrl+mouse drag]">
+          <span className="icon gg-duplicate"></span>
           Clone
+        </button>
+        <button
+          onClick={() => actions().delete()}
+          title="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents. [alt+delete]">
+          <span className="icon gg-trash"></span>
+          Destroy
         </button>
       </ToolbarGroup>
       <ToolbarGroup title="Move">
         <button onClick={() => actions().unindent()} title="Unindent the selected item [ctrl+alt+left]">
+          <span className="icon gg-push-chevron-left"></span>
           Unindent
         </button>
         <button onClick={() => actions().indent()} title="Indent the selected item [ctrl+alt+right]">
+          <span className="icon gg-push-chevron-right"></span>
           Indent
         </button>
         <button onClick={() => actions().moveUp()} title="Move the selected item up [ctrl+alt+up]">
+          <span className="icon gg-push-chevron-up"></span>
           Up
         </button>
         <button onClick={() => actions().moveDown()} title="Move the selected item down [ctrl+alt+down]">
-          Down
+          <span className="icon gg-push-chevron-down"></span>Down
         </button>
       </ToolbarGroup>
-      <ToolbarGroup title="Insert">
+      <ToolbarGroup title="Connect">
         <button
           onClick={() => props.context.setActivePopup("sibling")}
           title="Insert an existing item as a sibling after the currently selected item. [alt+s]">
+          <span className="icon gg-add"></span>
           Sibling
         </button>
         <button
           onClick={() => props.context.setActivePopup("child")}
           title="Insert an existing item as a child of the currently selected item. [alt+c]">
+          <span className="icon gg-arrow-bottom-right-o"></span>
           Child
         </button>
         <button
           onClick={() => props.context.setActivePopup("parent")}
           title="Insert an existing item as a parent of the currently selected item. [alt+p]">
+          <span className="icon gg-arrow-top-left-o"></span>
           Parent
         </button>
         <button
@@ -662,29 +677,26 @@ function Toolbar(props: {context: Context}) {
             // the same thing?
             () => props.context.setActivePopup("link")
           }
-          title="Insert an existing item as a link at the cursor position. [alt+l]">
+          title="Insert a reference to an existing item at the position of the text. [alt+l]">
+          <span className="icon gg-file-document"></span>
           Link
         </button>
       </ToolbarGroup>
-      <ToolbarGroup title="Connection type">
+      <ToolbarGroup title="Child type">
         <button
           onClick={() => setShowTagPopup(true)}
           title="Set the connection type. (Use table mode on an item whose children's children have connection types set.) [alt+t]">
+          <span className="icon gg-extension-add"></span>
           Set
         </button>
         <button
           onClick={() => actions().untag()}
           title="Revert to the default connection type. [alt+shift+t]">
-          Unset
+          <span className="icon gg-extension-remove"></span>
+          Reset
         </button>
       </ToolbarGroup>
-      <ToolbarGroup>
-        <button
-          onClick={() => actions().delete()}
-          title="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents. [alt+delete]">
-          Destroy
-        </button>
-      </ToolbarGroup>
+      <ToolbarGroup></ToolbarGroup>
       {showTagPopup && (
         <ThingSelectPopup
           hide={() => setShowTagPopup(false)}
