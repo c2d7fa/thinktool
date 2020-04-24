@@ -562,8 +562,8 @@ h1.link-section:first-child {
 }
 
 .toolbar {
-  position: fixed;
-  bottom: 0;
+  position: sticky;
+  top: 0;
   width: 100%;
 
   padding: 0.35em 0;
@@ -577,8 +577,10 @@ h1.link-section:first-child {
   overflow-x: auto;
 }
 
-.toolbar-inactive {
-  display: none;
+@media (max-height: 580px) {
+  .toolbar {
+    position: static;
+  }
 }
 
 .toolbar-group {
@@ -601,7 +603,8 @@ h1.link-section:first-child {
   margin-right: 0.5em;
 }
 
-.gg-maximize-alt {
+.gg-maximize-alt,
+.gg-search {
   margin-left: -0.25em;
   margin-right: 0.75em;
 }
@@ -681,31 +684,33 @@ h1.link-section:first-child {
   text-transform: uppercase;
   font-size: 1em;
 
-  color: #808080;
+  color: #606060;
 
   padding: 0 1ex;
   background-color: transparent;
   border-radius: 3px;
 
-  margin-left: 1ex;
+  margin: 0.25em -0.25em -0.25em 0em;
+  padding: 0.25em 0.5em 0.25em 1em;
 
   transition: color 0.3s ease, background-color 0.3s ease;
 
   display: flex;
   align-items: center;
-
-  margin-top: 0.25em;
 }
 
-.toolbar button:hover {
+.toolbar button:disabled {
+  color: #c0c0c0;
+}
+
+.toolbar button:not(:disabled):hover {
   cursor: pointer;
 
-  color: #606060;
-  background-color: #e0e0e0;
+  background-color: #f0f0f0;
 }
 
-.toolbar button:active {
-  background-color: #c0c0c0;
+.toolbar button:not(:disabled):active {
+  background-color: #e8e8e8;
 }
 
 /* Table view */

@@ -13,7 +13,11 @@ export default function Search(props: {context: Context}) {
 
   return (
     <>
-      <button className="search" onClick={() => setShowPopup(true)}>
+      <button
+        className="search"
+        onClick={() => setShowPopup(true)}
+        title="Find or create an item with the given context.">
+        <span className="icon gg-search"></span>
         Find
       </button>
       {showPopup && (
