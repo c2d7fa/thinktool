@@ -13,7 +13,16 @@ export async function initialize(
   port: number,
 ): Promise<void> {
   console.log("Database: Connecting to database at %s:%s as user %s", host, port, username);
-  pool = new pg.Pool({host, user: username, password, database: "postgres", port});
+  pool = new pg.Pool({
+    host,
+    user: username,
+    password,
+    database: "postgres",
+    port,
+    connectionTimeoutMillis: 2000,
+    idleTimeoutMillis: 10000,
+    max: 10,
+  });
 }
 
 export async function connect<T>(callback: (client: pg.PoolClient) => T): Promise<T> {

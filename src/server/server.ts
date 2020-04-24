@@ -340,14 +340,19 @@ app.post("/login", async (req, res) => {
 
   const {user, password} = req.body;
 
+  console.log("[server] Login: Asking DB to validate user %o, %o", user, password);
+
   const userId = await DB.userId(user.toLowerCase(), password);
+  console.log("[server] Got user ID %o", userId);
   if (userId === null)
     return res
       .status(401)
       .type("text/plain")
       .send("Invalid username and password combination. Please try again.");
 
+  console.log("[server] Creating session ID");
   const sessionId = await DB.Session.create(userId);
+  console.log("[server] Everything OK, sending response");
   sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
 });
 
