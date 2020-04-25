@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as T from "../tree";
+import * as Tutorial from "../tutorial";
 import {Context} from "../context";
 import Search from "./Search";
 import {actionsWith} from "../actions";
@@ -28,9 +29,18 @@ function ToolbarButton(props: {
   icon: string;
   label: string;
   target: T.NodeRef | null;
+  name: Tutorial.FunctionName;
+  context: Context;
 }) {
   return (
     <button
+      className={
+        Tutorial.isRelevant(props.context.tutorialState, props.name)
+          ? "tutorial-relevant"
+          : Tutorial.isNotIntroduced(props.context.tutorialState, props.name)
+          ? "tutorial-not-introduced"
+          : ""
+      }
       onClick={() => {
         if (props.target === null) console.warn("Skipping action from toolbar because of missing target");
         props.action();
@@ -93,6 +103,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="maximize-alt"
           label="Zoom"
           target={target}
+          context={props.context}
+          name="zoom"
         />
       </ToolbarGroup>
       <ToolbarGroup title="Item">
@@ -105,6 +117,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="add-r"
           label="New"
           target={target}
+          context={props.context}
+          name="new"
         />
         <ToolbarButton
           action={() => {
@@ -115,6 +129,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="arrow-bottom-right-r"
           label="New Child"
           target={target}
+          context={props.context}
+          name="new-child"
         />
         <ToolbarButton
           action={() => {
@@ -125,6 +141,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="remove-r"
           label="Remove"
           target={target}
+          context={props.context}
+          name="remove"
         />
         <ToolbarButton
           action={() => {
@@ -135,6 +153,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="duplicate"
           label="Clone"
           target={target}
+          context={props.context}
+          name="clone"
         />
         <ToolbarButton
           action={() => {
@@ -145,6 +165,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="trash"
           label="Destroy"
           target={target}
+          context={props.context}
+          name="destroy"
         />
       </ToolbarGroup>
       <ToolbarGroup title="Move">
@@ -157,6 +179,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="push-chevron-left"
           label="Unindent"
           target={target}
+          context={props.context}
+          name="unindent"
         />
         <ToolbarButton
           action={() => {
@@ -167,6 +191,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="push-chevron-right"
           label="Indent"
           target={target}
+          context={props.context}
+          name="indent"
         />
         <ToolbarButton
           action={() => {
@@ -177,6 +203,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="push-chevron-up"
           label="Up"
           target={target}
+          context={props.context}
+          name="up"
         />
         <ToolbarButton
           action={() => {
@@ -187,6 +215,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="push-chevron-down"
           label="Down"
           target={target}
+          context={props.context}
+          name="down"
         />
       </ToolbarGroup>
       <ToolbarGroup title="Connect">
@@ -199,6 +229,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="add"
           label="Sibling"
           target={target}
+          context={props.context}
+          name="insert-sibling"
         />
         <ToolbarButton
           action={() => {
@@ -209,6 +241,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="arrow-bottom-right-o"
           label="Child"
           target={target}
+          context={props.context}
+          name="insert-child"
         />
         <ToolbarButton
           action={() => {
@@ -219,6 +253,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="arrow-top-left-o"
           label="Parent"
           target={target}
+          context={props.context}
+          name="insert-parent"
         />
         <ToolbarButton
           action={() => {
@@ -229,6 +265,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="file-document"
           label="Link"
           target={target}
+          context={props.context}
+          name="insert-link"
         />
       </ToolbarGroup>
       <ToolbarGroup title="Child type">
@@ -241,6 +279,8 @@ export default function Toolbar(props: {context: Context}) {
           target={target}
           icon="extension-add"
           label="Set"
+          context={props.context}
+          name="set-child-type"
         />
         <ToolbarButton
           action={() => {
@@ -251,6 +291,8 @@ export default function Toolbar(props: {context: Context}) {
           target={target}
           icon="extension-remove"
           label="Reset"
+          context={props.context}
+          name="reset-child-type"
         />
       </ToolbarGroup>
     </div>

@@ -713,6 +713,73 @@ h1.link-section:first-child {
   background-color: #e8e8e8;
 }
 
+/* Tutorial */
+
+.toolbar button:not(:disabled).tutorial-relevant {
+  text-shadow: 0 0 8px hsl(45, 100%, 50%);
+}
+
+.toolbar button.tutorial-not-introduced {
+  color: #d0d0d0;
+}
+
+.toolbar button:disabled.tutorial-not-introduced {
+  color: #e0e0e0;
+}
+
+.tutorial {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+
+  width: 20rem;
+  padding: 1rem;
+  background-color: hsl(45, 100%, 85%);
+  border-radius: 6px;
+}
+
+.tutorial h1 {
+  font-size: 1em;
+  font-family: "Montserrat";
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.tutorial p {
+  margin: 0;
+  margin-top: 1rem;
+}
+
+.tutorial strong {
+  font-size: 0.8em;
+  font-family: "Montserrat";
+  text-transform: uppercase;
+}
+
+.tutorial .fake-button {
+  white-space: nowrap;
+
+  font-family: "Titillium Web";
+  text-transform: uppercase;
+  font-size: 0.8em;
+
+  color: #606060;
+
+  display: inline-flex;
+
+  vertical-align: bottom;
+  margin-right: 0.5em;
+}
+
+.tutorial .fake-button .icon {
+  --ggs: 0.6;
+
+  margin: 0;
+  padding: 0;
+
+  margin-top: 0.15em;
+}
+
 /* Table view */
 
 .children-table table {

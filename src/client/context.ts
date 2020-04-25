@@ -1,6 +1,7 @@
 import {State} from "./data";
 import * as T from "./tree";
 import {Tree} from "./tree";
+import * as Tutorial from "./tutorial";
 
 export interface DragInfo {
   current: T.NodeRef | null;
@@ -13,6 +14,9 @@ export interface Context {
   setState(value: State): void;
   setLocalState(value: State): void;
   updateLocalState(f: (value: State) => State): void;
+
+  tutorialState: Tutorial.State;
+  setTutorialState(tutorialState: Tutorial.State): void;
 
   undo(): void;
 

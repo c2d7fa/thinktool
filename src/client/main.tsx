@@ -6,6 +6,7 @@ import {Context, DragInfo} from "./context";
 import * as Data from "./data";
 import * as T from "./tree";
 import * as Tb from "./table";
+import * as Tutorial from "./tutorial";
 import * as Server from "./server-api";
 import * as G from "../shared/general";
 import {actionsWith} from "./actions";
@@ -235,6 +236,10 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
     end: number;
   } | null>(null);
 
+  // Tutorial:
+  // [TODO] Save on server.
+  const [tutorialState, setTutorialState] = React.useState<Tutorial.State>(Tutorial.initialState);
+
   return {
     state,
     setState,
@@ -268,6 +273,8 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
     setPopupTarget,
     selectionInFocusedContent,
     setSelectionInFocusedContent,
+    tutorialState,
+    setTutorialState,
   };
 }
 
@@ -483,6 +490,7 @@ function App({
       </div>
       <Toolbar context={context} />
       <ThingOverview context={context} />
+      <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />
     </>
   );
 }
