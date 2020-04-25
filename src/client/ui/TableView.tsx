@@ -5,13 +5,12 @@ import * as T from "../tree";
 import * as Tb from "../table";
 
 import * as Main from "../main"; // [TODO] Remove cyclic dependency
+import {Context} from "../context";
 
-export default function TableView(props: {context: Main.Context}) {
+export default function TableView(props: {context: Context}) {
   const columns = Tb.columns(props.context.state, props.context.tree, T.root(props.context.tree));
 
   const rows = T.children(props.context.tree, T.root(props.context.tree)).map((childNode) => {
-    const cell = Tb.cell(props.context.state, props.context.tree, childNode, "Assigned");
-
     const cells = columns.map((column) => {
       const cellNodes = Tb.cell(props.context.state, props.context.tree, childNode, column);
       return (

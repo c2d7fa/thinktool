@@ -1,19 +1,20 @@
 import "regenerator-runtime/runtime"; // Required by Parcel for reasons that I do not understand.
 
 import {State} from "./data";
-import {Tree} from "./tree";
+import {Context, DragInfo} from "./context";
 
 import * as Data from "./data";
 import * as T from "./tree";
 import * as Tb from "./table";
 import * as Server from "./server-api";
 import * as G from "../shared/general";
+import {actionsWith} from "./actions";
 
 import * as C from "./ui/content";
-import Search from "./ui/Search";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
 import TableView from "./ui/TableView";
 import ToggleButton from "./ui/ToggleButton";
+import Toolbar from "./ui/Toolbar";
 
 import * as Demo from "./demo";
 
@@ -23,36 +24,6 @@ import * as ReactDOM from "react-dom";
 import undo from "./undo";
 
 // ==
-
-interface DragInfo {
-  current: T.NodeRef | null;
-  target: T.NodeRef | null;
-  finished: boolean | "copy";
-}
-
-export interface Context {
-  state: State;
-  setState(value: State): void;
-  setLocalState(value: State): void;
-  updateLocalState(f: (value: State) => State): void;
-
-  undo(): void;
-
-  tree: Tree;
-  setTree(value: Tree): void;
-
-  drag: DragInfo;
-  setDrag(value: DragInfo): void;
-
-  selectedThing: string;
-  setSelectedThing(value: string): void;
-
-  viewMode: "outline" | "table";
-  setViewMode(viewMode: "outline" | "table"): void;
-
-  activePopup: null | "child" | "parent" | "sibling" | "link";
-  setActivePopup(activePopup: null | "child" | "parent" | "sibling" | "link"): void;
-}
 
 // == Components ==
 
@@ -255,7 +226,14 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
   const [viewMode, setViewMode] = React.useState<"outline" | "table">("outline");
 
   // Popup:
-  const [activePopup, setActivePopup] = React.useState<null | "child" | "parent" | "sibling" | "link">(null);
+  const [activePopup, setActivePopup] = React.useState<
+    ((state: State, tree: T.Tree, target: T.NodeRef, selection: string) => [State, T.Tree]) | null
+  >(null);
+  const [popupTarget, setPopupTarget] = React.useState<T.NodeRef | null>(null);
+  const [selectionInFocusedContent, setSelectionInFocusedContent] = React.useState<{
+    start: number;
+    end: number;
+  } | null>(null);
 
   return {
     state,
@@ -280,7 +258,16 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
     viewMode,
     setViewMode,
     activePopup,
-    setActivePopup,
+    // Work around problem with setting state to callback:
+    setActivePopup(
+      arg: ((state: State, tree: T.Tree, target: T.NodeRef, selection: string) => [State, T.Tree]) | null,
+    ) {
+      return setActivePopup(() => arg);
+    },
+    popupTarget,
+    setPopupTarget,
+    selectionInFocusedContent,
+    setSelectionInFocusedContent,
   };
 }
 
@@ -433,6 +420,45 @@ function App({
 
   return (
     <>
+      {context.activePopup === null ? null : (
+        <ThingSelectPopup
+          hide={() => context.setActivePopup(null)}
+          state={context.state}
+          create={(content: string) => {
+            const target = context.popupTarget;
+            if (target === null) {
+              console.warn("Aborting popup action because nothing is focused.");
+              return;
+            }
+            const [state2, selection] = Data.create(context.state);
+            const state3 = Data.setContent(state2, selection, content);
+            const [newState, newTree] = context.activePopup!(state3, context.tree, target, selection);
+            context.setState(newState);
+            context.setTree(newTree);
+          }}
+          submit={(selection: string) => {
+            const target = context.popupTarget;
+            if (target === null) {
+              console.warn("Aborting popup action because nothing is focused.");
+              return;
+            }
+            const [newState, newTree] = context.activePopup!(context.state, context.tree, target, selection);
+            context.setState(newState);
+            context.setTree(newTree);
+          }}
+          seedText={(() => {
+            const start = context.selectionInFocusedContent?.start;
+            const end = context.selectionInFocusedContent?.end;
+
+            if (start && end && start - end !== 0 && context.popupTarget) {
+              return Data.content(context.state, T.thing(context.tree, context.popupTarget)).substring(
+                start,
+                end,
+              );
+            }
+          })()}
+        />
+      )}
       <div className="top-bar">
         <a className="logo" href="/">
           Thinktool
@@ -461,299 +487,6 @@ function App({
   );
 }
 
-function actionsWith(context: Context, node: T.NodeRef) {
-  // Q: Why do we set T.focus(context.tree, node) in some of these?
-  //
-  // A: This is a hack for the fact that when the user clicks a button in the
-  // toolbar, the focus is lost. So instead the consumer of this function passes
-  // in a special "target", which is the item that is *supposed* to be focused.
-  //
-  // Some of the functions we call here, e.g. indent(), have special behavior
-  // depending on the currently focused item, so in those cases we need to
-  // actually set the focus.
-
-  return {
-    createSiblingAfter(): void {
-      const [newState, newTree, _, newId] = T.createSiblingAfter(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(T.focus(newTree, newId));
-    },
-
-    zoom(): void {
-      context.setSelectedThing(T.thing(context.tree, node));
-    },
-
-    indent() {
-      const [newState, newTree] = T.indent(context.state, T.focus(context.tree, node), node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
-    unindent() {
-      const [newState, newTree] = T.unindent(context.state, T.focus(context.tree, node), node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
-    moveDown() {
-      const [newState, newTree] = T.moveDown(context.state, T.focus(context.tree, node), node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
-    moveUp() {
-      const [newState, newTree] = T.moveUp(context.state, T.focus(context.tree, node), node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
-    createChild() {
-      const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(T.focus(newTree, newId));
-    },
-
-    removeFromParent() {
-      const [newState, newTree] = T.remove(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
-    delete() {
-      const [newState, newTree] = T.removeThing(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
-    clone() {
-      const [newState, newTree] = T.clone(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
-    untag() {
-      const [newState, newTree] = T.setTag(context.state, context.tree, node, null);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-  };
-}
-
-function ToolbarGroup(props: {children: React.ReactNode; title?: string}) {
-  if (props.title === undefined) {
-    return (
-      <div className="toolbar-group unnamed-toolbar-group">
-        <div>{props.children}</div>
-      </div>
-    );
-  } else {
-    return (
-      <div className="toolbar-group named-toolbar-group">
-        <h6>{props.title}</h6>
-        <div>{props.children}</div>
-      </div>
-    );
-  }
-}
-
-function Toolbar(props: {context: Context}) {
-  const [showTagPopup, setShowTagPopup] = React.useState(false);
-
-  // The actions in the toolbar use the currently focused item to figure out how
-  // they should act. Unfortunately, this item is unfocused when the content box
-  // is blurred. To work around this issue, we just remember the last focused
-  // item, and then we always apply the actions to this item.
-  //
-  // This "target" item should be exactly the focused item, except for the
-  // duration between a button on the toolbar being focused and that button
-  // being activated. We use 'onPointerDown', which is triggered before the
-  // toolbar gains focus and 'onPointerUp', which is triggered after the
-  // button's 'onClick' event.
-
-  const [toolbarActive, setToolbarActive] = React.useState<boolean>(false);
-  const [target, setTarget] = React.useState<T.NodeRef | null>(null);
-
-  React.useEffect(() => {
-    let toolbarActive_ = toolbarActive;
-
-    // Partial workaround for bug where 'toolbarActive' is sometimes wrong.
-    if (T.focused(props.context.tree) !== null) {
-      setToolbarActive(false);
-      toolbarActive_ = false;
-    }
-
-    if (!toolbarActive_) setTarget(T.focused(props.context.tree));
-  }, [T.focused(props.context.tree)]);
-
-  function actions() {
-    if (target === null) throw "invalid state";
-    return actionsWith(props.context, target);
-  }
-
-  return (
-    <div
-      className="toolbar"
-      onPointerDown={() => setToolbarActive(true)}
-      onPointerUp={() => setToolbarActive(false)}>
-      <ToolbarGroup title="Navigate">
-        <Search context={props.context} />
-        <button
-          onClick={() => actions().zoom()}
-          title="Zoom in on selected item [middle-click bullet]"
-          disabled={target === null}>
-          <span className="icon gg-maximize-alt"></span>Zoom
-        </button>
-      </ToolbarGroup>
-      <ToolbarGroup title="Item">
-        <button
-          onClick={() => actions().createSiblingAfter()}
-          title="Create a new item as a sibling of the currently selected item [enter/ctrl+enter]"
-          disabled={target === null}>
-          <span className="icon gg-add-r"></span>
-          New
-        </button>
-        <button
-          onClick={() => actions().createChild()}
-          title="Create a new child of the selected item [alt+enter]"
-          disabled={target === null}>
-          <span className="icon gg-arrow-bottom-right-r"></span>
-          New Child
-        </button>
-        <button
-          onClick={() => actions().removeFromParent()}
-          title="Remove the selected item from its parent. This does not delete the item. [alt+backspace]"
-          disabled={target === null}>
-          <span className="icon gg-remove-r"></span>Remove
-        </button>
-        <button
-          onClick={() => actions().clone()}
-          title="Create a copy of the selected item [ctrl+mouse drag]"
-          disabled={target === null}>
-          <span className="icon gg-duplicate"></span>
-          Clone
-        </button>
-        <button
-          onClick={() => actions().delete()}
-          title="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents. [alt+delete]"
-          disabled={target === null}>
-          <span className="icon gg-trash"></span>
-          Destroy
-        </button>
-      </ToolbarGroup>
-      <ToolbarGroup title="Move">
-        <button
-          onClick={() => actions().unindent()}
-          title="Unindent the selected item [ctrl+alt+left]"
-          disabled={target === null}>
-          <span className="icon gg-push-chevron-left"></span>
-          Unindent
-        </button>
-        <button
-          onClick={() => actions().indent()}
-          title="Indent the selected item [ctrl+alt+right]"
-          disabled={target === null}>
-          <span className="icon gg-push-chevron-right"></span>
-          Indent
-        </button>
-        <button
-          onClick={() => actions().moveUp()}
-          title="Move the selected item up [ctrl+alt+up]"
-          disabled={target === null}>
-          <span className="icon gg-push-chevron-up"></span>
-          Up
-        </button>
-        <button
-          onClick={() => actions().moveDown()}
-          title="Move the selected item down [ctrl+alt+down]"
-          disabled={target === null}>
-          <span className="icon gg-push-chevron-down"></span>Down
-        </button>
-      </ToolbarGroup>
-      <ToolbarGroup title="Connect">
-        <button
-          onClick={() => props.context.setActivePopup("sibling")}
-          title="Insert an existing item as a sibling after the currently selected item. [alt+s]"
-          disabled={target === null}>
-          <span className="icon gg-add"></span>
-          Sibling
-        </button>
-        <button
-          onClick={() => props.context.setActivePopup("child")}
-          title="Insert an existing item as a child of the currently selected item. [alt+c]"
-          disabled={target === null}>
-          <span className="icon gg-arrow-bottom-right-o"></span>
-          Child
-        </button>
-        <button
-          onClick={() => props.context.setActivePopup("parent")}
-          title="Insert an existing item as a parent of the currently selected item. [alt+p]"
-          disabled={target === null}>
-          <span className="icon gg-arrow-top-left-o"></span>
-          Parent
-        </button>
-        <button
-          onPointerUp={
-            // [TODO] Using onPointerUp instead of onClick to work around focus
-            // being lost from popup. Is there are smarter way of accomplishing
-            // the same thing?
-            () => props.context.setActivePopup("link")
-          }
-          title="Insert a reference to an existing item at the position of the text. [alt+l]"
-          disabled={target === null}>
-          <span className="icon gg-file-document"></span>
-          Link
-        </button>
-      </ToolbarGroup>
-      <ToolbarGroup title="Child type">
-        <button
-          onClick={() => setShowTagPopup(true)}
-          title="Set the connection type. (Use table mode on an item whose children's children have connection types set.) [alt+t]"
-          disabled={target === null}>
-          <span className="icon gg-extension-add"></span>
-          Set
-        </button>
-        <button
-          onClick={() => actions().untag()}
-          title="Revert to the default connection type. [alt+shift+t]"
-          disabled={target === null}>
-          <span className="icon gg-extension-remove"></span>
-          Reset
-        </button>
-      </ToolbarGroup>
-      {showTagPopup && (
-        <ThingSelectPopup
-          hide={() => setShowTagPopup(false)}
-          state={props.context.state}
-          create={(content: string) => {
-            if (target === null) return;
-            const [state2, thing] = Data.create(props.context.state);
-            const state3 = Data.setContent(state2, thing, content);
-            const [state4, tree2] = T.setTag(state3, props.context.tree, target, thing);
-            props.context.setState(state4);
-            props.context.setTree(tree2);
-          }}
-          submit={(tag: string) => {
-            if (target === null) return;
-            const [newState, newTree] = T.setTag(props.context.state, props.context.tree, target, tag);
-            props.context.setState(newState);
-            props.context.setTree(newTree);
-          }}
-        />
-      )}
-      {target !== null && (
-        <GeneralPopup
-          active={props.context.activePopup === "link" ? null : props.context.activePopup}
-          hide={() => {
-            props.context.setActivePopup(null);
-          }}
-          context={props.context}
-          node={target}
-        />
-      )}
-    </div>
-  );
-}
-
 function ThingOverview(p: {context: Context}) {
   const hasReferences = Data.backreferences(p.context.state, p.context.selectedThing).length > 0;
 
@@ -761,15 +494,7 @@ function ThingOverview(p: {context: Context}) {
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        <C.Content
-          context={p.context}
-          node={T.root(p.context.tree)}
-          className="selected-content"
-          showLinkPopup={p.context.activePopup === "link"}
-          hideLinkPopup={() => {
-            p.context.setActivePopup(null);
-          }}
-        />
+        <C.Content context={p.context} node={T.root(p.context.tree)} className="selected-content" />
         {p.context.viewMode === "table" ? (
           <TableView context={p.context} />
         ) : (
@@ -955,75 +680,7 @@ function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void
   );
 }
 
-function GeneralPopup(props: {
-  active: null | "child" | "sibling" | "parent";
-  hide: () => void;
-  context: Context;
-  node: T.NodeRef;
-}) {
-  if (props.active === null) return null;
-  return (
-    <ThingSelectPopup
-      hide={props.hide}
-      state={props.context.state}
-      create={(content: string) => {
-        if (!props.active || !["child", "sibling", "parent"].includes(props.active)) return;
-
-        const [state0, newThing] = Data.create(props.context.state);
-        const state1 = Data.setContent(state0, newThing, content);
-
-        if (props.active === "child") {
-          const [newState, newTree] = T.insertChild(state1, props.context.tree, props.node, newThing, 0);
-          props.context.setState(newState);
-          props.context.setTree(newTree);
-        } else if (props.active === "sibling") {
-          const [newState, newTree] = T.insertSiblingAfter(state1, props.context.tree, props.node, newThing);
-          props.context.setState(newState);
-          props.context.setTree(newTree);
-        } else if (props.active === "parent") {
-          const [newState, newTree] = T.insertParent(state1, props.context.tree, props.node, newThing);
-          props.context.setState(newState);
-          props.context.setTree(newTree);
-        }
-      }}
-      submit={(thing: string) => {
-        if (props.active === "child") {
-          const [newState, newTree] = T.insertChild(
-            props.context.state,
-            props.context.tree,
-            props.node,
-            thing,
-            0,
-          );
-          props.context.setState(newState);
-          props.context.setTree(newTree);
-        } else if (props.active === "sibling") {
-          const [newState, newTree] = T.insertSiblingAfter(
-            props.context.state,
-            props.context.tree,
-            props.node,
-            thing,
-          );
-          props.context.setState(newState);
-          props.context.setTree(newTree);
-        } else if (props.active === "parent") {
-          const [newState, newTree] = T.insertParent(
-            props.context.state,
-            props.context.tree,
-            props.node,
-            thing,
-          );
-          props.context.setState(newState);
-          props.context.setTree(newTree);
-        }
-      }}
-    />
-  );
-}
-
 function Content(p: {context: Context; node: T.NodeRef}) {
-  const [showTagPopup, setShowTagPopup] = React.useState(false);
-
   const actions = actionsWith(p.context, p.node);
 
   function onKeyDown(
@@ -1076,68 +733,33 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       actions.delete();
       return true;
     } else if (ev.key === "c" && ev.altKey) {
-      p.context.setActivePopup("child");
+      p.context.setPopupTarget(T.focused(p.context.tree));
+      p.context.setActivePopup((state, tree, target, selection) => {
+        const [newState, newTree] = T.insertChild(state, tree, target, selection, 0);
+        return [newState, newTree];
+      });
       return true;
     } else if (ev.key === "s" && ev.altKey) {
-      p.context.setActivePopup("sibling");
+      actions.showSiblingPopup();
       return true;
     } else if (ev.key === "p" && ev.altKey) {
-      p.context.setActivePopup("parent");
+      actions.showParentPopup();
       return true;
     } else if (ev.key === "l" && ev.altKey) {
-      p.context.setActivePopup("link");
+      actions.showLinkPopup();
       return true;
     } else if (ev.key === "T" && ev.altKey && ev.shiftKey) {
       actions.untag();
       return true;
     } else if (ev.key === "t" && ev.altKey) {
-      setShowTagPopup(true);
+      actions.showTagPopup();
       return true;
     } else {
       return false;
     }
   }
 
-  const tagPopup = (() => {
-    if (showTagPopup) {
-      return (
-        <ThingSelectPopup
-          hide={() => setShowTagPopup(false)}
-          state={p.context.state}
-          create={(content: string) => {
-            if (p.node === null) return;
-            const [state2, thing] = Data.create(p.context.state);
-            const state3 = Data.setContent(state2, thing, content);
-            const [state4, tree2] = T.setTag(state3, p.context.tree, p.node, thing);
-            p.context.setState(state4);
-            p.context.setTree(tree2);
-          }}
-          submit={(tag: string) => {
-            if (p.node === null) return;
-            const [newState, newTree] = T.setTag(p.context.state, p.context.tree, p.node, tag);
-            p.context.setState(newState);
-            p.context.setTree(newTree);
-          }}
-        />
-      );
-    }
-  })();
-
-  return (
-    <>
-      <C.Content
-        context={p.context}
-        node={p.node}
-        className="content"
-        onKeyDown={onKeyDown}
-        showLinkPopup={p.context.activePopup === "link"}
-        hideLinkPopup={() => {
-          p.context.setActivePopup(null);
-        }}
-      />
-      {tagPopup}
-    </>
-  );
+  return <C.Content context={p.context} node={p.node} className="content" onKeyDown={onKeyDown} />;
 }
 
 function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {

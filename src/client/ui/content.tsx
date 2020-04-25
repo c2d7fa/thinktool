@@ -2,15 +2,7 @@ import * as React from "react";
 
 import * as D from "../data";
 import * as T from "../tree";
-
-import ThingSelectPopup from "./ThingSelectPopup";
-
-export interface Context {
-  state: D.State;
-  setState(value: D.State): void;
-  tree: T.Tree;
-  setTree(value: T.Tree): void;
-}
+import {Context} from "../context";
 
 type Annotation = {externalLink: string} | {internalLink: string};
 type Range = {start: number; end: number; annotation?: Annotation};
@@ -97,8 +89,6 @@ function RenderedContent(props: {
   className?: string;
   onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
-  showLinkPopup: boolean;
-  hideLinkPopup(): void;
 }) {
   let fragments: React.ReactNode[] = [];
 
@@ -149,26 +139,8 @@ export function ContentEditor(props: {
   className?: string;
   onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
-  showLinkPopup: boolean;
-  hideLinkPopup(): void;
   setForceEditor(forceEditor: boolean): void;
 }) {
-  const [showLinkPopup, setShowLinkPopup] = React.useState<boolean>(props.showLinkPopup);
-  const preservedSelectionRef = React.useRef<[number, number] | null>(null);
-
-  React.useEffect(() => {
-    if (props.showLinkPopup) {
-      if (textareaRef.current === null) return;
-
-      // Preserve selection so it can be restored when we insert the link.
-      preservedSelectionRef.current = [textareaRef.current.selectionStart, textareaRef.current.selectionEnd];
-      setShowLinkPopup(true);
-      props.setForceEditor(true);
-    } else {
-      setShowLinkPopup(false);
-    }
-  }, [props.showLinkPopup]);
-
   React.useEffect(() => {
     if (T.hasFocus(props.context.tree, props.node)) textareaRef.current?.focus();
   }, [props.context.tree]);
@@ -214,84 +186,6 @@ export function ContentEditor(props: {
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
-  const linkPopup = (() => {
-    if (!showLinkPopup) return null;
-
-    return (
-      <ThingSelectPopup
-        state={props.context.state}
-        hide={() => props.hideLinkPopup()}
-        seedText={
-          textareaRef.current && textareaRef.current.selectionStart !== textareaRef.current.selectionEnd
-            ? textareaRef.current.value.substring(
-                textareaRef.current.selectionStart,
-                textareaRef.current.selectionEnd,
-              )
-            : undefined
-        }
-        create={(content: string) => {
-          props.setForceEditor(false);
-
-          if (textareaRef.current === null) {
-            console.error("Can't get textarea; exiting early.");
-            return;
-          }
-
-          if (preservedSelectionRef.current === null) {
-            console.error("No selection preserved; exiting early.");
-            return;
-          }
-          textareaRef.current.selectionStart = preservedSelectionRef.current[0];
-          textareaRef.current.selectionEnd = preservedSelectionRef.current[1];
-
-          const [state0, thing] = D.create(props.context.state);
-          const state1 = D.setContent(state0, thing, content);
-
-          const text = D.content(state1, T.thing(props.context.tree, props.node));
-          const state2 = D.setContent(
-            state1,
-            T.thing(props.context.tree, props.node),
-            text.substring(0, textareaRef.current.selectionStart) +
-              `#${thing}` +
-              text.substring(textareaRef.current.selectionEnd),
-          );
-
-          props.context.setState(state2);
-
-          textareaRef.current.focus();
-        }}
-        submit={(link: string) => {
-          props.setForceEditor(false);
-
-          if (textareaRef.current === null) {
-            console.error("Can't get textarea; exiting early.");
-            return;
-          }
-
-          if (preservedSelectionRef.current === null) {
-            console.error("No selection preserved; exiting early.");
-            return;
-          }
-          textareaRef.current.selectionStart = preservedSelectionRef.current[0];
-          textareaRef.current.selectionEnd = preservedSelectionRef.current[1];
-
-          const text = D.content(props.context.state, T.thing(props.context.tree, props.node));
-          const state2 = D.setContent(
-            props.context.state,
-            T.thing(props.context.tree, props.node),
-            text.substring(0, textareaRef.current.selectionStart) +
-              `#${link}` +
-              text.substring(textareaRef.current.selectionEnd),
-          );
-
-          props.context.setState(state2);
-
-          textareaRef.current.focus();
-        }}
-      />
-    );
-  })();
-
   const [text, setText_] = React.useState<string>(
     D.content(props.context.state, T.thing(props.context.tree, props.node)),
   );
@@ -326,9 +220,14 @@ export function ContentEditor(props: {
             props.context.setTree(T.unfocus(props.context.tree));
           }
         }}
+        onSelect={(ev) => {
+          const start = textareaRef.current?.selectionStart;
+          const end = textareaRef.current?.selectionEnd;
+          if (start !== undefined && end !== undefined)
+            props.context.setSelectionInFocusedContent({start, end});
+        }}
         onKeyDown={onKeyDown}
       />
-      {linkPopup}
     </div>
   );
 }
@@ -339,8 +238,6 @@ export function Content(props: {
   className?: string;
   onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
-  showLinkPopup: boolean;
-  hideLinkPopup(): void;
 }) {
   const [forceEditor, setForceEditor] = React.useState<boolean>(false);
 

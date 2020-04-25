@@ -46,7 +46,6 @@ export default function ThingSelectPopup(props: {
   function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
     if (ev.key === "Enter") {
       if (selectedIndex === -1) {
-        console.log(props);
         props.create(text);
       } else {
         props.submit(results[selectedIndex][1]);
