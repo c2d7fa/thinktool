@@ -28,7 +28,8 @@ export const initialState = {step: "Getting started"};
 
 const steps: {name: string; introduces: FunctionName[]}[] = [
   {name: "Getting started", introduces: ["new", "new-child", "insert-child"]},
-  {name: "Gardening", introduces: ["remove", "destroy", "indent", "unindent", "up", "down"]},
+  {name: "Reorganizing", introduces: ["remove", "destroy", "indent", "unindent", "up", "down"]},
+  {name: "Flexible hierarchy", introduces: ["insert-sibling", "insert-child", "insert-parent"]},
 ];
 
 export function isRelevant(state: State, name: FunctionName): boolean {
@@ -97,8 +98,10 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
       </h1>
       {props.state.step === "Getting started" ? (
         <StepGettingStarted />
-      ) : props.state.step === "Gardening" ? (
-        <StepGardening />
+      ) : props.state.step === "Reorganizing" ? (
+        <StepReorganizing />
+      ) : props.state.step === "Flexible hierarchy" ? (
+        <StepFlexibleHierarchy />
       ) : (
         <p>An error happened while loading the tutorial!</p>
       )}
@@ -121,7 +124,7 @@ export function StepGettingStarted() {
   return (
     <>
       <p>
-        <i>Welcome to Thinktool! Let's start by learning the basics.</i>
+        <i>Welcome to Thinktool! Let's get you started with the basics.</i>
       </p>
       <p>
         <strong>Create a couple of new items.</strong> You can do this by clicking the buttons in the toolbar.
@@ -136,7 +139,7 @@ export function StepGettingStarted() {
         to create a tree of items.
       </p>
       <p>
-        <i>You can hover over buttons to see what they do and what their keyboard shortcuts are.</i>
+        <i>Most buttons also have keyboard shortcuts. Hover over a button to see its shortcuts.</i>
       </p>
       <p>
         <strong>Organize your items.</strong> In Thinktool, one item can be in multiple places. Use the
@@ -153,19 +156,19 @@ export function StepGettingStarted() {
   );
 }
 
-export function StepGardening() {
+export function StepReorganizing() {
   return (
     <>
       <p>
-        <i>For Thinktool to be really useful, you should make sure to regularly organize your items.</i>
+        <i>For Thinktool to be really useful, you should make sure to regularly go over your items.</i>
       </p>
       <p>
         <strong>Remove an item from its parent</strong> with
         <span className="fake-button">
           <span className="icon gg-remove-r"></span>Remove.
         </span>
-        Note that this does <em>not</em> remove that item from the database, and if it has any other parents,
-        it can still be found there.
+        Note that this does <em>not</em> remove that item from the database, and if it exists in any other
+        places, it can still be found there.
       </p>
       <p>
         <strong>To completely delete an item,</strong> use
@@ -192,6 +195,44 @@ export function StepGardening() {
           <span className="icon gg-push-chevron-right"></span>Indent
         </span>
         to reorganize items among their neighbours.
+      </p>
+    </>
+  );
+}
+
+export function StepFlexibleHierarchy() {
+  return (
+    <>
+      <p>
+        <i>
+          Let's say you're studying philosophy. You may want to add different areas of philosophy like ethics,
+          epistemology and metaphysics as items in Thinktool. Then you can add important philosophers as
+          children of those items, and then add each philosopher's notable ideas as children of that
+          philosopher's item.
+        </i>
+      </p>
+      <p>
+        <i>
+          But what if one philosopher has worked in multiple areas of philosophy? This is precisely why
+          Thinktool let's you assign multiple parents to an item.
+        </i>
+      </p>
+      <p>
+        <strong>Make an existing item a parent</strong> of the currently selected item with
+        <span className="fake-button">
+          <span className="icon gg-arrow-top-left-o"></span>Parent.
+        </span>
+        <i>You can use this to easily add an item (the child) to some category (the parent).</i>
+      </p>
+      <p>
+        <strong>Likewise,</strong> you can add an existing item as a sibling of the selected item with
+        <span className="fake-button">
+          <span className="icon gg-add"></span>Sibling
+        </span>
+        or as a child with
+        <span className="fake-button">
+          <span className="icon gg-arrow-bottom-right-o"></span>Child.
+        </span>
       </p>
     </>
   );
