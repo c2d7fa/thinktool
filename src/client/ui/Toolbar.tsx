@@ -146,18 +146,6 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action={() => {
-            actions().clone();
-          }}
-          description="Create a copy of the selected item"
-          shortcut="ctrl+mouse drag"
-          icon="duplicate"
-          label="Clone"
-          target={target}
-          context={props.context}
-          name="clone"
-        />
-        <ToolbarButton
-          action={() => {
             actions().delete();
           }}
           description="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents."

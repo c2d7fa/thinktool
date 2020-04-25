@@ -567,8 +567,9 @@ h1.link-section:first-child {
   width: 100%;
 
   padding: 0.35em 0;
+  padding-bottom: 0.75em;
   background-color: #f8f8f8;
-  box-shadow: #e0e0e0 0 0 6px;
+  box-shadow: #e0e0e0 0 3px 6px -3px, inset #e8e8e8 0 3px 6px -3px;
 
   display: flex;
 
@@ -609,7 +610,6 @@ h1.link-section:first-child {
   margin-right: 0.75em;
 }
 
-.gg-duplicate,
 .gg-trash {
   margin-right: 1em;
 }
@@ -715,8 +715,12 @@ h1.link-section:first-child {
 
 /* Tutorial */
 
-.toolbar button:not(:disabled).tutorial-relevant {
+.toolbar button.tutorial-relevant {
   text-shadow: 0 0 8px hsl(45, 100%, 50%);
+}
+
+.toolbar button:disabled.tutorial-relevant {
+  text-shadow: 0 0 8px hsla(45, 100%, 50%, 40%);
 }
 
 .toolbar button.tutorial-not-introduced {
@@ -778,6 +782,59 @@ h1.link-section:first-child {
   padding: 0;
 
   margin-top: 0.15em;
+}
+
+.tutorial .fake-button .icon.gg-trash {
+  margin: 0;
+  margin-top: 0.5em;
+  margin-right: 0.1em;
+}
+
+.tutorial .tutorial-navigation {
+  margin-top: 1rem;
+
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tutorial-navigation button {
+  background: none;
+  margin: none;
+  border: none;
+  outline: none;
+
+  background-color: #00000010;
+  color: #000000a0;
+  padding: 0.25em 0.5em;
+  border-radius: 3px;
+
+  font-size: inherit;
+  font-size: 0.9em;
+  text-transform: uppercase;
+
+  color: #000000a0;
+
+  transition: background-color 300ms;
+}
+
+.tutorial-navigation button:not(:disabled):hover {
+  cursor: pointer;
+  background-color: #00000028;
+}
+
+.tutorial-navigation button + button {
+  margin-left: 1em;
+}
+
+.tutorial-navigation button:disabled {
+  background-color: #00000004;
+  color: #00000040;
+}
+
+.tutorial .step {
+  cursor: default;
+  margin-left: 0.5em;
+  color: #00000040;
 }
 
 /* Table view */
