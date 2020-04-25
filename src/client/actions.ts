@@ -38,13 +38,6 @@ export function actionsWith(context: Context, node: T.NodeRef) {
       });
     },
 
-    showTagPopup(): void {
-      context.setPopupTarget(node);
-      context.setActivePopup((state, tree, target, selection) => {
-        return T.setTag(state, tree, target, selection);
-      });
-    },
-
     showLinkPopup(): void {
       const textSelection = context.selectionInFocusedContent;
       if (textSelection === null) throw "Selection wasn't saved; can't insert link.";
@@ -116,12 +109,6 @@ export function actionsWith(context: Context, node: T.NodeRef) {
 
     clone() {
       const [newState, newTree] = T.clone(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
-    untag() {
-      const [newState, newTree] = T.setTag(context.state, context.tree, node, null);
       context.setState(newState);
       context.setTree(newTree);
     },

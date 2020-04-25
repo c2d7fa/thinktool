@@ -231,28 +231,6 @@ export default function Toolbar(props: {context: Context}) {
           target={target}
         />
       </ToolbarGroup>
-      <ToolbarGroup title="Child type">
-        <ToolbarButton
-          action={() => {
-            actions().showTagPopup();
-          }}
-          description="Set the connection type. (Use table mode on an item whose children's children have connection types set.)"
-          shortcut="alt+t"
-          target={target}
-          icon="extension-add"
-          label="Set"
-        />
-        <ToolbarButton
-          action={() => {
-            actions().untag();
-          }}
-          description="Revert to the default connection type. [alt+shift+t]"
-          shortcut="alt+t"
-          target={target}
-          icon="extension-remove"
-          label="Reset"
-        />
-      </ToolbarGroup>
     </div>
   );
 }

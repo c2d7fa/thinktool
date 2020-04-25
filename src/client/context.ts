@@ -25,9 +25,6 @@ export interface Context {
   selectedThing: string;
   setSelectedThing(value: string): void;
 
-  viewMode: "outline" | "table";
-  setViewMode(viewMode: "outline" | "table"): void;
-
   activePopup: ((state: State, tree: Tree, target: T.NodeRef, selection: string) => [State, Tree]) | null;
   setActivePopup(
     callback: ((state: State, tree: Tree, target: T.NodeRef, selection: string) => [State, Tree]) | null,
