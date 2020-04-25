@@ -223,9 +223,6 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
 
   const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
 
-  // View mode:
-  const [viewMode, setViewMode] = React.useState<"outline" | "table">("outline");
-
   // Popup:
   const [activePopup, setActivePopup] = React.useState<
     ((state: State, tree: T.Tree, target: T.NodeRef, selection: string) => [State, T.Tree]) | null
@@ -260,8 +257,6 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
     setTree,
     drag,
     setDrag,
-    viewMode,
-    setViewMode,
     activePopup,
     // Work around problem with setting state to callback:
     setActivePopup(
@@ -470,15 +465,6 @@ function App({
         <a className="logo" href="/">
           Thinktool
         </a>
-        <ToggleButton
-          leftLabel="Outline"
-          rightLabel="Table"
-          chooseLeft={() => context.setViewMode("outline")}
-          chooseRight={() => {
-            context.setTree(Tb.prepareTreeForTableView(context.state, context.tree));
-            context.setViewMode("table");
-          }}
-        />
         <div id="current-user">
           <a className="username" href="/user.html">
             {username}
@@ -503,13 +489,9 @@ function ThingOverview(p: {context: Context}) {
       <ParentsOutline context={p.context} />
       <div className="overview-main">
         <C.Content context={p.context} node={T.root(p.context.tree)} className="selected-content" />
-        {p.context.viewMode === "table" ? (
-          <TableView context={p.context} />
-        ) : (
-          <div className="children">
-            <Outline context={p.context} />
-          </div>
-        )}
+        <div className="children">
+          <Outline context={p.context} />
+        </div>
       </div>
       {hasReferences && (
         <>
@@ -755,12 +737,6 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       return true;
     } else if (ev.key === "l" && ev.altKey) {
       actions.showLinkPopup();
-      return true;
-    } else if (ev.key === "T" && ev.altKey && ev.shiftKey) {
-      actions.untag();
-      return true;
-    } else if (ev.key === "t" && ev.altKey) {
-      actions.showTagPopup();
       return true;
     } else {
       return false;
