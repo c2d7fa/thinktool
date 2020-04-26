@@ -128,7 +128,7 @@ export function StepGettingStarted() {
       </p>
       <p>
         <strong>Create a couple of new items.</strong> You can do this by clicking the buttons in the toolbar.
-        Select an item, and then use
+        Select an existing item, and then use
         <span className="fake-button">
           <span className="icon gg-add-r"></span>New
         </span>
@@ -160,7 +160,7 @@ export function StepReorganizing() {
   return (
     <>
       <p>
-        <i>For Thinktool to be really useful, you should make sure to regularly go over your items.</i>
+        <i>For Thinktool to be really useful, try to keep your database clean and organized.</i>
       </p>
       <p>
         <strong>Remove an item from its parent</strong> with
@@ -171,7 +171,7 @@ export function StepReorganizing() {
         places, it can still be found there.
       </p>
       <p>
-        <strong>To completely delete an item,</strong> use
+        <strong>To completely delete an item,</strong> use{" "}
         <span className="fake-button">
           <span className="icon gg-trash"></span>Destroy
         </span>
@@ -204,17 +204,19 @@ export function StepFlexibleHierarchy() {
   return (
     <>
       <p>
+        <i>Let's say you're studying philosophy and want to take notes about what you read.</i>
+      </p>
+      <p>
         <i>
-          Let's say you're studying philosophy. You may want to add different areas of philosophy like ethics,
-          epistemology and metaphysics as items in Thinktool. Then you can add important philosophers as
-          children of those items, and then add each philosopher's notable ideas as children of that
-          philosopher's item.
+          You may want to add different areas of philosophy like ethics, epistemology and metaphysics as items
+          in Thinktool. Then you can add important philosophers under items, then the books they've authored,
+          and then your notes.
         </i>
       </p>
       <p>
         <i>
-          But what if one philosopher has worked in multiple areas of philosophy? This is precisely why
-          Thinktool let's you assign multiple parents to an item.
+          But what if one philosopher has worked in multiple areas of philosophy? This is where Thinktool is
+          better than other outlineres, because Thinktool let's you assign multiple parents to an item.
         </i>
       </p>
       <p>
@@ -222,7 +224,12 @@ export function StepFlexibleHierarchy() {
         <span className="fake-button">
           <span className="icon gg-arrow-top-left-o"></span>Parent.
         </span>
-        <i>You can use this to easily add an item (the child) to some category (the parent).</i>
+      </p>
+      <p>
+        <i>
+          Tip: You can also use parents to categorize items &ndash; in exactly the same way you would use tags
+          in other apps.
+        </i>
       </p>
       <p>
         <strong>Likewise,</strong> you can add an existing item as a sibling of the selected item with
