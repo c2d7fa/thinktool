@@ -790,6 +790,12 @@ h1.link-section:first-child {
   margin-right: 0.1em;
 }
 
+.tutorial .fake-button .icon.gg-file-document {
+  margin: 0;
+  margin-left: 0.3em;
+  margin-top: 0.3em;
+}
+
 .tutorial .tutorial-navigation {
   margin-top: 1rem;
 

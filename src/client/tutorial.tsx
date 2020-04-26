@@ -30,6 +30,7 @@ const steps: {name: string; introduces: FunctionName[]}[] = [
   {name: "Getting started", introduces: ["new", "new-child", "insert-child"]},
   {name: "Reorganizing", introduces: ["remove", "destroy", "indent", "unindent", "up", "down"]},
   {name: "Flexible hierarchy", introduces: ["insert-sibling", "insert-child", "insert-parent"]},
+  {name: "Bidirectional linking", introduces: ["insert-link"]},
 ];
 
 export function isRelevant(state: State, name: FunctionName): boolean {
@@ -102,6 +103,8 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
         <StepReorganizing />
       ) : props.state.step === "Flexible hierarchy" ? (
         <StepFlexibleHierarchy />
+      ) : props.state.step === "Bidirectional linking" ? (
+        <StepBidirectionalLinks />
       ) : (
         <p>An error happened while loading the tutorial!</p>
       )}
@@ -240,6 +243,32 @@ export function StepFlexibleHierarchy() {
         <span className="fake-button">
           <span className="icon gg-arrow-bottom-right-o"></span>Child.
         </span>
+      </p>
+    </>
+  );
+}
+
+export function StepBidirectionalLinks() {
+  return (
+    <>
+      <p>
+        <i>
+          Sometimes it doesn't really make sense to organize items into trees. Links let you describe loose
+          relationships between your items.
+        </i>
+      </p>
+      <p>
+        <strong>Try adding a link</strong> by first placing your cursor inside an item, and then pressing the
+        <span className="fake-button">
+          <span className="icon gg-file-document"></span>Link
+        </span>
+        button. Type the name of an existing item or create a new item.
+      </p>
+      <p>After creating a link, deselect the item. Now you can click the link to show the linked item.</p>
+      <p>
+        Notice how thinktool automatically shows you all the places where a given item is linked, called its{" "}
+        <em>references</em>. Links in Thinktool are <em>bidirectional</em>, because you can follow them in
+        both directions.
       </p>
     </>
   );
