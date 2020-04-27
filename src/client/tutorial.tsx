@@ -31,6 +31,8 @@ const steps: {name: string; introduces: FunctionName[]}[] = [
   {name: "Reorganizing", introduces: ["remove", "destroy", "indent", "unindent", "up", "down"]},
   {name: "Flexible hierarchy", introduces: ["insert-sibling", "insert-child", "insert-parent"]},
   {name: "Bidirectional linking", introduces: ["insert-link"]},
+  {name: "Staying focused", introduces: ["find", "zoom"]},
+  {name: "The end", introduces: []},
 ];
 
 export function isRelevant(state: State, name: FunctionName): boolean {
@@ -105,6 +107,10 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
         <StepFlexibleHierarchy />
       ) : props.state.step === "Bidirectional linking" ? (
         <StepBidirectionalLinks />
+      ) : props.state.step === "Staying focused" ? (
+        <StepStayingFocused />
+      ) : props.state.step === "The end" ? (
+        <StepHaveFun />
       ) : (
         <p>An error happened while loading the tutorial!</p>
       )}
@@ -145,7 +151,7 @@ export function StepGettingStarted() {
         <i>Most buttons also have keyboard shortcuts. Hover over a button to see its shortcuts.</i>
       </p>
       <p>
-        <strong>Organize your items.</strong> In Thinktool, one item can be in multiple places. Use the
+        <strong>Structure your items.</strong> In Thinktool, one item can be in multiple places. Use the
         <span className="fake-button">
           <span className="icon gg-arrow-bottom-right-o"></span>Child
         </span>
@@ -269,6 +275,51 @@ export function StepBidirectionalLinks() {
         Notice how thinktool automatically shows you all the places where a given item is linked, called its{" "}
         <em>references</em>. Links in Thinktool are <em>bidirectional</em>, because you can follow them in
         both directions.
+      </p>
+    </>
+  );
+}
+
+export function StepStayingFocused() {
+  return (
+    <>
+      <p>
+        <i>You probably don't want to always see every item in your database.</i>
+      </p>
+      <p>
+        <strong>Navigate to an item</strong> by selecting it, and then pressing
+        <span className="fake-button">
+          <span className="icon gg-maximize-alt"></span>Zoom.
+        </span>
+        Now you can see that item's parents and children, as well as any references to it, in an expanded
+        view.
+      </p>
+      <p>
+        <strong>Find a specific item</strong> using the
+        <span className="fake-button">
+          <span className="icon gg-search"></span>Find
+        </span>
+        button. Here you can search for an item with the given content. Select the item to go straight to it.
+      </p>
+      <p>You can also use this to create a new item that is not connected to any other items.</p>
+    </>
+  );
+}
+
+export function StepHaveFun() {
+  return (
+    <>
+      <p>
+        <i>That's it! I hope you find Thinktool useful.</i>
+      </p>
+      <p>
+        <i>
+          If you need any help, have feedback or want to submit a bug report, you are more than welcome to
+          write me an email at{" "}
+          <a className="email" href="mailto:jonas@thinktool.io">
+            jonas@thinktool.io
+          </a>
+        </i>
       </p>
     </>
   );
