@@ -32,6 +32,7 @@ function ToolbarButton(props: {
   name: Tutorial.FunctionName;
   context: Context;
   alwaysEnabled?: true;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -47,7 +48,7 @@ function ToolbarButton(props: {
         props.action();
       }}
       title={props.description + (props.shortcut === undefined ? "" : ` [${props.shortcut}]`)}
-      disabled={props.target === null && !props.alwaysEnabled}>
+      disabled={(props.target === null && !props.alwaysEnabled) || props.disabled}>
       <span className={`icon gg-${props.icon}`}></span>
       {props.label}
     </button>
@@ -276,6 +277,7 @@ export default function Toolbar(props: {context: Context}) {
           action={() => {
             actions(true).resetTutorial();
           }}
+          disabled={Tutorial.isActive(props.context.tutorialState)}
           description="Go through the tutorial again."
           icon="info"
           label="Tutorial"
