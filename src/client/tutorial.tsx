@@ -199,7 +199,7 @@ export function StepReorganizing() {
         <span className="fake-button">
           <span className="icon gg-remove-r"></span>Remove.
         </span>
-        Note that this does <em>not</em> remove that item from the database, and if it exists in any other
+        Note that this does <em>not</em> remove that item from the database, so if it exists in any other
         places, it can still be found there.
       </p>
       <p>
@@ -241,14 +241,14 @@ export function StepFlexibleHierarchy() {
       <p>
         <i>
           You may want to add different areas of philosophy like ethics, epistemology and metaphysics as items
-          in Thinktool. Then you can add important philosophers under items, then the books they've authored,
-          and then your notes.
+          in Thinktool. Then you can add important philosophers under those items, then the books they've
+          authored, and then your notes.
         </i>
       </p>
       <p>
         <i>
-          But what if one philosopher has worked in multiple areas of philosophy? This is where Thinktool is
-          better than other outlineres, because Thinktool let's you assign multiple parents to an item.
+          But what if one philosopher has worked in multiple areas of philosophy? This is where Thinktool
+          shines, because Thinktool lets you put one item in multiple places at the same time.
         </i>
       </p>
       <p>
@@ -256,11 +256,12 @@ export function StepFlexibleHierarchy() {
         <span className="fake-button">
           <span className="icon gg-arrow-top-left-o"></span>Parent.
         </span>
+        Now you can find that item under both its parents.
       </p>
       <p>
         <i>
-          Tip: You can also use parents to categorize items &ndash; in exactly the same way you would use tags
-          in other apps.
+          Tip: You can also use parents to categorize items, so you can easily find them again &ndash; like
+          tags in other apps.
         </i>
       </p>
       <p>
@@ -322,7 +323,7 @@ export function StepStayingFocused() {
         <span className="fake-button">
           <span className="icon gg-search"></span>Find
         </span>
-        button. Here you can search for an item with the given content. Select the item to go straight to it.
+        button. Here you can search for an item by its content. Select an item to go straight to it.
       </p>
       <p>You can also use this to create a new item that is not connected to any other items.</p>
     </>
@@ -350,6 +351,9 @@ export function StepHaveFun() {
             jonas@thinktool.io
           </a>
         </i>
+      </p>
+      <p>
+        <i>Thanks for trying out Thinktool!</i>
       </p>
     </>
   );
