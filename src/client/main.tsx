@@ -6,6 +6,7 @@ import {Context, DragInfo} from "./context";
 import * as Data from "./data";
 import * as T from "./tree";
 import * as Tb from "./table";
+import * as Tutorial from "./tutorial";
 import * as Server from "./server-api";
 import * as G from "../shared/general";
 import {actionsWith} from "./actions";
@@ -126,7 +127,7 @@ function diffState(
   return {added, deleted, changed, changedContent};
 }
 
-function useContext(initialState: State, args?: {local: boolean}): Context {
+function useContext(initialState: State, initialTutorialFinished: boolean, args?: {local: boolean}): Context {
   const [state, setLocalState] = React.useState(initialState);
 
   const batched = useBatched(200);
@@ -232,6 +233,17 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
     end: number;
   } | null>(null);
 
+  // Tutorial:
+  const [tutorialState, setTutorialState_] = React.useState<Tutorial.State>(
+    Tutorial.initialize(initialTutorialFinished),
+  );
+  function setTutorialState(tutorialState: Tutorial.State): void {
+    setTutorialState_(tutorialState);
+    if (!Tutorial.isActive(tutorialState) && !args?.local) {
+      Server.setTutorialFinished();
+    }
+  }
+
   return {
     state,
     setState,
@@ -263,19 +275,23 @@ function useContext(initialState: State, args?: {local: boolean}): Context {
     setPopupTarget,
     selectionInFocusedContent,
     setSelectionInFocusedContent,
+    tutorialState,
+    setTutorialState,
   };
 }
 
 function App({
   initialState,
+  initialTutorialFinished,
   username,
   args,
 }: {
   initialState: State;
+  initialTutorialFinished: boolean;
   username: string;
   args?: {local: boolean};
 }) {
-  const context = useContext(initialState, args);
+  const context = useContext(initialState, initialTutorialFinished, args);
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
@@ -468,6 +484,7 @@ function App({
         </div>
       </div>
       <Toolbar context={context} />
+      <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />
       <ThingOverview context={context} />
     </>
   );
@@ -940,7 +957,11 @@ function UserPage(props: {username: string}) {
   }
 
   ReactDOM.render(
-    <App initialState={(await Server.getFullState()) as State} username={await Server.getUsername()} />,
+    <App
+      initialState={(await Server.getFullState()) as State}
+      initialTutorialFinished={await Server.getTutorialFinished()}
+      username={await Server.getUsername()}
+    />,
     appElement,
   );
 };
@@ -949,7 +970,12 @@ function UserPage(props: {username: string}) {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
   Server.ping("demo");
   ReactDOM.render(
-    <App initialState={Demo.initialState} username={"demo"} args={{local: true}} />,
+    <App
+      initialState={Demo.initialState}
+      initialTutorialFinished={false}
+      username={"demo"}
+      args={{local: true}}
+    />,
     appElement,
   );
 };
