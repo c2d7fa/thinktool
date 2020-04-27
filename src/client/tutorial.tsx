@@ -23,7 +23,12 @@ export type FunctionName =
   | "reset-child-type"
   | "tutorial";
 
-export const initialState = {step: "Getting started", finished: false};
+const initialState = {step: "Getting started", finished: false};
+
+export function initialize(finished: boolean) {
+  if (!finished) return initialState;
+  return {step: "Getting started", finished: true};
+}
 
 const steps: {name: string; introduces: FunctionName[]}[] = [
   {name: "Getting started", introduces: ["new", "new-child", "insert-child"]},

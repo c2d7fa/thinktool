@@ -111,3 +111,11 @@ export async function setEmail(email: string): Promise<void> {
 export async function setPassword(password: string): Promise<void> {
   await api(`api/account/password`, {method: "PUT", body: password});
 }
+
+export async function getTutorialFinished(): Promise<boolean> {
+  return (await api(`api/account/tutorial-finished`)).json();
+}
+
+export async function setTutorialFinished(): Promise<void> {
+  await api(`api/account/tutorial-finished`, {method: "PUT", body: "true"});
+}

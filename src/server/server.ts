@@ -477,6 +477,32 @@ app.put("/api/account/password", requireSession, async (req, res) => {
     .send();
 });
 
+app.options("/api/account/tutorial-finished", async (req, res) => {
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .header("Access-Control-Allow-Methods", "GET, PUT, OPTIONS")
+    .send();
+});
+
+app.put("/api/account/tutorial-finished", requireSession, async (req, res) => {
+  console.log("finished tutorial for %o!", req.user!.name);
+
+  res
+    .status(200)
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send();
+});
+
+app.get("/api/account/tutorial-finished", requireSession, async (req, res) => {
+  res
+    .status(200)
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send("false");
+});
+
 app.post("/forgot-password", async (req, res) => {
   if (
     !(typeof req.body === "object" && typeof req.body.user === "string" && typeof req.body.email === "string")
