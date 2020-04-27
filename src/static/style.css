@@ -576,6 +576,8 @@ h1.link-section:first-child {
   font-size: 0.8em;
 
   overflow-x: auto;
+
+  z-index: 550;
 }
 
 @media (max-height: 580px) {
@@ -732,6 +734,10 @@ h1.link-section:first-child {
   color: #e0e0e0;
 }
 
+.tutorial ~ .overview {
+  padding-right: 30rem;
+}
+
 .tutorial {
   position: fixed;
   bottom: 2rem;
@@ -741,6 +747,26 @@ h1.link-section:first-child {
   padding: 1rem;
   background-color: hsl(45, 100%, 85%);
   border-radius: 6px;
+
+  max-height: 90vh;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+
+  z-index: 600;
+}
+
+@media (max-width: 1000px) {
+  .tutorial {
+    position: static;
+    width: auto;
+    border-radius: 0;
+
+    z-index: 500;
+  }
+
+  .tutorial ~ .overview {
+    padding-right: 2rem;
+  }
 }
 
 .tutorial h1 {

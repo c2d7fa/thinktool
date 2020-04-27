@@ -117,7 +117,7 @@ export function NextStep(props: {state: State; setState(state: State): void}) {
 export function TutorialBox(props: {state: State; setState(state: State): void}) {
   if (props.state.finished) return null;
 
-  return ReactDOM.createPortal(
+  return (
     <div className="tutorial">
       <h1>
         {props.state.step}.{" "}
@@ -148,8 +148,7 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
         </button>
         <NextStep {...props} />
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 }
 

@@ -484,8 +484,8 @@ function App({
         </div>
       </div>
       <Toolbar context={context} />
-      <ThingOverview context={context} />
       <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />
+      <ThingOverview context={context} />
     </>
   );
 }
