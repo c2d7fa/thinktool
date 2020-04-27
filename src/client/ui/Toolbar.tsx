@@ -274,7 +274,7 @@ export default function Toolbar(props: {context: Context}) {
       <ToolbarGroup title="Help">
         <ToolbarButton
           action={() => {
-            actions().resetTutorial();
+            actions(true).resetTutorial();
           }}
           description="Go through the tutorial again."
           icon="info"
