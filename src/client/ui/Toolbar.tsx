@@ -46,7 +46,7 @@ function ToolbarButton(props: {
         if (props.target === null) console.warn("Skipping action from toolbar because of missing target");
         props.action();
       }}
-      title={props.description + props.shortcut === undefined ? "" : `[${props.shortcut}]`}
+      title={props.description + (props.shortcut === undefined ? "" : ` [${props.shortcut}]`)}
       disabled={props.target === null && !props.alwaysEnabled}>
       <span className={`icon gg-${props.icon}`}></span>
       {props.label}
