@@ -1,9 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import * as G from "../shared/general";
-
-export type State = {step: string};
+export type State = {step: string; finished: boolean};
 
 export type FunctionName =
   | "find"
@@ -24,7 +22,7 @@ export type FunctionName =
   | "set-child-type"
   | "reset-child-type";
 
-export const initialState = {step: "Getting started"};
+export const initialState = {step: "Getting started", finished: false};
 
 const steps: {name: string; introduces: FunctionName[]}[] = [
   {name: "Getting started", introduces: ["new", "new-child", "insert-child"]},
@@ -34,6 +32,10 @@ const steps: {name: string; introduces: FunctionName[]}[] = [
   {name: "Staying focused", introduces: ["find", "zoom"]},
   {name: "The end", introduces: []},
 ];
+
+export function reset(state: State): State {
+  return initialState;
+}
 
 export function isRelevant(state: State, name: FunctionName): boolean {
   let relevant: FunctionName[] = [];
@@ -72,7 +74,7 @@ function nextStep(state: State): State {
     if (step.name === state.step) break;
     index++;
   }
-  return {step: steps[index + 1].name};
+  return {...state, step: steps[index + 1].name};
 }
 
 function hasPreviousStep(state: State): boolean {
@@ -87,10 +89,20 @@ function previousStep(state: State): State {
     if (step.name === state.step) break;
     index++;
   }
-  return {step: steps[index - 1].name};
+  return {...state, step: steps[index - 1].name};
+}
+
+export function NextStep(props: {state: State; setState(state: State): void}) {
+  if (hasNextStep(props.state)) {
+    return <button onClick={() => props.setState(nextStep(props.state))}>Next Step &gt;</button>;
+  } else {
+    return <button onClick={() => props.setState({...props.state, finished: true})}>Close &gt;</button>;
+  }
 }
 
 export function TutorialBox(props: {state: State; setState(state: State): void}) {
+  if (props.state.finished) return null;
+
   return ReactDOM.createPortal(
     <div className="tutorial">
       <h1>
@@ -120,9 +132,7 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
           disabled={!hasPreviousStep(props.state)}>
           &lt; Back
         </button>
-        <button onClick={() => props.setState(nextStep(props.state))} disabled={!hasNextStep(props.state)}>
-          Next Step &gt;
-        </button>
+        <NextStep {...props} />
       </div>
     </div>,
     document.body,
