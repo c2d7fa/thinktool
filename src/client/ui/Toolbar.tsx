@@ -2,7 +2,6 @@ import * as React from "react";
 import * as T from "../tree";
 import * as Tutorial from "../tutorial";
 import {Context} from "../context";
-import Search from "./Search";
 import {actionsWith} from "../actions";
 
 function ToolbarGroup(props: {children: React.ReactNode; title?: string}) {
