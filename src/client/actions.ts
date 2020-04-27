@@ -1,6 +1,7 @@
 import {Context} from "./context";
 import * as T from "./tree";
 import * as D from "./data";
+import * as Tutorial from "./tutorial";
 
 export function actionsWith(context: Context, node: T.NodeRef) {
   // Q: Why do we set T.focus(context.tree, node) in some of these?
@@ -111,6 +112,10 @@ export function actionsWith(context: Context, node: T.NodeRef) {
       const [newState, newTree] = T.clone(context.state, context.tree, node);
       context.setState(newState);
       context.setTree(newTree);
+    },
+
+    resetTutorial() {
+      context.setTutorialState(Tutorial.reset(context.tutorialState));
     },
   };
 }

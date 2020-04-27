@@ -25,12 +25,13 @@ function ToolbarGroup(props: {children: React.ReactNode; title?: string}) {
 function ToolbarButton(props: {
   action: () => void;
   description: string;
-  shortcut: string;
+  shortcut?: string;
   icon: string;
   label: string;
   target: T.NodeRef | null;
   name: Tutorial.FunctionName;
   context: Context;
+  alwaysEnabled?: true;
 }) {
   return (
     <button
@@ -45,8 +46,8 @@ function ToolbarButton(props: {
         if (props.target === null) console.warn("Skipping action from toolbar because of missing target");
         props.action();
       }}
-      title={`${props.description} [${props.shortcut}]`}
-      disabled={props.target === null}>
+      title={props.description + props.shortcut === undefined ? "" : `[${props.shortcut}]`}
+      disabled={props.target === null && !props.alwaysEnabled}>
       <span className={`icon gg-${props.icon}`}></span>
       {props.label}
     </button>
@@ -255,6 +256,20 @@ export default function Toolbar(props: {context: Context}) {
           target={target}
           context={props.context}
           name="insert-link"
+        />
+      </ToolbarGroup>
+      <ToolbarGroup title="Help">
+        <ToolbarButton
+          action={() => {
+            actions().resetTutorial();
+          }}
+          description="Go through the tutorial again."
+          icon="info"
+          label="Tutorial"
+          alwaysEnabled
+          target={target}
+          context={props.context}
+          name="tutorial"
         />
       </ToolbarGroup>
     </div>

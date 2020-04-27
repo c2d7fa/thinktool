@@ -599,7 +599,8 @@ h1.link-section:first-child {
 .gg-arrow-bottom-right-r,
 .gg-add,
 .gg-arrow-top-left-o,
-.gg-arrow-bottom-right-o {
+.gg-arrow-bottom-right-o,
+.gg-info {
   margin-left: -0.5em;
   margin-right: 0.5em;
 }

@@ -20,7 +20,8 @@ export type FunctionName =
   | "insert-parent"
   | "insert-link"
   | "set-child-type"
-  | "reset-child-type";
+  | "reset-child-type"
+  | "tutorial";
 
 export const initialState = {step: "Getting started", finished: false};
 
@@ -30,14 +31,20 @@ const steps: {name: string; introduces: FunctionName[]}[] = [
   {name: "Flexible hierarchy", introduces: ["insert-sibling", "insert-child", "insert-parent"]},
   {name: "Bidirectional linking", introduces: ["insert-link"]},
   {name: "Staying focused", introduces: ["find", "zoom"]},
-  {name: "The end", introduces: []},
+  {name: "The end", introduces: ["tutorial"]},
 ];
+
+export function isActive(state: State): boolean {
+  return !state.finished;
+}
 
 export function reset(state: State): State {
   return initialState;
 }
 
 export function isRelevant(state: State, name: FunctionName): boolean {
+  if (!isActive(state)) return false;
+
   let relevant: FunctionName[] = [];
   for (const step of steps) {
     if (step.name === state.step) relevant = step.introduces;
@@ -46,6 +53,8 @@ export function isRelevant(state: State, name: FunctionName): boolean {
 }
 
 export function isNotIntroduced(state: State, name: FunctionName): boolean {
+  if (!isActive(state)) return false;
+
   let introduced: FunctionName[] = [];
   for (const step of steps) {
     introduced = [...introduced, ...step.introduces];
@@ -323,9 +332,16 @@ export function StepHaveFun() {
         <i>That's it! I hope you find Thinktool useful.</i>
       </p>
       <p>
+        <strong>If you want to do the tutorial again,</strong> just press the
+        <span className="fake-button">
+          <span className="icon gg-info"></span>Tutorial
+        </span>{" "}
+        button.
+      </p>
+      <p>
         <i>
-          If you need any help, have feedback or want to submit a bug report, you are more than welcome to
-          write me an email at{" "}
+          If you need any help, have feedback or want to submit a bug report or feature request, you are more
+          than welcome to send me an email at{" "}
           <a className="email" href="mailto:jonas@thinktool.io">
             jonas@thinktool.io
           </a>
