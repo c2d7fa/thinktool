@@ -81,11 +81,13 @@ export default function Toolbar(props: {context: Context}) {
     if (!toolbarActive_) setTarget(T.focused(props.context.tree));
   }, [T.focused(props.context.tree)]);
 
-  function actions() {
-    if (target === null) {
+  function actions(noTargetRequired?: true) {
+    if (target === null && !noTargetRequired) {
       throw "No target, so cannot handle actions";
     }
-    return actionsWith(props.context, target);
+    // Very ugly hack: target may be null, but we just force it anyway, since it
+    // should only be null, when actions don't actually require a target.
+    return actionsWith(props.context, target!);
   }
 
   return (
@@ -94,7 +96,18 @@ export default function Toolbar(props: {context: Context}) {
       onPointerDown={() => setToolbarActive(true)}
       onPointerUp={() => setToolbarActive(false)}>
       <ToolbarGroup title="Navigate">
-        <Search context={props.context} />
+        <ToolbarButton
+          action={() => {
+            actions(true).showSearchPopup();
+          }}
+          description="Search for a specific item by its content."
+          icon="search"
+          label="Find"
+          alwaysEnabled
+          target={target}
+          context={props.context}
+          name="find"
+        />
         <ToolbarButton
           action={() => {
             actions().zoom();

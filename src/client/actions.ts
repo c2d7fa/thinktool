@@ -56,6 +56,15 @@ export function actionsWith(context: Context, node: T.NodeRef) {
       });
     },
 
+    showSearchPopup(): void {
+      // This is a hack on how setActivePopup is supposed to be used.
+      context.setPopupTarget({id: 0});
+      context.setActivePopup((state, tree, target, selection) => {
+        context.setSelectedThing(selection);
+        return [state, tree];
+      });
+    },
+
     createSiblingAfter(): void {
       const [newState, newTree, _, newId] = T.createSiblingAfter(context.state, context.tree, node);
       context.setState(newState);
