@@ -282,3 +282,22 @@ export async function subscribeToNewsletter(email: string): Promise<void> {
   await client.query(`INSERT INTO newsletter_subscriptions (email, registered) VALUES ($1, NOW())`, [email]);
   client.release();
 }
+
+export async function getTutorialFinished(userId: UserId): Promise<boolean> {
+  const client = await pool.connect();
+  const result = await client.query(`SELECT tutorial_finished FROM users WHERE name = $1`, [userId.name]);
+  client.release();
+
+  if (result.rowCount !== 1) {
+    console.warn("Wrong number of rows: %o", result);
+    return false;
+  }
+
+  return result.rows[0].tutorial_finished;
+}
+
+export async function setTutorialFinished(userId: UserId, finished: boolean): Promise<void> {
+  const client = await pool.connect();
+  await client.query(`UPDATE users SET tutorial_finished = $2 WHERE name = $1`, [userId.name, finished]);
+  client.release();
+}

@@ -486,7 +486,7 @@ app.options("/api/account/tutorial-finished", async (req, res) => {
 });
 
 app.put("/api/account/tutorial-finished", requireSession, async (req, res) => {
-  console.log("finished tutorial for %o!", req.user!.name);
+  await DB.setTutorialFinished(req.user!, true);
 
   res
     .status(200)
@@ -500,7 +500,7 @@ app.get("/api/account/tutorial-finished", requireSession, async (req, res) => {
     .status(200)
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
-    .send("false");
+    .send(await DB.getTutorialFinished(req.user!));
 });
 
 app.post("/forgot-password", async (req, res) => {
