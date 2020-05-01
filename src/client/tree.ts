@@ -651,6 +651,9 @@ export function toggleLink(state: D.State, tree: Tree, node: NodeRef, link: stri
     const [linkNode, result0] = load(state, tree, link);
     let result = I.setOpenedLinkNode(result0, node, link, linkNode);
 
+    // Automatically expand parent item
+    result = expand(state, result, node);
+
     // Automatically expand newly opened link
     result = toggle(state, result, linkNode);
 
