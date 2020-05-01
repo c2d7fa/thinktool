@@ -18,6 +18,13 @@ ul.outline-tree {
   padding-left: 1.6em;
 }
 
+/* Utility classes */
+
+.hide-outline,
+.hide-outline:focus {
+  outline: none;
+}
+
 /* General UI elements */
 
 .toggle-button {

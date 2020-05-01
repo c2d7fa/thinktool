@@ -215,11 +215,6 @@ export function ContentEditor(props: {
         value={text}
         onChange={(ev) => setText(ev.target.value)}
         onFocus={(ev) => props.context.setTree(T.focus(props.context.tree, props.node))}
-        onBlur={() => {
-          if (T.hasFocus(props.context.tree, props.node)) {
-            props.context.setTree(T.unfocus(props.context.tree));
-          }
-        }}
         onSelect={(ev) => {
           const start = textareaRef.current?.selectionStart;
           const end = textareaRef.current?.selectionEnd;

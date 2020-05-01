@@ -27,7 +27,6 @@ function ToolbarButton(props: {
   shortcut?: string;
   icon: string;
   label: string;
-  target: T.NodeRef | null;
   name: Tutorial.FunctionName;
   context: Context;
   alwaysEnabled?: true;
@@ -43,11 +42,10 @@ function ToolbarButton(props: {
           : ""
       }
       onClick={() => {
-        if (props.target === null) console.warn("Skipping action from toolbar because of missing target");
         props.action();
       }}
       title={props.description + (props.shortcut === undefined ? "" : ` [${props.shortcut}]`)}
-      disabled={(props.target === null && !props.alwaysEnabled) || props.disabled}>
+      disabled={(T.focused(props.context.tree) === null && !props.alwaysEnabled) || props.disabled}>
       <span className={`icon gg-${props.icon}`}></span>
       {props.label}
     </button>
@@ -55,46 +53,18 @@ function ToolbarButton(props: {
 }
 
 export default function Toolbar(props: {context: Context}) {
-  // The actions in the toolbar use the currently focused item to figure out how
-  // they should act. Unfortunately, this item is unfocused when the content box
-  // is blurred. To work around this issue, we just remember the last focused
-  // item, and then we always apply the actions to this item.
-  //
-  // This "target" item should be exactly the focused item, except for the
-  // duration between a button on the toolbar being focused and that button
-  // being activated. We use 'onPointerDown', which is triggered before the
-  // toolbar gains focus and 'onPointerUp', which is triggered after the
-  // button's 'onClick' event.
-
-  const [toolbarActive, setToolbarActive] = React.useState<boolean>(false);
-  const [target, setTarget] = React.useState<T.NodeRef | null>(null);
-
-  React.useEffect(() => {
-    let toolbarActive_ = toolbarActive;
-
-    // Partial workaround for bug where 'toolbarActive' is sometimes wrong.
-    if (T.focused(props.context.tree) !== null) {
-      setToolbarActive(false);
-      toolbarActive_ = false;
-    }
-
-    if (!toolbarActive_) setTarget(T.focused(props.context.tree));
-  }, [T.focused(props.context.tree)]);
-
   function actions(noTargetRequired?: true) {
-    if (target === null && !noTargetRequired) {
-      throw "No target, so cannot handle actions";
+    if (T.focused(props.context.tree) === null && !noTargetRequired) {
+      throw "No item focused, so cannot handle actions";
     }
-    // Very ugly hack: target may be null, but we just force it anyway, since it
-    // should only be null, when actions don't actually require a target.
-    return actionsWith(props.context, target!);
+    // Very ugly hack: focused item may be null, but we just force it anyway,
+    // since it should only be null when actions don't actually require a
+    // target.
+    return actionsWith(props.context, T.focused(props.context.tree)!);
   }
 
   return (
-    <div
-      className="toolbar"
-      onPointerDown={() => setToolbarActive(true)}
-      onPointerUp={() => setToolbarActive(false)}>
+    <div className="toolbar">
       <ToolbarGroup title="Navigate">
         <ToolbarButton
           action={() => {
@@ -104,7 +74,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="search"
           label="Find"
           alwaysEnabled
-          target={target}
           context={props.context}
           name="find"
         />
@@ -116,7 +85,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="middle click bullet"
           icon="maximize-alt"
           label="Zoom"
-          target={target}
           context={props.context}
           name="zoom"
         />
@@ -130,7 +98,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="enter/ctrl+enter"
           icon="add-r"
           label="New"
-          target={target}
           context={props.context}
           name="new"
         />
@@ -142,7 +109,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="alt+enter"
           icon="arrow-bottom-right-r"
           label="New Child"
-          target={target}
           context={props.context}
           name="new-child"
         />
@@ -154,7 +120,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="alt+backspace"
           icon="remove-r"
           label="Remove"
-          target={target}
           context={props.context}
           name="remove"
         />
@@ -166,7 +131,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="alt+delete"
           icon="trash"
           label="Destroy"
-          target={target}
           context={props.context}
           name="destroy"
         />
@@ -180,7 +144,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="ctrl+alt+left"
           icon="push-chevron-left"
           label="Unindent"
-          target={target}
           context={props.context}
           name="unindent"
         />
@@ -192,7 +155,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="ctrl+alt+right"
           icon="push-chevron-right"
           label="Indent"
-          target={target}
           context={props.context}
           name="indent"
         />
@@ -204,7 +166,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="ctrl+alt+up"
           icon="push-chevron-up"
           label="Up"
-          target={target}
           context={props.context}
           name="up"
         />
@@ -216,7 +177,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="ctrl+alt+down"
           icon="push-chevron-down"
           label="Down"
-          target={target}
           context={props.context}
           name="down"
         />
@@ -230,7 +190,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="alt+s"
           icon="add"
           label="Sibling"
-          target={target}
           context={props.context}
           name="insert-sibling"
         />
@@ -242,7 +201,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="alt+c"
           icon="arrow-bottom-right-o"
           label="Child"
-          target={target}
           context={props.context}
           name="insert-child"
         />
@@ -254,7 +212,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="alt+p"
           icon="arrow-top-left-o"
           label="Parent"
-          target={target}
           context={props.context}
           name="insert-parent"
         />
@@ -266,7 +223,6 @@ export default function Toolbar(props: {context: Context}) {
           shortcut="alt+l"
           icon="file-document"
           label="Link"
-          target={target}
           context={props.context}
           name="insert-link"
         />
@@ -281,7 +237,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="info"
           label="Tutorial"
           alwaysEnabled
-          target={target}
           context={props.context}
           name="tutorial"
         />

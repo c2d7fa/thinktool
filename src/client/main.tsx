@@ -429,8 +429,18 @@ function App({
     }
   }, [context.drag]);
 
+  const appRef = React.useRef<HTMLDivElement>(null);
+
   return (
-    <>
+    <div
+      ref={appRef}
+      onFocus={(ev) => {
+        if (ev.target === appRef.current) {
+          context.setTree(T.unfocus(context.tree));
+        }
+      }}
+      tabIndex={0}
+      className="hide-outline">
       {context.activePopup === null ? null : (
         <ThingSelectPopup
           hide={() => context.setActivePopup(null)}
@@ -486,7 +496,7 @@ function App({
       <Toolbar context={context} />
       <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />
       <ThingOverview context={context} />
-    </>
+    </div>
   );
 }
 
