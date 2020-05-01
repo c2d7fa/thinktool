@@ -957,12 +957,9 @@ function UserPage(props: {username: string}) {
 (window as any).thinktoolApp = async () => {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
 
-  try {
-    await Server.getUsername();
-  } catch (e) {
-    console.log(
-      "Got weird response from server, probably because we are not logged in. Redirecting to login page.",
-    );
+  const username = await Server.getUsername();
+  if (username === null) {
+    console.log("Not logged in. Redirecting to login page.");
     window.location.href = "/login.html";
   }
 
@@ -970,7 +967,7 @@ function UserPage(props: {username: string}) {
     <App
       initialState={(await Server.getFullState()) as State}
       initialTutorialFinished={await Server.getTutorialFinished()}
-      username={await Server.getUsername()}
+      username={(await Server.getUsername()) ?? "<error!>"}
     />,
     appElement,
   );
@@ -992,5 +989,5 @@ function UserPage(props: {username: string}) {
 
 (window as any).thinktoolUser = async () => {
   const userElement = document.querySelector("#user")! as HTMLDivElement;
-  ReactDOM.render(<UserPage username={await Server.getUsername()} />, userElement);
+  ReactDOM.render(<UserPage username={(await Server.getUsername()) ?? "<error!>"} />, userElement);
 };

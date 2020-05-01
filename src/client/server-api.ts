@@ -38,8 +38,10 @@ export async function getFullState(): Promise<D.State> {
   return state;
 }
 
-export async function getUsername(): Promise<string> {
-  return (await api("username")).json();
+export async function getUsername(): Promise<string | null> {
+  const response = await api("username");
+  if (response.status === 401) return null;
+  return await response.json();
 }
 
 export async function setContent(thing: string, content: string): Promise<void> {

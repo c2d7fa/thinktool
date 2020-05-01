@@ -56,11 +56,10 @@ export async function createUser(
 
   try {
     const row = (
-      await client.query(`INSERT INTO users (name, password, email) VALUES ($1, $2, $3) RETURNING name`, [
-        user,
-        hashedPassword,
-        email,
-      ])
+      await client.query(
+        `INSERT INTO users (name, password, email, registered) VALUES ($1, $2, $3, NOW()) RETURNING name`,
+        [user, hashedPassword, email],
+      )
     ).rows[0];
     return {type: "success", userId: {name: row.name}};
   } catch (e) {
