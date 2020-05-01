@@ -17,7 +17,7 @@ import TableView from "./ui/TableView";
 import ToggleButton from "./ui/ToggleButton";
 import Toolbar from "./ui/Toolbar";
 
-import * as Demo from "./demo";
+import DemoData from "./demo-data.json";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -965,7 +965,7 @@ function UserPage(props: {username: string}) {
 
   ReactDOM.render(
     <App
-      initialState={(await Server.getFullState()) as State}
+      initialState={await Server.getFullState()}
       initialTutorialFinished={await Server.getTutorialFinished()}
       username={(await Server.getUsername()) ?? "<error!>"}
     />,
@@ -978,7 +978,7 @@ function UserPage(props: {username: string}) {
   Server.ping("demo");
   ReactDOM.render(
     <App
-      initialState={Demo.initialState}
+      initialState={Server.transformFullStateResponseIntoState(DemoData)}
       initialTutorialFinished={false}
       username={"demo"}
       args={{local: true}}
