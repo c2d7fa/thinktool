@@ -92,13 +92,14 @@ export default function Toolbar(props: {context: Context}) {
       <ToolbarGroup title="Item">
         <ToolbarButton
           action={() => {
-            actions().createSiblingAfter();
+            actions(true).createSiblingAfter();
           }}
           description="Create a new item as a sibling of the currently selected item"
           shortcut="enter/ctrl+enter"
           icon="add-r"
           label="New"
           context={props.context}
+          alwaysEnabled
           name="new"
         />
         <ToolbarButton

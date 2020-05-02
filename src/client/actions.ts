@@ -4,6 +4,10 @@ import * as D from "./data";
 import * as Tutorial from "./tutorial";
 
 export function actionsWith(context: Context, node: T.NodeRef) {
+  // We sometimes call this function with node = null, even though the signature
+  // claims that this is not allowed. This is a pretty bad hack, and should
+  // definitely be fixed. See <Toolbar>.
+
   // Q: Why do we set T.focus(context.tree, node) in some of these?
   //
   // A: This is a hack for the fact that when the user clicks a button in the
@@ -66,9 +70,19 @@ export function actionsWith(context: Context, node: T.NodeRef) {
     },
 
     createSiblingAfter(): void {
-      const [newState, newTree, _, newId] = T.createSiblingAfter(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(T.focus(newTree, newId));
+      if (node === null) {
+        const [newState, newTree, _, newId] = T.createChild(
+          context.state,
+          context.tree,
+          T.root(context.tree),
+        );
+        context.setState(newState);
+        context.setTree(T.focus(newTree, newId));
+      } else {
+        const [newState, newTree, _, newId] = T.createSiblingAfter(context.state, context.tree, node);
+        context.setState(newState);
+        context.setTree(T.focus(newTree, newId));
+      }
     },
 
     zoom(): void {
