@@ -440,7 +440,7 @@ function App({
         }
       }}
       tabIndex={0}
-      className="hide-outline">
+      className="app">
       {context.activePopup === null ? null : (
         <ThingSelectPopup
           hide={() => context.setActivePopup(null)}

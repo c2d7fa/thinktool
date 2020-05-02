@@ -18,13 +18,6 @@ ul.outline-tree {
   padding-left: 1.6em;
 }
 
-/* Utility classes */
-
-.hide-outline,
-.hide-outline:focus {
-  outline: none;
-}
-
 /* General UI elements */
 
 .toggle-button {
@@ -44,6 +37,12 @@ ul.outline-tree {
 .toggle-button .active-toggle {
   background-color: #e4e4e4;
   color: #787878;
+}
+
+/* Outer container */
+.app {
+  outline: none;
+  min-height: 100vh;
 }
 
 /* Root tree */
@@ -563,10 +562,6 @@ h1.link-section:first-child {
 }
 
 /* TOOLBAR */
-
-#app {
-  margin-bottom: 2em;
-}
 
 .toolbar {
   position: sticky;
