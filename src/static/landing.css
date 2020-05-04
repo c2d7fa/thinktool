@@ -15,6 +15,10 @@ main {
   padding: 4rem 2rem;
 }
 
+.video {
+  margin-top: 2rem;
+}
+
 .video-embed {
   border-radius: 6px;
   position: relative;
