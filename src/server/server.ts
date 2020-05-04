@@ -383,8 +383,12 @@ app.post("/signup", async (req, res) => {
       .status(409)
       .type("text/plain")
       .send(`Unable to create user: The user "${user}" already exists. (Or a different error occurred.)`);
-
   const {userId} = result;
+
+  if (req.body.newsletter !== undefined) {
+    await DB.subscribeToNewsletter(email);
+  }
+
   const sessionId = await DB.Session.create(userId);
   sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
 });

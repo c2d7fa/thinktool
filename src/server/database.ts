@@ -278,7 +278,10 @@ export async function setEmail(userId: UserId, email: string): Promise<void> {
 
 export async function subscribeToNewsletter(email: string): Promise<void> {
   const client = await pool.connect();
-  await client.query(`INSERT INTO newsletter_subscriptions (email, registered) VALUES ($1, NOW())`, [email]);
+  await client.query(
+    `INSERT INTO newsletter_subscriptions (email, registered) VALUES ($1, NOW()) ON CONFLICT (email) DO NOTHING`,
+    [email],
+  );
   client.release();
 }
 

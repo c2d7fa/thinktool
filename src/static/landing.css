@@ -518,6 +518,10 @@ form input {
   color: #606060;
 }
 
+.login .newsletter-signup {
+  margin-bottom: 1.5rem;
+}
+
 .login .invalid-username {
   display: none;
 
