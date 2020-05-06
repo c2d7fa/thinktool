@@ -1,5 +1,5 @@
 {
-  "name": "thinktool",
+  "name": "thinktool-client",
   "private": true,
   "devDependencies": {
     "thinktool-shared": "file:../shared",
@@ -9,5 +9,9 @@
     "react": "latest",
     "react-dom": "latest",
     "typescript": "latest"
-  }
+  },
+  "scripts": {
+    "bundle": "tsc && npx parcel build -d ../../dist/static -o bundle.js -t browser dist/src/client/main.js"
+  },
+  "dependencies": {}
 }

@@ -15,7 +15,7 @@ import * as C from "./ui/content";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 
-import DemoData from "./demo-data.json";
+import * as DemoData from "./demo-data.json";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

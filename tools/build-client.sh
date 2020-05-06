@@ -9,6 +9,5 @@ echo "{\"apiHost\": \"$DIAFORM_API_HOST\"}" > conf/client.json
 echo "Building client..."
 cd src/client
 npm ci
-npx parcel build main.tsx -d ../../dist/static -o bundle.js
-echo "Built 'dist/static/bundle.js' from 'src/client'."
+npm run bundle
 cd ../..
