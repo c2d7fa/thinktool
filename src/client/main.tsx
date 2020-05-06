@@ -5,7 +5,6 @@ import {Context, DragInfo} from "./context";
 
 import * as Data from "./data";
 import * as T from "./tree";
-import * as Tb from "./table";
 import * as Tutorial from "./tutorial";
 import * as Server from "./server-api";
 import * as G from "../shared/general";
@@ -13,8 +12,6 @@ import {actionsWith} from "./actions";
 
 import * as C from "./ui/content";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
-import TableView from "./ui/TableView";
-import ToggleButton from "./ui/ToggleButton";
 import Toolbar from "./ui/Toolbar";
 
 import DemoData from "./demo-data.json";
