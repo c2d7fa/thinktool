@@ -2,6 +2,7 @@
   "name": "thinktool",
   "private": true,
   "devDependencies": {
+    "thinktool-shared": "file:../shared",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "parcel-bundler": "latest",

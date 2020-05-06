@@ -1,5 +1,5 @@
-/dist/
 /conf/
-/.envrc
-node_modules/
 .cache/
+.envrc
+dist/
+node_modules/

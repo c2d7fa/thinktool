@@ -1,4 +1,4 @@
-import * as G from "../shared/general";
+import {General as G} from "thinktool-shared";
 
 export interface State {
   things: {[id: string]: ThingData};

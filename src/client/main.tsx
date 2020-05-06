@@ -1,5 +1,7 @@
 import "regenerator-runtime/runtime"; // Required by Parcel for reasons that I do not understand.
 
+import {General as G} from "thinktool-shared";
+
 import {State} from "./data";
 import {Context, DragInfo} from "./context";
 
@@ -7,7 +9,6 @@ import * as Data from "./data";
 import * as T from "./tree";
 import * as Tutorial from "./tutorial";
 import * as Server from "./server-api";
-import * as G from "../shared/general";
 import {actionsWith} from "./actions";
 
 import * as C from "./ui/content";

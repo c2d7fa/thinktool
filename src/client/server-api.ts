@@ -1,5 +1,5 @@
 import * as D from "./data";
-import * as Communication from "../shared/communication";
+import {Communication} from "thinktool-shared";
 
 import * as Configuration from "../../conf/client.json";
 

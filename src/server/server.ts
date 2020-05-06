@@ -5,7 +5,7 @@ import * as util from "util";
 
 import * as DB from "./database";
 import * as Mail from "./mail";
-import * as Communication from "../shared/communication";
+import {Communication} from "thinktool-shared";
 
 const staticUrl = process.env.DIAFORM_STATIC_HOST;
 
