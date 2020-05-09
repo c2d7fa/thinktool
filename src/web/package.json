@@ -1,0 +1,13 @@
+{
+  "name": "thinktool-web-client",
+  "private": true,
+  "devDependencies": {
+    "thinktool-client": "file:../client",
+    "typescript": "latest",
+    "parcel-bundler": "latest"
+  },
+  "scripts": {
+    "bundle": "tsc && npx parcel build -d ../../dist/static -o bundle.js -t browser dist/main.js"
+  },
+  "dependencies": {}
+}

@@ -6,8 +6,14 @@ echo "Building configuration file..."
 mkdir -p conf
 echo "{\"apiHost\": \"$DIAFORM_API_HOST\"}" > conf/client.json
 
-echo "Building client..."
+echo "Building shared client code..."
 cd src/client
+npm ci
+npm run build
+cd ../..
+
+echo "Bundling web client..."
+cd src/web
 npm ci
 npm run bundle
 cd ../..

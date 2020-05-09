@@ -952,7 +952,7 @@ function UserPage(props: {username: string}) {
 
 // ==
 
-(window as any).thinktoolApp = async () => {
+export async function thinktoolApp() {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
 
   const username = await Server.getUsername();
@@ -969,9 +969,9 @@ function UserPage(props: {username: string}) {
     />,
     appElement,
   );
-};
+}
 
-(window as any).thinktoolDemo = async () => {
+export async function thinktoolDemo() {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
   Server.ping("demo");
   ReactDOM.render(
@@ -983,9 +983,9 @@ function UserPage(props: {username: string}) {
     />,
     appElement,
   );
-};
+}
 
-(window as any).thinktoolUser = async () => {
+export async function thinktoolUser() {
   const userElement = document.querySelector("#user")! as HTMLDivElement;
   ReactDOM.render(<UserPage username={(await Server.getUsername()) ?? "<error!>"} />, userElement);
-};
+}
