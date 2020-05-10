@@ -5,12 +5,12 @@
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.9.6",
     "@babel/preset-env": "^7.9.6",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "react": "latest",
-    "react-dom": "latest",
+    "@types/react": "^16.9.34",
+    "@types/react-dom": "^16.9.7",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
     "thinktool-shared": "file:../shared",
-    "typescript": "latest"
+    "typescript": "^3.8.3"
   },
   "scripts": {
     "build": "tsc && npx babel dist/src/client -D --out-dir dist/client-babel && rm -rf dist/src/client && mv dist/client-babel dist/src/client"
