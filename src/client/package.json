@@ -10,10 +10,12 @@
     "@babel/preset-typescript": "^7.9.0",
     "@types/react": "^16.9.34",
     "@types/react-dom": "^16.9.7",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "thinktool-shared": "file:../shared",
     "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "thinktool-shared": "file:../shared",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
   },
   "scripts": {
     "check": "tsc --noEmit",

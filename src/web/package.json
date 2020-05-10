@@ -3,8 +3,10 @@
   "private": true,
   "devDependencies": {
     "parcel-bundler": "^1.12.4",
-    "thinktool-client": "file:../client",
     "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "thinktool-client": "file:../client"
   },
   "scripts": {
     "bundle": "npx parcel build -d ../../dist/static -o bundle.js -t browser main.tsx",
