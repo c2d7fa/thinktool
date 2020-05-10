@@ -6,8 +6,7 @@ import {Context, DragInfo} from "./context";
 import * as Data from "./data";
 import * as T from "./tree";
 import * as Tutorial from "./tutorial";
-import initializeServer from "./server-api";
-let Server: ReturnType<typeof initializeServer> = null as never; // [TODO] Fix this hack!
+import * as API from "./server-api";
 import {actionsWith} from "./actions";
 
 import * as C from "./ui/content";
@@ -128,7 +127,17 @@ function diffState(
   return {added, deleted, changed, changedContent};
 }
 
-function useContext(initialState: State, initialTutorialFinished: boolean, args?: {local: boolean}): Context {
+function useContext({
+  initialState,
+  initialTutorialFinished,
+  local,
+  server,
+}: {
+  initialState: State;
+  initialTutorialFinished: boolean;
+  local?: boolean;
+  server: API.Server;
+}): Context {
   const [state, setLocalState] = React.useState(initialState);
 
   const batched = useBatched(200);
@@ -138,18 +147,18 @@ function useContext(initialState: State, initialTutorialFinished: boolean, args?
       undo.pushState(state);
       setLocalState(newState);
 
-      if (!args?.local) {
+      if (!local) {
         const diff = diffState(state, newState);
         for (const thing of diff.deleted) {
-          Server.deleteThing(thing);
+          server.deleteThing(thing);
         }
         for (const thing of diff.changedContent) {
           batched.update(thing, () => {
-            Server.setContent(thing, Data.content(newState, thing));
+            server.setContent(thing, Data.content(newState, thing));
           });
         }
         if (diff.added.length !== 0 || diff.changed.length !== 0) {
-          Server.updateThings(
+          server.updateThings(
             [...diff.added, ...diff.changed].map((thing) => ({
               name: thing,
               content: Data.content(newState, thing),
@@ -175,12 +184,12 @@ function useContext(initialState: State, initialTutorialFinished: boolean, args?
     }
     setLocalState(oldState);
     // TODO: Code duplication, see setState above
-    if (!args?.local) {
+    if (!local) {
       const diff = diffState(state, oldState);
       for (const thing of diff.deleted) {
-        Server.deleteThing(thing);
+        server.deleteThing(thing);
       }
-      Server.updateThings(
+      server.updateThings(
         [...diff.added, ...diff.changed].map((thing) => ({
           name: thing,
           content: Data.content(oldState, thing),
@@ -240,8 +249,8 @@ function useContext(initialState: State, initialTutorialFinished: boolean, args?
   );
   function setTutorialState(tutorialState: Tutorial.State): void {
     setTutorialState_(tutorialState);
-    if (!Tutorial.isActive(tutorialState) && !args?.local) {
-      Server.setTutorialFinished();
+    if (!Tutorial.isActive(tutorialState) && !local) {
+      server.setTutorialFinished();
     }
   }
 
@@ -249,7 +258,7 @@ function useContext(initialState: State, initialTutorialFinished: boolean, args?
   const [changelogShown, setChangelogShown] = React.useState<boolean>(false);
   const [changelog, setChangelog] = React.useState<Communication.Changelog | "loading">("loading");
   React.useEffect(() => {
-    Server.getChangelog().then((changelog) => setChangelog(changelog));
+    server.getChangelog().then((changelog) => setChangelog(changelog));
   }, []);
 
   return {
@@ -288,6 +297,7 @@ function useContext(initialState: State, initialTutorialFinished: boolean, args?
     changelogShown,
     setChangelogShown,
     changelog,
+    server,
   };
 }
 
@@ -295,14 +305,16 @@ function App({
   initialState,
   initialTutorialFinished,
   username,
-  args,
+  local,
+  server,
 }: {
   initialState: State;
   initialTutorialFinished: boolean;
   username: string;
-  args?: {local: boolean};
+  local?: boolean;
+  server: API.Server;
 }) {
-  const context = useContext(initialState, initialTutorialFinished, args);
+  const context = useContext({initialState, initialTutorialFinished, local, server});
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
@@ -315,11 +327,11 @@ function App({
   // dependencies makes it reconnect every time any change is made to the state
   // (e.g. editing the content of an item).
   React.useEffect(() => {
-    if (args?.local) return;
+    if (local) return;
 
-    return Server.onChanges(async (changes) => {
+    return context.server.onChanges(async (changes) => {
       for (const changedThing of changes) {
-        const thingData = await Server.getThingData(changedThing);
+        const thingData = await context.server.getThingData(changedThing);
 
         if (thingData === null) {
           // Thing was deleted
@@ -499,7 +511,7 @@ function App({
           <a className="username" href="/user.html">
             {username}
           </a>
-          <a className="log-out" href={Server.logOutUrl}>
+          <a className="log-out" href={context.server.logOutUrl}>
             log out
           </a>
         </div>
@@ -920,12 +932,12 @@ function Subtree(p: {
 
 // User Page
 
-function UserPage(props: {username: string}) {
+function UserPage(props: {server: API.Server; username: string}) {
   const [emailField, setEmailField] = React.useState<string>("(Loading...)");
   const [passwordField, setPasswordField] = React.useState<string>("");
 
   React.useEffect(() => {
-    Server.getEmail().then((email) => setEmailField(email));
+    props.server.getEmail().then((email) => setEmailField(email));
   }, []);
 
   return (
@@ -938,7 +950,7 @@ function UserPage(props: {username: string}) {
         <input value={emailField} onChange={(ev) => setEmailField(ev.target.value)} />
         <button
           onClick={async () => {
-            await Server.setEmail(emailField);
+            await props.server.setEmail(emailField);
             window.location.reload();
           }}>
           Change email
@@ -948,7 +960,7 @@ function UserPage(props: {username: string}) {
         <input value={passwordField} onChange={(ev) => setPasswordField(ev.target.value)} type="password" />
         <button
           onClick={async () => {
-            await Server.setPassword(passwordField);
+            await props.server.setPassword(passwordField);
             window.location.reload();
           }}>
           Change password
@@ -958,7 +970,7 @@ function UserPage(props: {username: string}) {
       <button
         onClick={async () => {
           if (confirm("Are you sure you want to PERMANENTLY DELETE YOUR ACCOUNT AND ALL YOUR DATA?")) {
-            await Server.deleteAccount(props.username);
+            await props.server.deleteAccount(props.username);
             window.location.href = "/";
           }
         }}>
@@ -970,14 +982,12 @@ function UserPage(props: {username: string}) {
 
 // ==
 
-export async function initialize({apiHost}: {apiHost: string}) {
-  Server = initializeServer(apiHost);
-}
-
-export async function thinktoolApp() {
+export async function thinktoolApp({apiHost}: {apiHost: string}) {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
 
-  const username = await Server.getUsername();
+  const server = API.initialize(apiHost);
+
+  const username = server.getUsername();
   if (username === null) {
     console.log("Not logged in. Redirecting to login page.");
     window.location.href = "/login.html";
@@ -985,29 +995,37 @@ export async function thinktoolApp() {
 
   ReactDOM.render(
     <App
-      initialState={await Server.getFullState()}
-      initialTutorialFinished={await Server.getTutorialFinished()}
-      username={(await Server.getUsername()) ?? "<error!>"}
+      initialState={await server.getFullState()}
+      initialTutorialFinished={await server.getTutorialFinished()}
+      username={(await server.getUsername()) ?? "<error!>"}
+      server={server}
     />,
     appElement,
   );
 }
 
-export async function thinktoolDemo() {
+export async function thinktoolDemo({apiHost}: {apiHost: string}) {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
-  Server.ping("demo");
+  API.initialize(apiHost).ping("demo");
   ReactDOM.render(
     <App
-      initialState={Server.transformFullStateResponseIntoState(DemoData)}
+      initialState={API.transformFullStateResponseIntoState(DemoData)}
       initialTutorialFinished={false}
       username={"demo"}
-      args={{local: true}}
+      local
+      server={API.initialize(apiHost)}
     />,
     appElement,
   );
 }
 
-export async function thinktoolUser() {
+export async function thinktoolUser({apiHost}: {apiHost: string}) {
   const userElement = document.querySelector("#user")! as HTMLDivElement;
-  ReactDOM.render(<UserPage username={(await Server.getUsername()) ?? "<error!>"} />, userElement);
+  ReactDOM.render(
+    <UserPage
+      server={API.initialize(apiHost)}
+      username={(await API.initialize(apiHost).getUsername()) ?? "error!!"}
+    />,
+    userElement,
+  );
 }

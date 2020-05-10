@@ -1,7 +1,28 @@
 import * as D from "./data";
 import {Communication} from "thinktool-shared";
 
-export default (apiHost: string) => {
+export type Server = ReturnType<typeof initialize>;
+
+export function transformFullStateResponseIntoState(response: Communication.FullStateResponse): D.State {
+  let state: D.State = {things: {}, connections: {}};
+
+  for (const thing of response.things) {
+    if (!D.exists(state, thing.name)) {
+      const [newState, _] = D.create(state, thing.name);
+      state = newState;
+    }
+    state = D.setContent(state, thing.name, thing.content);
+    for (const childConnection of thing.children) {
+      state = D.addChild(state, thing.name, childConnection.child, childConnection.name)[0];
+      if (childConnection.tag !== undefined)
+        state = D.setTag(state, {connectionId: childConnection.name}, childConnection.tag);
+    }
+  }
+
+  return state;
+}
+
+export function initialize(apiHost: string) {
   async function api(endpoint: string, args?: object) {
     return fetch(`${apiHost}/${endpoint}`, {credentials: "include", ...args});
   }
@@ -9,25 +30,6 @@ export default (apiHost: string) => {
   // The server expects us to identify ourselves. This way, the server will not
   // notify us of any changes that we are ourselves responsible for.
   const clientId = Math.floor(Math.random() * Math.pow(36, 6)).toString(36);
-
-  function transformFullStateResponseIntoState(response: Communication.FullStateResponse): D.State {
-    let state: D.State = {things: {}, connections: {}};
-
-    for (const thing of response.things) {
-      if (!D.exists(state, thing.name)) {
-        const [newState, _] = D.create(state, thing.name);
-        state = newState;
-      }
-      state = D.setContent(state, thing.name, thing.content);
-      for (const childConnection of thing.children) {
-        state = D.addChild(state, thing.name, childConnection.child, childConnection.name)[0];
-        if (childConnection.tag !== undefined)
-          state = D.setTag(state, {connectionId: childConnection.name}, childConnection.tag);
-      }
-    }
-
-    return state;
-  }
 
   async function getFullState(): Promise<D.State> {
     const response = (await (await api("state")).json()) as Communication.FullStateResponse;
@@ -147,4 +149,4 @@ export default (apiHost: string) => {
     setTutorialFinished,
     getChangelog,
   };
-};
+}

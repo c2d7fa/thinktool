@@ -10,6 +10,7 @@
   },
   "scripts": {
     "bundle": "npx parcel build -d ../../dist/static -o bundle.js -t browser main.tsx",
-    "watch": "npx parcel watch -d ../../dist/static -o bundle.js -t browser main.tsx"
+    "watch": "npx parcel watch -d ../../dist/static -o bundle.js -t browser main.tsx",
+    "check": "tsc --noEmit"
   }
 }

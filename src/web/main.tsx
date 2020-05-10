@@ -2,8 +2,6 @@ import * as Client from "thinktool-client";
 
 import * as Configuration from "../../conf/client.json";
 
-Client.initialize({apiHost: Configuration.apiHost});
-
-(window as any).thinktoolApp = Client.thinktoolApp;
-(window as any).thinktoolDemo = Client.thinktoolDemo;
-(window as any).thinktoolUser = Client.thinktoolUser;
+(window as any).thinktoolApp = () => Client.thinktoolApp({apiHost: Configuration.apiHost});
+(window as any).thinktoolDemo = () => Client.thinktoolDemo({apiHost: Configuration.apiHost});
+(window as any).thinktoolUser = () => Client.thinktoolUser({apiHost: Configuration.apiHost});
