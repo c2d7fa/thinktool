@@ -3,26 +3,26 @@ suppress_history: false
 windows:
   - layout: even-vertical
     panes:
-    - shell_command:
-      - cd dist/server
-      - node server.js
-    - shell_command:
-      - ./tools/build-static.sh
-    - shell_command:
-      - cd dist/static
-      - python -m http.server 8080
-    - shell_command:
-      - ./tools/dev/watch-client.sh
-    - shell_command:
-      - ./tools/dev/watch-server.sh
+      - shell_command:
+          - cd dist/server
+          - node server.js
+      - shell_command:
+          - cd dist/static
+          - python -m http.server 8080
+      - shell_command:
+          - ./tools/build-static.sh
+      - shell_command:
+          - ./tools/build-client.sh
+      - shell_command:
+          - ./tools/build-server.sh
   - layout: even-vertical
     panes:
-    - shell_command:
-      - cd src/client
-      - tsc --noEmit
-    - shell_command:
-      - cd src/server
-      - tsc --noEmit
-    - shell_command:
-      - cd src/tests
-      - ./run.sh
+      - shell_command:
+          - cd src/client
+          - tsc --noEmit
+      - shell_command:
+          - cd src/server
+          - tsc --noEmit
+    # - shell_command:
+    #   - cd src/tests
+    #   - ./run.sh
