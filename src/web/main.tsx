@@ -1,4 +1,4 @@
-import "regenerator-runtime/runtime"; // [TODO] Why do we need this??
+import "regenerator-runtime/runtime"; // [TODO] Needed for reasons that I don't understand; otherwise we get a runtime error.
 
 import * as Client from "thinktool-client";
 

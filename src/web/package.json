@@ -7,7 +7,6 @@
     "parcel-bundler": "latest"
   },
   "scripts": {
-    "bundle": "tsc && npx parcel build -d ../../dist/static -o bundle.js -t browser dist/main.js"
-  },
-  "dependencies": {}
+    "bundle": "tsc && npx parcel build -d ../../dist/static -o bundle.js -t browser dist/src/web/main.js"
+  }
 }
