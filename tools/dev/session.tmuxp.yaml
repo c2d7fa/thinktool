@@ -12,9 +12,13 @@ windows:
       - shell_command:
           - ./tools/build-static.sh
       - shell_command:
-          - ./tools/build-client.sh
-      - shell_command:
           - ./tools/build-server.sh
+      - shell_command:
+          - cd src/client
+          - npm run watch
+      - shell_command:
+          - cd src/web
+          - npm run watch
   - layout: even-vertical
     panes:
       - shell_command:

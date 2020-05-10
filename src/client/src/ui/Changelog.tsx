@@ -34,11 +34,15 @@ export default function Changelog(props: {
         <ul className="changelog-entries">
           {items.map((item) => {
             return (
-              <li className="changelog-entry">
+              <li key={item.date} className="changelog-entry">
                 <h2>{item.date}</h2>
                 <ul>
                   {item.changes.map((change) => {
-                    return <li className="changelog-change">{change}</li>;
+                    return (
+                      <li key={change} className="changelog-change">
+                        {change}
+                      </li>
+                    );
                   })}
                 </ul>
               </li>
