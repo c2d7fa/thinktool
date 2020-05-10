@@ -1,0 +1,240 @@
+{
+  "things": [
+    {
+      "name": "0",
+      "content": "Thinktool Demo",
+      "children": [
+        {"name": "c.q9nsdn7k", "child": "q9nsdn5j"},
+        {"name": "c.q9ntwes5", "child": "q9nsqefl"}
+      ]
+    },
+    {
+      "name": "q9nsdn5j",
+      "content": "Welcome to the #q9nsqefl demo! Any changes you make here will be discarded when you reload the page.",
+      "children": [
+        {"name": "c.q9nse9x0", "child": "q9nse9p6"},
+        {"name": "c.q9nsesf8", "child": "q9nseski"}
+      ]
+    },
+    {
+      "name": "q9nse9p6",
+      "content": "If you like what you see, sign up for an account here: https://thinktool.io/login.html.",
+      "children": []
+    },
+    {
+      "name": "q9nseski",
+      "content": "You can also sign up for the newsletter: https://thinktool.io/.",
+      "children": []
+    },
+    {
+      "name": "q9nsqefl",
+      "content": "Thinktool",
+      "children": [
+        {"name": "c.q9nsqm80", "child": "q9nsqm4b"},
+        {"name": "c.q9nt0omu", "child": "q9nt0ogi"}
+      ]
+    },
+    {
+      "name": "q9nsqm4b",
+      "content": "Thinktool is different from other #q9nsqwci, because it's based on a philosophy of #q9nsv320, rather than hierarchical organization.",
+      "children": []
+    },
+    {
+      "name": "q9nsqwci",
+      "content": "Outliners",
+      "children": [
+        {"name": "c.q9nsr49n", "child": "q9nsqefl"},
+        {"name": "c.q9nsr05t", "child": "q9nsr0gq"},
+        {"name": "c.q9nsr23b", "child": "q9nsr2cn"},
+        {"name": "c.q9nsr7f7", "child": "q9nsr7d5"}
+      ]
+    },
+    {"name": "q9nsr0gq", "content": "Workflowy", "children": []},
+    {"name": "q9nsr2cn", "content": "Dynalist", "children": []},
+    {
+      "name": "q9nsr7d5",
+      "content": "Org-mode for #q9nsrcga",
+      "children": [
+        {"name": "c.q9nst2zc", "child": "q9nst2pk"},
+        {"name": "c.q9nstphu", "child": "q9nstprc"}
+      ]
+    },
+    {"name": "q9nsrcga", "content": "Emacs", "children": [{"name": "c.q9nssfdw", "child": "q9nssfvm"}]},
+    {
+      "name": "q9nsrkjr",
+      "content": "Text editors",
+      "children": [
+        {"name": "c.q9nsrklw", "child": "q9nsrcga"},
+        {"name": "c.q9nsrxry", "child": "q9nsrwlc"}
+      ]
+    },
+    {"name": "q9nsrwlc", "content": "Vim", "children": []},
+    {
+      "name": "q9nssfvm",
+      "content": "Cool Emacs packages",
+      "children": [{"name": "c.q9nsskh7", "child": "q9nsr7d5"}]
+    },
+    {
+      "name": "q9nst2pk",
+      "content": "Org-mode is a pretty cool outliner for Emacs. Because it's built inside Emacs, it's highly extensible.",
+      "children": []
+    },
+    {"name": "q9nstprc", "content": "https://orgmode.org/", "children": []},
+    {
+      "name": "q9nsv320",
+      "content": "Associative note-taking",
+      "children": [
+        {"name": "c.q9nsw8pl", "child": "q9nsw8fh"},
+        {"name": "c.q9ntgu48", "child": "q9ntgu9m"},
+        {"name": "c.q9nsxpa4", "child": "q9nsxpjy"}
+      ]
+    },
+    {
+      "name": "q9nsw8fh",
+      "content": "Associative note-taking is an apporoach to note-taking, where you don't try to to fit your notes into a strict organizational system. Instead, you just write what comes to mind, and then use a different of linking relevant notes together.",
+      "children": []
+    },
+    {
+      "name": "q9nsxpjy",
+      "content": "Examples of systems based on associative note-taking",
+      "children": [
+        {"name": "c.q9nsytpt", "child": "q9nsqefl"},
+        {"name": "c.q9nsyvtw", "child": "q9nsyvhu"},
+        {"name": "c.q9nsz922", "child": "q9nsz9ao"}
+      ]
+    },
+    {
+      "name": "q9nsyvhu",
+      "content": "Roam Research",
+      "children": [{"name": "c.q9nsz3m1", "child": "q9nsz336"}]
+    },
+    {"name": "q9nsz336", "content": "https://roamresearch.com/", "children": []},
+    {
+      "name": "q9nsz9ao",
+      "content": "Zettelkasten",
+      "children": [{"name": "c.q9nt2f2b", "child": "q9nt2f2i"}]
+    },
+    {
+      "name": "q9nt0ogi",
+      "content": "Unlike other #q9nsxpjy, Thinktool gives you the best of both words by presenting all your notes in a loose hierarchy. So if it makes sense to organize your notes into a hierarchy, you can do so.",
+      "children": []
+    },
+    {
+      "name": "q9nt2f2i",
+      "content": "The Zettelkasten system is an analog system of associative note-taking invented by #q9nt31oz",
+      "children": []
+    },
+    {"name": "q9nt31oz", "content": "Niklas Luhmann", "children": []},
+    {
+      "name": "q9nt4rwd",
+      "content": "Germans",
+      "children": [
+        {"name": "c.q9nt5e2b", "child": "q9nt5e2j"},
+        {"name": "c.q9nt5wub", "child": "q9nt5whx"},
+        {"name": "c.q9nt4r2g", "child": "q9nt31oz"}
+      ]
+    },
+    {"name": "q9nt5e2j", "content": "Karl Marx", "children": []},
+    {"name": "q9nt5whx", "content": "Friedrich Nietzsche", "children": []},
+    {
+      "name": "q9nt68el",
+      "content": "Existentialism",
+      "children": [{"name": "c.q9nt68tl", "child": "q9nt5whx"}]
+    },
+    {
+      "name": "q9nt6ksy",
+      "content": "Philosophy",
+      "children": [
+        {"name": "c.q9nt6kue", "child": "q9nt68el"},
+        {"name": "c.q9nt705i", "child": "q9nt7047"}
+      ]
+    },
+    {
+      "name": "q9nt7047",
+      "content": "Ancient Greek philosophy",
+      "children": [
+        {"name": "c.q9nt7nh5", "child": "q9nt7nk2"},
+        {"name": "c.q9nt7ojq", "child": "q9nt7oz2"},
+        {"name": "c.q9nt7rgd", "child": "q9nt7rpk"}
+      ]
+    },
+    {"name": "q9nt7fjf", "content": "History", "children": [{"name": "c.q9nt7fg3", "child": "q9nt7047"}]},
+    {"name": "q9nt7nk2", "content": "Plato", "children": []},
+    {"name": "q9nt7oz2", "content": "Aristotle", "children": []},
+    {
+      "name": "q9nt7rpk",
+      "content": "The Pre-Socratics",
+      "children": [
+        {"name": "c.q9nt8sou", "child": "q9nt8sxh"},
+        {"name": "c.q9ntad1p", "child": "q9ntad7i"},
+        {"name": "c.q9ntakla", "child": "q9ntahxw"}
+      ]
+    },
+    {
+      "name": "q9nt8sxh",
+      "content": "Much of what we know about the Pre-Socratics comes from later writings about them, especially from #q9nt7oz2, #q9nt9koj, #q9nt9w6e and a few others.",
+      "children": []
+    },
+    {"name": "q9nt9koj", "content": "Plutarch", "children": []},
+    {"name": "q9nt9w6e", "content": "Diogenes Laertius", "children": []},
+    {"name": "q9ntad7i", "content": "Anaximander", "children": []},
+    {"name": "q9ntahxw", "content": "Pythagoras", "children": []},
+    {
+      "name": "q9ntgu9m",
+      "content": "Associative note-taking is both easier and more powerful than linear note-taking (see #q9nthksl) or #q9nsqwci.",
+      "children": []
+    },
+    {
+      "name": "q9nthksl",
+      "content": "Linear documents",
+      "children": [
+        {"name": "c.q9ntigna", "child": "q9ntig2e"},
+        {"name": "c.q9ntjecr", "child": "q9ntjedf"},
+        {"name": "c.q9ntm4nv", "child": "q9ntm436"}
+      ]
+    },
+    {
+      "name": "q9ntig2e",
+      "content": "Linear documents are documents that run from one end to the other.",
+      "children": []
+    },
+    {
+      "name": "q9ntjedf",
+      "content": "This is the most common form of documents. Examples include #q9ntjy8e, notes in applications like #q9ntlpf7 and #q9ntlucg, PDFs and many more.",
+      "children": []
+    },
+    {"name": "q9ntjy8e", "content": "Books", "children": []},
+    {"name": "q9ntlpf7", "content": "OneNote", "children": []},
+    {"name": "q9ntlucg", "content": "Evernote", "children": []},
+    {
+      "name": "q9ntm436",
+      "content": "#q9ntmjln can be seen as a bridging the gap between #q9nthksl and #q9nsv320 approaches.",
+      "children": [{"name": "c.q9ntop5z", "child": "q9ntope6"}]
+    },
+    {"name": "q9ntmjln", "content": "Hypertext", "children": [{"name": "c.q9ntq7sp", "child": "q9ntq7af"}]},
+    {
+      "name": "q9ntope6",
+      "content": "#q9nsyvhu depends heavily on hyperlinks. #q9nsqefl uses hyperlinks as well, but also allows for organization of items into graph-based hierarchies.",
+      "children": []
+    },
+    {
+      "name": "q9ntq7af",
+      "content": "Hypertext is text that contains links to other documents. The #q9ntqr6u - specifically #q9ntr79y - is based around the concept of hypertext.",
+      "children": []
+    },
+    {"name": "q9ntqr6u", "content": "World Wide Web", "children": []},
+    {"name": "q9ntr79y", "content": "HTML", "children": [{"name": "c.q9ntrkxd", "child": "q9ntrkzq"}]},
+    {"name": "q9ntrkzq", "content": "(Hyper-Text Markup Language)", "children": []},
+    {
+      "name": "q9ntrzvy",
+      "content": "Markup languages",
+      "children": [
+        {"name": "c.q9ntrzld", "child": "q9ntr79y"},
+        {"name": "c.q9ntt5wp", "child": "q9ntt5a5"}
+      ]
+    },
+    {"name": "q9ntt5a5", "content": "Markdown", "children": []},
+    {"name": "q9ntux59", "content": "Ted Nelson", "children": []},
+    {"name": "q9ntuyoc", "content": "#q9ntux59 coined the term #q9ntmjln", "children": []}
+  ]
+}
