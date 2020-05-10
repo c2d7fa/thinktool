@@ -1,7 +1,8 @@
 {
-  "name": "thinktool",
+  "name": "thinktool-server",
   "private": true,
   "devDependencies": {
+    "thinktool-shared": "file:../shared",
     "@types/bcrypt": "latest",
     "@types/express-ws": "latest",
     "@types/express": "latest",

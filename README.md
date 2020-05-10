@@ -2,23 +2,25 @@
 
 Source code:
 
-| Directory      | Purpose                                                                                            |
-| -------------- | -------------------------------------------------------------------------------------------------- |
-| `/src/`        | Source code, used to generate `/dist/`.                                                            |
-| `/src/client/` | Code for client. Resulting JavaScript file is deployed on static server. Output in `/dist/static/` |
-| `/src/share/`  | Code shared between client and server. Output in `/dist/static` and `/dist/server`.                |
-| `/src/server/` | Code for server. This code is deployed on server running Node.js. Output in `/dist/server/`.       |
-| `/src/markup/` | Source for HTML markup. Output in `/dist/static/`.                                                 |
-| `/src/style/`  | Source for CSS stylesheets. Output in `/dist/static/`.                                             |
-| `src/static`   | Other static resources. Output in `/dist/static/`.                                                 |
+| Directory      | Purpose                                            |
+| -------------- | -------------------------------------------------- |
+| `/src/share/`  | Code shared between client and server.             |
+| `/src/server/` | Code for dynamic Node.js server.                   |
+| `/src/client/` | Client code shared between web and desktop client. |
+| `/src/web/`    | Code specific to web client.                       |
+| `/src/desktop` | Code specific to desktop client.                   |
+| `/src/markup/` | Source for HTML markup.                            |
+| `/src/style/`  | Source for CSS stylesheets.                        |
+| `/src/static/` | Other static resources.                            |
 
 The generated output goes in the `/dist/` directory. Each subdirectory is intended to be deployed differently:
 
-| Directory       | Purpose                                                                                |
-| --------------- | -------------------------------------------------------------------------------------- |
-| `/dist/`        | Output files generated from `/src/`. Each subdirectory is deployed to separate server. |
-| `/dist/static/` | Static content, including HTML, CSS and JavaScript.                                    |
-| `/dist/server/` | Code for dynamic server running Node.js.                                               |
+| Directory        | Purpose                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------ |
+| `/dist/`         | Output files generated from `/src/`. Each subdirectory represents a sepearte target. |
+| `/dist/static/`  | Static content, including HTML, CSS and JavaScript.                                  |
+| `/dist/server/`  | Code for dynamic server running Node.js.                                             |
+| `/dist/desktop/` | Static content for the Electron-based desktop app.                                   |
 
 Tools and configuration:
 
@@ -33,9 +35,12 @@ The application consists of two parts:
 
 1. Static resources, output to `/dist/static/`
 2. Node.js server, output to `/dist/server/`
+3. Electron-based desktop client, output to `/dist/desktop/`
 
 The static resources should be deployed to a static site hosting service, while
 the server code should be run on an appropriate server using Node.js.
+
+The desktop client is bundled as an executable app.
 
 ## Static Resources
 
@@ -60,7 +65,7 @@ before running the server:
 - `DIAFORM_POSTGRES_HOST` &mdash; The hostname containing the database, e.g. `localhost`
 - `DIAFORM_POSTGRES_PORT` &mdash; Port that the database is running on, e.g. `5432`
 - `DIAFORM_POSTGRES_USERNAME` &mdash; Username used to authenticate with the PostgreSQL DB, e.g. `postgres`
-- `DIAFORM_POSTGRES_PASSWORD` &mdash; Password used to authenticate with the PostgreSQL DB, e.g. `postgress`
+- `DIAFORM_POSTGRES_PASSWORD` &mdash; Password used to authenticate with the PostgreSQL DB, e.g. `postgres`
 
 To configure email sending (used for "Forgot my password" functionality), set the following variables:
 
@@ -91,3 +96,7 @@ Once you have the `thinktool` image, run it with the environment variables given
         -e DIAFORM_STATIC_HOST \
         -p 80:80 \
         thinktool
+
+## Desktop
+
+We are currently working on an Electron-based desktop app, but it isn't ready yet.

@@ -6,9 +6,14 @@ echo "Building configuration file..."
 mkdir -p conf
 echo "{\"apiHost\": \"$DIAFORM_API_HOST\"}" > conf/client.json
 
-echo "Building client..."
+echo "Building shared client code..."
 cd src/client
 npm ci
-npx parcel build main.tsx -d ../../dist/static -o bundle.js
-echo "Built 'dist/static/bundle.js' from 'src/client'."
+npm run build
+cd ../..
+
+echo "Bundling web client..."
+cd src/web
+npm ci
+npm run bundle
 cd ../..

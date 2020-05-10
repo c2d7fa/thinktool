@@ -1,5 +1,7 @@
 import "regenerator-runtime/runtime"; // Required by Parcel for reasons that I do not understand.
 
+import {General as G} from "thinktool-shared";
+
 import {State} from "./data";
 import {Context, DragInfo} from "./context";
 
@@ -7,14 +9,13 @@ import * as Data from "./data";
 import * as T from "./tree";
 import * as Tutorial from "./tutorial";
 import * as Server from "./server-api";
-import * as G from "../shared/general";
 import {actionsWith} from "./actions";
 
 import * as C from "./ui/content";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 
-import DemoData from "./demo-data.json";
+import * as DemoData from "./demo-data.json";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -951,7 +952,7 @@ function UserPage(props: {username: string}) {
 
 // ==
 
-(window as any).thinktoolApp = async () => {
+export async function thinktoolApp() {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
 
   const username = await Server.getUsername();
@@ -968,9 +969,9 @@ function UserPage(props: {username: string}) {
     />,
     appElement,
   );
-};
+}
 
-(window as any).thinktoolDemo = async () => {
+export async function thinktoolDemo() {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
   Server.ping("demo");
   ReactDOM.render(
@@ -982,9 +983,9 @@ function UserPage(props: {username: string}) {
     />,
     appElement,
   );
-};
+}
 
-(window as any).thinktoolUser = async () => {
+export async function thinktoolUser() {
   const userElement = document.querySelector("#user")! as HTMLDivElement;
   ReactDOM.render(<UserPage username={(await Server.getUsername()) ?? "<error!>"} />, userElement);
-};
+}

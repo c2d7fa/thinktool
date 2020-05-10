@@ -6,7 +6,6 @@
     "resolveJsonModule": true,
     "module": "CommonJS",
     "strict": true,
-    "outDir": "dist",
-    "declaration": true
+    "outDir": "dist"
   }
 }

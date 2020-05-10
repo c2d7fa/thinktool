@@ -1,4 +1,4 @@
-import * as G from "../shared/general";
+import {General as G} from "thinktool-shared";
 import * as D from "./data";
 
 export interface Node {
