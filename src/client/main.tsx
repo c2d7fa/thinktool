@@ -1,5 +1,3 @@
-import "regenerator-runtime/runtime"; // Required by Parcel for reasons that I do not understand.
-
 import {General as G, Communication} from "thinktool-shared";
 
 import {State} from "./data";
