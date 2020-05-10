@@ -1,5 +1,5 @@
 {
-  "name": "thinktool",
+  "name": "thinktool-server",
   "private": true,
   "devDependencies": {
     "thinktool-shared": "file:../shared",

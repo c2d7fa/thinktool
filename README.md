@@ -8,7 +8,7 @@ Source code:
 | `/src/server/` | Code for dynamic Node.js server.                   |
 | `/src/client/` | Client code shared between web and desktop client. |
 | `/src/web/`    | Code specific to web client.                       |
-| `/src/desktop` | Code for desktop client.                           |
+| `/src/desktop` | Code specific to desktop client.                   |
 | `/src/markup/` | Source for HTML markup.                            |
 | `/src/style/`  | Source for CSS stylesheets.                        |
 | `/src/static/` | Other static resources.                            |
@@ -99,4 +99,4 @@ Once you have the `thinktool` image, run it with the environment variables given
 
 ## Desktop
 
-- [ ] TODO
+We are currently working on an Electron-based desktop app, but it isn't ready yet.
