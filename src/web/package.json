@@ -2,12 +2,15 @@
   "name": "thinktool-web-client",
   "private": true,
   "devDependencies": {
-    "thinktool-client": "file:../client",
-    "typescript": "latest",
-    "parcel-bundler": "latest"
+    "parcel-bundler": "^1.12.4",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "thinktool-client": "file:../client"
   },
   "scripts": {
-    "bundle": "tsc && npx parcel build -d ../../dist/static -o bundle.js -t browser dist/main.js"
-  },
-  "dependencies": {}
+    "bundle": "npx parcel build -d ../../dist/static -o bundle.js -t browser main.tsx",
+    "watch": "npx parcel watch -d ../../dist/static -o bundle.js -t browser main.tsx",
+    "check": "tsc --noEmit"
+  }
 }

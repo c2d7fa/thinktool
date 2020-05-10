@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ESNext",
     "moduleResolution": "node",
+    "emitDeclarationOnly": true,
     "jsx": "react",
-    "resolveJsonModule": true,
-    "module": "CommonJS",
     "strict": true,
     "outDir": "dist",
     "declaration": true
-  }
+  },
+  "include": ["src/**/*"]
 }
