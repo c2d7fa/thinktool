@@ -241,6 +241,17 @@ export default function Toolbar(props: {context: Context}) {
           context={props.context}
           name="tutorial"
         />
+        <ToolbarButton
+          action={() => {
+            props.context.setChangelogShown(!props.context.changelogShown);
+          }}
+          description="Show list of updates to Thinktool."
+          icon="list"
+          label="Updates"
+          alwaysEnabled
+          context={props.context}
+          name="changelog"
+        />
       </ToolbarGroup>
     </div>
   );

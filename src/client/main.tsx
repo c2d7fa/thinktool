@@ -1,6 +1,6 @@
 import "regenerator-runtime/runtime"; // Required by Parcel for reasons that I do not understand.
 
-import {General as G} from "thinktool-shared";
+import {General as G, Communication} from "thinktool-shared";
 
 import {State} from "./data";
 import {Context, DragInfo} from "./context";
@@ -14,6 +14,7 @@ import {actionsWith} from "./actions";
 import * as C from "./ui/content";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
+import Changelog from "./ui/Changelog";
 
 import * as DemoData from "./demo-data.json";
 
@@ -242,6 +243,13 @@ function useContext(initialState: State, initialTutorialFinished: boolean, args?
     }
   }
 
+  // Changelog
+  const [changelogShown, setChangelogShown] = React.useState<boolean>(false);
+  const [changelog, setChangelog] = React.useState<Communication.Changelog | "loading">("loading");
+  React.useEffect(() => {
+    Server.getChangelog().then((changelog) => setChangelog(changelog));
+  }, []);
+
   return {
     state,
     setState,
@@ -275,6 +283,9 @@ function useContext(initialState: State, initialTutorialFinished: boolean, args?
     setSelectionInFocusedContent,
     tutorialState,
     setTutorialState,
+    changelogShown,
+    setChangelogShown,
+    changelog,
   };
 }
 
@@ -493,6 +504,11 @@ function App({
       </div>
       <Toolbar context={context} />
       <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />
+      <Changelog
+        changelog={context.changelog}
+        visible={context.changelogShown}
+        hide={() => context.setChangelogShown(false)}
+      />
       <ThingOverview context={context} />
     </div>
   );

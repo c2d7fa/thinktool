@@ -2,6 +2,7 @@ import {State} from "./data";
 import * as T from "./tree";
 import {Tree} from "./tree";
 import * as Tutorial from "./tutorial";
+import {Communication} from "thinktool-shared";
 
 export interface DragInfo {
   current: T.NodeRef | null;
@@ -17,6 +18,10 @@ export interface Context {
 
   tutorialState: Tutorial.State;
   setTutorialState(tutorialState: Tutorial.State): void;
+
+  changelogShown: boolean;
+  setChangelogShown(changelogShown: boolean): void;
+  changelog: Communication.Changelog | "loading";
 
   undo(): void;
 

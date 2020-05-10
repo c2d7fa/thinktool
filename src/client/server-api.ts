@@ -125,3 +125,8 @@ export async function getTutorialFinished(): Promise<boolean> {
 export async function setTutorialFinished(): Promise<void> {
   await api(`api/account/tutorial-finished`, {method: "PUT", body: "true"});
 }
+
+// NOTE: This actually fetches from static server, not API server!
+export async function getChangelog(): Promise<Communication.Changelog> {
+  return (await (await fetch("/changes.json")).json()) as Communication.Changelog;
+}

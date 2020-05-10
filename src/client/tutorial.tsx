@@ -20,7 +20,8 @@ export type FunctionName =
   | "insert-link"
   | "set-child-type"
   | "reset-child-type"
-  | "tutorial";
+  | "tutorial"
+  | "changelog";
 
 const initialState = {step: "Getting started", finished: false};
 

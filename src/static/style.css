@@ -604,7 +604,8 @@ h1.link-section:first-child {
 .gg-add,
 .gg-arrow-top-left-o,
 .gg-arrow-bottom-right-o,
-.gg-info {
+.gg-info,
+.gg-list {
   margin-left: -0.5em;
   margin-right: 0.5em;
 }
@@ -943,4 +944,74 @@ h1.link-section:first-child {
   text-transform: uppercase;
   background-color: #e9eef0;
   color: #7d9196;
+}
+
+/* Changelog */
+
+.changelog {
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+
+  width: 24rem;
+  padding: 1rem;
+
+  background-color: hsl(0, 0%, 97%);
+  border-radius: 6px;
+
+  z-index: 600;
+
+  font-size: 0.9em;
+}
+
+.changelog > button {
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+
+  outline: none;
+  border: none;
+  background: none;
+  font: inherit;
+
+  font-family: "Titillium Web";
+  text-transform: uppercase;
+  font-size: 0.9em;
+
+  color: #a0a0a0;
+
+  transition: color 150ms;
+}
+
+.changelog > button:hover {
+  cursor: pointer;
+
+  color: #606060;
+}
+
+.changelog-entries {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.changelog-entry + .changelog-entry {
+  margin-top: 1rem;
+}
+
+.changelog-entry h2 {
+  font: inherit;
+  font-weight: bold;
+  margin: 0;
+}
+
+.changelog-entry > ul {
+  list-style: disc;
+  padding-left: 2rem;
 }

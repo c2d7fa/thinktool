@@ -15,3 +15,5 @@ export type UpdateThings = {
   content: string;
   children: {name: string; child: string; tag: string}[];
 }[];
+
+export type Changelog = {changes: {date: string; title: string}[]};

@@ -13,6 +13,9 @@ cp -r src/static/*.css dist/static
 echo "Building static HTML..."
 cp -r src/static/*.html dist/static/
 
+echo "Building changes.json"
+cp -r src/static/changes.json dist/static
+
 echo "Building HTML templates..."
 npm ci
 
