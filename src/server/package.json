@@ -16,5 +16,8 @@
     "parcel-bundler": "latest",
     "pg": "latest",
     "typescript": "latest"
+  },
+  "scripts": {
+    "check": "tsc --noEmit"
   }
 }

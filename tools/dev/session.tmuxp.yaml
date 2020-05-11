@@ -23,10 +23,10 @@ windows:
     panes:
       - shell_command:
           - cd src/client
-          - tsc --noEmit
+          - npm run check
       - shell_command:
           - cd src/server
-          - tsc --noEmit
+          - npm run check
     # - shell_command:
     #   - cd src/tests
     #   - ./run.sh
