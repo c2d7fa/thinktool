@@ -549,7 +549,24 @@ export function insertSiblingAfter(
 
 export function insertParent(state: D.State, tree: Tree, node: NodeRef, parent: string): [D.State, Tree] {
   const newState = D.addChild(state, parent, thing(tree, node))[0];
-  return [newState, refresh(tree, newState)];
+
+  let newTree = tree;
+
+  // Refresh parent list of these nodes
+  for (const n of I.allNodes(newTree)) {
+    if (thing(newTree, n) === thing(newTree, node)) {
+      newTree = refreshOtherParentsChildren(newState, newTree, n);
+    }
+  }
+
+  // Refresh children of this parent
+  for (const n of I.allNodes(newTree)) {
+    if (thing(newTree, n) === parent) {
+      newTree = refreshChildren(newState, newTree, n);
+    }
+  }
+
+  return [newState, newTree];
 }
 
 export function removeThing(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {

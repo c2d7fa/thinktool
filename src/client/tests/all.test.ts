@@ -156,3 +156,28 @@ test("Inserting a child should not cause all items to be collapsed", () => {
   expect(T.expanded(tree, T.children(tree, T.root(tree))[0])).toBeTruthy();
   expect(T.expanded(tree, T.children(tree, T.root(tree))[1])).toBeTruthy();
 });
+
+// Bug: Adding a parent would cause all items to be collapsed.
+test("Inserting a parent should not cause all items to be collapsed", () => {
+  let state = D.empty;
+
+  state = D.create(state, "a")[0];
+  state = D.create(state, "b")[0];
+  state = D.create(state, "c")[0];
+  state = D.addChild(state, "0", "a")[0];
+  state = D.addChild(state, "0", "a")[0];
+  state = D.addChild(state, "a", "b")[0];
+
+  let tree = T.fromRoot(state, "0");
+
+  tree = T.expand(state, tree, T.children(tree, T.root(tree))[0]);
+  tree = T.expand(state, tree, T.children(tree, T.root(tree))[1]);
+
+  expect(T.expanded(tree, T.children(tree, T.root(tree))[0])).toBeTruthy();
+  expect(T.expanded(tree, T.children(tree, T.root(tree))[1])).toBeTruthy();
+
+  [state, tree] = T.insertParent(state, tree, T.children(tree, T.root(tree))[0], "c");
+
+  expect(T.expanded(tree, T.children(tree, T.root(tree))[0])).toBeTruthy();
+  expect(T.expanded(tree, T.children(tree, T.root(tree))[1])).toBeTruthy();
+});
