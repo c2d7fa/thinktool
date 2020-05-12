@@ -53,10 +53,10 @@ ul.outline-tree {
 .bullet {
   user-select: none;
   display: inline-block;
-  width: 1.35ex;
-  height: 1.35ex;
-  padding: 0.5ex;
-  margin-right: 0.6em;
+  width: 12px;
+  height: 12px;
+  margin-top: 7px;
+  margin-right: 1em;
   cursor: pointer;
   background-repeat: no-repeat;
 
@@ -72,6 +72,10 @@ ul.outline-tree {
 
 .bullet.expanded {
   background-image: url(/bullet-expanded.svg);
+}
+
+.bullet.terminal {
+  background-image: url(/bullet-terminal.svg);
 }
 
 .connection-tag {
@@ -176,10 +180,9 @@ a.plain-text-link:hover {
 .link-bullet {
   user-select: none;
   display: inline-block;
-  width: 1.35ex;
-  height: 1.35ex;
-  padding: 0.5ex;
-  margin-left: -0.2ex;
+  width: 12px;
+  height: 12px;
+  margin-right: 3px;
   cursor: pointer;
   background-repeat: no-repeat;
 
@@ -198,16 +201,13 @@ a.plain-text-link:hover {
 }
 
 .link-content {
-  border: 1px solid transparent;
-  padding: 0 3px;
-  margin-right: -3px;
-  border-radius: 3px;
+  border-bottom: 2px solid transparent;
 
-  transition: border-color 300ms, background-color 300ms, color 300ms, margin-right 300ms;
+  transition: border-color 300ms;
 }
 
 .link-bullet:hover + .link-content {
-  border-color: #dcdcdc;
+  border-color: #484848;
 }
 
 .internal-link .empty-content {
@@ -218,11 +218,7 @@ a.plain-text-link:hover {
 }
 
 .internal-link-open .link-content {
-  background-color: #f0f0f0;
-  border-color: #f0f0f0;
-  color: #606060;
-
-  margin-right: 0;
+  border-color: #c8c8c8;
 }
 
 .internal-link-open:hover {
@@ -230,11 +226,7 @@ a.plain-text-link:hover {
 }
 
 .opened-link .content span {
-  padding: 0 3px;
-  border-radius: 3px;
-  background-color: #f0f0f0;
-  color: #606060;
-  box-decoration-break: clone;
+  border-bottom: 2px solid #c8c8c8;
 }
 
 /* EDITOR */

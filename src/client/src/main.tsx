@@ -631,7 +631,7 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
           beginDrag={() => {
             return;
           }}
-          expanded={true}
+          status="terminal"
           toggle={() => {
             return;
           }}
@@ -662,6 +662,11 @@ export function ExpandableItem(p: {
   }
 
   const expanded = T.expanded(p.context.tree, p.node);
+  const terminal =
+    expanded &&
+    T.children(p.context.tree, p.node).length === 0 &&
+    T.otherParentsChildren(p.context.tree, p.node).length === 0 &&
+    T.backreferencesChildren(p.context.tree, p.node).length === 0;
 
   function beginDrag() {
     p.context.setDrag({current: p.node, target: null, finished: false});
@@ -685,7 +690,7 @@ export function ExpandableItem(p: {
         {/* data-id is used for drag and drop. */}
         <Bullet
           beginDrag={beginDrag}
-          expanded={T.expanded(p.context.tree, p.node)}
+          status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
           toggle={toggle}
           onMiddleClick={() => {
             p.context.setSelectedThing(T.thing(p.context.tree, p.node));
@@ -700,7 +705,12 @@ export function ExpandableItem(p: {
   );
 }
 
-function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void; onMiddleClick?(): void}) {
+function Bullet(p: {
+  status: "expanded" | "collapsed" | "terminal";
+  toggle: () => void;
+  beginDrag: () => void;
+  onMiddleClick?(): void;
+}) {
   function onAuxClick(ev: React.MouseEvent<never>): void {
     // ev.button === 1 checks for middle click.
     if (ev.button === 1 && p.onMiddleClick !== undefined) p.onMiddleClick();
@@ -708,7 +718,7 @@ function Bullet(p: {expanded: boolean; toggle: () => void; beginDrag: () => void
 
   return (
     <span
-      className={`bullet ${p.expanded ? "expanded" : "collapsed"}`}
+      className={`bullet ${p.status}`}
       onMouseDown={p.beginDrag}
       onTouchStart={p.beginDrag}
       onClick={() => p.toggle()}
@@ -805,7 +815,7 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
       <span className="item-line">
         <Bullet
           beginDrag={() => {}}
-          expanded={T.backreferencesExpanded(p.context.tree, p.parent)}
+          status={T.backreferencesExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
           toggle={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
           onMiddleClick={() => {}}
         />
@@ -862,7 +872,7 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
       <span className="item-line">
         <Bullet
           beginDrag={() => {}}
-          expanded={T.otherParentsExpanded(p.context.tree, p.parent)}
+          status={T.otherParentsExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
           toggle={() => p.context.setTree(T.toggleOtherParents(p.context.state, p.context.tree, p.parent))}
         />
         <span className="other-parents-text">
