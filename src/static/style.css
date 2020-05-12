@@ -66,6 +66,17 @@ ul.outline-tree {
   touch-action: none;
 }
 
+.bullet + div {
+  padding: 6px;
+  margin: -6px;
+  border-radius: 3px;
+  transition: background-color 300ms;
+}
+
+.bullet:hover + div {
+  background-color: #f8f8f8;
+}
+
 .bullet.collapsed {
   background-image: url(/bullet-collapsed.svg);
 }
