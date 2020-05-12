@@ -46,3 +46,11 @@ export function removeBy<T>(a: T[], x: T, eq?: (x: T, y: T) => boolean): T[] {
   const eq_ = eq ?? ((x, y) => x === y);
   return a.filter((y) => !eq_(x, y));
 }
+
+export function setMinus<T>(a: T[], b: T[]): T[] {
+  let result = [...a];
+  for (const y of b) {
+    result = removeBy(result, y);
+  }
+  return result;
+}

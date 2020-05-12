@@ -3,6 +3,10 @@
     {
       "date": "2020-05-10",
       "title": "Added a list of recent updates, accessed through the new \"Updates\" item in the toolbar."
+    },
+    {
+      "date": "2020-05-11",
+      "title": "Added an option to export data to Roam Research from the user page."
     }
   ]
 }

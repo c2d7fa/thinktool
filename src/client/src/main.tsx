@@ -8,6 +8,7 @@ import * as T from "./tree";
 import * as Tutorial from "./tutorial";
 import * as API from "./server-api";
 import {actionsWith} from "./actions";
+import * as ExportRoam from "./export-roam";
 
 import * as C from "./ui/content";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
@@ -971,6 +972,41 @@ function UserPage(props: {server: API.Server; username: string}) {
         }}>
         Delete account and all data
       </button>
+      <hr />
+      <div>
+        <h1>Export to Roam</h1>
+        <p>
+          Click the button below to download a file that can be imported into{" "}
+          <a href="https://roamresearch.com/" rel="nofollow">
+            Roam Research
+          </a>
+          . To import it, select <b>Import Files</b> in the top-right menu inside Roam.
+        </p>
+        <p>
+          All your notes will be imported to a single page, because Roam does not let you have multiple pages
+          with the same name. (So some documents that are valid in Thinktool would not be in Roam.)
+          Additionally, items with multiple parents will turn into "embedded" content inside Roam. This is
+          because Roam cannot represent an item with multiple parents, unlike Thinktool.
+        </p>
+        <button
+          onClick={async () => {
+            // https://stackoverflow.com/questions/45831191/generate-and-download-file-from-js
+            function download(filename: string, text: string) {
+              const element = document.createElement("a");
+              element.href = "data:text/plain;charset=utf-8," + encodeURIComponent(text);
+              element.download = filename;
+              element.style.display = "none";
+              document.body.appendChild(element);
+              element.click();
+              document.body.removeChild(element);
+            }
+
+            const state = await props.server.getFullState();
+            download("thinktool-export-for-roam.json", ExportRoam.exportString(state));
+          }}>
+          Download data for importing into Roam
+        </button>
+      </div>
     </div>
   );
 }
