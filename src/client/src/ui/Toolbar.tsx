@@ -71,6 +71,7 @@ export default function Toolbar(props: {context: Context}) {
             actions(true).showSearchPopup();
           }}
           description="Search for a specific item by its content."
+          shortcut="alt+f"
           icon="search"
           label="Find"
           alwaysEnabled

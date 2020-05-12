@@ -366,6 +366,10 @@ function App({
       console.log("Undoing");
       context.undo();
       ev.preventDefault();
+    } else if (ev.key === "f" && ev.altKey) {
+      // [TODO] Hack - passing null, because actionsWith() has a dumb interface.
+      actionsWith(context, null!).showSearchPopup();
+      ev.preventDefault();
     }
   };
 

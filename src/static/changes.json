@@ -11,6 +11,10 @@
     {
       "date": "2020-05-11",
       "title": "Fixed bug where adding a parent would collapse all items."
+    },
+    {
+      "date": "2020-05-12",
+      "title": "Added keyboard shortcut Alt+F for \"Find\" action."
     }
   ]
 }
