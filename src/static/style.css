@@ -171,45 +171,66 @@ a.plain-text-link:hover {
   border-color: #00000080;
 }
 
-a.internal-link {
-  display: inline;
-  color: inherit;
-  text-decoration: none;
+/* Internal links */
 
-  border: 1px solid #dcdcdc;
+.link-bullet {
+  user-select: none;
+  display: inline-block;
+  width: 1.35ex;
+  height: 1.35ex;
+  padding: 0.5ex;
+  margin-left: -0.2ex;
+  cursor: pointer;
+  background-repeat: no-repeat;
+
+  text-align: center;
+  vertical-align: middle;
+
+  touch-action: none;
+}
+
+.link-bullet.collapsed {
+  background-image: url(/bullet-link-collapsed.svg);
+}
+
+.link-bullet.expanded {
+  background-image: url(/bullet-link-expanded.svg);
+}
+
+.link-content {
+  border: 1px solid transparent;
   padding: 0 3px;
+  margin-right: -3px;
   border-radius: 3px;
 
-  transition: border-color 0.3s ease, background-color 0.15s ease, color 0.15s ease;
+  transition: border-color 300ms, background-color 300ms, color 300ms, margin-right 300ms;
 }
 
-a.internal-link:hover {
-  border-color: #c0c0c0;
+.link-bullet:hover + .link-content {
+  border-color: #dcdcdc;
 }
 
-a.internal-link:active {
-  border-color: #808080;
-}
-
-a.internal-link .empty-content {
+.internal-link .empty-content {
   color: #c0c0c0;
   font-size: 0.8em;
   font-family: "Titillium Web";
   text-transform: uppercase;
 }
 
-a.internal-link-open {
+.internal-link-open .link-content {
   background-color: #f0f0f0;
   border-color: #f0f0f0;
   color: #606060;
+
+  margin-right: 0;
 }
 
-a.internal-link-open:hover {
+.internal-link-open:hover {
   border-color: #f0f0f0;
 }
 
 .opened-link .content span {
-  padding: 0 2px;
+  padding: 0 3px;
   border-radius: 3px;
   background-color: #f0f0f0;
   color: #606060;

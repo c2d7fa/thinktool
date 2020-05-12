@@ -15,6 +15,10 @@
     {
       "date": "2020-05-12",
       "title": "Added keyboard shortcut Alt+F for \"Find\" action."
+    },
+    {
+      "date": "2020-05-12",
+      "title": "Changed link UI so that links are now shown with a bullet next to them."
     }
   ]
 }

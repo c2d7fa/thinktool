@@ -68,18 +68,33 @@ function ExternalLink(props: {link: string}) {
 
 function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) {
   const content = D.contentText(props.context.state, props.link);
+
+  const expanded =
+    !(
+      D.hasChildren(props.context.state, props.link) ||
+      D.otherParents(props.context.state, props.link).length > 0
+    ) || T.isLinkOpen(props.context.tree, props.node, props.link);
+
   return (
-    <a
+    <span
       className={`internal-link${
         T.isLinkOpen(props.context.tree, props.node, props.link) ? " internal-link-open" : ""
-      }`}
-      href="#"
-      onClick={(ev) => {
-        props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, props.link));
-        ev.preventDefault();
-      }}>
-      {content === "" ? <span className="empty-content">#{props.link}</span> : content}
-    </a>
+      }`}>
+      <span
+        className={`link-bullet ${expanded ? "expanded" : "collapsed"}`}
+        onMouseDown={(ev) => {
+          ev.preventDefault();
+        }}
+        onClick={(ev) => {
+          props.context.setTree(
+            T.toggleLink(props.context.state, props.context.tree, props.node, props.link),
+          );
+          ev.preventDefault();
+        }}></span>
+      <span className="link-content">
+        {content === "" ? <span className="empty-content">{props.link}</span> : content}
+      </span>
+    </span>
   );
 }
 
