@@ -23,6 +23,10 @@
     {
       "date": "2020-05-12",
       "title": "Made my task list publicly available here: https://thinktool.io/work.html"
+    },
+    {
+      "date": "2020-05-12",
+      "title": "Changed bullets such that collapsed bullets are now rings, and expanded bullets are filled discs."
     }
   ]
 }
