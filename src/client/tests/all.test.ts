@@ -1,5 +1,7 @@
-import * as T from "../client/tree";
-import * as D from "../client/data";
+/// <reference types="@types/jest" />
+
+import * as T from "../src/tree";
+import * as D from "../src/data";
 
 test("Creating a thing with a custom ID returns that ID.", () => {
   expect(D.create(D.empty, "custom-id")[1]).toBe("custom-id");
