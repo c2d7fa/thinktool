@@ -200,6 +200,10 @@ a.plain-text-link:hover {
   background-image: url(/bullet-link-expanded.svg);
 }
 
+.link-bullet.terminal {
+  background-image: url(/bullet-link-expanded.svg);
+}
+
 .link-content {
   border-bottom: 2px solid transparent;
 

@@ -69,11 +69,10 @@ function ExternalLink(props: {link: string}) {
 function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) {
   const content = D.contentText(props.context.state, props.link);
 
-  const expanded =
-    !(
-      D.hasChildren(props.context.state, props.link) ||
-      D.otherParents(props.context.state, props.link).length > 0
-    ) || T.isLinkOpen(props.context.tree, props.node, props.link);
+  const expanded = T.isLinkOpen(props.context.tree, props.node, props.link);
+  const terminal =
+    !D.hasChildren(props.context.state, props.link) &&
+    D.otherParents(props.context.state, props.link).length === 0;
 
   return (
     <span
@@ -81,7 +80,7 @@ function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) 
         T.isLinkOpen(props.context.tree, props.node, props.link) ? " internal-link-open" : ""
       }`}>
       <span
-        className={`link-bullet ${expanded ? "expanded" : "collapsed"}`}
+        className={`link-bullet ${terminal ? "terminal" : expanded ? "expanded" : "collapsed"}`}
         onMouseDown={(ev) => {
           ev.preventDefault();
         }}
