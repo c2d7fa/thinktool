@@ -54,7 +54,7 @@ function useBatched(cooldown: number): {update(key: string, callback: () => void
       delete timeouts.current[key];
     }
     callbacks.current[key] = callback;
-    timeouts.current[key] = setTimeout(() => {
+    timeouts.current[key] = window.setTimeout(() => {
       callback();
       delete callbacks.current[key];
     }, cooldown);
