@@ -461,10 +461,11 @@ function App({
       ref={appRef}
       onFocus={(ev) => {
         if (ev.target === appRef.current) {
+          console.log("Unfocusing item due to click on background");
           context.setTree(T.unfocus(context.tree));
         }
       }}
-      tabIndex={0}
+      tabIndex={-1}
       className="app">
       {context.activePopup === null ? null : (
         <ThingSelectPopup
