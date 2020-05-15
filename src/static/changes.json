@@ -27,6 +27,10 @@
     {
       "date": "2020-05-12",
       "title": "Changed bullets such that collapsed bullets are now rings, and expanded bullets are filled discs."
+    },
+    {
+      "date": "2020-05-15",
+      "title": "Made it possible to toggle whether or not the toolbar is shown."
     }
   ]
 }

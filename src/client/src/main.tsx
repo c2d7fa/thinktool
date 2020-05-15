@@ -452,6 +452,8 @@ function App({
     }
   }, [context.drag]);
 
+  const [toolbarShown, setToolbarShown] = React.useState<boolean>(true);
+
   const appRef = React.useRef<HTMLDivElement>(null);
 
   return (
@@ -507,6 +509,9 @@ function App({
         <a className="logo" href="/">
           Thinktool
         </a>
+        <button onClick={() => setToolbarShown(!toolbarShown)}>
+          {toolbarShown ? "Hide" : "Show"} toolbar
+        </button>
         <div id="current-user">
           <a className="username" href="/user.html">
             {username}
@@ -516,7 +521,7 @@ function App({
           </a>
         </div>
       </div>
-      <Toolbar context={context} />
+      {toolbarShown ? <Toolbar context={context} /> : null}
       <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />
       <Changelog
         changelog={context.changelog}
