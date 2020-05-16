@@ -601,6 +601,40 @@ app.post("/newsletter/subscribe", async (req, res) => {
     .send(`${req.body.email} is now subscribed to the newsletter.`);
 });
 
+app.get("/unsubscribe", async (req, res) => {
+  return res
+    .status(200)
+    .send(
+      `To confirm that you want to unsubscribe from the newsletter, please click this button: <form action="/unsubscribe?key=${req.query.key}" method="post"><input type="submit" value="Unsubscribe from newsletter"/></form>`,
+    );
+});
+
+app.post("/unsubscribe", async (req, res) => {
+  const key = req.query.key;
+  if (typeof key !== "string") {
+    console.warn("User tried to unsubscribe from newsletter but did not provide key", key);
+    return res
+      .status(400)
+      .send(
+        `An error occurred while trying to unsubscribe you from the newsletter. Did you use the correct link?<p>If you can't unsubscribe, please send an email to jonas@thinktool.io, and I'll do it for you manually :)`,
+      );
+  }
+
+  const result = await DB.unsubscribe(key);
+
+  if (result === "invalid-key") {
+    console.warn("User tried to unsubscribe with invalid key", key);
+    return res
+      .status(400)
+      .send(
+        `The key <code>${key}</code> was not recognized. Did you use the correct link?<p>If you can't unsubscribe, please send an email to jonas@thinktool.io, and I'll do it for you manually :)`,
+      );
+  } else {
+    const email = result[1];
+    return res.status(200).send(`Succesfully unsubscribed ${email} from the newsletter.`);
+  }
+});
+
 // Error handling
 app.use((req, res, next) => {
   if (!res.headersSent) res.type("text/plain").status(404).send("404 Not Found");

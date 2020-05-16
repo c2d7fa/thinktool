@@ -18,6 +18,7 @@
     "typescript": "latest"
   },
   "scripts": {
+    "watch": "npx parcel watch server.ts -t node -d ../../dist/server -o server.js",
     "check": "tsc --noEmit"
   }
 }
