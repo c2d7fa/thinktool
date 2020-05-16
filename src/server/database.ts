@@ -303,3 +303,18 @@ export async function setTutorialFinished(userId: UserId, finished: boolean): Pr
   await client.query(`UPDATE users SET tutorial_finished = $2 WHERE name = $1`, [userId.name, finished]);
   client.release();
 }
+
+export async function unsubscribe(key: string): Promise<["ok", string] | "invalid-key"> {
+  const client = await pool.connect();
+  const result = await client.query(
+    "UPDATE newsletter_subscriptions SET unsubscribed = NOW() WHERE unsubscribe_token = $1 RETURNING email",
+    [key],
+  );
+  client.release();
+
+  if (result.rowCount !== 1) {
+    return "invalid-key";
+  }
+
+  return ["ok", result.rows[0].email];
+}
