@@ -35,9 +35,9 @@ with smtplib.SMTP_SSL(host=smtp_host, port=smtp_port) as smtp_conn:
   def send_email(email, text, html, unsubscribe_post_url):
     message = MIMEMultipart("alternative") # MIME type is multipart/alternative
     message["Subject"] = subject
-    message["From"] = "newsletter@thinktool.io"
+    message["From"] = "Thinktool Newsletter <newsletter@thinktool.io>"
     message["To"] = email
-    message["List-Unsubscribe"] = "<{}>".format(unsubscribe_post_url)
+    message["List-Unsubscribe"] = "<{}>, <mailto:newsletter@thinktool.io?subject=unsubscribe>".format(unsubscribe_post_url)
     message["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
     text_part = MIMEText(text, "plain")
     html_part = MIMEText(html, "html")
