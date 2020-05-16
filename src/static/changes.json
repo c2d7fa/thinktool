@@ -31,6 +31,10 @@
     {
       "date": "2020-05-15",
       "title": "Made it possible to toggle whether or not the toolbar is shown."
+    },
+    {
+      "date": "2020-05-16",
+      "title": "Show a bullet graphic next to the note that is currently zoomed in, instead of highlighting it in bold."
     }
   ]
 }

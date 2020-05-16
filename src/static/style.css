@@ -424,25 +424,23 @@ a.plain-text-link:hover {
 }
 
 .selected-content {
-  font-weight: bold;
+  display: flex;
 }
 
-.selected-content {
-  display: block;
-  margin: -0.5em -0.5em;
-  padding: 0.5em 0.5em;
-  border-radius: 6px;
-  border: 1px solid rgba(0, 0, 0, 0%);
+.selected-content::before {
+  content: "";
+  display: inline-block;
 
-  transition: border-color 0.3s ease;
-}
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  margin-right: calc(1rem);
+  margin-left: calc(-1rem - 18px);
 
-.selected-content:hover {
-  border-color: #f0f0f0;
-}
+  cursor: default;
+  background-repeat: no-repeat;
 
-.selected-content:focus-within {
-  border-color: #d0d0d0;
+  background-image: url(/bullet-link-expanded.svg);
 }
 
 .children {
