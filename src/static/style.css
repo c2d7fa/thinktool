@@ -980,7 +980,10 @@ h1.link-section:first-child {
   left: 2rem;
 
   width: 24rem;
+  max-width: calc(100vw - 6rem);
   padding: 1rem;
+
+  max-height: calc(100vh - 6rem);
 
   background-color: hsl(0, 0%, 97%);
   border-radius: 6px;

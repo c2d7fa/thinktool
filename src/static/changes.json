@@ -35,6 +35,10 @@
     {
       "date": "2020-05-16",
       "title": "Show a bullet graphic next to the note that is currently zoomed in, instead of highlighting it in bold."
+    },
+    {
+      "date": "2020-05-16",
+      "title": "Improve display of update list on devices with narrow screens."
     }
   ]
 }
