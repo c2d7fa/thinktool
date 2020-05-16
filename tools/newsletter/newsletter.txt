@@ -1,0 +1,60 @@
+Thank you for signing up for this roughly monthly newsletter for Thinktool
+(https://thinktool.io/), an associative note-taking app designed to help you
+understand complex topics.
+
+I've been working on Thinktool for a couple of months now. While still
+unpolished, I think it's coming along nicely, if I say so myself.
+
+Reading your feedback has been the highlight of this project so far for me.
+Although I've been programming since I was in my teens, this is my first attempt
+at making something for other people, by myself. Actually putting it out there
+is exciting — and a little bit scary!
+
+# How I'm working on Thinktool
+
+Although I would love to see Thinktool eventually become profitable, it's
+currently just a side-project that I'm spending 5-20 hours a week on. That's not
+much time, so I'm carefully prioritizing tasks. Feedback helps me figure out
+what's important and what's not. If Thinktool looks like something that'll
+eventually be useful to you, you should make sure to send me your feedback, so I
+can focus on the parts that are important to you!
+
+I thought it might be fun to let you have a look at what I'm currently doing, so
+I've now made my task list public. If you want to stay updated on what's next
+for Thinktool, you can now spy on me here:
+
+https://thinktool.io/work.html
+
+# An offline app?
+
+I originally planned for Thinktool to be available only as a web app. However,
+I've gotten a lot of feedback from people that want to have their notes
+available offline. Given how important my notes are to me, I can certainly
+empathize with this view. In fact, an offline app is something that I would use
+myself.
+
+That's why I'm looking into creating an offline desktop app for Thinktool.
+
+This is technically quite challenging, so I've decided to do it in phases. Phase
+one will be to have a basic prototype that can do everything that the online
+version can do, but which saves to a local file. I am planning on adding login,
+synchronization, automatic updates, etc., etc. later on.
+
+# Export to Roam
+
+I'm also working on other features at the same time as the offline app. One cool
+feature that I recently added is the ability to export all your notes to Roam
+Research. If you're worried about Thinktool disappearing, I hope this feature
+will give you some peace of mind.
+
+# Stay tuned!
+
+I hope you found this update interesting. If not, you can unsubscribe by
+following this link:
+
+https://api.thinktool.io/unsubscribe?key={unsubscribe}
+
+If you want to send me your feedback, just reply to this email, or send your
+feedback to jonas@thinktool.io. Thanks for reading!
+
+— Jonas
