@@ -41,8 +41,15 @@ function ToolbarButton(props: {
           ? "tutorial-not-introduced"
           : ""
       }
-      onClick={() => {
+      tabIndex={0}
+      onFocus={(ev) => {
+        console.log("Attempted focusing button %o", props.name);
+      }}
+      onMouseDown={(ev) => console.log("Mouse down on button %o", props.name)}
+      onClick={(ev) => {
+        console.log("Clicked button %o", props.name);
         props.action();
+        ev.preventDefault();
       }}
       title={props.description + (props.shortcut === undefined ? "" : ` [${props.shortcut}]`)}
       disabled={(T.focused(props.context.tree) === null && !props.alwaysEnabled) || props.disabled}>
