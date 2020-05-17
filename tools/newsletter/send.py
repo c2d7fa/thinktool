@@ -39,6 +39,7 @@ with smtplib.SMTP_SSL(host=smtp_host, port=smtp_port) as smtp_conn:
     message["To"] = email
     message["List-Unsubscribe"] = "<{}>, <mailto:newsletter@thinktool.io?subject=unsubscribe>".format(unsubscribe_post_url)
     message["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
+    message["Bcc"] = "newsletter+cc@thinktool.io"  # (Note: Intercepted by send_message; not actually sent)
     text_part = MIMEText(text, "plain")
     html_part = MIMEText(html, "html")
     message.attach(text_part)
