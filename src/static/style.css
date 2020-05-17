@@ -78,15 +78,15 @@ ul.outline-tree {
 }
 
 .bullet.collapsed {
-  background-image: url(/bullet-collapsed.svg);
+  background-image: url(bullet-collapsed.svg);
 }
 
 .bullet.expanded {
-  background-image: url(/bullet-expanded.svg);
+  background-image: url(bullet-expanded.svg);
 }
 
 .bullet.terminal {
-  background-image: url(/bullet-terminal.svg);
+  background-image: url(bullet-terminal.svg);
 }
 
 .connection-tag {
@@ -204,15 +204,15 @@ a.plain-text-link:hover {
 }
 
 .link-bullet.collapsed {
-  background-image: url(/bullet-link-collapsed.svg);
+  background-image: url(bullet-link-collapsed.svg);
 }
 
 .link-bullet.expanded {
-  background-image: url(/bullet-link-expanded.svg);
+  background-image: url(bullet-link-expanded.svg);
 }
 
 .link-bullet.terminal {
-  background-image: url(/bullet-link-expanded.svg);
+  background-image: url(bullet-link-expanded.svg);
 }
 
 .link-content {
@@ -440,7 +440,7 @@ a.plain-text-link:hover {
   cursor: default;
   background-repeat: no-repeat;
 
-  background-image: url(/bullet-link-expanded.svg);
+  background-image: url(bullet-link-expanded.svg);
 }
 
 .children {
