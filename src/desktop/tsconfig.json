@@ -5,6 +5,6 @@
     "jsx": "react",
     "module": "CommonJS",
     "strict": true,
-    "outDir": "dist"
+    "outDir": "build"
   }
 }

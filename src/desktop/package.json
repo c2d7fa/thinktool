@@ -1,5 +1,6 @@
 {
   "name": "thinktool-desktop-client",
+  "version": "0.0.1",
   "private": true,
   "devDependencies": {
     "electron": "^8.3.0",
@@ -11,8 +12,9 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "build-static": "cp ../../dist/static/* dist && cp index.html dist",
-    "build": "tsc && npm run build-static",
-    "start": "electron dist/start.js"
+    "build-static": "cp ../../dist/static/* build && cp index.html build",
+    "build": "mkdir -p build && tsc && npm run build-static",
+    "start": "electron build/start.js"
+  },
   }
 }
