@@ -15,7 +15,7 @@
     "check": "tsc --noEmit",
     "build-static": "cp ../../dist/static/* build && cp index.html build",
     "build": "mkdir -p build && tsc && npm run build-static",
-    "start": "electron build/start.js"
+    "start": "npx electron-builder --dir && ./dist/linux-unpacked/thinktool-desktop-client"
   },
   "main": "build/start.js",
   "build": {
