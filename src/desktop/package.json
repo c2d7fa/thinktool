@@ -23,6 +23,16 @@
     "productName": "Thinktool Desktop Prototype",
     "files": [
       "build/**/*"
-    ]
+    ],
+    "win": {
+      "target": "portable"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity"
+    }
   }
 }
