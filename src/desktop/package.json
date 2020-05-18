@@ -4,6 +4,7 @@
   "private": true,
   "devDependencies": {
     "electron": "^8.3.0",
+    "electron-builder": "^22.6.1",
     "parcel-bundler": "^1.12.4",
     "typescript": "^3.8.3"
   },
@@ -16,5 +17,12 @@
     "build": "mkdir -p build && tsc && npm run build-static",
     "start": "electron build/start.js"
   },
+  "main": "build/start.js",
+  "build": {
+    "appId": "io.thinktool.desktop.prototype",
+    "productName": "Thinktool Desktop Prototype",
+    "files": [
+      "build/**/*"
+    ]
   }
 }
