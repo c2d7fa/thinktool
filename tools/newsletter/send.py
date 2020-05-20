@@ -61,7 +61,7 @@ with smtplib.SMTP_SSL(host=smtp_host, port=smtp_port) as smtp_conn:
 
   print("\x1B[1mPress ENTER to send...\x1B[0m")
 
-  postgres.execute("SELECT email, registered, unsubscribe_token FROM newsletter_subscriptions ORDER BY registered ASC NULLS FIRST")
+  postgres.execute("SELECT email, registered, unsubscribe_token FROM newsletter_subscriptions WHERE last_sent IS NULL ORDER BY registered ASC NULLS FIRST")
   for subscription in postgres.fetchall():
     email = subscription[0]
     registered = subscription[1]
