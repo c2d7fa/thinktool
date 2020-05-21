@@ -16,7 +16,7 @@
     "build-static": "cp ../../dist/static/* build && cp index.html build",
     "build": "mkdir -p build && tsc && npm run build-static",
     "start": "npx electron-builder --dir && ./dist/linux-unpacked/thinktool-desktop-client",
-    "bundle": "npm run build && rm -f build/icon.png && npx electron-builder -lw && echo 'Output in ./dist/'"
+    "bundle": "npm run build && rm -f build/icon.png && npx electron-builder && echo 'Output in ./dist/'"
   },
   "main": "build/start.js",
   "build": {
@@ -32,7 +32,7 @@
       "target": "AppImage"
     },
     "mac": {
-      "target": "dmg",
+      "target": "tar.gz",
       "category": "public.app-category.productivity"
     }
   }
