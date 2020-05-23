@@ -15,12 +15,11 @@ Source code:
 
 The generated output goes in the `/dist/` directory. Each subdirectory is intended to be deployed differently:
 
-| Directory        | Purpose                                                                              |
-| ---------------- | ------------------------------------------------------------------------------------ |
-| `/dist/`         | Output files generated from `/src/`. Each subdirectory represents a sepearte target. |
-| `/dist/static/`  | Static content, including HTML, CSS and JavaScript.                                  |
-| `/dist/server/`  | Code for dynamic server running Node.js.                                             |
-| `/dist/desktop/` | Static content for the Electron-based desktop app.                                   |
+| Directory       | Purpose                                                                              |
+| --------------- | ------------------------------------------------------------------------------------ |
+| `/dist/`        | Output files generated from `/src/`. Each subdirectory represents a sepearte target. |
+| `/dist/static/` | Static content, including HTML, CSS and JavaScript.                                  |
+| `/dist/server/` | Code for dynamic server running Node.js.                                             |
 
 Tools and configuration:
 
@@ -49,9 +48,10 @@ Set the following environment variables:
 - `DIAFORM_API_HOST` &mdash; API server host, including the protocol, e.g.
   `https://api.thinktool.io`.
 
-Then build the client code and other static resources with:
+Then build the web client, the desktop client and other static resources with:
 
     $ ./tools/build-client.sh
+    $ ./tools/build-desktop.sh
     $ ./tools/build-static.sh
 
 Then, set `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` and run
@@ -96,7 +96,3 @@ Once you have the `thinktool` image, run it with the environment variables given
         -e DIAFORM_STATIC_HOST \
         -p 80:80 \
         thinktool
-
-## Desktop
-
-We are currently working on an Electron-based desktop app, but it isn't ready yet.
