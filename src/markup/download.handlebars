@@ -1,0 +1,63 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Thinktool &ndash; Desktop Client</title>
+  <link rel="stylesheet" href="/landing.css">
+  <link rel="icon" href="/icon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+  <div id="top-bar">
+    <span id="logo">Thinktool</span>
+    <a href="/demo.html" class="demo demo-small">Demo</a>
+    <a id="login-link" href="/login.html">Log in</a>
+  </div>
+  <main>
+    <div class="block small centered">
+      <h1>Thinktool on the desktop.</h1>
+
+      <p>I'm working on creating an offline desktop app for Thinktool. With this, you can be confident that your data is
+        totally private and secure. <strong>The desktop client is highly experimental,</strong> and currently does not
+        implement most of the functionality of the web app.</p>
+    </div>
+
+    <div class="block box small centered">
+      <p>The current version is a <strong>pre-prototype intended purely for testing</strong>. It provides the same
+        functionality as
+        the Thinktool demo, and as such does not allow you to save your notes.</p>
+      <p>Get it for Linux here: <a href="/Thinktool Desktop Prototype-0.0.1.AppImage" download><span>Thinktool Desktop
+            Prototype-0.0.1.AppImage</span></a>. Just make it executable with <code>chmod +x &lt;FILENAME&gt;</code> and
+        then run
+        it.</p>
+      <p>Get it for Windows here: <a href="/Thinktool Desktop Prototype 0.0.1.exe" download><span>Thinktool Desktop
+            Prototype-0.0.1.exe</span></a>. It's a so-called portable executable, so you don't have to install anything
+        &ndash; just run the file.</p>
+      <p>I don't own a machine that runs macOS, so unfortunately I can't provide a tested application for macOS.
+        However, I
+        did manage to create this file: <a href="/Thinktool Desktop Prototype-0.0.1-mac.tar.gz" download><span>Thinktool
+            Desktop
+            Prototype 0.0.1-mac.tar.gz</span></a>. I have no idea how to run it, or whether it works at all.</p>
+    </div>
+
+    <div class="block edge newsletter-outer">
+      <div class="small centered newsletter">
+        <div>
+          <h1>Get notified when the desktop client is better.</h1>
+          <p>Receive monthly updates about new features
+            and get a look behind the scenes at Thinktool by subscribing to the
+            newsletter.</p>
+        </div>
+        <form action="{{apiUrl}}/newsletter/subscribe" method="POST">
+          <input type="email" name="email" required placeholder="you@example.com" />
+          <input type="submit" value="Subscribe" />
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>fetch(`{{apiUrl}}/ping/desktop`, { mode: " no-cors" });</script>
+</body>
+
+</html>

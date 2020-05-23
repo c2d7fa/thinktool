@@ -1,0 +1,39 @@
+{
+  "name": "thinktool-desktop-client",
+  "version": "0.0.1",
+  "private": true,
+  "devDependencies": {
+    "electron": "^8.3.0",
+    "electron-builder": "^22.6.1",
+    "parcel-bundler": "^1.12.4",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "thinktool-client": "file:../client"
+  },
+  "scripts": {
+    "check": "./node_modules/.bin/tsc --noEmit",
+    "build-static": "cp ../../dist/static/* build && cp index.html build",
+    "build": "mkdir -p build && ./node_modules/.bin/tsc && npm run build-static",
+    "start": "./node_modules/.bin/electron-builder --dir && ./dist/linux-unpacked/thinktool-desktop-client",
+    "bundle": "npm run build && rm -f build/icon.png && ./node_modules/.bin/electron-builder -lwm && echo 'Output in ./dist/'"
+  },
+  "main": "build/start.js",
+  "build": {
+    "appId": "io.thinktool.desktop.prototype",
+    "productName": "Thinktool Desktop Prototype",
+    "files": [
+      "build/**/*"
+    ],
+    "win": {
+      "target": "portable"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "mac": {
+      "target": "tar.gz",
+      "category": "public.app-category.productivity"
+    }
+  }
+}

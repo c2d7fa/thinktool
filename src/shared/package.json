@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "tsc"
+    "build": "./node_modules/.bin/tsc"
   },
   "files": [
     "dist/"
