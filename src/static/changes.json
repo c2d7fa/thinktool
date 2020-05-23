@@ -39,6 +39,10 @@
     {
       "date": "2020-05-16",
       "title": "Improve display of update list on devices with narrow screens."
+    },
+    {
+      "date": "2020-05-23",
+      "title": "Created a very basic prototype of an offline desktop client, currently just containing the demo."
     }
   ]
 }
