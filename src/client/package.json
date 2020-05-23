@@ -1,5 +1,6 @@
 {
   "name": "thinktool-client",
+  "version": "0.0.1",
   "private": true,
   "devDependencies": {
     "@babel/cli": "^7.8.4",
@@ -22,10 +23,10 @@
     "react-dom": "^16.13.1"
   },
   "scripts": {
-    "check": "tsc",
-    "build": "npx babel src/ -D --extensions .ts,.tsx --out-dir dist && tsc",
-    "watch": "npx babel -w --verbose src/ -D --extensions .ts,.tsx --out-dir dist",
-    "test": "jest"
+    "check": "./node_modules/.bin/tsc",
+    "build": "./node_modules/.bin/babel src/ -D --extensions .ts,.tsx --out-dir dist && tsc",
+    "watch": "./node_modules/.bin/babel -w --verbose src/ -D --extensions .ts,.tsx --out-dir dist",
+    "test": "./node_modules/.bin/jest"
   },
   "files": [
     "dist/"

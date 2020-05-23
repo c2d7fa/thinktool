@@ -1,5 +1,6 @@
 {
   "name": "thinktool-web-client",
+  "version": "0.0.1",
   "private": true,
   "devDependencies": {
     "parcel-bundler": "^1.12.4",
@@ -9,8 +10,8 @@
     "thinktool-client": "file:../client"
   },
   "scripts": {
-    "bundle": "npx parcel build -d ../../dist/static -o bundle.js -t browser main.tsx",
-    "watch": "npx parcel watch -d ../../dist/static -o bundle.js -t browser main.tsx",
-    "check": "tsc --noEmit"
+    "bundle": "./node_modules/.bin/parcel build -d ../../dist/static -o bundle.js -t browser main.tsx",
+    "watch": "./node_modules/.bin/parcel watch -d ../../dist/static -o bundle.js -t browser main.tsx",
+    "check": "./node_modules/.bin/tsc --noEmit"
   }
 }
