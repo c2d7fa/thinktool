@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - desktop
 jobs:
   api:
     runs-on: ubuntu-latest
@@ -29,8 +30,16 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v1
+      - name: Install Wine (for building desktop client)
+        # https://github.com/actions/virtual-environments/issues/743#issuecomment-616349857
+        run: |
+          sudo dpkg --add-architecture i386
+          wget -qO - https://dl.winehq.org/wine-builds/winehq.key | sudo apt-key add -
+          sudo add-apt-repository ppa:cybermax-dexter/sdl2-backport
+          sudo apt-add-repository "deb https://dl.winehq.org/wine-builds/ubuntu $(lsb_release -cs) main"
+          sudo apt install --install-recommends winehq-stable
       - name: Build static resources
-        run: ./tools/build-client.sh && ./tools/build-static.sh
+        run: ./tools/build-client.sh && ./tools/build-desktop.sh && ./tools/build-static.sh
         env:
           DIAFORM_API_HOST: ${{secrets.api_host}}
       - name: Deploy to Azure Storage and purge Cloudflare cache
