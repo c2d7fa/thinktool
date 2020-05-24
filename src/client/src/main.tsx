@@ -1021,7 +1021,7 @@ function UserPage(props: {server: API.Server; username: string}) {
               document.body.removeChild(element);
             }
 
-            const state = await props.server.getFullState();
+            const state = API.transformFullStateResponseIntoState(await props.server.getFullState());
             download("thinktool-export-for-roam.json", ExportRoam.exportString(state));
           }}>
           Download data for importing into Roam
@@ -1049,7 +1049,7 @@ export async function thinktoolApp({apiHost}: {apiHost: string}) {
 
   ReactDOM.render(
     <App
-      initialState={await storage.getFullState()}
+      initialState={API.transformFullStateResponseIntoState(await storage.getFullState())}
       initialTutorialFinished={await storage.getTutorialFinished()}
       username={username ?? "<error>"}
       storage={storage}
@@ -1064,7 +1064,7 @@ export async function startLocalApp({storage}: {storage: Storage.Storage}) {
 
   ReactDOM.render(
     <App
-      initialState={await storage.getFullState()}
+      initialState={API.transformFullStateResponseIntoState(await storage.getFullState())}
       initialTutorialFinished={await storage.getTutorialFinished()}
       storage={storage}
     />,
@@ -1103,3 +1103,4 @@ export async function thinktoolUser({apiHost}: {apiHost: string}) {
 }
 
 export * as Storage from "./storage";
+export {Communication} from "thinktool-shared";
