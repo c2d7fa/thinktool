@@ -1,5 +1,7 @@
 import {General as G, Communication} from "thinktool-shared";
 
+import * as ChangelogData from "./changes.json";
+
 import {State} from "./data";
 import {Context, DragInfo} from "./context";
 
@@ -249,13 +251,6 @@ function useContext({
 
   // Changelog
   const [changelogShown, setChangelogShown] = React.useState<boolean>(false);
-  const [changelog, setChangelog] = React.useState<Communication.Changelog | "loading">("loading");
-  React.useEffect(() => {
-    // [TODO] We should be able to display a changelog, even when not connected to the server.
-    if (server !== undefined) {
-      server.getChangelog().then((changelog) => setChangelog(changelog));
-    }
-  }, []);
 
   return {
     state,
@@ -292,7 +287,7 @@ function useContext({
     setTutorialState,
     changelogShown,
     setChangelogShown,
-    changelog,
+    changelog: ChangelogData,
     storage,
     server,
   };
