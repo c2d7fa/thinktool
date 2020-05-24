@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-# NOTE: This script should only be run AFTER running build-client.sh!
-
 set -e
 
 echo "Preparing to build desktop client for Linux..."
