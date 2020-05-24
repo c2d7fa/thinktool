@@ -13,10 +13,10 @@
   },
   "scripts": {
     "check": "./node_modules/.bin/tsc --noEmit",
-    "build-static": "cp ../../dist/static/* build && cp index.html build",
+    "build-static": "cp ../../dist/static/* build && cp index.html build && rm -f build/icon.png",
     "build": "mkdir -p build && ./node_modules/.bin/tsc && npm run build-static",
     "start": "./node_modules/.bin/electron-builder --dir && ./dist/linux-unpacked/thinktool-desktop-client",
-    "bundle": "npm run build && rm -f build/icon.png && ./node_modules/.bin/electron-builder -lwm && echo 'Output in ./dist/'"
+    "bundle": "npm run build && ./node_modules/.bin/electron-builder -lwm && echo 'Output in ./dist/'"
   },
   "main": "build/start.js",
   "build": {
