@@ -7,6 +7,7 @@ import * as Data from "./data";
 import * as T from "./tree";
 import * as Tutorial from "./tutorial";
 import * as API from "./server-api";
+import * as Storage from "./storage";
 import {actionsWith} from "./actions";
 import * as ExportRoam from "./export-roam";
 
@@ -127,12 +128,14 @@ function useContext({
   initialState,
   initialTutorialFinished,
   local,
+  storage,
   server,
 }: {
   initialState: State;
   initialTutorialFinished: boolean;
   local?: boolean;
-  server: API.Server;
+  storage: Storage.Storage;
+  server?: API.Server;
 }): Context {
   const [state, setLocalState] = React.useState(initialState);
 
@@ -146,15 +149,15 @@ function useContext({
       if (!local) {
         const diff = diffState(state, newState);
         for (const thing of diff.deleted) {
-          server.deleteThing(thing);
+          storage.deleteThing(thing);
         }
         for (const thing of diff.changedContent) {
           batched.update(thing, () => {
-            server.setContent(thing, Data.content(newState, thing));
+            storage.setContent(thing, Data.content(newState, thing));
           });
         }
         if (diff.added.length !== 0 || diff.changed.length !== 0) {
-          server.updateThings(
+          storage.updateThings(
             [...diff.added, ...diff.changed].map((thing) => ({
               name: thing,
               content: Data.content(newState, thing),
@@ -183,9 +186,9 @@ function useContext({
     if (!local) {
       const diff = diffState(state, oldState);
       for (const thing of diff.deleted) {
-        server.deleteThing(thing);
+        storage.deleteThing(thing);
       }
-      server.updateThings(
+      storage.updateThings(
         [...diff.added, ...diff.changed].map((thing) => ({
           name: thing,
           content: Data.content(oldState, thing),
@@ -246,7 +249,7 @@ function useContext({
   function setTutorialState(tutorialState: Tutorial.State): void {
     setTutorialState_(tutorialState);
     if (!Tutorial.isActive(tutorialState) && !local) {
-      server.setTutorialFinished();
+      storage.setTutorialFinished();
     }
   }
 
@@ -254,7 +257,10 @@ function useContext({
   const [changelogShown, setChangelogShown] = React.useState<boolean>(false);
   const [changelog, setChangelog] = React.useState<Communication.Changelog | "loading">("loading");
   React.useEffect(() => {
-    server.getChangelog().then((changelog) => setChangelog(changelog));
+    // [TODO] We should be able to display a changelog, even when not connected to the server.
+    if (server !== undefined) {
+      server.getChangelog().then((changelog) => setChangelog(changelog));
+    }
   }, []);
 
   return {
@@ -293,6 +299,7 @@ function useContext({
     changelogShown,
     setChangelogShown,
     changelog,
+    storage,
     server,
   };
 }
@@ -302,15 +309,17 @@ function App({
   initialTutorialFinished,
   username,
   local,
+  storage,
   server,
 }: {
   initialState: State;
   initialTutorialFinished: boolean;
   username: string;
   local?: boolean;
-  server: API.Server;
+  storage: Storage.Storage;
+  server?: API.Server;
 }) {
-  const context = useContext({initialState, initialTutorialFinished, local, server});
+  const context = useContext({initialState, initialTutorialFinished, local, storage, server});
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
@@ -325,9 +334,11 @@ function App({
   React.useEffect(() => {
     if (local) return;
 
+    if (context.server === undefined) return;
+
     return context.server.onChanges(async (changes) => {
       for (const changedThing of changes) {
-        const thingData = await context.server.getThingData(changedThing);
+        const thingData = await context.server!.getThingData(changedThing);
 
         if (thingData === null) {
           // Thing was deleted
@@ -517,9 +528,11 @@ function App({
           <a className="username" href="/user.html">
             {username}
           </a>
-          <a className="log-out" href={context.server.logOutUrl}>
-            log out
-          </a>
+          {context.server && (
+            <a className="log-out" href={context.server.logOutUrl}>
+              log out
+            </a>
+          )}
         </div>
       </div>
       {toolbarShown ? <Toolbar context={context} /> : null}
@@ -1033,22 +1046,26 @@ function UserPage(props: {server: API.Server; username: string}) {
 
 // ==
 
+// Web app that synchronizes with the server over API.
 export async function thinktoolApp({apiHost}: {apiHost: string}) {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
 
   const server = API.initialize(apiHost);
 
-  const username = server.getUsername();
+  const username = await server.getUsername();
   if (username === null) {
     console.log("Not logged in. Redirecting to login page.");
     window.location.href = "/login.html";
   }
 
+  const storage = Storage.server(server);
+
   ReactDOM.render(
     <App
-      initialState={await server.getFullState()}
-      initialTutorialFinished={await server.getTutorialFinished()}
-      username={(await server.getUsername()) ?? "<error!>"}
+      initialState={await storage.getFullState()}
+      initialTutorialFinished={await storage.getTutorialFinished()}
+      username={username ?? "<error>"}
+      storage={storage}
       server={server}
     />,
     appElement,
@@ -1071,6 +1088,7 @@ export async function thinktoolDemo({
       username={"demo"}
       local
       server={API.initialize(apiHost)}
+      storage={Storage.ignore()}
     />,
     appElement,
   );
