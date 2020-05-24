@@ -654,7 +654,7 @@ function ConnectionTag(p: {context: Context; tag: string}) {
   return <span className="connection-tag">{Data.contentText(p.context.state, p.tag)}</span>;
 }
 
-export function ExpandableItem(p: {
+function ExpandableItem(p: {
   context: Context;
   node: T.NodeRef;
   parent?: T.NodeRef;
@@ -1059,6 +1059,19 @@ export async function thinktoolApp({apiHost}: {apiHost: string}) {
   );
 }
 
+export async function startLocalApp({storage}: {storage: Storage.Storage}) {
+  const appElement = document.querySelector("#app")! as HTMLDivElement;
+
+  ReactDOM.render(
+    <App
+      initialState={await storage.getFullState()}
+      initialTutorialFinished={await storage.getTutorialFinished()}
+      storage={storage}
+    />,
+    appElement,
+  );
+}
+
 export async function thinktoolDemo({
   apiHost,
   data,
@@ -1088,3 +1101,5 @@ export async function thinktoolUser({apiHost}: {apiHost: string}) {
     userElement,
   );
 }
+
+export * as Storage from "./storage";
