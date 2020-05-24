@@ -4,6 +4,7 @@ import {Tree} from "./tree";
 import * as Tutorial from "./tutorial";
 import {Communication} from "thinktool-shared";
 import {Server} from "./server-api";
+import {Storage} from "./storage";
 
 export interface DragInfo {
   current: T.NodeRef | null;
@@ -12,7 +13,8 @@ export interface DragInfo {
 }
 
 export interface Context {
-  server: Server;
+  storage: Storage;
+  server?: Server;
 
   state: State;
   setState(value: State): void;

@@ -125,11 +125,6 @@ export function initialize(apiHost: string) {
     await api(`api/account/tutorial-finished`, {method: "PUT", body: "true"});
   }
 
-  // NOTE: This actually fetches from static server, not API server!
-  async function getChangelog(): Promise<Communication.Changelog> {
-    return (await (await fetch("/changes.json")).json()) as Communication.Changelog;
-  }
-
   return {
     transformFullStateResponseIntoState,
     getFullState,
@@ -147,6 +142,5 @@ export function initialize(apiHost: string) {
     setPassword,
     getTutorialFinished,
     setTutorialFinished,
-    getChangelog,
   };
 }

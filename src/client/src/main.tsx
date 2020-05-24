@@ -1,5 +1,7 @@
 import {General as G, Communication} from "thinktool-shared";
 
+import * as ChangelogData from "./changes.json";
+
 import {State} from "./data";
 import {Context, DragInfo} from "./context";
 
@@ -7,6 +9,7 @@ import * as Data from "./data";
 import * as T from "./tree";
 import * as Tutorial from "./tutorial";
 import * as API from "./server-api";
+import * as Storage from "./storage";
 import {actionsWith} from "./actions";
 import * as ExportRoam from "./export-roam";
 
@@ -126,13 +129,13 @@ function diffState(
 function useContext({
   initialState,
   initialTutorialFinished,
-  local,
+  storage,
   server,
 }: {
   initialState: State;
   initialTutorialFinished: boolean;
-  local?: boolean;
-  server: API.Server;
+  storage: Storage.Storage;
+  server?: API.Server;
 }): Context {
   const [state, setLocalState] = React.useState(initialState);
 
@@ -143,31 +146,29 @@ function useContext({
       undo.pushState(state);
       setLocalState(newState);
 
-      if (!local) {
-        const diff = diffState(state, newState);
-        for (const thing of diff.deleted) {
-          server.deleteThing(thing);
-        }
-        for (const thing of diff.changedContent) {
-          batched.update(thing, () => {
-            server.setContent(thing, Data.content(newState, thing));
-          });
-        }
-        if (diff.added.length !== 0 || diff.changed.length !== 0) {
-          server.updateThings(
-            [...diff.added, ...diff.changed].map((thing) => ({
-              name: thing,
-              content: Data.content(newState, thing),
-              children: Data.childConnections(newState, thing).map((c) => {
-                return {
-                  name: c.connectionId,
-                  child: Data.connectionChild(newState, c),
-                  tag: Data.tag(newState, c) ?? undefined,
-                };
-              }),
-            })),
-          );
-        }
+      const diff = diffState(state, newState);
+      for (const thing of diff.deleted) {
+        storage.deleteThing(thing);
+      }
+      for (const thing of diff.changedContent) {
+        batched.update(thing, () => {
+          storage.setContent(thing, Data.content(newState, thing));
+        });
+      }
+      if (diff.added.length !== 0 || diff.changed.length !== 0) {
+        storage.updateThings(
+          [...diff.added, ...diff.changed].map((thing) => ({
+            name: thing,
+            content: Data.content(newState, thing),
+            children: Data.childConnections(newState, thing).map((c) => {
+              return {
+                name: c.connectionId,
+                child: Data.connectionChild(newState, c),
+                tag: Data.tag(newState, c) ?? undefined,
+              };
+            }),
+          })),
+        );
       }
     }
   }
@@ -180,25 +181,23 @@ function useContext({
     }
     setLocalState(oldState);
     // TODO: Code duplication, see setState above
-    if (!local) {
-      const diff = diffState(state, oldState);
-      for (const thing of diff.deleted) {
-        server.deleteThing(thing);
-      }
-      server.updateThings(
-        [...diff.added, ...diff.changed].map((thing) => ({
-          name: thing,
-          content: Data.content(oldState, thing),
-          children: Data.childConnections(oldState, thing).map((c) => {
-            return {
-              name: c.connectionId,
-              child: Data.connectionChild(oldState, c),
-              tag: Data.tag(oldState, c) ?? undefined,
-            };
-          }),
-        })),
-      );
+    const diff = diffState(state, oldState);
+    for (const thing of diff.deleted) {
+      storage.deleteThing(thing);
     }
+    storage.updateThings(
+      [...diff.added, ...diff.changed].map((thing) => ({
+        name: thing,
+        content: Data.content(oldState, thing),
+        children: Data.childConnections(oldState, thing).map((c) => {
+          return {
+            name: c.connectionId,
+            child: Data.connectionChild(oldState, c),
+            tag: Data.tag(oldState, c) ?? undefined,
+          };
+        }),
+      })),
+    );
   }
 
   // Selected thing:
@@ -245,17 +244,13 @@ function useContext({
   );
   function setTutorialState(tutorialState: Tutorial.State): void {
     setTutorialState_(tutorialState);
-    if (!Tutorial.isActive(tutorialState) && !local) {
-      server.setTutorialFinished();
+    if (!Tutorial.isActive(tutorialState)) {
+      storage.setTutorialFinished();
     }
   }
 
   // Changelog
   const [changelogShown, setChangelogShown] = React.useState<boolean>(false);
-  const [changelog, setChangelog] = React.useState<Communication.Changelog | "loading">("loading");
-  React.useEffect(() => {
-    server.getChangelog().then((changelog) => setChangelog(changelog));
-  }, []);
 
   return {
     state,
@@ -292,7 +287,8 @@ function useContext({
     setTutorialState,
     changelogShown,
     setChangelogShown,
-    changelog,
+    changelog: ChangelogData,
+    storage,
     server,
   };
 }
@@ -301,16 +297,16 @@ function App({
   initialState,
   initialTutorialFinished,
   username,
-  local,
+  storage,
   server,
 }: {
   initialState: State;
   initialTutorialFinished: boolean;
-  username: string;
-  local?: boolean;
-  server: API.Server;
+  username?: string;
+  storage: Storage.Storage;
+  server?: API.Server;
 }) {
-  const context = useContext({initialState, initialTutorialFinished, local, server});
+  const context = useContext({initialState, initialTutorialFinished, storage, server});
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
@@ -323,11 +319,11 @@ function App({
   // dependencies makes it reconnect every time any change is made to the state
   // (e.g. editing the content of an item).
   React.useEffect(() => {
-    if (local) return;
+    if (context.server === undefined) return;
 
     return context.server.onChanges(async (changes) => {
       for (const changedThing of changes) {
-        const thingData = await context.server.getThingData(changedThing);
+        const thingData = await context.server!.getThingData(changedThing);
 
         if (thingData === null) {
           // Thing was deleted
@@ -514,12 +510,16 @@ function App({
           {toolbarShown ? "Hide" : "Show"} toolbar
         </button>
         <div id="current-user">
-          <a className="username" href="/user.html">
-            {username}
-          </a>
-          <a className="log-out" href={context.server.logOutUrl}>
-            log out
-          </a>
+          {username && (
+            <a className="username" href="/user.html">
+              {username}
+            </a>
+          )}
+          {context.server && (
+            <a className="log-out" href={context.server.logOutUrl}>
+              log out
+            </a>
+          )}
         </div>
       </div>
       {toolbarShown ? <Toolbar context={context} /> : null}
@@ -1033,22 +1033,26 @@ function UserPage(props: {server: API.Server; username: string}) {
 
 // ==
 
+// Web app that synchronizes with the server over API.
 export async function thinktoolApp({apiHost}: {apiHost: string}) {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
 
   const server = API.initialize(apiHost);
 
-  const username = server.getUsername();
+  const username = await server.getUsername();
   if (username === null) {
     console.log("Not logged in. Redirecting to login page.");
     window.location.href = "/login.html";
   }
 
+  const storage = Storage.server(server);
+
   ReactDOM.render(
     <App
-      initialState={await server.getFullState()}
-      initialTutorialFinished={await server.getTutorialFinished()}
-      username={(await server.getUsername()) ?? "<error!>"}
+      initialState={await storage.getFullState()}
+      initialTutorialFinished={await storage.getTutorialFinished()}
+      username={username ?? "<error>"}
+      storage={storage}
       server={server}
     />,
     appElement,
@@ -1068,9 +1072,7 @@ export async function thinktoolDemo({
     <App
       initialState={API.transformFullStateResponseIntoState(data)}
       initialTutorialFinished={false}
-      username={"demo"}
-      local
-      server={API.initialize(apiHost)}
+      storage={Storage.ignore()}
     />,
     appElement,
   );

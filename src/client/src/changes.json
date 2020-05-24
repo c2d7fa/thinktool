@@ -43,6 +43,10 @@
     {
       "date": "2020-05-23",
       "title": "Created a very basic prototype of an offline desktop client, currently just containing the demo."
+    },
+    {
+      "date": "2020-05-24",
+      "title": "Remove link to user page in demo."
     }
   ]
 }
