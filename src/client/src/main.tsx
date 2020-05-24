@@ -654,7 +654,7 @@ function ConnectionTag(p: {context: Context; tag: string}) {
   return <span className="connection-tag">{Data.contentText(p.context.state, p.tag)}</span>;
 }
 
-export function ExpandableItem(p: {
+function ExpandableItem(p: {
   context: Context;
   node: T.NodeRef;
   parent?: T.NodeRef;
@@ -1021,7 +1021,7 @@ function UserPage(props: {server: API.Server; username: string}) {
               document.body.removeChild(element);
             }
 
-            const state = await props.server.getFullState();
+            const state = API.transformFullStateResponseIntoState(await props.server.getFullState());
             download("thinktool-export-for-roam.json", ExportRoam.exportString(state));
           }}>
           Download data for importing into Roam
@@ -1049,11 +1049,24 @@ export async function thinktoolApp({apiHost}: {apiHost: string}) {
 
   ReactDOM.render(
     <App
-      initialState={await storage.getFullState()}
+      initialState={API.transformFullStateResponseIntoState(await storage.getFullState())}
       initialTutorialFinished={await storage.getTutorialFinished()}
       username={username ?? "<error>"}
       storage={storage}
       server={server}
+    />,
+    appElement,
+  );
+}
+
+export async function startLocalApp({storage}: {storage: Storage.Storage}) {
+  const appElement = document.querySelector("#app")! as HTMLDivElement;
+
+  ReactDOM.render(
+    <App
+      initialState={API.transformFullStateResponseIntoState(await storage.getFullState())}
+      initialTutorialFinished={await storage.getTutorialFinished()}
+      storage={storage}
     />,
     appElement,
   );
@@ -1088,3 +1101,6 @@ export async function thinktoolUser({apiHost}: {apiHost: string}) {
     userElement,
   );
 }
+
+export * as Storage from "./storage";
+export {Communication} from "thinktool-shared";

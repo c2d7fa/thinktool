@@ -1,8 +1,9 @@
 import * as API from "./server-api";
 import * as D from "./data";
+import {Communication} from "thinktool-shared";
 
 export interface Storage {
-  getFullState(): Promise<D.State>;
+  getFullState(): Promise<Communication.FullStateResponse>;
 
   setContent(thing: string, content: string): Promise<void>;
   deleteThing(thing: string): Promise<void>;
@@ -28,7 +29,7 @@ export function server(server: API.Server): Storage {
 // Don't store anything
 export function ignore(): Storage {
   return {
-    getFullState: async () => D.empty,
+    getFullState: async () => ({things: []}),
     async setContent(thing: string, content: string) {},
     async deleteThing(thing: string) {},
     async updateThings(things: any) {},

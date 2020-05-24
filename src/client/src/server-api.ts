@@ -4,6 +4,8 @@ import {Communication} from "thinktool-shared";
 export type Server = ReturnType<typeof initialize>;
 
 export function transformFullStateResponseIntoState(response: Communication.FullStateResponse): D.State {
+  if (response.things.length === 0) return D.empty;
+
   let state: D.State = {things: {}, connections: {}};
 
   for (const thing of response.things) {
@@ -31,14 +33,8 @@ export function initialize(apiHost: string) {
   // notify us of any changes that we are ourselves responsible for.
   const clientId = Math.floor(Math.random() * Math.pow(36, 6)).toString(36);
 
-  async function getFullState(): Promise<D.State> {
-    const response = (await (await api("state")).json()) as Communication.FullStateResponse;
-
-    if (response.things.length === 0) {
-      return D.empty;
-    }
-
-    return transformFullStateResponseIntoState(response);
+  async function getFullState(): Promise<Communication.FullStateResponse> {
+    return (await (await api("state")).json()) as Communication.FullStateResponse;
   }
 
   async function getUsername(): Promise<string | null> {
