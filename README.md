@@ -48,14 +48,33 @@ Set the following environment variables:
 - `DIAFORM_API_HOST` &mdash; API server host, including the protocol, e.g.
   `https://api.thinktool.io`.
 
-Then build the web client, the desktop client and other static resources with:
+Then build the web client and other static resources with:
 
     $ ./tools/build-client.sh
-    $ ./tools/build-desktop.sh
     $ ./tools/build-static.sh
 
 Then, set `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` and run
 `./tools/deploy-static.sh` to deploy static files to Microsoft Azure Storage.
+
+## Desktop
+
+The desktop client can be built for Linux, macOS and Windows. It should be built
+on the same platform that it's targeting.
+
+Start by setting the following environment variables:
+
+- `DIAFORM_API_HOST` &mdash; API server host, including the protocol, e.g.
+  `https://api.thinktool.io`.
+
+On **Linux**, build the desktop client with:
+
+    $ ./tools/build-desktop-linux.sh
+
+_(Missing instructions for macOS and Windows.)_
+
+Once you have built the desktop client, the output will be in `dist/`. Set
+`AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` and run
+`./tools/deploy-static.sh` to deploy these files to Microsoft Azure Storage.
 
 ## Server
 

@@ -29,7 +29,23 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v1
-      - name: Install Wine (for building desktop client)
+      - name: Build static resources
+        run: ./tools/build-client.sh && ./tools/build-static.sh
+        env:
+          DIAFORM_API_HOST: ${{secrets.api_host}}
+      - name: Deploy to Azure Storage and purge Cloudflare cache
+        run: ./tools/deploy-static.sh
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
+          AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}
+          CLOUDFLARE_ZONE: ${{secrets.cloudflare_zone}}
+          CLOUDFLARE_TOKEN: ${{secrets.cloudflare_token}}
+  desktop-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v1
+      - name: Install Wine
         # https://github.com/actions/virtual-environments/issues/743#issuecomment-616349857
         run: |
           sudo dpkg --add-architecture i386
@@ -37,8 +53,8 @@ jobs:
           sudo add-apt-repository ppa:cybermax-dexter/sdl2-backport
           sudo apt-add-repository "deb https://dl.winehq.org/wine-builds/ubuntu $(lsb_release -cs) main"
           sudo apt install --install-recommends winehq-stable
-      - name: Build static resources
-        run: ./tools/build-client.sh && ./tools/build-desktop.sh && ./tools/build-static.sh
+      - name: Build desktop client
+        run: ./tools/build-client.sh && ./tools/build-desktop.sh
         env:
           DIAFORM_API_HOST: ${{secrets.api_host}}
       - name: Deploy to Azure Storage and purge Cloudflare cache
