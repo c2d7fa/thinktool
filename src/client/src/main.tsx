@@ -127,13 +127,11 @@ function diffState(
 function useContext({
   initialState,
   initialTutorialFinished,
-  local,
   storage,
   server,
 }: {
   initialState: State;
   initialTutorialFinished: boolean;
-  local?: boolean;
   storage: Storage.Storage;
   server?: API.Server;
 }): Context {
@@ -146,31 +144,29 @@ function useContext({
       undo.pushState(state);
       setLocalState(newState);
 
-      if (!local) {
-        const diff = diffState(state, newState);
-        for (const thing of diff.deleted) {
-          storage.deleteThing(thing);
-        }
-        for (const thing of diff.changedContent) {
-          batched.update(thing, () => {
-            storage.setContent(thing, Data.content(newState, thing));
-          });
-        }
-        if (diff.added.length !== 0 || diff.changed.length !== 0) {
-          storage.updateThings(
-            [...diff.added, ...diff.changed].map((thing) => ({
-              name: thing,
-              content: Data.content(newState, thing),
-              children: Data.childConnections(newState, thing).map((c) => {
-                return {
-                  name: c.connectionId,
-                  child: Data.connectionChild(newState, c),
-                  tag: Data.tag(newState, c) ?? undefined,
-                };
-              }),
-            })),
-          );
-        }
+      const diff = diffState(state, newState);
+      for (const thing of diff.deleted) {
+        storage.deleteThing(thing);
+      }
+      for (const thing of diff.changedContent) {
+        batched.update(thing, () => {
+          storage.setContent(thing, Data.content(newState, thing));
+        });
+      }
+      if (diff.added.length !== 0 || diff.changed.length !== 0) {
+        storage.updateThings(
+          [...diff.added, ...diff.changed].map((thing) => ({
+            name: thing,
+            content: Data.content(newState, thing),
+            children: Data.childConnections(newState, thing).map((c) => {
+              return {
+                name: c.connectionId,
+                child: Data.connectionChild(newState, c),
+                tag: Data.tag(newState, c) ?? undefined,
+              };
+            }),
+          })),
+        );
       }
     }
   }
@@ -183,25 +179,23 @@ function useContext({
     }
     setLocalState(oldState);
     // TODO: Code duplication, see setState above
-    if (!local) {
-      const diff = diffState(state, oldState);
-      for (const thing of diff.deleted) {
-        storage.deleteThing(thing);
-      }
-      storage.updateThings(
-        [...diff.added, ...diff.changed].map((thing) => ({
-          name: thing,
-          content: Data.content(oldState, thing),
-          children: Data.childConnections(oldState, thing).map((c) => {
-            return {
-              name: c.connectionId,
-              child: Data.connectionChild(oldState, c),
-              tag: Data.tag(oldState, c) ?? undefined,
-            };
-          }),
-        })),
-      );
+    const diff = diffState(state, oldState);
+    for (const thing of diff.deleted) {
+      storage.deleteThing(thing);
     }
+    storage.updateThings(
+      [...diff.added, ...diff.changed].map((thing) => ({
+        name: thing,
+        content: Data.content(oldState, thing),
+        children: Data.childConnections(oldState, thing).map((c) => {
+          return {
+            name: c.connectionId,
+            child: Data.connectionChild(oldState, c),
+            tag: Data.tag(oldState, c) ?? undefined,
+          };
+        }),
+      })),
+    );
   }
 
   // Selected thing:
@@ -248,7 +242,7 @@ function useContext({
   );
   function setTutorialState(tutorialState: Tutorial.State): void {
     setTutorialState_(tutorialState);
-    if (!Tutorial.isActive(tutorialState) && !local) {
+    if (!Tutorial.isActive(tutorialState)) {
       storage.setTutorialFinished();
     }
   }
@@ -308,18 +302,16 @@ function App({
   initialState,
   initialTutorialFinished,
   username,
-  local,
   storage,
   server,
 }: {
   initialState: State;
   initialTutorialFinished: boolean;
-  username: string;
-  local?: boolean;
+  username?: string;
   storage: Storage.Storage;
   server?: API.Server;
 }) {
-  const context = useContext({initialState, initialTutorialFinished, local, storage, server});
+  const context = useContext({initialState, initialTutorialFinished, storage, server});
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
@@ -332,8 +324,6 @@ function App({
   // dependencies makes it reconnect every time any change is made to the state
   // (e.g. editing the content of an item).
   React.useEffect(() => {
-    if (local) return;
-
     if (context.server === undefined) return;
 
     return context.server.onChanges(async (changes) => {
@@ -525,9 +515,11 @@ function App({
           {toolbarShown ? "Hide" : "Show"} toolbar
         </button>
         <div id="current-user">
-          <a className="username" href="/user.html">
-            {username}
-          </a>
+          {username && (
+            <a className="username" href="/user.html">
+              {username}
+            </a>
+          )}
           {context.server && (
             <a className="log-out" href={context.server.logOutUrl}>
               log out
@@ -1085,9 +1077,6 @@ export async function thinktoolDemo({
     <App
       initialState={API.transformFullStateResponseIntoState(data)}
       initialTutorialFinished={false}
-      username={"demo"}
-      local
-      server={API.initialize(apiHost)}
       storage={Storage.ignore()}
     />,
     appElement,
