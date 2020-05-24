@@ -45,7 +45,7 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v1
-      - name: Build desktop client
+      - name: Build desktop client for Linux
         run: ./tools/build-client.sh && ./tools/build-desktop-linux.sh
         env:
           DIAFORM_API_HOST: ${{secrets.api_host}}
@@ -61,13 +61,16 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
-      - name: Build desktop client
+      - name: Build desktop client for Windows
         run: ./tools/build-desktop-windows.sh
         shell: bash
         env:
           DIAFORM_API_HOST: ${{secrets.api_host}}
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: windows-desktop
-          path: dist/static/*.exe
+      - name: Deploy to Azure Storage and purge Cloudflare cache
+        run: ./tools/deploy-static.sh
+        shell: bash
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
+          AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}
+          CLOUDFLARE_ZONE: ${{secrets.cloudflare_zone}}
+          CLOUDFLARE_TOKEN: ${{secrets.cloudflare_token}}
