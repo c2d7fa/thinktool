@@ -46,7 +46,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v1
       - name: Build desktop client for Linux
-        run: ./tools/build-client.sh && ./tools/build-desktop-linux.sh
+        run: ./tools/build-desktop-linux.sh
         env:
           DIAFORM_API_HOST: ${{secrets.api_host}}
       - name: Deploy to Azure Storage and purge Cloudflare cache

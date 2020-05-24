@@ -4,7 +4,7 @@ set -e
 
 echo "Preparing to build desktop client for Linux..."
 ./tools/build-static.sh
-./tools/build-shared-client.sh
+./tools/build-client.sh
 
 echo "Building desktop client for Linux..."
 cd src/desktop
