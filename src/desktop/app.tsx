@@ -1,3 +1,6 @@
+import * as Electron from "electron";
+
 import * as Client from "thinktool-client";
 
-Client.startLocalApp({storage: Client.Storage.ignore()});
+const storage = Electron.remote.getGlobal("storage") as Client.Storage.Storage;
+Client.startLocalApp({storage});
