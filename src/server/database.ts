@@ -8,6 +8,51 @@ export * as Session from "./database/session";
 
 import {UserId, pool, connect} from "./database/core";
 
+type Content = (string | {link: string})[];
+
+function contentFromString(string: string): Content {
+  try {
+    let result: Content = [];
+    let buffer = "";
+    let readingLink = false;
+
+    function commit() {
+      if (buffer !== "") {
+        if (readingLink) {
+          result.push({link: buffer});
+        } else {
+          result.push(buffer);
+        }
+      }
+      buffer = "";
+    }
+
+    for (const ch of [...string]) {
+      if (ch === "#") {
+        commit();
+        readingLink = true;
+      } else if (readingLink) {
+        if (ch.match(/[a-z0-9]/)) {
+          buffer += ch;
+        } else {
+          commit();
+          readingLink = false;
+          buffer = ch;
+        }
+      } else {
+        buffer += ch;
+      }
+    }
+
+    commit();
+
+    return result;
+  } catch (e) {
+    console.error("Parse error while trying to convert string %o to content: %o", string, e);
+    return [];
+  }
+}
+
 export interface Users {
   nextId: number;
   users: {[name: string]: {password: string; id: number}};
@@ -170,9 +215,11 @@ export async function updateThing({
   const client = await pool.connect();
   await client.query("BEGIN");
 
+  const jsonContent = JSON.stringify(contentFromString(content));
+
   await client.query(
-    `INSERT INTO things ("user", name, content) VALUES ($1, $2, $3) ON CONFLICT ("user", name) DO UPDATE SET content = EXCLUDED.content`,
-    [userId.name, thing, content],
+    `INSERT INTO things ("user", name, content, json_content) VALUES ($1, $2, $3, $4) ON CONFLICT ("user", name) DO UPDATE SET content = EXCLUDED.content`,
+    [userId.name, thing, content, jsonContent],
   );
 
   // Delete old connections
@@ -210,10 +257,11 @@ export async function deleteThing(userId: UserId, thing: string): Promise<void> 
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
   const client = await pool.connect();
-  await client.query(`UPDATE things SET content = $3 WHERE "user" = $1 AND name = $2`, [
+  await client.query(`UPDATE things SET content = $3, json_content = $4 WHERE "user" = $1 AND name = $2`, [
     userId.name,
     thing,
     content,
+    JSON.stringify(contentFromString(content)),
   ]);
   client.release();
 }
