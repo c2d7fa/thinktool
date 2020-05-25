@@ -218,7 +218,7 @@ export async function updateThing({
   const jsonContent = JSON.stringify(contentFromString(content));
 
   await client.query(
-    `INSERT INTO things ("user", name, content, json_content) VALUES ($1, $2, $3, $4) ON CONFLICT ("user", name) DO UPDATE SET content = EXCLUDED.content`,
+    `INSERT INTO things ("user", name, content, json_content) VALUES ($1, $2, $3, $4) ON CONFLICT ("user", name) DO UPDATE SET content = EXCLUDED.content, json_content = EXCLUDED.json_content`,
     [userId.name, thing, content, jsonContent],
   );
 
