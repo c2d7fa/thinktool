@@ -53,6 +53,23 @@ function contentFromString(string: string): Content {
   }
 }
 
+function contentJsonToString(json: any): string {
+  try {
+    // Conversion may fail, but we handle errors.
+    const content = json as Content;
+
+    let result = "";
+    for (const segment of content) {
+      if (typeof segment === "string") result += segment;
+      else result += "#" + segment.link;
+    }
+    return result;
+  } catch (e) {
+    console.error("Invalid data from database: %o. Got error: %o", json, e);
+    return "";
+  }
+}
+
 export interface Users {
   nextId: number;
   users: {[name: string]: {password: string; id: number}};
@@ -163,7 +180,7 @@ export async function getFullState(
   const client = await pool.connect();
   const result = await client.query(
     `
-    SELECT things.name, things.content, connections.name as connection_name, connections.child, connections.tag, connections.parent_index
+    SELECT things.name, things.json_content, connections.name as connection_name, connections.child, connections.tag, connections.parent_index
     FROM things
     LEFT JOIN connections ON connections.parent = things.name AND connections.user = things.user
     WHERE things.user = $1
@@ -179,7 +196,7 @@ export async function getFullState(
 
   for (const row of result.rows) {
     if (!(row.name in thingsObject)) {
-      thingsObject[row.name] = {content: row.content, children: []};
+      thingsObject[row.name] = {content: contentJsonToString(row["json_content"]), children: []};
     }
 
     if (row.connection_name !== null) {
@@ -218,8 +235,8 @@ export async function updateThing({
   const jsonContent = JSON.stringify(contentFromString(content));
 
   await client.query(
-    `INSERT INTO things ("user", name, content, json_content) VALUES ($1, $2, $3, $4) ON CONFLICT ("user", name) DO UPDATE SET content = EXCLUDED.content, json_content = EXCLUDED.json_content`,
-    [userId.name, thing, content, jsonContent],
+    `INSERT INTO things ("user", name, json_content) VALUES ($1, $2, $3) ON CONFLICT ("user", name) DO UPDATE SET json_content = EXCLUDED.json_content`,
+    [userId.name, thing, jsonContent],
   );
 
   // Delete old connections
@@ -257,10 +274,9 @@ export async function deleteThing(userId: UserId, thing: string): Promise<void> 
 
 export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
   const client = await pool.connect();
-  await client.query(`UPDATE things SET content = $3, json_content = $4 WHERE "user" = $1 AND name = $2`, [
+  await client.query(`UPDATE things SET json_content = $3 WHERE "user" = $1 AND name = $2`, [
     userId.name,
     thing,
-    content,
     JSON.stringify(contentFromString(content)),
   ]);
   client.release();
@@ -274,7 +290,7 @@ export async function getThingData(
 
   const result = await client.query(
     `
-    SELECT things.name, things.content, connections.name as connection_name, connections.child, connections.tag
+    SELECT things.name, things.json_content, connections.name as connection_name, connections.child, connections.tag
     FROM things
     LEFT JOIN connections ON connections.user = things.user AND connections.parent = things.name
     WHERE things.user = $1 AND things.name = $2
@@ -294,7 +310,7 @@ export async function getThingData(
     }
   }
 
-  return {content: result.rows[0].content ?? "", children};
+  return {content: contentJsonToString(result.rows[0]["json_content"]), children};
 }
 
 export async function deleteAllUserData(userId: UserId): Promise<void> {
