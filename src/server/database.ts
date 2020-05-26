@@ -175,45 +175,36 @@ export async function isValidResetKey(user: string, key: string): Promise<boolea
 export async function getFullState(
   userId: UserId,
 ): Promise<{
-  things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[];
+  things: {name: string; content: string; children: {name: string; child: string}[]}[];
 }> {
   const client = await pool.connect();
   const result = await client.query(
     `
-    SELECT things.name, things.json_content, connections.name as connection_name, connections.child, connections.tag, connections.parent_index
+    SELECT
+      things.name,
+      things.json_content AS content,
+      (
+        SELECT COALESCE(JSON_AGG(JSON_BUILD_OBJECT('name', name, 'child', child)), '[]') AS children
+        FROM (
+          SELECT connections.name as name, connections.child as child
+          FROM connections
+          WHERE things.user = connections.user and connections.parent = things.name
+          ORDER BY connections.parent_index
+        ) AS thing_connections
+      )
     FROM things
-    LEFT JOIN connections ON connections.parent = things.name AND connections.user = things.user
     WHERE things.user = $1
-    ORDER BY things.name ASC, parent_index ASC
-  `,
+    ORDER BY things.name asc
+    `,
     [userId.name],
   );
   client.release();
 
-  let thingsObject: {
-    [name: string]: {content: string; children: {name: string; child: string; tag?: string}[]};
-  } = {};
-
-  for (const row of result.rows) {
-    if (!(row.name in thingsObject)) {
-      thingsObject[row.name] = {content: contentJsonToString(row["json_content"]), children: []};
-    }
-
-    if (row.connection_name !== null) {
-      thingsObject[row.name].children.push({
-        name: row.connection_name,
-        child: row.child,
-        tag: row.tag ?? undefined,
-      });
-    }
-  }
-
-  // [TODO] We should just change the signature, so we can return the dictionary
-  // we've already made.
-  let things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[] = [];
-  for (const thing in thingsObject) {
-    things.push({name: thing, ...thingsObject[thing]});
-  }
+  const things = result.rows.map((row) => ({
+    name: row.name,
+    content: contentJsonToString(row.content),
+    children: row.children,
+  }));
 
   return {things};
 }
