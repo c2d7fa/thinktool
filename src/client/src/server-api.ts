@@ -16,8 +16,6 @@ export function transformFullStateResponseIntoState(response: Communication.Full
     state = D.setContent(state, thing.name, thing.content);
     for (const childConnection of thing.children) {
       state = D.addChild(state, thing.name, childConnection.child, childConnection.name)[0];
-      if (childConnection.tag !== undefined)
-        state = D.setTag(state, {connectionId: childConnection.name}, childConnection.tag);
     }
   }
 
@@ -56,7 +54,7 @@ export function initialize(apiHost: string) {
   }
 
   async function updateThings(
-    things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[],
+    things: {name: string; content: string; children: {name: string; child: string}[]}[],
   ): Promise<void> {
     await api(`state/things`, {
       method: "post",

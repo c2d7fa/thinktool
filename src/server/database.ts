@@ -218,7 +218,7 @@ export async function updateThing({
   userId: UserId;
   thing: string;
   content: string;
-  children: {name: string; child: string; tag?: string}[];
+  children: {name: string; child: string}[];
 }): Promise<void> {
   const client = await pool.connect();
   await client.query("BEGIN");
@@ -237,8 +237,8 @@ export async function updateThing({
   for (let i = 0; i < children.length; ++i) {
     const connection = children[i];
     await client.query(
-      `INSERT INTO connections ("user", name, parent, child, tag, parent_index) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [userId.name, connection.name, thing, connection.child, connection.tag, i],
+      `INSERT INTO connections ("user", name, parent, child, parent_index) VALUES ($1, $2, $3, $4, $5)`,
+      [userId.name, connection.name, thing, connection.child, i],
     );
   }
 
@@ -276,12 +276,12 @@ export async function setContent(userId: UserId, thing: string, content: string)
 export async function getThingData(
   userId: UserId,
   thing: string,
-): Promise<{content: string; children: {name: string; child: string; tag?: string}[]} | null> {
+): Promise<{content: string; children: {name: string; child: string}[]} | null> {
   const client = await pool.connect();
 
   const result = await client.query(
     `
-    SELECT things.name, things.json_content, connections.name as connection_name, connections.child, connections.tag
+    SELECT things.name, things.json_content, connections.name as connection_name, connections.child
     FROM things
     LEFT JOIN connections ON connections.user = things.user AND connections.parent = things.name
     WHERE things.user = $1 AND things.name = $2
@@ -297,7 +297,7 @@ export async function getThingData(
   let children = [];
   for (const row of result.rows) {
     if (row.connection_name !== null) {
-      children.push({name: row.connection_name, child: row.child, tag: row.tag ?? undefined});
+      children.push({name: row.connection_name, child: row.child});
     }
   }
 

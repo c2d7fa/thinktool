@@ -16,7 +16,6 @@ export interface ThingData {
 export interface ConnectionData {
   parent: string;
   child: string;
-  tag: string | null; // null is used for neutral parent-child relationship.
 }
 
 export interface State {
@@ -63,7 +62,7 @@ export function insertChild(
   const connectionId = customConnectionId ?? `c.${generateShortId()}`; // 'c.' prefix to tell where the ID came from when debugging.
   result = {
     ...result,
-    connections: {...state.connections, [connectionId]: {parent, child, tag: null}},
+    connections: {...state.connections, [connectionId]: {parent, child}},
   };
   if (!exists(result, child)) {
     // We must store the child-to-parent connection in the child node; however,
@@ -149,22 +148,6 @@ export function exists(state: State, thing: string): boolean {
 export function parents(state: State, child: string): string[] {
   if (!exists(state, child)) return [];
   return state.things[child].parents.map((c) => connectionParent(state, c));
-}
-
-export function setTag(state: State, connection: Connection, tag: string | null): State {
-  return {
-    ...state,
-    connections: {
-      ...state.connections,
-      [connection.connectionId]: {...state.connections[connection.connectionId], tag},
-    },
-  };
-}
-
-export function tag(state: State, connection: Connection): string | null {
-  if (state.connections[connection.connectionId] === undefined)
-    throw `No such connection '${connection.connectionId}'`;
-  return state.connections[connection.connectionId].tag;
 }
 
 //#endregion

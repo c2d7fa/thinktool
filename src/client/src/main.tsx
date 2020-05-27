@@ -164,7 +164,6 @@ function useContext({
               return {
                 name: c.connectionId,
                 child: Data.connectionChild(newState, c),
-                tag: Data.tag(newState, c) ?? undefined,
               };
             }),
           })),
@@ -193,7 +192,6 @@ function useContext({
           return {
             name: c.connectionId,
             child: Data.connectionChild(oldState, c),
-            tag: Data.tag(oldState, c) ?? undefined,
           };
         }),
       })),
@@ -347,8 +345,6 @@ function App({
           }
           for (const childConnection of thingData.children) {
             newState = Data.addChild(newState, changedThing, childConnection.child, childConnection.name)[0];
-            if (childConnection.tag !== undefined)
-              newState = Data.setTag(newState, {connectionId: childConnection.name}, childConnection.tag);
           }
 
           return newState;
@@ -650,17 +646,11 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   );
 }
 
-function ConnectionTag(p: {context: Context; tag: string}) {
-  return <span className="connection-tag">{Data.contentText(p.context.state, p.tag)}</span>;
-}
-
 function ExpandableItem(p: {
   context: Context;
   node: T.NodeRef;
   parent?: T.NodeRef;
   className?: string;
-  hideTagged?: boolean;
-  hideTag?: boolean;
   otherParentText?: string;
 }) {
   function toggle() {
@@ -684,11 +674,7 @@ function ExpandableItem(p: {
   if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id) className += " drop-target";
   if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null) className += " drag-source";
 
-  const tag = T.tag(p.context.state, p.context.tree, p.node);
-
-  const subtree = (
-    <Subtree hideTagged={p.hideTagged} context={p.context} parent={p.node} grandparent={p.parent} />
-  );
+  const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
 
   return (
     <li className="outline-item">
@@ -703,7 +689,6 @@ function ExpandableItem(p: {
           }}
         />
         {p.otherParentText !== undefined && <span className="other-parents-text">{p.otherParentText}</span>}
-        {tag !== null && !p.hideTag && <ConnectionTag context={p.context} tag={tag} />}
         <Content context={p.context} node={p.node} />
       </span>
       {expanded && subtree}
@@ -906,15 +891,10 @@ function Subtree(p: {
   grandparent?: T.NodeRef;
   children?: React.ReactNode[] | React.ReactNode;
   omitReferences?: boolean;
-  hideTagged?: boolean;
 }) {
-  const children = T.children(p.context.tree, p.parent)
-    .filter((child) => {
-      return !(p.hideTagged && T.tag(p.context.state, p.context.tree, child));
-    })
-    .map((child) => {
-      return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
-    });
+  const children = T.children(p.context.tree, p.parent).map((child) => {
+    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
+  });
 
   const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map((child) => {
     return (

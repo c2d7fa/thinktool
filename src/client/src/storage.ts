@@ -8,7 +8,7 @@ export interface Storage {
   setContent(thing: string, content: string): Promise<void>;
   deleteThing(thing: string): Promise<void>;
   updateThings(
-    things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[],
+    things: {name: string; content: string; children: {name: string; child: string}[]}[],
   ): Promise<void>;
 
   getTutorialFinished(): Promise<boolean>;
