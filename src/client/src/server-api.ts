@@ -41,11 +41,11 @@ export function initialize(apiHost: string) {
     return await response.json();
   }
 
-  async function setContent(thing: string, content: string): Promise<void> {
+  async function setContent(thing: string, content: Communication.Content): Promise<void> {
     await api(`api/things/${thing}/content`, {
       method: "put",
-      body: content,
-      headers: {"Thinktool-Client-Id": clientId},
+      body: JSON.stringify(content),
+      headers: {"Content-Type": "application/json", "Thinktool-Client-Id": clientId},
     });
   }
 
@@ -54,7 +54,7 @@ export function initialize(apiHost: string) {
   }
 
   async function updateThings(
-    things: {name: string; content: string; children: {name: string; child: string}[]}[],
+    things: {name: string; content: Communication.Content; children: {name: string; child: string}[]}[],
   ): Promise<void> {
     await api(`state/things`, {
       method: "post",

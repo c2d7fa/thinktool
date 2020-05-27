@@ -470,7 +470,7 @@ function App({
               return;
             }
             const [state2, selection] = Data.create(context.state);
-            const state3 = Data.setContent(state2, selection, content);
+            const state3 = Data.setContent(state2, selection, [content]);
             const [newState, newTree] = context.activePopup!(state3, context.tree, target, selection);
             context.setState(newState);
             context.setTree(newTree);
@@ -490,7 +490,7 @@ function App({
             const end = context.selectionInFocusedContent?.end;
 
             if (start && end && start - end !== 0 && context.popupTarget) {
-              return Data.content(context.state, T.thing(context.tree, context.popupTarget)).substring(
+              return Data.contentText(context.state, T.thing(context.tree, context.popupTarget)).substring(
                 start,
                 end,
               );

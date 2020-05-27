@@ -262,7 +262,14 @@ app.post("/state/things", requireSession, requireClientId, async (req, res) => {
   }
   const data = req.body as Communication.UpdateThings;
 
+  console.log("updating things");
   for (const thing of data) {
+    console.log("got thing: %o", JSON.stringify(thing));
+    if (!isValidContent(thing.content)) {
+      console.warn("Ignoring item %o with invalid content %o", thing, thing.content);
+      continue;
+    }
+
     await DB.updateThing({
       userId: req.user!,
       thing: thing.name,
@@ -271,9 +278,13 @@ app.post("/state/things", requireSession, requireClientId, async (req, res) => {
     });
   }
 
+  console.log("notifying");
+
   for (const thing of data) {
     changes.updated(req.user!, thing.name, res.locals.clientId);
   }
+
+  console.log("ok were goot");
 
   res
     .header("Access-Control-Allow-Origin", staticUrl)
@@ -299,8 +310,23 @@ app.delete("/state/things/:thing", requireSession, parseThingExists, requireClie
     .end();
 });
 
+function isValidContent(json: any): json is Communication.Content {
+  try {
+    for (const segment of json) {
+      if (typeof segment === "string") continue; // Text segment
+      if (typeof segment.link === "string" && Object.keys(segment).length === 1) continue; // Link segment
+      console.warn("Bad segment %o", segment);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.warn("Bad content %o", json);
+    return false;
+  }
+}
+
 app.put("/api/things/:thing/content", requireSession, parseThingExists, requireClientId, async (req, res) => {
-  if (typeof req.body !== "string") {
+  if (!isValidContent(req.body)) {
     res.status(400).type("text/plain").send("400 Bad Request");
     return;
   }

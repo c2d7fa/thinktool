@@ -1,14 +1,13 @@
 import * as API from "./server-api";
-import * as D from "./data";
 import {Communication} from "thinktool-shared";
 
 export interface Storage {
   getFullState(): Promise<Communication.FullStateResponse>;
 
-  setContent(thing: string, content: string): Promise<void>;
+  setContent(thing: string, content: Communication.Content): Promise<void>;
   deleteThing(thing: string): Promise<void>;
   updateThings(
-    things: {name: string; content: string; children: {name: string; child: string}[]}[],
+    things: {name: string; content: Communication.Content; children: {name: string; child: string}[]}[],
   ): Promise<void>;
 
   getTutorialFinished(): Promise<boolean>;
@@ -30,7 +29,7 @@ export function server(server: API.Server): Storage {
 export function ignore(): Storage {
   return {
     getFullState: async () => ({things: []}),
-    async setContent(thing: string, content: string) {},
+    async setContent(thing: string, content: Communication.Content) {},
     async deleteThing(thing: string) {},
     async updateThings(things: any) {},
     getTutorialFinished: async () => false,

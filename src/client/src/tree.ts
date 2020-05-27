@@ -598,7 +598,8 @@ const refreshBackreferencesChildren = (state: D.State, tree: Tree, node: NodeRef
   // If a backreference contains just a link and nothing else, automatically
   // show its children.
   for (const backreferenceNode of backreferencesChildren(result, node)) {
-    if (/^#[a-z0-9]+$/.test(D.content(state, thing(result, backreferenceNode)))) {
+    const content = D.content(state, thing(result, backreferenceNode));
+    if (content.length === 1 && content[0].link !== undefined) {
       result = expand(state, result, backreferenceNode);
     }
 

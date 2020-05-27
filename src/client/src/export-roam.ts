@@ -30,11 +30,23 @@ function exportData(state: D.State): RoamImport {
         referencedItems.push(parent);
       }
 
-      for (const link of D.content(state, thing).matchAll(/#([a-z0-9]+)/g)) {
-        referencedItems.push(link[1]);
-      }
+      referencedItems = [
+        ...referencedItems,
+        ...D.content(state, thing)
+          .filter((segment) => typeof segment === "object" && typeof segment.link === "string")
+          .map((segment) => segment.link as string),
+      ];
 
-      const exportedContent = D.content(state, thing).replace(/#([a-z0-9]+)/g, `((${uid("$1")}))`);
+      const exportedContent = D.content(state, thing)
+        .map((segment) => {
+          if (typeof segment === "string") return segment;
+          else if (typeof segment.link === "string") return `((${uid(segment.link)}))`;
+          else {
+            console.warn("Unimplemented segment type in Roam export: %o", segment);
+            return "";
+          }
+        })
+        .join("");
 
       return {
         string: exportedContent,

@@ -1,16 +1,18 @@
+export type Content = (string | {link: string})[];
+
 export type FullStateResponse = {
   things: {
     name: string;
-    content: string;
+    content: Content;
     children: {name: string; child: string}[];
   }[];
 };
 
-export type ThingData = {content: string; children: {name: string; child: string}[]};
+export type ThingData = {content: Content; children: {name: string; child: string}[]};
 
 export type UpdateThings = {
   name: string;
-  content: string;
+  content: Content;
   children: {name: string; child: string}[];
 }[];
 
