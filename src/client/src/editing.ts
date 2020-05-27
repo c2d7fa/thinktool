@@ -4,7 +4,7 @@ export function contentToEditString(content: D.Content): string {
   let result = "";
   for (const segment of content) {
     if (typeof segment === "string") result += segment;
-    else result += "#" + segment.link;
+    else result += `#${segment.link}`;
   }
   return result;
 }
