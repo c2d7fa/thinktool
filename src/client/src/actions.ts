@@ -2,6 +2,7 @@ import {Context} from "./context";
 import * as T from "./tree";
 import * as D from "./data";
 import * as Tutorial from "./tutorial";
+import * as E from "./editing";
 
 export function actionsWith(context: Context, node: T.NodeRef) {
   // We sometimes call this function with node = null, even though the signature
@@ -51,10 +52,10 @@ export function actionsWith(context: Context, node: T.NodeRef) {
       context.setActivePopup((state, tree, target, selection) => {
         if (target !== node) throw "Invalid target/node";
 
-        const content = D.content(context.state, T.thing(context.tree, node));
-        const newContent =
-          content.substring(0, textSelection.start) + `#${selection}` + content.substring(textSelection.end);
-        const newState = D.setContent(state, T.thing(tree, target), newContent);
+        const editing = E.contentToEditString(D.content(context.state, T.thing(context.tree, node)));
+        const newEditing =
+          editing.substring(0, textSelection.start) + `#${selection}` + editing.substring(textSelection.end);
+        const newState = D.setContent(state, T.thing(tree, target), E.contentFromEditString(newEditing));
 
         return [newState, tree];
       });

@@ -1,19 +1,19 @@
-export type FullThingsResponse = {name: string; content: string; children: string[]}[];
+export type Content = (string | {link: string})[];
 
 export type FullStateResponse = {
   things: {
     name: string;
-    content: string;
-    children: {name: string; child: string; tag?: string}[];
+    content: Content;
+    children: {name: string; child: string}[];
   }[];
 };
 
-export type ThingData = {content: string; children: {name: string; child: string; tag?: string}[]};
+export type ThingData = {content: Content; children: {name: string; child: string}[]};
 
 export type UpdateThings = {
   name: string;
-  content: string;
-  children: {name: string; child: string; tag: string}[];
+  content: Content;
+  children: {name: string; child: string}[];
 }[];
 
 export type Changelog = {changes: {date: string; title: string}[]};

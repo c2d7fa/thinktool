@@ -331,12 +331,6 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
   );
   newState = newState_;
 
-  // Preserve connection tag
-  const connection = I.connection(tree, node);
-  if (connection !== undefined) {
-    newState = D.setTag(newState, newConnection, D.tag(state, connection));
-  }
-
   // Move nodes in tree
 
   for (const n of I.allNodes(newTree)) {
@@ -604,7 +598,8 @@ const refreshBackreferencesChildren = (state: D.State, tree: Tree, node: NodeRef
   // If a backreference contains just a link and nothing else, automatically
   // show its children.
   for (const backreferenceNode of backreferencesChildren(result, node)) {
-    if (/^#[a-z0-9]+$/.test(D.content(state, thing(result, backreferenceNode)))) {
+    const content = D.content(state, thing(result, backreferenceNode));
+    if (content.length === 1 && content[0].link !== undefined) {
       result = expand(state, result, backreferenceNode);
     }
 
@@ -679,21 +674,3 @@ export function toggleLink(state: D.State, tree: Tree, node: NodeRef, link: stri
 }
 
 export const openedLinksChildren = I.openedLinksChildren;
-
-// Tagged connections
-
-// In the Data module, tags are associated with connections. In the Tree module,
-// however, they are associated with nodes, since a given node actually
-// represents a connection to a thing, not just the thing.
-
-export function setTag(state: D.State, tree: Tree, node: NodeRef, tag: string | null): [D.State, Tree] {
-  const connection = I.connection(tree, node);
-  if (connection === undefined) return [state, tree];
-  return [D.setTag(state, connection, tag), tree];
-}
-
-export function tag(state: D.State, tree: Tree, node: NodeRef): string | null {
-  const connection = I.connection(tree, node);
-  if (connection === undefined) return null;
-  return D.tag(state, connection);
-}

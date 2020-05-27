@@ -1,4 +1,6 @@
-import {General as G} from "thinktool-shared";
+import {General as G, Communication} from "thinktool-shared";
+
+export type Content = Communication.Content;
 
 export interface State {
   things: {[id: string]: ThingData};
@@ -8,7 +10,7 @@ export interface State {
 export type Connection = {connectionId: string};
 
 export interface ThingData {
-  content: string;
+  content: Content;
   children: Connection[];
   parents: Connection[];
 }
@@ -16,7 +18,6 @@ export interface ThingData {
 export interface ConnectionData {
   parent: string;
   child: string;
-  tag: string | null; // null is used for neutral parent-child relationship.
 }
 
 export interface State {
@@ -26,7 +27,7 @@ export interface State {
 //#region Fundamental operations
 
 export const empty: State = {
-  things: {"0": {content: "Welcome", children: [], parents: []}},
+  things: {"0": {content: ["Welcome"], children: [], parents: []}},
   connections: {},
 };
 
@@ -43,12 +44,12 @@ export function childConnections(state: State, thing: string): Connection[] {
   return state.things[thing].children;
 }
 
-export function content(things: State, thing: string): string {
-  if (!exists(things, thing)) return "";
+export function content(things: State, thing: string): Content {
+  if (!exists(things, thing)) return [];
   return things.things[thing].content;
 }
 
-export function setContent(state: State, thing: string, newContent: string): State {
+export function setContent(state: State, thing: string, newContent: Content): State {
   return {...state, things: {...state.things, [thing]: {...state.things[thing], content: newContent}}};
 }
 
@@ -63,7 +64,7 @@ export function insertChild(
   const connectionId = customConnectionId ?? `c.${generateShortId()}`; // 'c.' prefix to tell where the ID came from when debugging.
   result = {
     ...result,
-    connections: {...state.connections, [connectionId]: {parent, child, tag: null}},
+    connections: {...state.connections, [connectionId]: {parent, child}},
   };
   if (!exists(result, child)) {
     // We must store the child-to-parent connection in the child node; however,
@@ -133,7 +134,7 @@ export function removeChild(state: State, parent: string, index: number) {
 
 export function create(state: State, customId?: string): [State, string] {
   const newId = customId ?? generateShortId();
-  return [{...state, things: {...state.things, [newId]: {content: "", children: [], parents: []}}}, newId];
+  return [{...state, things: {...state.things, [newId]: {content: [], children: [], parents: []}}}, newId];
 }
 
 export function forget(state: State, thing: string): State {
@@ -149,22 +150,6 @@ export function exists(state: State, thing: string): boolean {
 export function parents(state: State, child: string): string[] {
   if (!exists(state, child)) return [];
   return state.things[child].parents.map((c) => connectionParent(state, c));
-}
-
-export function setTag(state: State, connection: Connection, tag: string | null): State {
-  return {
-    ...state,
-    connections: {
-      ...state.connections,
-      [connection.connectionId]: {...state.connections[connection.connectionId], tag},
-    },
-  };
-}
-
-export function tag(state: State, connection: Connection): string | null {
-  if (state.connections[connection.connectionId] === undefined)
-    throw `No such connection '${connection.connectionId}'`;
-  return state.connections[connection.connectionId].tag;
 }
 
 //#endregion
@@ -212,13 +197,15 @@ export function otherParents(state: State, child: string, parent?: string): stri
 
 export function contentText(state: State, thing: string): string {
   function contentText_(thing: string, seen: string[]): string {
-    return content(state, thing).replace(
-      /#([a-z0-9]+)/g,
-      (match: string, thing: string, offset: number, string: string) => {
-        if (seen.includes(thing)) return "...";
-        return contentText_(thing, [...seen, thing]);
-      },
-    );
+    if (seen.includes(thing)) return "...";
+
+    let result = "";
+    for (const segment of content(state, thing)) {
+      if (typeof segment === "string") result += segment;
+      else if (typeof segment.link === "string") result += contentText_(segment.link, [...seen, thing]);
+    }
+
+    return result;
   }
 
   return contentText_(thing, []);
@@ -241,17 +228,16 @@ export function search(state: State, text: string): string[] {
 //
 // Items may reference other items in their content. Such items are displayed
 // with the referenced item embedded where the reference is.
-//
-// We currently use a pretty lazy way of implementing this: References are
-// simply stored as part of the string in the format '#<ITEM ID>', e.g.
-// '#q54vf530'.
 
 export function references(state: State, thing: string): string[] {
   let result: string[] = [];
-  for (const referenceMatch of content(state, thing).matchAll(/#([a-z0-9]+)/g)) {
-    if (typeof referenceMatch[1] !== "string") throw "bad programmer error";
-    result = [...result, referenceMatch[1]];
+
+  for (const segment of content(state, thing)) {
+    if (typeof segment.link === "string") {
+      result = [...result, segment.link];
+    }
   }
+
   return result;
 }
 

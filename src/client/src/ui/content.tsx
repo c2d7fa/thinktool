@@ -2,60 +2,56 @@ import * as React from "react";
 
 import * as D from "../data";
 import * as T from "../tree";
+import * as E from "../editing";
 import {Context} from "../context";
 
-type Annotation = {externalLink: string} | {internalLink: string};
-type Range = {start: number; end: number; annotation?: Annotation};
+function annotate(content: D.Content): (string | {externalLink: string} | {link: string})[] {
+  function annotateText(text: string): (string | {externalLink: string})[] {
+    let result: (string | {externalLink: string})[] = [];
 
-function annotate(text: string): Range[] {
-  let ranges: Range[] = [];
+    let position = 0;
 
-  // External links
-
-  const linkRegex = /https?:\/\S*/g;
-
-  for (const match of [...text.matchAll(linkRegex)]) {
-    if (match.index === undefined) throw "bad programmer error";
-
-    const start = match.index;
-    let end = match.index + match[0].length;
-
-    // Trim punctuation at the end of link:
-    if ([",", ".", ":", ")", "]"].includes(text[end - 1])) {
-      end -= 1;
+    function commitText(end: number) {
+      if (position !== end) {
+        result.push(text.substring(position, end + 1));
+        position = end + 1;
+      }
     }
 
-    ranges = [...ranges, {start, end, annotation: {externalLink: text.slice(start, end)}}];
+    // External links
+
+    const linkRegex = /https?:\/\S*/g;
+
+    for (const match of [...text.matchAll(linkRegex)]) {
+      if (match.index === undefined) throw "bad programmer error";
+
+      const start = match.index;
+      let end = match.index + match[0].length;
+
+      // Trim punctuation at the end of link:
+      if ([",", ".", ":", ")", "]"].includes(text[end - 1])) {
+        end -= 1;
+      }
+
+      commitText(start - 1);
+      result = [...result, {externalLink: text.substring(start, end)}];
+      position = end;
+    }
+
+    commitText(text.length - 1);
+
+    return result;
   }
 
-  // Internal links
-
-  const internalLinkRegex = /#([a-z0-9]+)/g;
-
-  for (const match of [...text.matchAll(internalLinkRegex)]) {
-    if (match.index === undefined) throw "bad programmer error";
-
-    const start = match.index;
-    let end = match.index + match[0].length;
-
-    ranges = [...ranges, {start, end, annotation: {internalLink: text.slice(start + 1, end)}}];
+  let result: (string | {externalLink: string} | {link: string})[] = [];
+  for (const segment of content) {
+    if (typeof segment === "string") {
+      result = [...result, ...annotateText(segment)];
+    } else {
+      result = [...result, segment];
+    }
   }
-
-  // Fill out missing ranges with text and sort them
-
-  ranges.sort((a, b) => a.start - b.start);
-
-  let fullRanges = [];
-
-  let i = 0;
-  for (const range of ranges) {
-    if (i !== range.start) fullRanges.push({start: i, end: range.start});
-    fullRanges.push(range);
-    i = range.end;
-  }
-  if (i !== text.length) fullRanges.push({start: i, end: text.length});
-
-  return fullRanges;
+  return result;
 }
 
 function ExternalLink(props: {link: string}) {
@@ -106,25 +102,18 @@ function RenderedContent(props: {
 }) {
   let fragments: React.ReactNode[] = [];
 
-  const text = D.content(props.context.state, T.thing(props.context.tree, props.node));
+  const content = D.content(props.context.state, T.thing(props.context.tree, props.node));
 
   let i = 0; // Node key
-  for (const range of annotate(text)) {
-    const rangeText = text.substring(range.start, range.end);
-
-    if (!range.annotation) {
-      fragments.push(rangeText);
-    } else if ("internalLink" in range.annotation) {
+  for (const segment of annotate(content)) {
+    if (typeof segment === "string") {
+      fragments.push(segment);
+    } else if ("link" in segment) {
       fragments.push(
-        <InternalLink
-          key={i++}
-          link={range.annotation.internalLink}
-          node={props.node}
-          context={props.context}
-        />,
+        <InternalLink key={i++} link={segment.link} node={props.node} context={props.context} />,
       );
-    } else if ("externalLink" in range.annotation) {
-      fragments.push(<ExternalLink key={i++} link={range.annotation.externalLink} />);
+    } else if ("externalLink" in segment) {
+      fragments.push(<ExternalLink key={i++} link={segment.externalLink} />);
     }
   }
 
@@ -200,17 +189,28 @@ export function ContentEditor(props: {
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
-  const [text, setText_] = React.useState<string>(
-    D.content(props.context.state, T.thing(props.context.tree, props.node)),
+  const [editing, setEditing_] = React.useState<string>(
+    E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))),
   );
-  function setText(text: string) {
-    setText_(text);
-    props.context.setState(D.setContent(props.context.state, T.thing(props.context.tree, props.node), text));
+  function setEditing(editing: string) {
+    setEditing_(editing);
+    props.context.setState(
+      D.setContent(
+        props.context.state,
+        T.thing(props.context.tree, props.node),
+        E.contentFromEditString(editing),
+      ),
+    );
   }
 
   React.useEffect(() => {
-    if (D.content(props.context.state, T.thing(props.context.tree, props.node)) !== text) {
-      setText_(D.content(props.context.state, T.thing(props.context.tree, props.node)));
+    if (
+      E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))) !==
+      editing
+    ) {
+      setEditing_(
+        E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))),
+      );
     }
   }, [props.context.state]);
 
@@ -220,14 +220,14 @@ export function ContentEditor(props: {
       textareaRef.current.style.height = "0"; // Necessary for shrinking
       textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
-  }, [text]);
+  }, [editing]);
 
   return (
     <div className={`editor ${props.className}`}>
       <textarea
         ref={textareaRef}
-        value={text}
-        onChange={(ev) => setText(ev.target.value)}
+        value={editing}
+        onChange={(ev) => setEditing(ev.target.value)}
         onFocus={(ev) => props.context.setTree(T.focus(props.context.tree, props.node))}
         onSelect={(ev) => {
           const start = textareaRef.current?.selectionStart;

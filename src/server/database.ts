@@ -1,4 +1,5 @@
 import * as bcrypt from "bcrypt";
+import {Communication} from "thinktool-shared";
 
 // We require the consumer of this module to call initialize() before doing
 // anything else.
@@ -7,68 +8,6 @@ export {UserId, initialize} from "./database/core";
 export * as Session from "./database/session";
 
 import {UserId, pool, connect} from "./database/core";
-
-type Content = (string | {link: string})[];
-
-function contentFromString(string: string): Content {
-  try {
-    let result: Content = [];
-    let buffer = "";
-    let readingLink = false;
-
-    function commit() {
-      if (buffer !== "") {
-        if (readingLink) {
-          result.push({link: buffer});
-        } else {
-          result.push(buffer);
-        }
-      }
-      buffer = "";
-    }
-
-    for (const ch of [...string]) {
-      if (ch === "#") {
-        commit();
-        readingLink = true;
-      } else if (readingLink) {
-        if (ch.match(/[a-z0-9]/)) {
-          buffer += ch;
-        } else {
-          commit();
-          readingLink = false;
-          buffer = ch;
-        }
-      } else {
-        buffer += ch;
-      }
-    }
-
-    commit();
-
-    return result;
-  } catch (e) {
-    console.error("Parse error while trying to convert string %o to content: %o", string, e);
-    return [];
-  }
-}
-
-function contentJsonToString(json: any): string {
-  try {
-    // Conversion may fail, but we handle errors.
-    const content = json as Content;
-
-    let result = "";
-    for (const segment of content) {
-      if (typeof segment === "string") result += segment;
-      else result += "#" + segment.link;
-    }
-    return result;
-  } catch (e) {
-    console.error("Invalid data from database: %o. Got error: %o", json, e);
-    return "";
-  }
-}
 
 export interface Users {
   nextId: number;
@@ -175,49 +114,41 @@ export async function isValidResetKey(user: string, key: string): Promise<boolea
 export async function getFullState(
   userId: UserId,
 ): Promise<{
-  things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[];
+  things: {name: string; content: Communication.Content; children: {name: string; child: string}[]}[];
 }> {
   const client = await pool.connect();
   const result = await client.query(
     `
-    SELECT things.name, things.json_content, connections.name as connection_name, connections.child, connections.tag, connections.parent_index
+    SELECT
+      things.name,
+      things.json_content AS content,
+      (
+        SELECT COALESCE(JSON_AGG(JSON_BUILD_OBJECT('name', name, 'child', child)), '[]') AS children
+        FROM (
+          SELECT connections.name as name, connections.child as child
+          FROM connections
+          WHERE things.user = connections.user and connections.parent = things.name
+          ORDER BY connections.parent_index
+        ) AS thing_connections
+      )
     FROM things
-    LEFT JOIN connections ON connections.parent = things.name AND connections.user = things.user
     WHERE things.user = $1
-    ORDER BY things.name ASC, parent_index ASC
-  `,
+    ORDER BY things.name asc
+    `,
     [userId.name],
   );
   client.release();
-
-  let thingsObject: {
-    [name: string]: {content: string; children: {name: string; child: string; tag?: string}[]};
-  } = {};
-
-  for (const row of result.rows) {
-    if (!(row.name in thingsObject)) {
-      thingsObject[row.name] = {content: contentJsonToString(row["json_content"]), children: []};
-    }
-
-    if (row.connection_name !== null) {
-      thingsObject[row.name].children.push({
-        name: row.connection_name,
-        child: row.child,
-        tag: row.tag ?? undefined,
-      });
-    }
-  }
-
-  // [TODO] We should just change the signature, so we can return the dictionary
-  // we've already made.
-  let things: {name: string; content: string; children: {name: string; child: string; tag?: string}[]}[] = [];
-  for (const thing in thingsObject) {
-    things.push({name: thing, ...thingsObject[thing]});
-  }
+  const things = result.rows.map((row) => ({
+    name: row.name,
+    content: row.content,
+    children: row.children,
+  }));
 
   return {things};
 }
 
+// IMPORTANT: You must validate the the Content is actually valid content.
+// Otherwise, invalid data will be stored in the database!
 export async function updateThing({
   userId,
   thing,
@@ -226,17 +157,15 @@ export async function updateThing({
 }: {
   userId: UserId;
   thing: string;
-  content: string;
-  children: {name: string; child: string; tag?: string}[];
+  content: Communication.Content;
+  children: {name: string; child: string}[];
 }): Promise<void> {
   const client = await pool.connect();
   await client.query("BEGIN");
 
-  const jsonContent = JSON.stringify(contentFromString(content));
-
   await client.query(
     `INSERT INTO things ("user", name, json_content) VALUES ($1, $2, $3) ON CONFLICT ("user", name) DO UPDATE SET json_content = EXCLUDED.json_content`,
-    [userId.name, thing, jsonContent],
+    [userId.name, thing, JSON.stringify(content)],
   );
 
   // Delete old connections
@@ -246,8 +175,8 @@ export async function updateThing({
   for (let i = 0; i < children.length; ++i) {
     const connection = children[i];
     await client.query(
-      `INSERT INTO connections ("user", name, parent, child, tag, parent_index) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [userId.name, connection.name, thing, connection.child, connection.tag, i],
+      `INSERT INTO connections ("user", name, parent, child, parent_index) VALUES ($1, $2, $3, $4, $5)`,
+      [userId.name, connection.name, thing, connection.child, i],
     );
   }
 
@@ -272,12 +201,18 @@ export async function deleteThing(userId: UserId, thing: string): Promise<void> 
   client.release();
 }
 
-export async function setContent(userId: UserId, thing: string, content: string): Promise<void> {
+// IMPORTANT: You must validate the content BEFORE passing it into this
+// function! Otherwise, invalid data will be stored in the database!
+export async function setContent(
+  userId: UserId,
+  thing: string,
+  content: Communication.Content,
+): Promise<void> {
   const client = await pool.connect();
   await client.query(`UPDATE things SET json_content = $3 WHERE "user" = $1 AND name = $2`, [
     userId.name,
     thing,
-    JSON.stringify(contentFromString(content)),
+    JSON.stringify(content),
   ]);
   client.release();
 }
@@ -285,12 +220,12 @@ export async function setContent(userId: UserId, thing: string, content: string)
 export async function getThingData(
   userId: UserId,
   thing: string,
-): Promise<{content: string; children: {name: string; child: string; tag?: string}[]} | null> {
+): Promise<{content: Communication.Content; children: {name: string; child: string}[]} | null> {
   const client = await pool.connect();
 
   const result = await client.query(
     `
-    SELECT things.name, things.json_content, connections.name as connection_name, connections.child, connections.tag
+    SELECT things.name, things.json_content, connections.name as connection_name, connections.child
     FROM things
     LEFT JOIN connections ON connections.user = things.user AND connections.parent = things.name
     WHERE things.user = $1 AND things.name = $2
@@ -306,11 +241,11 @@ export async function getThingData(
   let children = [];
   for (const row of result.rows) {
     if (row.connection_name !== null) {
-      children.push({name: row.connection_name, child: row.child, tag: row.tag ?? undefined});
+      children.push({name: row.connection_name, child: row.child});
     }
   }
 
-  return {content: contentJsonToString(result.rows[0]["json_content"]), children};
+  return {content: result.rows[0]["json_content"], children};
 }
 
 export async function deleteAllUserData(userId: UserId): Promise<void> {
