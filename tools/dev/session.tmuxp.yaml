@@ -12,8 +12,10 @@ windows:
       - shell_command:
           - ./tools/build-static.sh
       - shell_command:
-          - ./tools/build-server.sh
+          - cd src/server
+          - npm run watch
       - shell_command:
+          - ./tools/build-client.sh
           - cd src/client
           - npm run watch
       - shell_command:
