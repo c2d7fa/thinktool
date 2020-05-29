@@ -51,6 +51,10 @@
     {
       "date": "2020-05-27",
       "title": "Implemented saving and loading in desktop client."
+    },
+    {
+      "date": "2020-05-29",
+      "title": "Fixed a bug in the demo that would cause all items to show up as empty until clicked."
     }
   ]
 }
