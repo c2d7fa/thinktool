@@ -151,6 +151,13 @@ main {
   }
 }
 
+@media (min-width: 900px) and (max-width: 1380px) {
+  .feature {
+    /* For Safari 13.0.5 */
+    max-height: 271px;
+  }
+}
+
 .horizontal {
   display: flex;
   justify-content: center;

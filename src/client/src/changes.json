@@ -63,6 +63,10 @@
     {
       "date": "2020-05-31",
       "title": "Fixed a bug where links would sometimes \"eat\" nearby characters at the beginning and end of items."
+    },
+    {
+      "date": "2020-05-31",
+      "title": "Improved appearance of landing page in Safari 13.0."
     }
   ]
 }
