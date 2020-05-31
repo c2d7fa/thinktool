@@ -67,6 +67,10 @@
     {
       "date": "2020-05-31",
       "title": "Improved appearance of landing page in Safari 13.0."
+    },
+    {
+      "date": "2020-05-31",
+      "title": "Fixed bug where you couldn't click on toolbar items on macOS."
     }
   ]
 }

@@ -45,7 +45,15 @@ function ToolbarButton(props: {
       onFocus={(ev) => {
         console.log("Attempted focusing button %o", props.name);
       }}
-      onMouseDown={(ev) => console.log("Mouse down on button %o", props.name)}
+      onMouseDown={(ev) => {
+        console.log("Mouse down on button %o", props.name);
+        // If we don't preventDefault, then we lose focus due to click on
+        // background on macOS. This seems to happen in Safari, Firefox and
+        // Chrome, but only on macOS for some reason.
+        //
+        // Last tested 2020-05-31. Don't remove this without testing on macOS.
+        ev.preventDefault();
+      }}
       onClick={(ev) => {
         console.log("Clicked button %o", props.name);
         props.action();
