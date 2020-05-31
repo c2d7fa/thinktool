@@ -10,28 +10,38 @@ function capitalize(s: string) {
   return s.substr(0, 1).toUpperCase() + s.substr(1);
 }
 
+function ifMacOS<T>(x: T, y: T): T {
+  if (navigator.platform === "MacIntel") {
+    return y;
+  } else {
+    return x;
+  }
+}
+
 export function format(shortcut: Shortcut) {
   function formatKey(key: string) {
     if (key === "ArrowRight") return "Right";
     else if (key === "ArrowDown") return "Down";
     else if (key === "ArrowLeft") return "Left";
     else if (key === "ArrowUp") return "Up";
+    else if (key === "Backspace") return ifMacOS("Backspace", "Delete");
+    else if (key === "Delete") return ifMacOS("Delete", "Fn+Delete");
     else return capitalize(key);
   }
 
   return (
-    (shortcut.mod ? "Alt+" : "") +
-    (shortcut.secondaryMod ? "Ctrl+" : "") +
-    (shortcut.ctrlLikeMod ? "Ctrl+" : "") +
+    (shortcut.mod ? ifMacOS("Alt+", "Ctrl+") : "") +
+    (shortcut.secondaryMod ? ifMacOS("Ctrl+", "Option+") : "") +
+    (shortcut.ctrlLikeMod ? ifMacOS("Ctrl+", "Cmd+") : "") +
     formatKey(shortcut.key)
   );
 }
 
 export function matches(event: React.KeyboardEvent<{}> | KeyboardEvent, shortcut: Shortcut) {
   return (
-    implies(shortcut.mod ?? false, event.altKey) &&
-    implies(shortcut.secondaryMod ?? false, event.ctrlKey) &&
-    implies(shortcut.ctrlLikeMod ?? false, event.ctrlKey) &&
+    implies(shortcut.mod ?? false, ifMacOS(event.altKey, event.ctrlKey)) &&
+    implies(shortcut.secondaryMod ?? false, ifMacOS(event.ctrlKey, event.altKey)) &&
+    implies(shortcut.ctrlLikeMod ?? false, ifMacOS(event.ctrlKey, event.metaKey)) &&
     shortcut.key === event.key
   );
 }

@@ -71,6 +71,10 @@
     {
       "date": "2020-05-31",
       "title": "Fixed bug where you couldn't click on toolbar items on macOS."
+    },
+    {
+      "date": "2020-05-31",
+      "title": "Improved keyboard shortcuts on macOS."
     }
   ]
 }
