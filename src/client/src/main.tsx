@@ -12,6 +12,7 @@ import * as API from "./server-api";
 import * as Storage from "./storage";
 import {actionsWith} from "./actions";
 import * as ExportRoam from "./export-roam";
+import * as Sh from "./shortcuts";
 
 import * as C from "./ui/content";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
@@ -354,11 +355,11 @@ function App({
   }, []);
 
   document.onkeydown = (ev) => {
-    if (ev.key === "z" && ev.ctrlKey) {
+    if (Sh.matches(ev, Sh.standard.undo)) {
       console.log("Undoing");
       context.undo();
       ev.preventDefault();
-    } else if (ev.key === "f" && ev.altKey) {
+    } else if (Sh.matches(ev, Sh.standard.find)) {
       // [TODO] Hack - passing null, because actionsWith() has a dumb interface.
       actionsWith(context, null!).showSearchPopup();
       ev.preventDefault();
@@ -725,16 +726,16 @@ function Content(p: {context: Context; node: T.NodeRef}) {
     ev: React.KeyboardEvent<{}>,
     notes: {startOfItem: boolean; endOfItem: boolean},
   ): boolean {
-    if (ev.key === "ArrowRight" && ev.altKey && ev.ctrlKey) {
+    if (Sh.matches(ev, Sh.standard.indent)) {
       actions.indent();
       return true;
-    } else if (ev.key === "ArrowLeft" && ev.altKey && ev.ctrlKey) {
+    } else if (Sh.matches(ev, Sh.standard.unindent)) {
       actions.unindent();
       return true;
-    } else if (ev.key === "ArrowDown" && ev.altKey && ev.ctrlKey) {
+    } else if (Sh.matches(ev, Sh.standard.moveDown)) {
       actions.moveDown();
       return true;
-    } else if (ev.key === "ArrowUp" && ev.altKey && ev.ctrlKey) {
+    } else if (Sh.matches(ev, Sh.standard.moveUp)) {
       actions.moveUp();
       return true;
     } else if (ev.key === "Tab") {
@@ -746,10 +747,10 @@ function Content(p: {context: Context; node: T.NodeRef}) {
     } else if (ev.key === "ArrowDown") {
       p.context.setTree(T.focusDown(p.context.tree));
       return true;
-    } else if (ev.key === "Enter" && ev.altKey) {
+    } else if (Sh.matches(ev, Sh.standard.createChild)) {
       actions.createChild();
       return true;
-    } else if (ev.key === "Enter" && ev.ctrlKey) {
+    } else if (Sh.matches(ev, Sh.standard.forceCreateSibling)) {
       actions.createSiblingAfter();
       return true;
     } else if (ev.key === "Enter" && !ev.shiftKey) {
@@ -764,26 +765,26 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       } else {
         return false;
       }
-    } else if (ev.key === "Backspace" && ev.altKey) {
+    } else if (Sh.matches(ev, Sh.standard.removeFromParent)) {
       actions.removeFromParent();
       return true;
-    } else if (ev.key === "Delete" && ev.altKey) {
+    } else if (Sh.matches(ev, Sh.standard.delete)) {
       actions.delete();
       return true;
-    } else if (ev.key === "c" && ev.altKey) {
+    } else if (Sh.matches(ev, Sh.standard.insertChild)) {
       p.context.setPopupTarget(T.focused(p.context.tree));
       p.context.setActivePopup((state, tree, target, selection) => {
         const [newState, newTree] = T.insertChild(state, tree, target, selection, 0);
         return [newState, newTree];
       });
       return true;
-    } else if (ev.key === "s" && ev.altKey) {
+    } else if (Sh.matches(ev, Sh.standard.insertSibling)) {
       actions.showSiblingPopup();
       return true;
-    } else if (ev.key === "p" && ev.altKey) {
+    } else if (Sh.matches(ev, Sh.standard.insertParent)) {
       actions.showParentPopup();
       return true;
-    } else if (ev.key === "l" && ev.altKey) {
+    } else if (Sh.matches(ev, Sh.standard.insertLink)) {
       actions.showLinkPopup();
       return true;
     } else {

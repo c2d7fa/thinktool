@@ -3,6 +3,7 @@ import * as T from "../tree";
 import * as Tutorial from "../tutorial";
 import {Context} from "../context";
 import {actionsWith} from "../actions";
+import * as Sh from "../shortcuts";
 
 function ToolbarGroup(props: {children: React.ReactNode; title?: string}) {
   if (props.title === undefined) {
@@ -86,7 +87,7 @@ export default function Toolbar(props: {context: Context}) {
             actions(true).showSearchPopup();
           }}
           description="Search for a specific item by its content."
-          shortcut="alt+f"
+          shortcut={Sh.format(Sh.standard.find)}
           icon="search"
           label="Find"
           alwaysEnabled
@@ -98,7 +99,7 @@ export default function Toolbar(props: {context: Context}) {
             actions().zoom();
           }}
           description="Zoom in on selected item"
-          shortcut="middle click bullet"
+          shortcut="Middle click bullet"
           icon="maximize-alt"
           label="Zoom"
           context={props.context}
@@ -111,7 +112,7 @@ export default function Toolbar(props: {context: Context}) {
             actions(true).createSiblingAfter();
           }}
           description="Create a new item as a sibling of the currently selected item"
-          shortcut="enter/ctrl+enter"
+          shortcut={`Enter/${Sh.format(Sh.standard.forceCreateSibling)}`}
           icon="add-r"
           label="New"
           context={props.context}
@@ -123,7 +124,7 @@ export default function Toolbar(props: {context: Context}) {
             actions().createChild();
           }}
           description="Create a new child of the selected item"
-          shortcut="alt+enter"
+          shortcut={Sh.format(Sh.standard.createChild)}
           icon="arrow-bottom-right-r"
           label="New Child"
           context={props.context}
@@ -134,7 +135,7 @@ export default function Toolbar(props: {context: Context}) {
             actions().removeFromParent();
           }}
           description="Remove the selected item from its parent. This does not delete the item."
-          shortcut="alt+backspace"
+          shortcut={Sh.format(Sh.standard.removeFromParent)}
           icon="remove-r"
           label="Remove"
           context={props.context}
@@ -145,7 +146,7 @@ export default function Toolbar(props: {context: Context}) {
             actions().delete();
           }}
           description="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents."
-          shortcut="alt+delete"
+          shortcut={Sh.format(Sh.standard.delete)}
           icon="trash"
           label="Destroy"
           context={props.context}
@@ -158,7 +159,7 @@ export default function Toolbar(props: {context: Context}) {
             actions().unindent();
           }}
           description="Unindent the selected item"
-          shortcut="ctrl+alt+left"
+          shortcut={Sh.format(Sh.standard.unindent)}
           icon="push-chevron-left"
           label="Unindent"
           context={props.context}
@@ -169,7 +170,7 @@ export default function Toolbar(props: {context: Context}) {
             actions().indent();
           }}
           description="Indent the selected item"
-          shortcut="ctrl+alt+right"
+          shortcut={Sh.format(Sh.standard.indent)}
           icon="push-chevron-right"
           label="Indent"
           context={props.context}
@@ -180,7 +181,7 @@ export default function Toolbar(props: {context: Context}) {
             actions().moveUp();
           }}
           description="Move the selected item up"
-          shortcut="ctrl+alt+up"
+          shortcut={Sh.format(Sh.standard.moveUp)}
           icon="push-chevron-up"
           label="Up"
           context={props.context}
@@ -191,7 +192,7 @@ export default function Toolbar(props: {context: Context}) {
             actions().moveDown();
           }}
           description="Move the selected item down"
-          shortcut="ctrl+alt+down"
+          shortcut={Sh.format(Sh.standard.moveDown)}
           icon="push-chevron-down"
           label="Down"
           context={props.context}
@@ -204,7 +205,7 @@ export default function Toolbar(props: {context: Context}) {
             actions().showSiblingPopup();
           }}
           description="Insert an existing item as a sibling after the currently selected item."
-          shortcut="alt+s"
+          shortcut={Sh.format(Sh.standard.insertSibling)}
           icon="add"
           label="Sibling"
           context={props.context}
@@ -215,7 +216,7 @@ export default function Toolbar(props: {context: Context}) {
             actions().showChildPopup();
           }}
           description="Insert an existing item as a child of the currently selected item."
-          shortcut="alt+c"
+          shortcut={Sh.format(Sh.standard.insertChild)}
           icon="arrow-bottom-right-o"
           label="Child"
           context={props.context}
@@ -226,7 +227,7 @@ export default function Toolbar(props: {context: Context}) {
             actions().showParentPopup();
           }}
           description="Insert an existing item as a parent of the currently selected item."
-          shortcut="alt+p"
+          shortcut={Sh.format(Sh.standard.insertParent)}
           icon="arrow-top-left-o"
           label="Parent"
           context={props.context}
@@ -237,7 +238,7 @@ export default function Toolbar(props: {context: Context}) {
             actions().showLinkPopup();
           }}
           description="Insert a reference to an existing item at the position of the text."
-          shortcut="alt+l"
+          shortcut={Sh.format(Sh.standard.insertLink)}
           icon="file-document"
           label="Link"
           context={props.context}
