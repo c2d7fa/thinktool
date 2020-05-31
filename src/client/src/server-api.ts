@@ -6,7 +6,7 @@ export type Server = ReturnType<typeof initialize>;
 export function transformFullStateResponseIntoState(response: Communication.FullStateResponse): D.State {
   if (response.things.length === 0) return D.empty;
 
-  let state: D.State = {things: {}, connections: {}};
+  let state: D.State = D.empty;
 
   for (const thing of response.things) {
     if (!D.exists(state, thing.name)) {

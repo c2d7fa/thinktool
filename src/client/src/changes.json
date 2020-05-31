@@ -55,6 +55,10 @@
     {
       "date": "2020-05-29",
       "title": "Fixed a bug in the demo that would cause all items to show up as empty until clicked."
+    },
+    {
+      "date": "2020-05-31",
+      "title": "Fixed a bug where no items showed up, and making any changes would crash the app."
     }
   ]
 }
