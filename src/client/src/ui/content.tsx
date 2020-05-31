@@ -13,8 +13,8 @@ function annotate(content: D.Content): (string | {externalLink: string} | {link:
 
     function commitText(end: number) {
       if (position !== end) {
-        result.push(text.substring(position, end + 1));
-        position = end + 1;
+        result.push(text.substring(position, end));
+        position = end;
       }
     }
 
@@ -33,12 +33,12 @@ function annotate(content: D.Content): (string | {externalLink: string} | {link:
         end -= 1;
       }
 
-      commitText(start - 1);
+      commitText(start);
       result = [...result, {externalLink: text.substring(start, end)}];
       position = end;
     }
 
-    commitText(text.length - 1);
+    commitText(text.length);
 
     return result;
   }

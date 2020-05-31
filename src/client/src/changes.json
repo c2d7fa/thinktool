@@ -59,6 +59,10 @@
     {
       "date": "2020-05-31",
       "title": "Fixed a bug where no items showed up, and making any changes would crash the app."
+    },
+    {
+      "date": "2020-05-31",
+      "title": "Fixed a bug where links would sometimes \"eat\" nearby characters at the beginning and end of items."
     }
   ]
 }

@@ -22,6 +22,8 @@ export function contentFromEditString(editString: string): D.Content {
         } else {
           result.push(buffer);
         }
+      } else if (buffer === "" && readingLink) {
+        result.push("#");
       }
       buffer = "";
     }
