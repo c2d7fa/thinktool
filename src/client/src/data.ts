@@ -20,10 +20,6 @@ export interface ConnectionData {
   child: string;
 }
 
-export interface State {
-  things: {[id: string]: ThingData};
-}
-
 //#region Fundamental operations
 
 export const empty: State = {
@@ -138,6 +134,9 @@ export function create(state: State, customId?: string): [State, string] {
 }
 
 export function forget(state: State, thing: string): State {
+  // It should not be possible to permanently remove the root item.
+  if (thing === "0") return state;
+
   const result = {...state, things: {...state.things}};
   delete result.things[thing];
   return result;
@@ -186,6 +185,7 @@ export function remove(state: State, removedThing: string): State {
       newState = removeChild(newState, parent, G.indexOfBy(children(newState, parent), removedThing)!);
     }
   }
+
   return forget(newState, removedThing);
 }
 
