@@ -13,6 +13,9 @@ cp -r src/static/*.css dist/static
 echo "Building static HTML..."
 cp -r src/static/*.html dist/static/
 
+echo "Building sitemap..."
+cp src/static/sitemap.txt dist/static
+
 echo "Building HTML templates..."
 npm ci
 
