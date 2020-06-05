@@ -1,0 +1,147 @@
+@import url("https://fonts.googleapis.com/css?family=Titillium+Web:400,400i&display=swap");
+@import url("https://fonts.googleapis.com/css?family=Montserrat:500,500i,800,800i&display=swap&subset=cyrillic,latin-ext");
+
+body {
+  margin: 0;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 500;
+  color: #202020;
+  font-size: 110%;
+}
+
+article {
+  display: flex;
+  flex-direction: column;
+  padding: 4rem 2rem;
+
+  max-width: 37em;
+  margin: auto;
+}
+
+.last-updated {
+  font-style: italic;
+  color: #b0b0b0;
+  font-size: 0.9em;
+  margin-top: 2em;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  margin-top: 1em;
+  padding: 0.5em;
+  border: 1px solid #dadada;
+  border-radius: 3px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  margin: 0;
+}
+
+a span {
+  border-bottom: 2px solid #00000028;
+  transition: border-color 150ms;
+}
+
+a:hover span {
+  border-color: #00000060;
+}
+
+a:active span {
+  border-color: #00000010;
+}
+
+h1 {
+  margin: 0;
+  text-transform: uppercase;
+  font-size: 1.5em;
+  font-weight: 800;
+}
+
+h1 + p {
+  margin-top: 1.5em;
+}
+
+p {
+  margin: 0;
+  margin-top: 1em;
+  line-height: 175%;
+}
+
+#top-bar {
+  padding: 1em 2em;
+  background: radial-gradient(circle at bottom, #f0f0f0 0%, #fcfcfc 150%);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  box-shadow: 0 0 6px 0 #d8d8d8;
+}
+
+#top-bar #logo {
+  text-transform: uppercase;
+  font-size: 2em;
+  font-weight: bold;
+  display: inline-block;
+  cursor: default;
+  user-select: none;
+
+  margin-right: auto;
+}
+
+#top-bar a#logo {
+  cursor: pointer;
+}
+
+#top-bar #login-link {
+  display: inline-block;
+
+  text-transform: uppercase;
+  background-color: inherit;
+  font-family: "Titillium Web";
+  border-radius: 6px;
+
+  color: #b0b0b0;
+  text-decoration: none;
+
+  transition: color 0.3s ease, background-color 0.3s ease;
+
+  user-select: none;
+
+  white-space: nowrap;
+}
+
+#top-bar a#login-link:hover {
+  color: #808080;
+  background-color: #f8f8f8;
+}
+
+#top-bar a#login-link:active {
+  color: #404040;
+  background-color: #f8f8f8;
+}
+
+@media (max-width: 600px) {
+  #top-bar #logo {
+    font-size: 1.2em;
+  }
+}
+
+@media (max-width: 420px) {
+  #top-bar {
+    font-size: 0.8em;
+  }
+}
+
+footer {
+  font-size: 0.9em;
+  padding: 2rem;
+  background: radial-gradient(circle at top, #f0f0f0 0%, #fcfcfc 150%);
+  color: #a0a0a0;
+  text-align: center;
+
+  box-shadow: inset 0 3px 6px -3px #c0c0c0;
+}

@@ -75,6 +75,10 @@
     {
       "date": "2020-05-31",
       "title": "Improved keyboard shortcuts on macOS."
+    },
+    {
+      "date": "2020-06-05",
+      "title": "Wrote a more in-depth tutorial for Thinktool here: https://thinktool.io/tutorial.html"
     }
   ]
 }

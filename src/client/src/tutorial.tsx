@@ -23,14 +23,15 @@ export type FunctionName =
   | "tutorial"
   | "changelog";
 
-const initialState = {step: "Getting started", finished: false};
+const initialState = {step: "How to use Thinktool", finished: false};
 
 export function initialize(finished: boolean) {
   if (!finished) return initialState;
-  return {step: "Getting started", finished: true};
+  return {step: "How to use Thinktool", finished: true};
 }
 
 const steps: {name: string; introduces: FunctionName[]}[] = [
+  {name: "How to use Thinktool", introduces: []},
   {name: "Getting started", introduces: ["new", "new-child", "insert-child"]},
   {name: "Reorganizing", introduces: ["remove", "destroy", "indent", "unindent", "up", "down"]},
   {name: "Flexible hierarchy", introduces: ["insert-sibling", "insert-child", "insert-parent"]},
@@ -125,7 +126,9 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
           (Step {stepIndex(props.state) + 1} of {amountSteps(props.state)})
         </span>
       </h1>
-      {props.state.step === "Getting started" ? (
+      {props.state.step === "How to use Thinktool" ? (
+        <StepHowToUseThinktool />
+      ) : props.state.step === "Getting started" ? (
         <StepGettingStarted />
       ) : props.state.step === "Reorganizing" ? (
         <StepReorganizing />
@@ -152,11 +155,37 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
   );
 }
 
+export function StepHowToUseThinktool() {
+  return (
+    <>
+      <p>
+        <i>Welcome to Thinktool!</i>
+      </p>
+      <p>
+        For a more thorough introduction, you can also check out this guide:{" "}
+        <a className="important-link" href="/tutorial.html" target="_blank">
+          How to use Thinktool
+        </a>
+      </p>
+      <p>
+        <i>
+          This tutorial is a work-in-progress. I'd like to hear your feedback about it. If there's anything
+          you found unclear, please{" "}
+          <a className="email" href="mailto:jonas@thinktool.io">
+            let me know
+          </a>
+          .
+        </i>
+      </p>
+    </>
+  );
+}
+
 export function StepGettingStarted() {
   return (
     <>
       <p>
-        <i>Welcome to Thinktool! Let's get you started with the basics.</i>
+        <i>Now, let's get started with the basics.</i>
       </p>
       <p>
         <strong>Create a couple of new items.</strong> You can do this by clicking the buttons in the toolbar.

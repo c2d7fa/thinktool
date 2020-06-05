@@ -281,6 +281,10 @@ p {
   margin-right: auto;
 }
 
+#top-bar a#logo {
+  cursor: pointer;
+}
+
 #top-bar #login-link {
   display: inline-block;
 
