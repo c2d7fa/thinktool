@@ -118,7 +118,12 @@ function genericRefreshChildren({
   updateChildren(tree: Tree, parent: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree;
 }): (state: D.State, tree: Tree, parent: NodeRef) => Tree {
   return (state: D.State, tree: Tree, parent: NodeRef) => {
-    const stateChildren = getStateChildren(state, thing(tree, parent));
+    if (thing(tree, parent) === undefined) {
+      console.warn("Node was not associated with item");
+      return tree;
+    }
+
+    const stateChildren = getStateChildren(state, thing(tree, parent)!);
     const treeChildren = getTreeChildren(tree, parent).map((ch) => thing(tree, ch));
 
     if (!expanded(tree, parent)) return tree;
@@ -163,6 +168,11 @@ function genericRefreshChildren({
 }
 
 function refreshChildren(state: D.State, tree: Tree, parent: NodeRef): Tree {
+  if (thing(tree, parent) === undefined) {
+    console.error("Node was not associated with item");
+    return tree;
+  }
+
   if (!expanded(tree, parent)) return tree;
 
   // [TODO] Check for equality and don't update if unnecessary. (See genericRefreshChildren.)
@@ -171,7 +181,7 @@ function refreshChildren(state: D.State, tree: Tree, parent: NodeRef): Tree {
 
   let result = I.updateChildren(tree, parent, (cs) => []);
 
-  for (const connection of D.childConnections(state, thing(tree, parent))) {
+  for (const connection of D.childConnections(state, thing(tree, parent)!)) {
     const [newChild, newResult] = loadConnection(state, result, connection, parent);
     result = I.updateChildren(newResult, parent, (cs) => [...cs, newChild]);
   }
@@ -226,6 +236,10 @@ export function loadConnection(
   parent?: NodeRef,
 ): [NodeRef, Tree] {
   const thing = D.connectionChild(state, connection);
+
+  if (thing === undefined) {
+    throw "Unable to load connection because item did not exist.";
+  }
 
   let [newNode, newTree] = I.loadThing(tree, thing, connection);
 

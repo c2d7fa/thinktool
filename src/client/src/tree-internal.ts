@@ -8,7 +8,7 @@ export interface Node {
   children: NodeRef[];
   backreferences: {expanded: boolean; children: NodeRef[]};
   otherParents: {expanded: boolean; children: NodeRef[]};
-  openedLinks: {[thing: string]: NodeRef};
+  openedLinks: {[thing: string]: NodeRef | undefined};
 }
 
 export type NodeRef = {id: number};
@@ -16,16 +16,22 @@ export type NodeRef = {id: number};
 export interface Tree {
   nextId: number;
   root: NodeRef;
-  nodes: {[id: number]: Node};
+  nodes: {[id: number]: Node | undefined};
   focus: null | NodeRef;
 }
 
-function getNode(tree: Tree, node: NodeRef): Node {
+function getNode(tree: Tree, node: NodeRef): Node | undefined {
   return tree.nodes[node.id];
 }
 
 function updateNode(tree: Tree, node: NodeRef, update: (node: Node) => Node): Tree {
-  return {...tree, nodes: {...tree.nodes, [node.id]: update(getNode(tree, node))}};
+  const data = getNode(tree, node);
+  if (data === undefined) {
+    console.warn("Couldn't update node %o, because it didn't exist in %o", node, tree);
+    return tree;
+  }
+
+  return {...tree, nodes: {...tree.nodes, [node.id]: update(data)}};
 }
 
 export function fromRoot(thing: string): Tree {
@@ -51,11 +57,18 @@ export function root(tree: Tree): NodeRef {
 }
 
 export function thing(tree: Tree, node: NodeRef): string {
-  return getNode(tree, node).thing;
+  const thing = getNode(tree, node)?.thing;
+  if (thing === undefined) {
+    alert("A fatal error occurred. Please check the developer console for more information.");
+    throw {message: "Could not get item for node", node, tree};
+  }
+  return thing;
 }
 
 export function expanded(tree: Tree, node: NodeRef): boolean {
-  return getNode(tree, node).expanded;
+  if (getNode(tree, node) === undefined)
+    console.warn("Assuming non-existent node %o in %o is not expanded", node, tree);
+  return getNode(tree, node)?.expanded ?? false;
 }
 
 export function focused(tree: Tree): NodeRef | null {
@@ -83,7 +96,9 @@ export function markExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree
 }
 
 export function children(tree: Tree, node: NodeRef): NodeRef[] {
-  return getNode(tree, node).children;
+  if (getNode(tree, node) === undefined)
+    console.warn("Could not get children of non-existent node %o in %o", node, tree);
+  return getNode(tree, node)?.children ?? [];
 }
 
 export function loadThing(tree: Tree, thing: string, connection?: D.Connection): [NodeRef, Tree] {
@@ -119,17 +134,17 @@ export function updateChildren(tree: Tree, node: NodeRef, update: (children: Nod
 }
 
 export function connection(tree: Tree, node: NodeRef): D.Connection | undefined {
-  return tree.nodes[node.id].connection;
+  return tree.nodes[node.id]?.connection;
 }
 
 // Backreferences
 
 export function backreferencesExpanded(tree: Tree, node: NodeRef): boolean {
-  return getNode(tree, node).backreferences.expanded;
+  return getNode(tree, node)?.backreferences?.expanded ?? false;
 }
 
 export function backreferencesChildren(tree: Tree, node: NodeRef): NodeRef[] {
-  return getNode(tree, node).backreferences.children;
+  return getNode(tree, node)?.backreferences?.children ?? [];
 }
 
 export function markBackreferencesExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree {
@@ -150,11 +165,11 @@ export function updateBackreferencesChildren(
 // Parents as children ("other parents")
 
 export function otherParentsExpanded(tree: Tree, node: NodeRef): boolean {
-  return getNode(tree, node).otherParents.expanded;
+  return getNode(tree, node)?.otherParents?.expanded ?? false;
 }
 
 export function otherParentsChildren(tree: Tree, node: NodeRef): NodeRef[] {
-  return getNode(tree, node).otherParents.children;
+  return getNode(tree, node)?.otherParents?.children ?? [];
 }
 
 export function markOtherParentsExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree {
@@ -176,7 +191,7 @@ export function updateOtherParentsChildren(
 // (See comment in Tree module)
 
 export function openedLinkNode(tree: Tree, node: NodeRef, link: string): NodeRef | undefined {
-  return getNode(tree, node).openedLinks[link];
+  return getNode(tree, node)?.openedLinks[link];
 }
 
 export function setOpenedLinkNode(tree: Tree, node: NodeRef, link: string, linkNode: NodeRef | null) {
@@ -188,5 +203,11 @@ export function setOpenedLinkNode(tree: Tree, node: NodeRef, link: string, linkN
 }
 
 export function openedLinksChildren(tree: Tree, node: NodeRef): NodeRef[] {
-  return Object.values(getNode(tree, node).openedLinks);
+  const result: NodeRef[] = [];
+
+  for (const n of Object.values(getNode(tree, node)?.openedLinks ?? {})) {
+    if (n !== undefined) result.push(n);
+  }
+
+  return result;
 }

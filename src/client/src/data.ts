@@ -3,8 +3,8 @@ import {General as G, Communication} from "thinktool-shared";
 export type Content = Communication.Content;
 
 export interface State {
-  things: {[id: string]: ThingData};
-  connections: {[connectionId: string]: ConnectionData};
+  things: {[id: string]: ThingData | undefined};
+  connections: {[connectionId: string]: ConnectionData | undefined};
 }
 
 export type Connection = {connectionId: string};
@@ -27,26 +27,36 @@ export const empty: State = {
   connections: {},
 };
 
-export function connectionParent(state: State, connection: Connection): string {
-  return state.connections[connection.connectionId].parent;
+export function connectionParent(state: State, connection: Connection): string | undefined {
+  return state.connections[connection.connectionId]?.parent;
 }
 
-export function connectionChild(state: State, connection: Connection): string {
-  return state.connections[connection.connectionId].child;
+export function connectionChild(state: State, connection: Connection): string | undefined {
+  return state.connections[connection.connectionId]?.child;
 }
 
 export function childConnections(state: State, thing: string): Connection[] {
-  if (!exists(state, thing)) return [];
-  return state.things[thing].children;
+  const data = state.things[thing];
+  if (data === undefined) {
+    console.warn("Getting children of non-existent item %o", thing);
+    return [];
+  }
+  return data.children;
 }
 
-export function content(things: State, thing: string): Content {
-  if (!exists(things, thing)) return [];
-  return things.things[thing].content;
+export function content(state: State, thing: string): Content {
+  const data = state.things[thing];
+  if (data === undefined) {
+    console.warn("Getting content of non-existent item %o", thing);
+    return [];
+  }
+  return data.content ?? [];
 }
 
 export function setContent(state: State, thing: string, newContent: Content): State {
-  return {...state, things: {...state.things, [thing]: {...state.things[thing], content: newContent}}};
+  if (state.things[thing] === undefined) console.warn("Setting content of non-existent item %o", thing);
+  const oldThing = state.things[thing] ?? {content: [], children: [], parents: []};
+  return {...state, things: {...state.things, [thing]: {...oldThing, content: newContent}}};
 }
 
 export function insertChild(
@@ -56,75 +66,114 @@ export function insertChild(
   index: number,
   customConnectionId?: string,
 ): [State, Connection] {
+  const parentData = state.things[parent];
+  let childData = state.things[child];
+
+  if (parentData === undefined) {
+    throw "Tried to insert child into non-existent parent";
+  }
+
   let result = state;
   const connectionId = customConnectionId ?? `c.${generateShortId()}`; // 'c.' prefix to tell where the ID came from when debugging.
   result = {
     ...result,
     connections: {...state.connections, [connectionId]: {parent, child}},
   };
-  if (!exists(result, child)) {
+
+  if (childData === undefined) {
     // We must store the child-to-parent connection in the child node; however,
     // sometimes it makes sense to add a parent before its child, for example
     // when loading a cyclic structure. Thus, we may need to create the child
     // first.
     result = create(result, child)[0];
+    childData = result.things[child]!;
   }
+
   result = {
     ...result,
     things: {
       ...result.things,
       [child]: {
-        ...result.things[child],
-        parents: [{connectionId}, ...result.things[child].parents],
+        ...childData,
+        parents: [{connectionId}, ...childData.parents],
       },
     },
   };
+
   result = {
     ...result,
     things: {
       ...result.things,
       [parent]: {
-        ...result.things[parent],
-        children: G.splice(result.things[parent].children, index, 0, {connectionId}),
+        ...parentData,
+        children: G.splice(parentData.children, index, 0, {connectionId}),
       },
     },
   };
+
   return [result, {connectionId}];
 }
 
-export function removeChild(state: State, parent: string, index: number) {
+export function removeChild(state: State, parent: string, index: number): State {
+  const parentData = state.things[parent];
+  if (parentData === undefined) throw "Tried to remove item from non-existent parent";
+
   let result = state;
-  const removedConnection = state.things[parent].children[index]; // Connection to remove
+
+  const removedConnection = parentData.children[index]; // Connection to remove
   const child = connectionChild(state, removedConnection);
+  if (child === undefined) {
+    console.error(
+      "While removing %o-th child from parent %o with %o, the child did not actually exist",
+      index,
+      parent,
+      parentData,
+    );
+    return state;
+  }
+  const childData = result.things[child];
+  if (childData === undefined) {
+    console.error(
+      "While removing %o-th child from parent %o with %o, the child was invalid",
+      index,
+      parent,
+      parentData,
+    );
+    return state;
+  }
+
   result = {
     ...result,
     things: {
       ...result.things,
       [parent]: {
-        ...result.things[parent],
+        ...parentData,
         children: G.removeBy(
-          result.things[parent].children,
+          parentData.children,
           removedConnection,
           (x, y) => x.connectionId === y.connectionId,
         ),
       },
     },
   };
+
   result = {
     ...result,
     things: {
       ...result.things,
       [child]: {
-        ...result.things[child],
+        ...childData,
         parents: G.removeBy(
-          result.things[child].parents,
+          childData.parents,
           removedConnection,
           (x, y) => x.connectionId === y.connectionId,
         ),
       },
     },
   };
+
   result = {...result, connections: G.removeKey(result.connections, removedConnection.connectionId)};
+
   return result;
 }
 
@@ -143,18 +192,31 @@ export function forget(state: State, thing: string): State {
 }
 
 export function exists(state: State, thing: string): boolean {
-  return typeof state.things[thing] === "object";
+  return state.things[thing] !== undefined;
 }
 
 export function parents(state: State, child: string): string[] {
-  if (!exists(state, child)) return [];
-  return state.things[child].parents.map((c) => connectionParent(state, c));
+  let result: string[] = [];
+
+  for (const parent of state.things[child]?.parents ?? []) {
+    const parentThing = connectionParent(state, parent);
+    if (parentThing !== undefined) result.push(parentThing);
+  }
+
+  return result;
 }
 
 //#endregion
 
 export function children(state: State, thing: string): string[] {
-  return childConnections(state, thing).map((c) => connectionChild(state, c));
+  let result: string[] = [];
+
+  for (const child of state.things[thing]?.children ?? []) {
+    const childThing = connectionChild(state, child);
+    if (childThing !== undefined) result.push(childThing);
+  }
+
+  return result;
 }
 
 export function hasChildren(things: State, thing: string): boolean {
@@ -180,7 +242,6 @@ function generateShortId(): string {
 export function remove(state: State, removedThing: string): State {
   let newState = state;
   for (const parent of parents(newState, removedThing)) {
-    if (!exists(newState, parent)) continue;
     while (children(newState, parent).includes(removedThing)) {
       newState = removeChild(newState, parent, G.indexOfBy(children(newState, parent), removedThing)!);
     }

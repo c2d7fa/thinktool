@@ -110,7 +110,7 @@ function diffState(
         }
       }
     } else {
-      for (const connection of oldState.things[thing].children) {
+      for (const connection of Data.childConnections(oldState, thing)) {
         if (oldState.connections[connection.connectionId] !== newState.connections[connection.connectionId]) {
           changed.push(thing);
         }
@@ -164,7 +164,7 @@ function useContext({
             children: Data.childConnections(newState, thing).map((c) => {
               return {
                 name: c.connectionId,
-                child: Data.connectionChild(newState, c),
+                child: Data.connectionChild(newState, c)!,
               };
             }),
           })),
@@ -192,7 +192,7 @@ function useContext({
         children: Data.childConnections(oldState, thing).map((c) => {
           return {
             name: c.connectionId,
-            child: Data.connectionChild(oldState, c),
+            child: Data.connectionChild(oldState, c)!,
           };
         }),
       })),
