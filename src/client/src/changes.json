@@ -79,6 +79,10 @@
     {
       "date": "2020-06-05",
       "title": "Wrote a more in-depth tutorial for Thinktool here: https://thinktool.io/tutorial.html"
+    },
+    {
+      "date": "2020-06-05",
+      "title": "Fixed crash when manually typing link to non-existent item and then editing that item's content."
     }
   ]
 }
