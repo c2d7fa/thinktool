@@ -36,3 +36,6 @@ for (const file of fs.readdirSync("src/markup")) {
   fs.writeFileSync(outPath, html)
 }
 EOF
+
+echo "Building blog..."
+./tools/build-blog.sh
