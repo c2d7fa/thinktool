@@ -1,0 +1,6 @@
+User-Agent: *
+Disallow: /login.html
+Disallow: /user.html
+Disallow: /app.html
+Disallow: /demo.html
+Disallow: /forgot-password.html
