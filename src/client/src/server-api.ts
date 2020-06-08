@@ -89,10 +89,6 @@ export function initialize(apiHost: string) {
 
   const logOutUrl = `${apiHost}/logout`;
 
-  function ping(note: string): void {
-    fetch(`${apiHost}/ping/${note}`, {mode: "no-cors"});
-  }
-
   async function deleteAccount(account: string): Promise<void> {
     // We require the account name here to make it harder to accidentally send a
     // request to delete the user's entire account.
@@ -129,7 +125,6 @@ export function initialize(apiHost: string) {
     onChanges,
     getThingData,
     logOutUrl,
-    ping,
     deleteAccount,
     getEmail,
     setEmail,

@@ -1061,7 +1061,6 @@ export async function thinktoolDemo({
   data: Communication.FullStateResponse;
 }) {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
-  API.initialize(apiHost).ping("demo");
   ReactDOM.render(
     <App
       initialState={API.transformFullStateResponseIntoState(data)}

@@ -134,11 +134,6 @@ app.get("/logout", async (req, res) => {
   sendRedirect(res.header("Set-Cookie", "DiaformSession=; Max-Age=0"), `${staticUrl}/`);
 });
 
-app.get("/ping/*", async (req, res) => {
-  // Extremely basic analytics just so we can see if we get *any* traffic in the log.
-  res.send();
-});
-
 app.ws("/changes", async (ws, req) => {
   if (req.user === undefined) return ws.close();
 
