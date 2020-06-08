@@ -9,6 +9,9 @@ mkdir -p dist/static/blog
 echo "Building images for blog..."
 cp -r blog/*.png dist/static/blog
 
+echo "Building RSS feed..."
+cp -r src/static/blog.rss dist/static
+
 echo "Building blog posts..."
 node <<"EOF"
 const h = require("handlebars")
