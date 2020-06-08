@@ -251,7 +251,6 @@ p {
 
 .demo-small {
   font-size: 0.8em;
-  margin-right: 2rem;
 }
 
 .demo:hover {
@@ -289,7 +288,16 @@ p {
   cursor: pointer;
 }
 
-#top-bar #login-link {
+#top-bar nav {
+  display: flex;
+  align-items: center;
+}
+
+#top-bar nav > * + * {
+  margin-left: 1.5rem;
+}
+
+#top-bar nav a:not(.demo) {
   display: inline-block;
 
   text-transform: uppercase;
@@ -307,12 +315,12 @@ p {
   white-space: nowrap;
 }
 
-#top-bar a#login-link:hover {
+#top-bar nav a:not(.demo):hover {
   color: #808080;
   background-color: #f8f8f8;
 }
 
-#top-bar a#login-link:active {
+#top-bar nav a:not(.demo):active {
   color: #404040;
   background-color: #f8f8f8;
 }
@@ -329,9 +337,15 @@ p {
   }
 }
 
-@media (max-width: 300px) {
-  #top-bar .demo {
-    display: none;
+@media (max-width: 350px) {
+  #top-bar nav *:nth-child(3) {
+    display: none !important;
+  }
+}
+
+@media (max-width: 265px) {
+  #top-bar nav *:nth-child(1) {
+    display: none !important;
   }
 }
 
