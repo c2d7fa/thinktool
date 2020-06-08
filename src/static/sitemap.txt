@@ -3,3 +3,5 @@ https://thinktool.io/tutorial.html
 https://thinktool.io/download.html
 https://thinktool.io/work.html
 https://thinktool.io/login.html
+https://thinktool.io/blog/
+https://thinktool.io/blog/zettelkasten-principles.html
