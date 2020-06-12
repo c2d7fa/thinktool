@@ -257,9 +257,7 @@ app.post("/state/things", requireSession, requireClientId, async (req, res) => {
   }
   const data = req.body as Communication.UpdateThings;
 
-  console.log("updating things");
   for (const thing of data) {
-    console.log("got thing: %o", JSON.stringify(thing));
     if (!isValidContent(thing.content)) {
       console.warn("Ignoring item %o with invalid content %o", thing, thing.content);
       continue;
@@ -273,13 +271,9 @@ app.post("/state/things", requireSession, requireClientId, async (req, res) => {
     });
   }
 
-  console.log("notifying");
-
   for (const thing of data) {
     changes.updated(req.user!, thing.name, res.locals.clientId);
   }
-
-  console.log("ok were goot");
 
   res
     .header("Access-Control-Allow-Origin", staticUrl)
