@@ -9,7 +9,7 @@ test("Creating a thing with a custom ID returns that ID.", () => {
 
 test("Creating a child is reflected in other parents in the tree.", () => {
   let state = D.empty;
-  state = D.setContent(state, "0", "Root");
+  state = D.setContent(state, "0", ["Root"]);
   state = D.create(state, "a")[0];
   state = D.addChild(state, "0", "a")[0];
   state = D.addChild(state, "0", "a")[0];
@@ -34,7 +34,7 @@ test("Creating a child is reflected in other parents in the tree.", () => {
 
 test("Indenting and removing item", () => {
   let state = D.empty;
-  state = D.setContent(state, "0", "Root");
+  state = D.setContent(state, "0", ["Root"]);
   state = D.create(state, "a")[0];
   state = D.create(state, "b")[0];
   state = D.addChild(state, "0", "a")[0];
@@ -58,7 +58,7 @@ test("Indenting and removing item", () => {
 
 test("Removing a thing causes it to no longer exist.", () => {
   let state = D.empty;
-  state = D.setContent(state, "0", "Root");
+  state = D.setContent(state, "0", ["Root"]);
   state = D.create(state, "a")[0];
   state = D.addChild(state, "0", "a")[0];
 
