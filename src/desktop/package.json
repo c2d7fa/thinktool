@@ -16,7 +16,7 @@
   },
   "scripts": {
     "check": "./node_modules/.bin/tsc --noEmit",
-    "build-static": "cp ../../dist/static/* build && cp index.html build && rm -f build/icon.png",
+    "build-static": "./build-static-and-client-for-desktop.sh",
     "build": "mkdir -p build && ./node_modules/.bin/tsc && npm run build-static",
     "start": "./node_modules/.bin/electron-builder --dir && ./dist/linux-unpacked/thinktool-desktop-client",
     "bundle-linux": "npm run build && ./node_modules/.bin/electron-builder -l && echo 'Output in ./dist/'",

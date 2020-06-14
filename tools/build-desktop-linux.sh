@@ -22,7 +22,7 @@ echo "Removing left over files..."
 cd dist/static
 mkdir .temp
 mv *.AppImage .temp
-rm -f *
+rm -rf *
 mv .temp/* .
 rmdir .temp
 cd ../..

@@ -25,7 +25,7 @@ echo "Removing left over files..."
 cd dist/static
 mkdir .temp
 mv *.exe .temp
-rm -f *
+rm -rf *
 mv .temp/* .
 rmdir .temp
 cd ../..
