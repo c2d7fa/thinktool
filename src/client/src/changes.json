@@ -83,6 +83,10 @@
     {
       "date": "2020-06-05",
       "title": "Fixed crash when manually typing link to non-existent item and then editing that item's content."
+    },
+    {
+      "date": "2020-06-14",
+      "title": "Fixed a bug where any selected text would not be used correctly in the popup when adding a link, sibling, child or parent."
     }
   ]
 }

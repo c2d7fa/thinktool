@@ -13,6 +13,7 @@ import * as Storage from "./storage";
 import {actionsWith} from "./actions";
 import * as ExportRoam from "./export-roam";
 import * as Sh from "./shortcuts";
+import * as Editing from "./editing";
 
 import * as C from "./ui/content";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
@@ -490,11 +491,15 @@ function App({
             const start = context.selectionInFocusedContent?.start;
             const end = context.selectionInFocusedContent?.end;
 
-            if (start && end && start - end !== 0 && context.popupTarget) {
-              return Data.contentText(context.state, T.thing(context.tree, context.popupTarget)).substring(
-                start,
-                end,
-              );
+            if (
+              start !== undefined &&
+              end !== undefined &&
+              start - end !== 0 &&
+              context.popupTarget !== null
+            ) {
+              return Editing.contentToEditString(
+                Data.content(context.state, T.thing(context.tree, context.popupTarget)),
+              ).substring(start, end);
             }
           })()}
         />
