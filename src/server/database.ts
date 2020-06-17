@@ -16,24 +16,16 @@ export interface Users {
 
 // Check password and return user ID.
 export async function userId(name: string, password: string): Promise<UserId | null> {
-  console.log("[DB] Retrieving user ID for %o, %o", name, password);
-  console.log("[DB] Connecting to DB");
   const client = await pool.connect();
-  console.log("[DB] Running query");
   const result = await client.query(`SELECT name, password FROM users WHERE name = $1`, [name]);
-  console.log("[DB] Query result: %s", JSON.stringify(result));
-  console.log("[DB] Releasing client");
   client.release();
 
-  console.log("[DB] Considering early exit");
   if (result.rowCount !== 1) return null;
 
-  console.log("[DB] Verifying password");
   if (await bcrypt.compare(password, result.rows[0].password)) {
-    console.log("[DB] Success! Returning");
     return {name: result.rows[0].name};
   } else {
-    console.log("[DB] Failure! Returning");
+    console.log("DB: User '%s' tried to log in with incorrect password.", name);
     return null;
   }
 }
