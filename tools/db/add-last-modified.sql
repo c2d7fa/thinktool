@@ -1,0 +1,2 @@
+ALTER TABLE things
+ADD COLUMN last_modified TIMESTAMPTZ;
