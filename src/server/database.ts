@@ -156,7 +156,7 @@ export async function updateThing({
   await client.query("BEGIN");
 
   await client.query(
-    `INSERT INTO things ("user", name, json_content) VALUES ($1, $2, $3) ON CONFLICT ("user", name) DO UPDATE SET json_content = EXCLUDED.json_content`,
+    `INSERT INTO things ("user", name, json_content, last_modified) VALUES ($1, $2, $3, NOW()) ON CONFLICT ("user", name) DO UPDATE SET json_content = EXCLUDED.json_content, last_modified = EXCLUDED.last_modified`,
     [userId.name, thing, JSON.stringify(content)],
   );
 
@@ -201,11 +201,10 @@ export async function setContent(
   content: Communication.Content,
 ): Promise<void> {
   const client = await pool.connect();
-  await client.query(`UPDATE things SET json_content = $3 WHERE "user" = $1 AND name = $2`, [
-    userId.name,
-    thing,
-    JSON.stringify(content),
-  ]);
+  await client.query(
+    `UPDATE things SET json_content = $3, last_modified = NOW() WHERE "user" = $1 AND name = $2`,
+    [userId.name, thing, JSON.stringify(content)],
+  );
   client.release();
 }
 
