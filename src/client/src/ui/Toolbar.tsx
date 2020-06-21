@@ -76,7 +76,7 @@ export default function Toolbar(props: {context: Context}) {
     // Very ugly hack: focused item may be null, but we just force it anyway,
     // since it should only be null when actions don't actually require a
     // target.
-    return actionsWith(props.context, T.focused(props.context.tree)!);
+    return actionsWith(props.context);
   }
 
   return (

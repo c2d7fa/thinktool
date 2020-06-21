@@ -361,8 +361,7 @@ function App({
       context.undo();
       ev.preventDefault();
     } else if (Sh.matches(ev, Sh.standard.find)) {
-      // [TODO] Hack - passing null, because actionsWith() has a dumb interface.
-      actionsWith(context, null!).showSearchPopup();
+      actionsWith(context).showSearchPopup();
       ev.preventDefault();
     }
   };
@@ -725,7 +724,7 @@ function Bullet(p: {
 }
 
 function Content(p: {context: Context; node: T.NodeRef}) {
-  const actions = actionsWith(p.context, p.node);
+  const actions = actionsWith(p.context);
 
   function onKeyDown(
     ev: React.KeyboardEvent<{}>,

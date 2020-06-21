@@ -4,10 +4,11 @@ import * as D from "./data";
 import * as Tutorial from "./tutorial";
 import * as E from "./editing";
 
-export function actionsWith(context: Context, node: T.NodeRef) {
-  // We sometimes call this function with node = null, even though the signature
-  // claims that this is not allowed. This is a pretty bad hack, and should
-  // definitely be fixed. See <Toolbar>.
+export function actionsWith(context: Context) {
+  // [TODO] We just assume that the caller hasn't made a mistake about when
+  // focused node is allowed to be null by casting to non-null. This is a
+  // pretty serious hack.
+  const node = T.focused(context.tree)!;
 
   return {
     showSiblingPopup(): void {
