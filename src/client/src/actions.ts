@@ -122,12 +122,6 @@ export function actionsWith(context: Context, node: T.NodeRef) {
       context.setTree(newTree);
     },
 
-    clone() {
-      const [newState, newTree] = T.clone(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
     resetTutorial() {
       context.setTutorialState(Tutorial.reset(context.tutorialState));
     },

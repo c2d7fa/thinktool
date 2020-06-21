@@ -594,12 +594,6 @@ export function removeThing(state: D.State, tree: Tree, node: NodeRef): [D.State
   return [newState, newTree];
 }
 
-export function clone(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {
-  const [newState, newTree, newNode] = copyToAbove(state, tree, node, node);
-  const newTree2 = focus(newTree, newNode);
-  return [newState, newTree2];
-}
-
 // Backreferences:
 
 const refreshBackreferencesChildren = (state: D.State, tree: Tree, node: NodeRef) => {

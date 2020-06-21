@@ -8,7 +8,6 @@ export type FunctionName =
   | "new"
   | "new-child"
   | "remove"
-  | "clone"
   | "destroy"
   | "unindent"
   | "indent"
