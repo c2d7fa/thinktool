@@ -3,6 +3,7 @@ import * as T from "../tree";
 import * as Tutorial from "../tutorial";
 import {Context} from "../context";
 import {actionsWith} from "../actions";
+import * as Ac from "../actions";
 import * as Sh from "../shortcuts";
 
 function ToolbarGroup(props: {children: React.ReactNode; title?: string}) {
@@ -30,8 +31,7 @@ function ToolbarButton(props: {
   label: string;
   name: Tutorial.FunctionName;
   context: Context;
-  alwaysEnabled?: true;
-  disabled?: boolean;
+  enabled: boolean;
 }) {
   return (
     <button
@@ -61,7 +61,7 @@ function ToolbarButton(props: {
         ev.preventDefault();
       }}
       title={props.description + (props.shortcut === undefined ? "" : ` [${props.shortcut}]`)}
-      disabled={(T.focused(props.context.tree) === null && !props.alwaysEnabled) || props.disabled}>
+      disabled={!props.enabled}>
       <span className={`icon gg-${props.icon}`}></span>
       {props.label}
     </button>
@@ -90,7 +90,7 @@ export default function Toolbar(props: {context: Context}) {
           shortcut={Sh.format(Sh.standard.find)}
           icon="search"
           label="Find"
-          alwaysEnabled
+          enabled={Ac.enabled(props.context, "find")}
           context={props.context}
           name="find"
         />
@@ -104,6 +104,7 @@ export default function Toolbar(props: {context: Context}) {
           label="Zoom"
           context={props.context}
           name="zoom"
+          enabled={Ac.enabled(props.context, "zoom")}
         />
       </ToolbarGroup>
       <ToolbarGroup title="Item">
@@ -116,8 +117,8 @@ export default function Toolbar(props: {context: Context}) {
           icon="add-r"
           label="New"
           context={props.context}
-          alwaysEnabled
           name="new"
+          enabled={Ac.enabled(props.context, "new")}
         />
         <ToolbarButton
           action={() => {
@@ -129,6 +130,7 @@ export default function Toolbar(props: {context: Context}) {
           label="New Child"
           context={props.context}
           name="new-child"
+          enabled={Ac.enabled(props.context, "new-child")}
         />
         <ToolbarButton
           action={() => {
@@ -140,6 +142,7 @@ export default function Toolbar(props: {context: Context}) {
           label="Remove"
           context={props.context}
           name="remove"
+          enabled={Ac.enabled(props.context, "remove")}
         />
         <ToolbarButton
           action={() => {
@@ -151,6 +154,7 @@ export default function Toolbar(props: {context: Context}) {
           label="Destroy"
           context={props.context}
           name="destroy"
+          enabled={Ac.enabled(props.context, "destroy")}
         />
       </ToolbarGroup>
       <ToolbarGroup title="Move">
@@ -164,6 +168,7 @@ export default function Toolbar(props: {context: Context}) {
           label="Unindent"
           context={props.context}
           name="unindent"
+          enabled={Ac.enabled(props.context, "unindent")}
         />
         <ToolbarButton
           action={() => {
@@ -175,6 +180,7 @@ export default function Toolbar(props: {context: Context}) {
           label="Indent"
           context={props.context}
           name="indent"
+          enabled={Ac.enabled(props.context, "indent")}
         />
         <ToolbarButton
           action={() => {
@@ -186,6 +192,7 @@ export default function Toolbar(props: {context: Context}) {
           label="Up"
           context={props.context}
           name="up"
+          enabled={Ac.enabled(props.context, "up")}
         />
         <ToolbarButton
           action={() => {
@@ -197,6 +204,7 @@ export default function Toolbar(props: {context: Context}) {
           label="Down"
           context={props.context}
           name="down"
+          enabled={Ac.enabled(props.context, "down")}
         />
       </ToolbarGroup>
       <ToolbarGroup title="Connect">
@@ -210,6 +218,7 @@ export default function Toolbar(props: {context: Context}) {
           label="Sibling"
           context={props.context}
           name="insert-sibling"
+          enabled={Ac.enabled(props.context, "insert-sibling")}
         />
         <ToolbarButton
           action={() => {
@@ -221,6 +230,7 @@ export default function Toolbar(props: {context: Context}) {
           label="Child"
           context={props.context}
           name="insert-child"
+          enabled={Ac.enabled(props.context, "insert-child")}
         />
         <ToolbarButton
           action={() => {
@@ -232,6 +242,7 @@ export default function Toolbar(props: {context: Context}) {
           label="Parent"
           context={props.context}
           name="insert-parent"
+          enabled={Ac.enabled(props.context, "insert-parent")}
         />
         <ToolbarButton
           action={() => {
@@ -243,6 +254,7 @@ export default function Toolbar(props: {context: Context}) {
           label="Link"
           context={props.context}
           name="insert-link"
+          enabled={Ac.enabled(props.context, "insert-link")}
         />
       </ToolbarGroup>
       <ToolbarGroup title="Help">
@@ -250,13 +262,12 @@ export default function Toolbar(props: {context: Context}) {
           action={() => {
             actions(true).resetTutorial();
           }}
-          disabled={Tutorial.isActive(props.context.tutorialState)}
           description="Go through the tutorial again."
           icon="info"
           label="Tutorial"
-          alwaysEnabled
           context={props.context}
           name="tutorial"
+          enabled={Ac.enabled(props.context, "tutorial")}
         />
         <ToolbarButton
           action={() => {
@@ -265,9 +276,9 @@ export default function Toolbar(props: {context: Context}) {
           description="Show list of updates to Thinktool."
           icon="list"
           label="Updates"
-          alwaysEnabled
           context={props.context}
           name="changelog"
+          enabled={true}
         />
       </ToolbarGroup>
     </div>

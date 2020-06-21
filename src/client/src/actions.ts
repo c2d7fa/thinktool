@@ -4,6 +4,58 @@ import * as D from "./data";
 import * as Tutorial from "./tutorial";
 import * as E from "./editing";
 
+export type ActionName =
+  | "insert-sibling"
+  | "insert-child"
+  | "insert-parent"
+  | "insert-link"
+  | "find"
+  | "new"
+  | "zoom"
+  | "indent"
+  | "unindent"
+  | "down"
+  | "up"
+  | "new-child"
+  | "remove"
+  | "destroy"
+  | "tutorial";
+
+// Some actions can only be executed under some circumstances, for example if an
+// item is selected.
+//
+// If enabled(context, action) returns false, then the toolbar button for the
+// given action should be disabled, and pressing the shortcut should not execute
+// the action.
+export function enabled(context: Context, action: ActionName): boolean {
+  const alwaysEnabled: ActionName[] = ["find", "new"];
+  const requireTarget: ActionName[] = [
+    "zoom",
+    "new-child",
+    "remove",
+    "destroy",
+    "unindent",
+    "indent",
+    "up",
+    "down",
+    "insert-child",
+    "insert-sibling",
+    "insert-parent",
+    "insert-link",
+  ];
+
+  if (alwaysEnabled.includes(action)) {
+    return true;
+  } else if (requireTarget.includes(action)) {
+    return T.focused(context.tree) !== null;
+  } else if (action === "tutorial") {
+    return !Tutorial.isActive(context.tutorialState);
+  } else {
+    console.warn("enabled(..., %o): Did not know about action.", action);
+    return true;
+  }
+}
+
 export function actionsWith(context: Context) {
   // [TODO] We just assume that the caller hasn't made a mistake about when
   // focused node is allowed to be null by casting to non-null. This is a
