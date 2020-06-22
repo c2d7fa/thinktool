@@ -56,127 +56,140 @@ export function enabled(context: Context, action: ActionName): boolean {
   }
 }
 
-export function actionsWith(context: Context) {
-  // [TODO] We just assume that the caller hasn't made a mistake about when
-  // focused node is allowed to be null by casting to non-null. This is a
-  // pretty serious hack.
-  const node = T.focused(context.tree)!;
+export function execute(context: Context, action: ActionName): void {
+  if (!enabled(context, action)) {
+    console.error("The action %o is not enabled! Ignoring.");
+    return;
+  }
 
-  return {
-    showSiblingPopup(): void {
-      context.setPopupTarget(node);
-      context.setActivePopup((state, tree, target, selection) => {
-        const [newState, newTree] = T.insertSiblingAfter(state, tree, target, selection);
-        return [newState, newTree];
-      });
-    },
+  function node(): T.NodeRef {
+    const node = T.focused(context.tree);
+    if (node === null)
+      throw `Bug in 'enabled'. Ran action ${action}, even though there was no node selected.`;
+    return node;
+  }
 
-    showChildPopup(): void {
-      context.setPopupTarget(node);
-      context.setActivePopup((state, tree, target, selection) => {
-        const [newState, newTree] = T.insertChild(state, tree, target, selection, 0);
-        return [newState, newTree];
-      });
-    },
+  const implementation = implementations[action];
+  if (typeof implementation !== "function")
+    throw "Bug in 'execute'. Action ${action} did not have an implementation.";
+  implementation(context, node);
+}
 
-    showParentPopup(): void {
-      context.setPopupTarget(node);
-      context.setActivePopup((state, tree, target, selection) => {
-        const [newState, newTree] = T.insertParent(state, tree, target, selection);
-        return [newState, newTree];
-      });
-    },
+const implementations: {
+  [k: string]: ((context: Context, getFocused: () => T.NodeRef) => void) | undefined;
+} = {
+  "insert-sibling"(context, getFocused) {
+    context.setPopupTarget(getFocused());
+    context.setActivePopup((state, tree, target, selection) => {
+      const [newState, newTree] = T.insertSiblingAfter(state, tree, target, selection);
+      return [newState, newTree];
+    });
+  },
 
-    showLinkPopup(): void {
-      const textSelection = context.selectionInFocusedContent;
-      if (textSelection === null) throw "Selection wasn't saved; can't insert link.";
+  "insert-child"(context, getFocused) {
+    context.setPopupTarget(getFocused());
+    context.setActivePopup((state, tree, target, selection) => {
+      const [newState, newTree] = T.insertChild(state, tree, target, selection, 0);
+      return [newState, newTree];
+    });
+  },
 
-      context.setPopupTarget(node);
-      context.setActivePopup((state, tree, target, selection) => {
-        if (target !== node) throw "Invalid target/node";
+  "insert-parent"(context, getFocused) {
+    context.setPopupTarget(getFocused());
+    context.setActivePopup((state, tree, target, selection) => {
+      const [newState, newTree] = T.insertParent(state, tree, target, selection);
+      return [newState, newTree];
+    });
+  },
 
-        const editing = E.contentToEditString(D.content(context.state, T.thing(context.tree, node)));
-        const newEditing =
-          editing.substring(0, textSelection.start) + `#${selection}` + editing.substring(textSelection.end);
-        const newState = D.setContent(state, T.thing(tree, target), E.contentFromEditString(newEditing));
+  "insert-link"(context, getFocused) {
+    const node = getFocused();
 
-        return [newState, tree];
-      });
-    },
+    const textSelection = context.selectionInFocusedContent;
+    if (textSelection === null) throw "Selection wasn't saved; can't insert link.";
 
-    showSearchPopup(): void {
-      // This is a hack on how setActivePopup is supposed to be used.
-      context.setPopupTarget({id: 0});
-      context.setActivePopup((state, tree, target, selection) => {
-        context.setSelectedThing(selection);
-        return [state, tree];
-      });
-    },
+    context.setPopupTarget(node);
+    context.setActivePopup((state, tree, target, selection) => {
+      if (target !== node) throw "Invalid target/node";
 
-    createSiblingAfter(): void {
-      if (node === null) {
-        const [newState, newTree, _, newId] = T.createChild(
-          context.state,
-          context.tree,
-          T.root(context.tree),
-        );
-        context.setState(newState);
-        context.setTree(T.focus(newTree, newId));
-      } else {
-        const [newState, newTree, _, newId] = T.createSiblingAfter(context.state, context.tree, node);
-        context.setState(newState);
-        context.setTree(T.focus(newTree, newId));
-      }
-    },
+      const editing = E.contentToEditString(D.content(context.state, T.thing(context.tree, node)));
+      const newEditing =
+        editing.substring(0, textSelection.start) + `#${selection}` + editing.substring(textSelection.end);
+      const newState = D.setContent(state, T.thing(tree, target), E.contentFromEditString(newEditing));
 
-    zoom(): void {
-      context.setSelectedThing(T.thing(context.tree, node));
-    },
+      return [newState, tree];
+    });
+  },
 
-    indent() {
-      const [newState, newTree] = T.indent(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
+  find(context) {
+    // This is a hack on how setActivePopup is supposed to be used.
+    context.setPopupTarget({id: 0});
+    context.setActivePopup((state, tree, target, selection) => {
+      context.setSelectedThing(selection);
+      return [state, tree];
+    });
+  },
 
-    unindent() {
-      const [newState, newTree] = T.unindent(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
-    moveDown() {
-      const [newState, newTree] = T.moveDown(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
-    moveUp() {
-      const [newState, newTree] = T.moveUp(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
-
-    createChild() {
-      const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, node);
+  new(context, getFocused) {
+    const node = T.focused(context.tree);
+    if (node === null) {
+      const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, T.root(context.tree));
       context.setState(newState);
       context.setTree(T.focus(newTree, newId));
-    },
-
-    removeFromParent() {
-      const [newState, newTree] = T.remove(context.state, context.tree, node);
+    } else {
+      const [newState, newTree, _, newId] = T.createSiblingAfter(context.state, context.tree, node);
       context.setState(newState);
-      context.setTree(newTree);
-    },
+      context.setTree(T.focus(newTree, newId));
+    }
+  },
 
-    delete() {
-      const [newState, newTree] = T.removeThing(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(newTree);
-    },
+  zoom(context, getFocused) {
+    context.setSelectedThing(T.thing(context.tree, getFocused()));
+  },
 
-    resetTutorial() {
-      context.setTutorialState(Tutorial.reset(context.tutorialState));
-    },
-  };
-}
+  indent(context, getFocused) {
+    const [newState, newTree] = T.indent(context.state, context.tree, getFocused());
+    context.setState(newState);
+    context.setTree(newTree);
+  },
+
+  unindent(context, getFocused) {
+    const [newState, newTree] = T.unindent(context.state, context.tree, getFocused());
+    context.setState(newState);
+    context.setTree(newTree);
+  },
+
+  down(context, getFocused) {
+    const [newState, newTree] = T.moveDown(context.state, context.tree, getFocused());
+    context.setState(newState);
+    context.setTree(newTree);
+  },
+
+  up(context, getFocused) {
+    const [newState, newTree] = T.moveUp(context.state, context.tree, getFocused());
+    context.setState(newState);
+    context.setTree(newTree);
+  },
+
+  "new-child"(context, getFocused) {
+    const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, getFocused());
+    context.setState(newState);
+    context.setTree(T.focus(newTree, newId));
+  },
+
+  remove(context, getFocused) {
+    const [newState, newTree] = T.remove(context.state, context.tree, getFocused());
+    context.setState(newState);
+    context.setTree(newTree);
+  },
+
+  destroy(context, getFocused) {
+    const [newState, newTree] = T.removeThing(context.state, context.tree, getFocused());
+    context.setState(newState);
+    context.setTree(newTree);
+  },
+
+  tutorial(context, getFocused) {
+    context.setTutorialState(Tutorial.reset(context.tutorialState));
+  },
+};

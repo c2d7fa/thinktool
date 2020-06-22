@@ -10,7 +10,7 @@ import * as T from "./tree";
 import * as Tutorial from "./tutorial";
 import * as API from "./server-api";
 import * as Storage from "./storage";
-import {actionsWith} from "./actions";
+import * as Actions from "./actions";
 import * as ExportRoam from "./export-roam";
 import * as Sh from "./shortcuts";
 import * as Editing from "./editing";
@@ -361,7 +361,7 @@ function App({
       context.undo();
       ev.preventDefault();
     } else if (Sh.matches(ev, Sh.standard.find)) {
-      actionsWith(context).showSearchPopup();
+      Actions.execute(context, "find");
       ev.preventDefault();
     }
   };
@@ -724,23 +724,21 @@ function Bullet(p: {
 }
 
 function Content(p: {context: Context; node: T.NodeRef}) {
-  const actions = actionsWith(p.context);
-
   function onKeyDown(
     ev: React.KeyboardEvent<{}>,
     notes: {startOfItem: boolean; endOfItem: boolean},
   ): boolean {
     if (Sh.matches(ev, Sh.standard.indent)) {
-      actions.indent();
+      Actions.execute(p.context, "indent");
       return true;
     } else if (Sh.matches(ev, Sh.standard.unindent)) {
-      actions.unindent();
+      Actions.execute(p.context, "unindent");
       return true;
     } else if (Sh.matches(ev, Sh.standard.moveDown)) {
-      actions.moveDown();
+      Actions.execute(p.context, "down");
       return true;
     } else if (Sh.matches(ev, Sh.standard.moveUp)) {
-      actions.moveUp();
+      Actions.execute(p.context, "up");
       return true;
     } else if (ev.key === "Tab") {
       p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
@@ -752,14 +750,14 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       p.context.setTree(T.focusDown(p.context.tree));
       return true;
     } else if (Sh.matches(ev, Sh.standard.createChild)) {
-      actions.createChild();
+      Actions.execute(p.context, "new-child");
       return true;
     } else if (Sh.matches(ev, Sh.standard.forceCreateSibling)) {
-      actions.createSiblingAfter();
+      Actions.execute(p.context, "new");
       return true;
     } else if (ev.key === "Enter" && !ev.shiftKey) {
       if (notes.endOfItem) {
-        actions.createSiblingAfter();
+        Actions.execute(p.context, "new");
         return true;
       } else if (notes.startOfItem) {
         const [newState, newTree, _, newId] = T.createSiblingBefore(p.context.state, p.context.tree, p.node);
@@ -770,10 +768,10 @@ function Content(p: {context: Context; node: T.NodeRef}) {
         return false;
       }
     } else if (Sh.matches(ev, Sh.standard.removeFromParent)) {
-      actions.removeFromParent();
+      Actions.execute(p.context, "remove");
       return true;
     } else if (Sh.matches(ev, Sh.standard.delete)) {
-      actions.delete();
+      Actions.execute(p.context, "destroy");
       return true;
     } else if (Sh.matches(ev, Sh.standard.insertChild)) {
       p.context.setPopupTarget(T.focused(p.context.tree));
@@ -783,13 +781,13 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       });
       return true;
     } else if (Sh.matches(ev, Sh.standard.insertSibling)) {
-      actions.showSiblingPopup();
+      Actions.execute(p.context, "insert-sibling");
       return true;
     } else if (Sh.matches(ev, Sh.standard.insertParent)) {
-      actions.showParentPopup();
+      Actions.execute(p.context, "insert-parent");
       return true;
     } else if (Sh.matches(ev, Sh.standard.insertLink)) {
-      actions.showLinkPopup();
+      Actions.execute(p.context, "insert-link");
       return true;
     } else {
       return false;

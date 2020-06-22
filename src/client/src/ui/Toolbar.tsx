@@ -2,7 +2,6 @@ import * as React from "react";
 import * as T from "../tree";
 import * as Tutorial from "../tutorial";
 import {Context} from "../context";
-import {actionsWith} from "../actions";
 import * as Ac from "../actions";
 import * as Sh from "../shortcuts";
 
@@ -69,22 +68,12 @@ function ToolbarButton(props: {
 }
 
 export default function Toolbar(props: {context: Context}) {
-  function actions(noTargetRequired?: true) {
-    if (T.focused(props.context.tree) === null && !noTargetRequired) {
-      throw "No item focused, so cannot handle actions";
-    }
-    // Very ugly hack: focused item may be null, but we just force it anyway,
-    // since it should only be null when actions don't actually require a
-    // target.
-    return actionsWith(props.context);
-  }
-
   return (
     <div className="toolbar">
       <ToolbarGroup title="Navigate">
         <ToolbarButton
           action={() => {
-            actions(true).showSearchPopup();
+            Ac.execute(props.context, "find");
           }}
           description="Search for a specific item by its content."
           shortcut={Sh.format(Sh.standard.find)}
@@ -96,7 +85,7 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action={() => {
-            actions().zoom();
+            Ac.execute(props.context, "zoom");
           }}
           description="Zoom in on selected item"
           shortcut="Middle click bullet"
@@ -110,7 +99,7 @@ export default function Toolbar(props: {context: Context}) {
       <ToolbarGroup title="Item">
         <ToolbarButton
           action={() => {
-            actions(true).createSiblingAfter();
+            Ac.execute(props.context, "new");
           }}
           description="Create a new item as a sibling of the currently selected item"
           shortcut={`Enter/${Sh.format(Sh.standard.forceCreateSibling)}`}
@@ -122,7 +111,7 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action={() => {
-            actions().createChild();
+            Ac.execute(props.context, "new-child");
           }}
           description="Create a new child of the selected item"
           shortcut={Sh.format(Sh.standard.createChild)}
@@ -134,7 +123,7 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action={() => {
-            actions().removeFromParent();
+            Ac.execute(props.context, "remove");
           }}
           description="Remove the selected item from its parent. This does not delete the item."
           shortcut={Sh.format(Sh.standard.removeFromParent)}
@@ -146,7 +135,7 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action={() => {
-            actions().delete();
+            Ac.execute(props.context, "destroy");
           }}
           description="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents."
           shortcut={Sh.format(Sh.standard.delete)}
@@ -160,7 +149,7 @@ export default function Toolbar(props: {context: Context}) {
       <ToolbarGroup title="Move">
         <ToolbarButton
           action={() => {
-            actions().unindent();
+            Ac.execute(props.context, "unindent");
           }}
           description="Unindent the selected item"
           shortcut={Sh.format(Sh.standard.unindent)}
@@ -172,7 +161,7 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action={() => {
-            actions().indent();
+            Ac.execute(props.context, "indent");
           }}
           description="Indent the selected item"
           shortcut={Sh.format(Sh.standard.indent)}
@@ -184,7 +173,7 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action={() => {
-            actions().moveUp();
+            Ac.execute(props.context, "up");
           }}
           description="Move the selected item up"
           shortcut={Sh.format(Sh.standard.moveUp)}
@@ -196,7 +185,7 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action={() => {
-            actions().moveDown();
+            Ac.execute(props.context, "down");
           }}
           description="Move the selected item down"
           shortcut={Sh.format(Sh.standard.moveDown)}
@@ -210,7 +199,7 @@ export default function Toolbar(props: {context: Context}) {
       <ToolbarGroup title="Connect">
         <ToolbarButton
           action={() => {
-            actions().showSiblingPopup();
+            Ac.execute(props.context, "insert-sibling");
           }}
           description="Insert an existing item as a sibling after the currently selected item."
           shortcut={Sh.format(Sh.standard.insertSibling)}
@@ -222,7 +211,7 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action={() => {
-            actions().showChildPopup();
+            Ac.execute(props.context, "insert-child");
           }}
           description="Insert an existing item as a child of the currently selected item."
           shortcut={Sh.format(Sh.standard.insertChild)}
@@ -234,7 +223,7 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action={() => {
-            actions().showParentPopup();
+            Ac.execute(props.context, "insert-parent");
           }}
           description="Insert an existing item as a parent of the currently selected item."
           shortcut={Sh.format(Sh.standard.insertParent)}
@@ -246,7 +235,7 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action={() => {
-            actions().showLinkPopup();
+            Ac.execute(props.context, "insert-link");
           }}
           description="Insert a reference to an existing item at the position of the text."
           shortcut={Sh.format(Sh.standard.insertLink)}
@@ -260,7 +249,7 @@ export default function Toolbar(props: {context: Context}) {
       <ToolbarGroup title="Help">
         <ToolbarButton
           action={() => {
-            actions(true).resetTutorial();
+            Ac.execute(props.context, "tutorial");
           }}
           description="Go through the tutorial again."
           icon="info"
