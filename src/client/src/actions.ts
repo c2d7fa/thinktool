@@ -3,6 +3,7 @@ import * as T from "./tree";
 import * as D from "./data";
 import * as Tutorial from "./tutorial";
 import * as E from "./editing";
+import * as S from "./shortcuts";
 
 export type ActionName =
   | "insert-sibling"
@@ -20,7 +21,8 @@ export type ActionName =
   | "remove"
   | "destroy"
   | "tutorial"
-  | "changelog";
+  | "changelog"
+  | "undo";
 
 // Some actions can only be executed under some circumstances, for example if an
 // item is selected.
@@ -29,7 +31,7 @@ export type ActionName =
 // given action should be disabled, and pressing the shortcut should not execute
 // the action.
 export function enabled(context: Context, action: ActionName): boolean {
-  const alwaysEnabled: ActionName[] = ["find", "new", "changelog"];
+  const alwaysEnabled: ActionName[] = ["find", "new", "changelog", "undo"];
   const requireTarget: ActionName[] = [
     "zoom",
     "new-child",
@@ -197,4 +199,48 @@ const implementations: {
   changelog(context, getFocused) {
     context.setChangelogShown(!context.changelogShown);
   },
+
+  undo(context, getFocused) {
+    context.undo();
+  },
 };
+
+export function shortcut(action: ActionName): S.Shortcut {
+  // [NOTE] This does not have a shortcut for "new", since this action is
+  // handled specially.
+
+  switch (action) {
+    case "find":
+      return {mod: true, key: "f"};
+    case "indent":
+      return {mod: true, secondaryMod: true, key: "ArrowRight"};
+    case "unindent":
+      return {mod: true, secondaryMod: true, key: "ArrowLeft"};
+    case "up":
+      return {mod: true, secondaryMod: true, key: "ArrowUp"};
+    case "down":
+      return {mod: true, secondaryMod: true, key: "ArrowDown"};
+    case "new-child":
+      return {mod: true, key: "Enter"};
+    case "remove":
+      return {mod: true, key: "Backspace"};
+    case "destroy":
+      return {mod: true, key: "Delete"};
+    case "insert-child":
+      return {mod: true, key: "c"};
+    case "insert-parent":
+      return {mod: true, key: "p"};
+    case "insert-sibling":
+      return {mod: true, key: "s"};
+    case "insert-link":
+      return {mod: true, key: "l"};
+    case "undo":
+      return {ctrlLikeMod: true, key: "z"};
+    case "new":
+      return {special: `${S.format({key: "Enter"})}/${S.format({secondaryMod: true, key: "Enter"})}}`};
+    case "zoom":
+      return {special: "MMB"};
+    default:
+      return null;
+  }
+}

@@ -73,7 +73,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="find"
           description="Search for a specific item by its content."
-          shortcut={Sh.format(Sh.standard.find)}
+          shortcut={Sh.format(Ac.shortcut("find"))}
           icon="search"
           label="Find"
           enabled={Ac.enabled(props.context, "find")}
@@ -82,7 +82,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="zoom"
           description="Zoom in on selected item"
-          shortcut="Middle click bullet"
+          shortcut={Sh.format(Ac.shortcut("zoom"))}
           icon="maximize-alt"
           label="Zoom"
           context={props.context}
@@ -93,7 +93,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="new"
           description="Create a new item as a sibling of the currently selected item"
-          shortcut={`Enter/${Sh.format(Sh.standard.forceCreateSibling)}`}
+          shortcut={Sh.format(Ac.shortcut("new"))}
           icon="add-r"
           label="New"
           context={props.context}
@@ -102,7 +102,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="new-child"
           description="Create a new child of the selected item"
-          shortcut={Sh.format(Sh.standard.createChild)}
+          shortcut={Sh.format(Ac.shortcut("new-child"))}
           icon="arrow-bottom-right-r"
           label="New Child"
           context={props.context}
@@ -111,7 +111,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="remove"
           description="Remove the selected item from its parent. This does not delete the item."
-          shortcut={Sh.format(Sh.standard.removeFromParent)}
+          shortcut={Sh.format(Ac.shortcut("remove"))}
           icon="remove-r"
           label="Remove"
           context={props.context}
@@ -120,7 +120,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="destroy"
           description="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents."
-          shortcut={Sh.format(Sh.standard.delete)}
+          shortcut={Sh.format(Ac.shortcut("destroy"))}
           icon="trash"
           label="Destroy"
           context={props.context}
@@ -131,7 +131,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="unindent"
           description="Unindent the selected item"
-          shortcut={Sh.format(Sh.standard.unindent)}
+          shortcut={Sh.format(Ac.shortcut("unindent"))}
           icon="push-chevron-left"
           label="Unindent"
           context={props.context}
@@ -140,7 +140,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="indent"
           description="Indent the selected item"
-          shortcut={Sh.format(Sh.standard.indent)}
+          shortcut={Sh.format(Ac.shortcut("indent"))}
           icon="push-chevron-right"
           label="Indent"
           context={props.context}
@@ -149,7 +149,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="up"
           description="Move the selected item up"
-          shortcut={Sh.format(Sh.standard.moveUp)}
+          shortcut={Sh.format(Ac.shortcut("up"))}
           icon="push-chevron-up"
           label="Up"
           context={props.context}
@@ -158,7 +158,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="down"
           description="Move the selected item down"
-          shortcut={Sh.format(Sh.standard.moveDown)}
+          shortcut={Sh.format(Ac.shortcut("down"))}
           icon="push-chevron-down"
           label="Down"
           context={props.context}
@@ -169,7 +169,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="insert-sibling"
           description="Insert an existing item as a sibling after the currently selected item."
-          shortcut={Sh.format(Sh.standard.insertSibling)}
+          shortcut={Sh.format(Ac.shortcut("insert-sibling"))}
           icon="add"
           label="Sibling"
           context={props.context}
@@ -178,7 +178,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="insert-child"
           description="Insert an existing item as a child of the currently selected item."
-          shortcut={Sh.format(Sh.standard.insertChild)}
+          shortcut={Sh.format(Ac.shortcut("insert-child"))}
           icon="arrow-bottom-right-o"
           label="Child"
           context={props.context}
@@ -187,7 +187,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="insert-parent"
           description="Insert an existing item as a parent of the currently selected item."
-          shortcut={Sh.format(Sh.standard.insertParent)}
+          shortcut={Sh.format(Ac.shortcut("insert-parent"))}
           icon="arrow-top-left-o"
           label="Parent"
           context={props.context}
@@ -196,7 +196,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="insert-link"
           description="Insert a reference to an existing item at the position of the text."
-          shortcut={Sh.format(Sh.standard.insertLink)}
+          shortcut={Sh.format(Ac.shortcut("insert-link"))}
           icon="file-document"
           label="Link"
           context={props.context}

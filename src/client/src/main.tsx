@@ -356,11 +356,11 @@ function App({
   }, []);
 
   document.onkeydown = (ev) => {
-    if (Sh.matches(ev, Sh.standard.undo)) {
+    if (Sh.matches(ev, Actions.shortcut("undo"))) {
       console.log("Undoing");
-      context.undo();
+      Actions.execute(context, "undo");
       ev.preventDefault();
-    } else if (Sh.matches(ev, Sh.standard.find)) {
+    } else if (Sh.matches(ev, Actions.shortcut("find"))) {
       Actions.execute(context, "find");
       ev.preventDefault();
     }
@@ -728,17 +728,19 @@ function Content(p: {context: Context; node: T.NodeRef}) {
     ev: React.KeyboardEvent<{}>,
     notes: {startOfItem: boolean; endOfItem: boolean},
   ): boolean {
-    if (Sh.matches(ev, Sh.standard.indent)) {
-      Actions.execute(p.context, "indent");
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.unindent)) {
-      Actions.execute(p.context, "unindent");
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.moveDown)) {
-      Actions.execute(p.context, "down");
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.moveUp)) {
-      Actions.execute(p.context, "up");
+    function tryAction(action: Actions.ActionName): boolean {
+      if (Sh.matches(ev, Actions.shortcut(action))) {
+        Actions.execute(p.context, action);
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    // [TODO] Is there a reason for this weird ordering? We can probably clean
+    // this up.
+
+    if (tryAction("indent") || tryAction("unindent") || tryAction("down") || tryAction("up")) {
       return true;
     } else if (ev.key === "Tab") {
       p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
@@ -749,13 +751,16 @@ function Content(p: {context: Context; node: T.NodeRef}) {
     } else if (ev.key === "ArrowDown") {
       p.context.setTree(T.focusDown(p.context.tree));
       return true;
-    } else if (Sh.matches(ev, Sh.standard.createChild)) {
-      Actions.execute(p.context, "new-child");
+    } else if (tryAction("new-child")) {
       return true;
-    } else if (Sh.matches(ev, Sh.standard.forceCreateSibling)) {
+    } else if (Sh.matches(ev, {secondaryMod: true, key: "Enter"})) {
       Actions.execute(p.context, "new");
       return true;
     } else if (ev.key === "Enter" && !ev.shiftKey) {
+      // [TODO] Couldn't we handle this logic in the action code itself. We
+      // would need to check where in the item we are, which would require
+      // accessing the current selection from the context.
+
       if (notes.endOfItem) {
         Actions.execute(p.context, "new");
         return true;
@@ -767,27 +772,14 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       } else {
         return false;
       }
-    } else if (Sh.matches(ev, Sh.standard.removeFromParent)) {
-      Actions.execute(p.context, "remove");
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.delete)) {
-      Actions.execute(p.context, "destroy");
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.insertChild)) {
-      p.context.setPopupTarget(T.focused(p.context.tree));
-      p.context.setActivePopup((state, tree, target, selection) => {
-        const [newState, newTree] = T.insertChild(state, tree, target, selection, 0);
-        return [newState, newTree];
-      });
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.insertSibling)) {
-      Actions.execute(p.context, "insert-sibling");
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.insertParent)) {
-      Actions.execute(p.context, "insert-parent");
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.insertLink)) {
-      Actions.execute(p.context, "insert-link");
+    } else if (
+      tryAction("remove") ||
+      tryAction("destroy") ||
+      tryAction("insert-child") ||
+      tryAction("insert-sibling") ||
+      tryAction("insert-parent") ||
+      tryAction("insert-link")
+    ) {
       return true;
     } else {
       return false;
