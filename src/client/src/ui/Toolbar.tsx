@@ -23,7 +23,7 @@ function ToolbarGroup(props: {children: React.ReactNode; title?: string}) {
 }
 
 function ToolbarButton(props: {
-  action: () => void;
+  action: Ac.ActionName;
   description: string;
   shortcut?: string;
   icon: string;
@@ -56,7 +56,7 @@ function ToolbarButton(props: {
       }}
       onClick={(ev) => {
         console.log("Clicked button %o", props.name);
-        props.action();
+        Ac.execute(props.context, props.action);
         ev.preventDefault();
       }}
       title={props.description + (props.shortcut === undefined ? "" : ` [${props.shortcut}]`)}
@@ -72,9 +72,7 @@ export default function Toolbar(props: {context: Context}) {
     <div className="toolbar">
       <ToolbarGroup title="Navigate">
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "find");
-          }}
+          action="find"
           description="Search for a specific item by its content."
           shortcut={Sh.format(Sh.standard.find)}
           icon="search"
@@ -84,9 +82,7 @@ export default function Toolbar(props: {context: Context}) {
           name="find"
         />
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "zoom");
-          }}
+          action="zoom"
           description="Zoom in on selected item"
           shortcut="Middle click bullet"
           icon="maximize-alt"
@@ -98,9 +94,7 @@ export default function Toolbar(props: {context: Context}) {
       </ToolbarGroup>
       <ToolbarGroup title="Item">
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "new");
-          }}
+          action="new"
           description="Create a new item as a sibling of the currently selected item"
           shortcut={`Enter/${Sh.format(Sh.standard.forceCreateSibling)}`}
           icon="add-r"
@@ -110,9 +104,7 @@ export default function Toolbar(props: {context: Context}) {
           enabled={Ac.enabled(props.context, "new")}
         />
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "new-child");
-          }}
+          action="new-child"
           description="Create a new child of the selected item"
           shortcut={Sh.format(Sh.standard.createChild)}
           icon="arrow-bottom-right-r"
@@ -122,9 +114,7 @@ export default function Toolbar(props: {context: Context}) {
           enabled={Ac.enabled(props.context, "new-child")}
         />
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "remove");
-          }}
+          action="remove"
           description="Remove the selected item from its parent. This does not delete the item."
           shortcut={Sh.format(Sh.standard.removeFromParent)}
           icon="remove-r"
@@ -134,9 +124,7 @@ export default function Toolbar(props: {context: Context}) {
           enabled={Ac.enabled(props.context, "remove")}
         />
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "destroy");
-          }}
+          action="destroy"
           description="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents."
           shortcut={Sh.format(Sh.standard.delete)}
           icon="trash"
@@ -148,9 +136,7 @@ export default function Toolbar(props: {context: Context}) {
       </ToolbarGroup>
       <ToolbarGroup title="Move">
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "unindent");
-          }}
+          action="unindent"
           description="Unindent the selected item"
           shortcut={Sh.format(Sh.standard.unindent)}
           icon="push-chevron-left"
@@ -160,9 +146,7 @@ export default function Toolbar(props: {context: Context}) {
           enabled={Ac.enabled(props.context, "unindent")}
         />
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "indent");
-          }}
+          action="indent"
           description="Indent the selected item"
           shortcut={Sh.format(Sh.standard.indent)}
           icon="push-chevron-right"
@@ -172,9 +156,7 @@ export default function Toolbar(props: {context: Context}) {
           enabled={Ac.enabled(props.context, "indent")}
         />
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "up");
-          }}
+          action="up"
           description="Move the selected item up"
           shortcut={Sh.format(Sh.standard.moveUp)}
           icon="push-chevron-up"
@@ -184,9 +166,7 @@ export default function Toolbar(props: {context: Context}) {
           enabled={Ac.enabled(props.context, "up")}
         />
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "down");
-          }}
+          action="down"
           description="Move the selected item down"
           shortcut={Sh.format(Sh.standard.moveDown)}
           icon="push-chevron-down"
@@ -198,9 +178,7 @@ export default function Toolbar(props: {context: Context}) {
       </ToolbarGroup>
       <ToolbarGroup title="Connect">
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "insert-sibling");
-          }}
+          action="insert-sibling"
           description="Insert an existing item as a sibling after the currently selected item."
           shortcut={Sh.format(Sh.standard.insertSibling)}
           icon="add"
@@ -210,9 +188,7 @@ export default function Toolbar(props: {context: Context}) {
           enabled={Ac.enabled(props.context, "insert-sibling")}
         />
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "insert-child");
-          }}
+          action="insert-child"
           description="Insert an existing item as a child of the currently selected item."
           shortcut={Sh.format(Sh.standard.insertChild)}
           icon="arrow-bottom-right-o"
@@ -222,9 +198,7 @@ export default function Toolbar(props: {context: Context}) {
           enabled={Ac.enabled(props.context, "insert-child")}
         />
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "insert-parent");
-          }}
+          action="insert-parent"
           description="Insert an existing item as a parent of the currently selected item."
           shortcut={Sh.format(Sh.standard.insertParent)}
           icon="arrow-top-left-o"
@@ -234,9 +208,7 @@ export default function Toolbar(props: {context: Context}) {
           enabled={Ac.enabled(props.context, "insert-parent")}
         />
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "insert-link");
-          }}
+          action="insert-link"
           description="Insert a reference to an existing item at the position of the text."
           shortcut={Sh.format(Sh.standard.insertLink)}
           icon="file-document"
@@ -248,9 +220,7 @@ export default function Toolbar(props: {context: Context}) {
       </ToolbarGroup>
       <ToolbarGroup title="Help">
         <ToolbarButton
-          action={() => {
-            Ac.execute(props.context, "tutorial");
-          }}
+          action="tutorial"
           description="Go through the tutorial again."
           icon="info"
           label="Tutorial"
@@ -259,9 +229,7 @@ export default function Toolbar(props: {context: Context}) {
           enabled={Ac.enabled(props.context, "tutorial")}
         />
         <ToolbarButton
-          action={() => {
-            props.context.setChangelogShown(!props.context.changelogShown);
-          }}
+          action="changelog"
           description="Show list of updates to Thinktool."
           icon="list"
           label="Updates"
