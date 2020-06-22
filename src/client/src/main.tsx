@@ -10,7 +10,7 @@ import * as T from "./tree";
 import * as Tutorial from "./tutorial";
 import * as API from "./server-api";
 import * as Storage from "./storage";
-import {actionsWith} from "./actions";
+import * as Actions from "./actions";
 import * as ExportRoam from "./export-roam";
 import * as Sh from "./shortcuts";
 import * as Editing from "./editing";
@@ -356,13 +356,12 @@ function App({
   }, []);
 
   document.onkeydown = (ev) => {
-    if (Sh.matches(ev, Sh.standard.undo)) {
+    if (Sh.matches(ev, Actions.shortcut("undo"))) {
       console.log("Undoing");
-      context.undo();
+      Actions.execute(context, "undo");
       ev.preventDefault();
-    } else if (Sh.matches(ev, Sh.standard.find)) {
-      // [TODO] Hack - passing null, because actionsWith() has a dumb interface.
-      actionsWith(context, null!).showSearchPopup();
+    } else if (Sh.matches(ev, Actions.shortcut("find"))) {
+      Actions.execute(context, "find");
       ev.preventDefault();
     }
   };
@@ -725,23 +724,23 @@ function Bullet(p: {
 }
 
 function Content(p: {context: Context; node: T.NodeRef}) {
-  const actions = actionsWith(p.context, p.node);
-
   function onKeyDown(
     ev: React.KeyboardEvent<{}>,
     notes: {startOfItem: boolean; endOfItem: boolean},
   ): boolean {
-    if (Sh.matches(ev, Sh.standard.indent)) {
-      actions.indent();
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.unindent)) {
-      actions.unindent();
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.moveDown)) {
-      actions.moveDown();
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.moveUp)) {
-      actions.moveUp();
+    function tryAction(action: Actions.ActionName): boolean {
+      if (Sh.matches(ev, Actions.shortcut(action))) {
+        Actions.execute(p.context, action);
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    // [TODO] Is there a reason for this weird ordering? We can probably clean
+    // this up.
+
+    if (tryAction("indent") || tryAction("unindent") || tryAction("down") || tryAction("up")) {
       return true;
     } else if (ev.key === "Tab") {
       p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
@@ -752,15 +751,18 @@ function Content(p: {context: Context; node: T.NodeRef}) {
     } else if (ev.key === "ArrowDown") {
       p.context.setTree(T.focusDown(p.context.tree));
       return true;
-    } else if (Sh.matches(ev, Sh.standard.createChild)) {
-      actions.createChild();
+    } else if (tryAction("new-child")) {
       return true;
-    } else if (Sh.matches(ev, Sh.standard.forceCreateSibling)) {
-      actions.createSiblingAfter();
+    } else if (Sh.matches(ev, {secondaryMod: true, key: "Enter"})) {
+      Actions.execute(p.context, "new");
       return true;
     } else if (ev.key === "Enter" && !ev.shiftKey) {
+      // [TODO] Couldn't we handle this logic in the action code itself. We
+      // would need to check where in the item we are, which would require
+      // accessing the current selection from the context.
+
       if (notes.endOfItem) {
-        actions.createSiblingAfter();
+        Actions.execute(p.context, "new");
         return true;
       } else if (notes.startOfItem) {
         const [newState, newTree, _, newId] = T.createSiblingBefore(p.context.state, p.context.tree, p.node);
@@ -770,27 +772,14 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       } else {
         return false;
       }
-    } else if (Sh.matches(ev, Sh.standard.removeFromParent)) {
-      actions.removeFromParent();
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.delete)) {
-      actions.delete();
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.insertChild)) {
-      p.context.setPopupTarget(T.focused(p.context.tree));
-      p.context.setActivePopup((state, tree, target, selection) => {
-        const [newState, newTree] = T.insertChild(state, tree, target, selection, 0);
-        return [newState, newTree];
-      });
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.insertSibling)) {
-      actions.showSiblingPopup();
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.insertParent)) {
-      actions.showParentPopup();
-      return true;
-    } else if (Sh.matches(ev, Sh.standard.insertLink)) {
-      actions.showLinkPopup();
+    } else if (
+      tryAction("remove") ||
+      tryAction("destroy") ||
+      tryAction("insert-child") ||
+      tryAction("insert-sibling") ||
+      tryAction("insert-parent") ||
+      tryAction("insert-link")
+    ) {
       return true;
     } else {
       return false;
