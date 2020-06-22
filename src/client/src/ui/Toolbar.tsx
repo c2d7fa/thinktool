@@ -28,25 +28,24 @@ function ToolbarButton(props: {
   shortcut?: string;
   icon: string;
   label: string;
-  name: Tutorial.FunctionName;
   context: Context;
   enabled: boolean;
 }) {
   return (
     <button
       className={
-        Tutorial.isRelevant(props.context.tutorialState, props.name)
+        Tutorial.isRelevant(props.context.tutorialState, props.action)
           ? "tutorial-relevant"
-          : Tutorial.isNotIntroduced(props.context.tutorialState, props.name)
+          : Tutorial.isNotIntroduced(props.context.tutorialState, props.action)
           ? "tutorial-not-introduced"
           : ""
       }
       tabIndex={0}
       onFocus={(ev) => {
-        console.log("Attempted focusing button %o", props.name);
+        console.log("Attempted focusing button %o", props.action);
       }}
       onMouseDown={(ev) => {
-        console.log("Mouse down on button %o", props.name);
+        console.log("Mouse down on button %o", props.action);
         // If we don't preventDefault, then we lose focus due to click on
         // background on macOS. This seems to happen in Safari, Firefox and
         // Chrome, but only on macOS for some reason.
@@ -55,7 +54,7 @@ function ToolbarButton(props: {
         ev.preventDefault();
       }}
       onClick={(ev) => {
-        console.log("Clicked button %o", props.name);
+        console.log("Clicked button %o", props.action);
         Ac.execute(props.context, props.action);
         ev.preventDefault();
       }}
@@ -79,7 +78,6 @@ export default function Toolbar(props: {context: Context}) {
           label="Find"
           enabled={Ac.enabled(props.context, "find")}
           context={props.context}
-          name="find"
         />
         <ToolbarButton
           action="zoom"
@@ -88,7 +86,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="maximize-alt"
           label="Zoom"
           context={props.context}
-          name="zoom"
           enabled={Ac.enabled(props.context, "zoom")}
         />
       </ToolbarGroup>
@@ -100,7 +97,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="add-r"
           label="New"
           context={props.context}
-          name="new"
           enabled={Ac.enabled(props.context, "new")}
         />
         <ToolbarButton
@@ -110,7 +106,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="arrow-bottom-right-r"
           label="New Child"
           context={props.context}
-          name="new-child"
           enabled={Ac.enabled(props.context, "new-child")}
         />
         <ToolbarButton
@@ -120,7 +115,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="remove-r"
           label="Remove"
           context={props.context}
-          name="remove"
           enabled={Ac.enabled(props.context, "remove")}
         />
         <ToolbarButton
@@ -130,7 +124,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="trash"
           label="Destroy"
           context={props.context}
-          name="destroy"
           enabled={Ac.enabled(props.context, "destroy")}
         />
       </ToolbarGroup>
@@ -142,7 +135,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="push-chevron-left"
           label="Unindent"
           context={props.context}
-          name="unindent"
           enabled={Ac.enabled(props.context, "unindent")}
         />
         <ToolbarButton
@@ -152,7 +144,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="push-chevron-right"
           label="Indent"
           context={props.context}
-          name="indent"
           enabled={Ac.enabled(props.context, "indent")}
         />
         <ToolbarButton
@@ -162,7 +153,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="push-chevron-up"
           label="Up"
           context={props.context}
-          name="up"
           enabled={Ac.enabled(props.context, "up")}
         />
         <ToolbarButton
@@ -172,7 +162,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="push-chevron-down"
           label="Down"
           context={props.context}
-          name="down"
           enabled={Ac.enabled(props.context, "down")}
         />
       </ToolbarGroup>
@@ -184,7 +173,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="add"
           label="Sibling"
           context={props.context}
-          name="insert-sibling"
           enabled={Ac.enabled(props.context, "insert-sibling")}
         />
         <ToolbarButton
@@ -194,7 +182,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="arrow-bottom-right-o"
           label="Child"
           context={props.context}
-          name="insert-child"
           enabled={Ac.enabled(props.context, "insert-child")}
         />
         <ToolbarButton
@@ -204,7 +191,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="arrow-top-left-o"
           label="Parent"
           context={props.context}
-          name="insert-parent"
           enabled={Ac.enabled(props.context, "insert-parent")}
         />
         <ToolbarButton
@@ -214,7 +200,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="file-document"
           label="Link"
           context={props.context}
-          name="insert-link"
           enabled={Ac.enabled(props.context, "insert-link")}
         />
       </ToolbarGroup>
@@ -225,7 +210,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="info"
           label="Tutorial"
           context={props.context}
-          name="tutorial"
           enabled={Ac.enabled(props.context, "tutorial")}
         />
         <ToolbarButton
@@ -234,7 +218,6 @@ export default function Toolbar(props: {context: Context}) {
           icon="list"
           label="Updates"
           context={props.context}
-          name="changelog"
           enabled={true}
         />
       </ToolbarGroup>

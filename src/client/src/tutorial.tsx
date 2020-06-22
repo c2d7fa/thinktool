@@ -1,26 +1,8 @@
 import * as React from "react";
 
-export type State = {step: string; finished: boolean};
+import {ActionName} from "./actions";
 
-export type FunctionName =
-  | "find"
-  | "zoom"
-  | "new"
-  | "new-child"
-  | "remove"
-  | "destroy"
-  | "unindent"
-  | "indent"
-  | "up"
-  | "down"
-  | "insert-sibling"
-  | "insert-child"
-  | "insert-parent"
-  | "insert-link"
-  | "set-child-type"
-  | "reset-child-type"
-  | "tutorial"
-  | "changelog";
+export type State = {step: string; finished: boolean};
 
 const initialState = {step: "How to use Thinktool", finished: false};
 
@@ -29,7 +11,7 @@ export function initialize(finished: boolean) {
   return {step: "How to use Thinktool", finished: true};
 }
 
-const steps: {name: string; introduces: FunctionName[]}[] = [
+const steps: {name: string; introduces: ActionName[]}[] = [
   {name: "How to use Thinktool", introduces: []},
   {name: "Getting started", introduces: ["new", "new-child", "insert-child"]},
   {name: "Reorganizing", introduces: ["remove", "destroy", "indent", "unindent", "up", "down"]},
@@ -47,20 +29,20 @@ export function reset(state: State): State {
   return initialState;
 }
 
-export function isRelevant(state: State, name: FunctionName): boolean {
+export function isRelevant(state: State, name: ActionName): boolean {
   if (!isActive(state)) return false;
 
-  let relevant: FunctionName[] = [];
+  let relevant: ActionName[] = [];
   for (const step of steps) {
     if (step.name === state.step) relevant = step.introduces;
   }
   return relevant.includes(name);
 }
 
-export function isNotIntroduced(state: State, name: FunctionName): boolean {
+export function isNotIntroduced(state: State, name: ActionName): boolean {
   if (!isActive(state)) return false;
 
-  let introduced: FunctionName[] = [];
+  let introduced: ActionName[] = [];
   for (const step of steps) {
     introduced = [...introduced, ...step.introduces];
     if (step.name === state.step) break;
