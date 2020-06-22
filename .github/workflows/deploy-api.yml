@@ -1,0 +1,26 @@
+name: Deploy API server
+on:
+  push:
+    branches:
+      - prod-api
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v1
+      - name: Build and push Docker image
+        uses: elgohr/Publish-Docker-Github-Action@2.13
+        with:
+          name: c2d7fa/thinktool
+          username: ${{secrets.docker_username}}
+          password: ${{secrets.docker_password}}
+          dockerfile: tools/Dockerfile
+          tags: latest,prod
+      - name: Run deployment script on server
+        uses: appleboy/ssh-action@v0.0.7
+        with:
+          host: ${{secrets.host}}
+          username: root
+          key: ${{secrets.key}}
+          script: ./deploy-diaform.sh
