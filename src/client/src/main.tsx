@@ -785,7 +785,8 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       tryAction("insert-child") ||
       tryAction("insert-sibling") ||
       tryAction("insert-parent") ||
-      tryAction("insert-link")
+      tryAction("insert-link") ||
+      tryAction("toggle-type")
     ) {
       return true;
     } else {
