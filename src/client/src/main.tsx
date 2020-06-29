@@ -373,7 +373,7 @@ function App({
       const [x, y] = [ev.clientX, ev.clientY];
 
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("item-line")) {
+      while (element && !element.classList.contains("outline-item")) {
         element = element?.parentElement;
       }
 
@@ -388,7 +388,7 @@ function App({
       const [x, y] = [ev.changedTouches[0].clientX, ev.changedTouches[0].clientY];
 
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("item-line")) {
+      while (element && !element.classList.contains("outline-item")) {
         element = element?.parentElement;
       }
 
@@ -673,30 +673,34 @@ function ExpandableItem(p: {
     p.context.setDrag({current: p.node, target: null, finished: false});
   }
 
-  let className = "item-line";
+  let className = "outline-item";
 
   if (p.className) className += " " + p.className;
   if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id) className += " drop-target";
   if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null) className += " drag-source";
 
+  console.log(className, p.context.drag);
+
   const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
 
   return (
-    <li className="outline-item">
-      <span className={className} data-id={p.node.id}>
-        {/* data-id is used for drag and drop. */}
-        <Bullet
-          beginDrag={beginDrag}
-          status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
-          toggle={toggle}
-          onMiddleClick={() => {
-            p.context.setSelectedThing(T.thing(p.context.tree, p.node));
-          }}
-        />
-        {p.otherParentText !== undefined && <span className="other-parents-text">{p.otherParentText}</span>}
-        <Content context={p.context} node={p.node} />
-      </span>
-      {expanded && subtree}
+    <li className={className} data-id={p.node.id}>
+      {/* data-id is used for drag and drop. */}
+      <Bullet
+        beginDrag={beginDrag}
+        status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
+        toggle={toggle}
+        onMiddleClick={() => {
+          p.context.setSelectedThing(T.thing(p.context.tree, p.node));
+        }}
+      />
+      <div className="item page">
+        <div className="content-line">
+          {p.otherParentText !== undefined && <span className="other-parents-text">{p.otherParentText}</span>}
+          <Content context={p.context} node={p.node} />
+        </div>
+        {expanded && !terminal && subtree}
+      </div>
     </li>
   );
 }
@@ -797,19 +801,21 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
   }
 
   return (
-    <li className="outline-item backreferences-item">
-      <span className="item-line">
-        <Bullet
-          beginDrag={() => {}}
-          status={T.backreferencesExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
-          toggle={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
-          onMiddleClick={() => {}}
-        />
-        <span className="backreferences-text">{backreferences.length} references</span>
-      </span>
-      {T.backreferencesExpanded(p.context.tree, p.parent) && (
-        <BackreferencesSubtree parent={p.parent} context={p.context} />
-      )}
+    <li className="outline-item">
+      <Bullet
+        beginDrag={() => {}}
+        status={T.backreferencesExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
+        toggle={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
+        onMiddleClick={() => {}}
+      />
+      <div className="item">
+        <div className="content-line">
+          <span className="backreferences-text">{backreferences.length} references</span>
+        </div>
+        {T.backreferencesExpanded(p.context.tree, p.parent) && (
+          <BackreferencesSubtree parent={p.parent} context={p.context} />
+        )}
+      </div>
     </li>
   );
 }
