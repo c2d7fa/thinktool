@@ -109,6 +109,11 @@ ul.outline-root-tree {
   margin-bottom: 1rem;
 }
 
+.content {
+  flex: 1;
+  cursor: text;
+}
+
 .content.placeholder-child {
   color: #b0b0b0;
 }
