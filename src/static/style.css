@@ -202,7 +202,7 @@ a.plain-text-link:hover {
   border-color: #f0f0f0;
 }
 
-.opened-link .content span {
+.opened-link > .item > .content-line .content span {
   border-bottom: 2px solid #c8c8c8;
 }
 

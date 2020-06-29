@@ -864,20 +864,22 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
   }
 
   return (
-    <li className="outline-item other-parents-item">
-      <span className="item-line">
-        <Bullet
-          beginDrag={() => {}}
-          status={T.otherParentsExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
-          toggle={() => p.context.setTree(T.toggleOtherParents(p.context.state, p.context.tree, p.parent))}
-        />
-        <span className="other-parents-text">
-          {otherParents.length} {p.grandparent ? " other parents" : "parents"}
-        </span>
-      </span>
-      {T.otherParentsExpanded(p.context.tree, p.parent) && (
-        <OtherParentsSubtree parent={p.parent} grandparent={p.grandparent} context={p.context} />
-      )}
+    <li className="outline-item">
+      <Bullet
+        beginDrag={() => {}}
+        status={T.otherParentsExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
+        toggle={() => p.context.setTree(T.toggleOtherParents(p.context.state, p.context.tree, p.parent))}
+      />
+      <div className="item">
+        <div className="content-line">
+          <span className="other-parents-text">
+            {otherParents.length} {p.grandparent ? " other parents" : "parents"}
+          </span>
+        </div>
+        {T.otherParentsExpanded(p.context.tree, p.parent) && (
+          <OtherParentsSubtree parent={p.parent} grandparent={p.grandparent} context={p.context} />
+        )}
+      </div>
     </li>
   );
 }
