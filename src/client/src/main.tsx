@@ -669,7 +669,8 @@ function ExpandableItem(p: {
     expanded &&
     T.children(p.context.tree, p.node).length === 0 &&
     T.otherParentsChildren(p.context.tree, p.node).length === 0 &&
-    T.backreferencesChildren(p.context.tree, p.node).length === 0;
+    T.backreferencesChildren(p.context.tree, p.node).length === 0 &&
+    T.openedLinksChildren(p.context.tree, p.node).length === 0;
 
   const isPage = Data.isPage(p.context.state, T.thing(p.context.tree, p.node));
 
