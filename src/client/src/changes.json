@@ -87,6 +87,10 @@
     {
       "date": "2020-06-14",
       "title": "Fixed a bug where any selected text would not be used correctly in the popup when adding a link, sibling, child or parent."
+    },
+    {
+      "date": "2020-06-29",
+      "title": "Add basic versoin of 'Pages' feature, which lets you mark important notes as pages. Currently, this just shows a border around the page."
     }
   ]
 }

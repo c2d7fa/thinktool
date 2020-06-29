@@ -14,6 +14,9 @@ export function transformFullStateResponseIntoState(response: Communication.Full
       state = newState;
     }
     state = D.setContent(state, thing.name, thing.content);
+    if (thing.isPage) {
+      state = D.togglePage(state, thing.name);
+    }
     for (const childConnection of thing.children) {
       state = D.addChild(state, thing.name, childConnection.child, childConnection.name)[0];
     }
@@ -54,12 +57,18 @@ export function initialize(apiHost: string) {
   }
 
   async function updateThings(
-    things: {name: string; content: Communication.Content; children: {name: string; child: string}[]}[],
+    things: {
+      name: string;
+      content: Communication.Content;
+      children: {name: string; child: string}[];
+      isPage: boolean;
+    }[],
   ): Promise<void> {
+    const message: Communication.UpdateThings = things;
     await api(`state/things`, {
       method: "post",
       headers: {"Content-Type": "application/json", "Thinktool-Client-Id": clientId},
-      body: JSON.stringify(things as Communication.UpdateThings),
+      body: JSON.stringify(message),
     });
   }
 

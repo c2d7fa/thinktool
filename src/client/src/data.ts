@@ -13,6 +13,7 @@ export interface ThingData {
   content: Content;
   children: Connection[];
   parents: Connection[];
+  isPage: boolean;
 }
 
 export interface ConnectionData {
@@ -23,7 +24,7 @@ export interface ConnectionData {
 //#region Fundamental operations
 
 export const empty: State = {
-  things: {"0": {content: ["Welcome"], children: [], parents: []}},
+  things: {"0": {content: ["Welcome"], children: [], parents: [], isPage: false}},
   connections: {},
 };
 
@@ -55,7 +56,7 @@ export function content(state: State, thing: string): Content {
 
 export function setContent(state: State, thing: string, newContent: Content): State {
   if (state.things[thing] === undefined) console.warn("Setting content of non-existent item %o", thing);
-  const oldThing = state.things[thing] ?? {content: [], children: [], parents: []};
+  const oldThing = state.things[thing] ?? {content: [], children: [], parents: [], isPage: false};
   return {...state, things: {...state.things, [thing]: {...oldThing, content: newContent}}};
 }
 
@@ -179,7 +180,10 @@ export function removeChild(state: State, parent: string, index: number): State 
 
 export function create(state: State, customId?: string): [State, string] {
   const newId = customId ?? generateShortId();
-  return [{...state, things: {...state.things, [newId]: {content: [], children: [], parents: []}}}, newId];
+  return [
+    {...state, things: {...state.things, [newId]: {content: [], children: [], parents: [], isPage: false}}},
+    newId,
+  ];
 }
 
 export function forget(state: State, thing: string): State {
@@ -204,6 +208,16 @@ export function parents(state: State, child: string): string[] {
   }
 
   return result;
+}
+
+export function isPage(state: State, thing: string): boolean {
+  return state.things[thing]?.isPage ?? false;
+}
+
+export function togglePage(state: State, thing: string): State {
+  const oldThing = state.things[thing];
+  if (oldThing === undefined) return state;
+  return {...state, things: {...state.things, [thing]: {...oldThing, isPage: !oldThing.isPage}}};
 }
 
 //#endregion

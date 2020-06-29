@@ -45,6 +45,8 @@ ul.outline-tree {
   min-height: 100vh;
 }
 
+/* OUTLINE */
+
 /* Root tree */
 :not(.outline-item) > .outline-tree {
   padding-left: 1em;
@@ -53,8 +55,8 @@ ul.outline-tree {
 .bullet {
   user-select: none;
   display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 12px !important;
+  height: 12px !important;
   margin-top: 7px;
   margin-right: 1em;
   cursor: pointer;
@@ -78,44 +80,38 @@ ul.outline-tree {
   background-image: url(bullet-terminal.svg);
 }
 
-li.outline-item > * {
-  vertical-align: middle;
-  margin-top: auto;
-  margin-bottom: auto;
-}
-
 ul.outline-root-tree {
   padding-left: 0;
 }
 
-.item-line.drop-target {
+.drop-target {
   border-top: 3px solid #d0d0d0;
   margin-top: -3px;
 }
 
-.item-line.drag-source {
+.drag-source {
   padding: 3px;
   margin: -3px;
   background-color: #eee;
 }
 
-.item-line {
-  display: inline-flex;
-  width: 100%;
+.outline-item {
+  display: flex;
 }
 
-.item-line .content {
+.item {
   flex: 1;
-  width: 100%;
-  margin-bottom: 0.8em;
 }
 
-.item-line > .other-parents-text {
-  display: inline-block;
-  width: auto;
-  margin-top: 0;
-  margin-bottom: 1em;
-  margin-right: 0.5rem;
+.content-line {
+  display: flex;
+
+  margin-bottom: 1rem;
+}
+
+.content {
+  flex: 1;
+  cursor: text;
 }
 
 .content.placeholder-child {
@@ -126,24 +122,18 @@ ul.outline-root-tree {
   color: #c8c8c8;
 }
 
-.item-line .bullet {
-  flex-shrink: 0;
-}
-
 .backreferences-text,
 .other-parents-text {
-  display: block;
-  width: 100%;
-  margin-bottom: 1em;
+  display: inline-block;
+
+  margin-right: 0.5rem;
 
   font-size: 0.8em;
   font-family: "Titillium Web";
   text-transform: uppercase;
   color: #808080;
   cursor: default;
-
-  margin-top: -0.15em; /* Hack to improve vertical centering of text */
-  margin-bottom: 1.15em;
+  vertical-align: middle;
 }
 
 a.plain-text-link {
@@ -212,7 +202,7 @@ a.plain-text-link:hover {
   border-color: #f0f0f0;
 }
 
-.opened-link .content span {
+.opened-link > .item > .content-line .content span {
   border-bottom: 2px solid #c8c8c8;
 }
 
@@ -240,6 +230,25 @@ a.plain-text-link:hover {
 .editor-inactive {
   white-space: pre-wrap;
   line-height: 150%;
+}
+
+/* Pages */
+
+.page {
+  border: 1px solid #f0f0f0;
+  border-radius: 3px;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+
+  box-shadow: #00000040 0 3px 3px -3px;
+}
+
+.page > .content-line {
+  margin-bottom: 0;
+}
+
+.page > .content-line + * {
+  margin-top: 1rem;
 }
 
 /* THING SELECTION POPUP */
@@ -419,7 +428,6 @@ a.plain-text-link:hover {
 
 .children {
   margin-top: 2em;
-  margin-bottom: -0.8em; /* Because of margin on .item-line .content */
 }
 
 .references {
@@ -616,7 +624,8 @@ h1.link-section:first-child {
   margin-right: 0.75em;
 }
 
-.gg-trash {
+.gg-trash,
+.gg-link {
   margin-right: 1em;
 }
 

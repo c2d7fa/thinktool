@@ -106,7 +106,12 @@ export async function isValidResetKey(user: string, key: string): Promise<boolea
 export async function getFullState(
   userId: UserId,
 ): Promise<{
-  things: {name: string; content: Communication.Content; children: {name: string; child: string}[]}[];
+  things: {
+    name: string;
+    content: Communication.Content;
+    children: {name: string; child: string}[];
+    isPage?: true;
+  }[];
 }> {
   const client = await pool.connect();
   const result = await client.query(
@@ -114,6 +119,7 @@ export async function getFullState(
     SELECT
       things.name,
       things.json_content AS content,
+      things.is_page,
       (
         SELECT COALESCE(JSON_AGG(JSON_BUILD_OBJECT('name', name, 'child', child)), '[]') AS children
         FROM (
@@ -134,6 +140,7 @@ export async function getFullState(
     name: row.name,
     content: row.content,
     children: row.children,
+    isPage: (row["is_page"] ? true : undefined) as true | undefined,
   }));
 
   return {things};
@@ -146,18 +153,27 @@ export async function updateThing({
   thing,
   content,
   children,
+  isPage,
 }: {
   userId: UserId;
   thing: string;
   content: Communication.Content;
   children: {name: string; child: string}[];
+  isPage: boolean;
 }): Promise<void> {
   const client = await pool.connect();
   await client.query("BEGIN");
 
   await client.query(
-    `INSERT INTO things ("user", name, json_content, last_modified) VALUES ($1, $2, $3, NOW()) ON CONFLICT ("user", name) DO UPDATE SET json_content = EXCLUDED.json_content, last_modified = EXCLUDED.last_modified`,
-    [userId.name, thing, JSON.stringify(content)],
+    `
+    INSERT INTO things ("user", name, json_content, last_modified, is_page)
+    VALUES ($1, $2, $3, NOW(), $4)
+    ON CONFLICT ("user", name) DO UPDATE SET
+      json_content = EXCLUDED.json_content,
+      last_modified = EXCLUDED.last_modified,
+      is_page = EXCLUDED.is_page
+    `,
+    [userId.name, thing, JSON.stringify(content), isPage],
   );
 
   // Delete old connections
@@ -211,12 +227,16 @@ export async function setContent(
 export async function getThingData(
   userId: UserId,
   thing: string,
-): Promise<{content: Communication.Content; children: {name: string; child: string}[]} | null> {
+): Promise<{
+  content: Communication.Content;
+  children: {name: string; child: string}[];
+  isPage: boolean;
+} | null> {
   const client = await pool.connect();
 
   const result = await client.query(
     `
-    SELECT things.name, things.json_content, connections.name as connection_name, connections.child
+    SELECT things.name, things.json_content, things.is_page, connections.name as connection_name, connections.child
     FROM things
     LEFT JOIN connections ON connections.user = things.user AND connections.parent = things.name
     WHERE things.user = $1 AND things.name = $2
@@ -236,7 +256,11 @@ export async function getThingData(
     }
   }
 
-  return {content: result.rows[0]["json_content"], children};
+  return {
+    content: result.rows[0]["json_content"],
+    isPage: result.rows[0]["is_page"],
+    children,
+  };
 }
 
 export async function deleteAllUserData(userId: UserId): Promise<void> {

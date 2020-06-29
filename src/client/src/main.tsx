@@ -25,6 +25,8 @@ import * as ReactDOM from "react-dom";
 
 import undo from "./undo";
 
+import {classes} from "./util";
+
 // ==
 
 // == Components ==
@@ -168,6 +170,7 @@ function useContext({
                 child: Data.connectionChild(newState, c)!,
               };
             }),
+            isPage: Data.isPage(newState, thing),
           })),
         );
       }
@@ -196,6 +199,7 @@ function useContext({
             child: Data.connectionChild(oldState, c)!,
           };
         }),
+        isPage: Data.isPage(oldState, thing),
       })),
     );
   }
@@ -341,6 +345,10 @@ function App({
 
           newState = Data.setContent(newState, changedThing, thingData.content);
 
+          if (Data.isPage(newState, changedThing) !== thingData.isPage) {
+            newState = Data.togglePage(newState, changedThing);
+          }
+
           const nChildren = Data.children(newState, changedThing).length;
           for (let i = 0; i < nChildren; ++i) {
             newState = Data.removeChild(newState, changedThing, 0);
@@ -373,7 +381,7 @@ function App({
       const [x, y] = [ev.clientX, ev.clientY];
 
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("item-line")) {
+      while (element && !element.classList.contains("outline-item")) {
         element = element?.parentElement;
       }
 
@@ -388,7 +396,7 @@ function App({
       const [x, y] = [ev.changedTouches[0].clientX, ev.changedTouches[0].clientY];
 
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("item-line")) {
+      while (element && !element.classList.contains("outline-item")) {
         element = element?.parentElement;
       }
 
@@ -667,13 +675,16 @@ function ExpandableItem(p: {
     expanded &&
     T.children(p.context.tree, p.node).length === 0 &&
     T.otherParentsChildren(p.context.tree, p.node).length === 0 &&
-    T.backreferencesChildren(p.context.tree, p.node).length === 0;
+    T.backreferencesChildren(p.context.tree, p.node).length === 0 &&
+    T.openedLinksChildren(p.context.tree, p.node).length === 0;
+
+  const isPage = Data.isPage(p.context.state, T.thing(p.context.tree, p.node));
 
   function beginDrag() {
     p.context.setDrag({current: p.node, target: null, finished: false});
   }
 
-  let className = "item-line";
+  let className = "outline-item";
 
   if (p.className) className += " " + p.className;
   if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id) className += " drop-target";
@@ -682,21 +693,23 @@ function ExpandableItem(p: {
   const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
 
   return (
-    <li className="outline-item">
-      <span className={className} data-id={p.node.id}>
-        {/* data-id is used for drag and drop. */}
-        <Bullet
-          beginDrag={beginDrag}
-          status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
-          toggle={toggle}
-          onMiddleClick={() => {
-            p.context.setSelectedThing(T.thing(p.context.tree, p.node));
-          }}
-        />
-        {p.otherParentText !== undefined && <span className="other-parents-text">{p.otherParentText}</span>}
-        <Content context={p.context} node={p.node} />
-      </span>
-      {expanded && subtree}
+    <li className={className} data-id={p.node.id}>
+      {/* data-id is used for drag and drop. */}
+      <Bullet
+        beginDrag={beginDrag}
+        status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
+        toggle={toggle}
+        onMiddleClick={() => {
+          p.context.setSelectedThing(T.thing(p.context.tree, p.node));
+        }}
+      />
+      <div {...classes({item: true, page: isPage})}>
+        <div className="content-line">
+          {p.otherParentText !== undefined && <span className="other-parents-text">{p.otherParentText}</span>}
+          <Content context={p.context} node={p.node} />
+        </div>
+        {expanded && !terminal && subtree}
+      </div>
     </li>
   );
 }
@@ -778,7 +791,8 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       tryAction("insert-child") ||
       tryAction("insert-sibling") ||
       tryAction("insert-parent") ||
-      tryAction("insert-link")
+      tryAction("insert-link") ||
+      tryAction("toggle-type")
     ) {
       return true;
     } else {
@@ -797,19 +811,21 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
   }
 
   return (
-    <li className="outline-item backreferences-item">
-      <span className="item-line">
-        <Bullet
-          beginDrag={() => {}}
-          status={T.backreferencesExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
-          toggle={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
-          onMiddleClick={() => {}}
-        />
-        <span className="backreferences-text">{backreferences.length} references</span>
-      </span>
-      {T.backreferencesExpanded(p.context.tree, p.parent) && (
-        <BackreferencesSubtree parent={p.parent} context={p.context} />
-      )}
+    <li className="outline-item">
+      <Bullet
+        beginDrag={() => {}}
+        status={T.backreferencesExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
+        toggle={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
+        onMiddleClick={() => {}}
+      />
+      <div className="item">
+        <div className="content-line">
+          <span className="backreferences-text">{backreferences.length} references</span>
+        </div>
+        {T.backreferencesExpanded(p.context.tree, p.parent) && (
+          <BackreferencesSubtree parent={p.parent} context={p.context} />
+        )}
+      </div>
     </li>
   );
 }
@@ -854,20 +870,22 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
   }
 
   return (
-    <li className="outline-item other-parents-item">
-      <span className="item-line">
-        <Bullet
-          beginDrag={() => {}}
-          status={T.otherParentsExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
-          toggle={() => p.context.setTree(T.toggleOtherParents(p.context.state, p.context.tree, p.parent))}
-        />
-        <span className="other-parents-text">
-          {otherParents.length} {p.grandparent ? " other parents" : "parents"}
-        </span>
-      </span>
-      {T.otherParentsExpanded(p.context.tree, p.parent) && (
-        <OtherParentsSubtree parent={p.parent} grandparent={p.grandparent} context={p.context} />
-      )}
+    <li className="outline-item">
+      <Bullet
+        beginDrag={() => {}}
+        status={T.otherParentsExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
+        toggle={() => p.context.setTree(T.toggleOtherParents(p.context.state, p.context.tree, p.parent))}
+      />
+      <div className="item">
+        <div className="content-line">
+          <span className="other-parents-text">
+            {otherParents.length} {p.grandparent ? " other parents" : "parents"}
+          </span>
+        </div>
+        {T.otherParentsExpanded(p.context.tree, p.parent) && (
+          <OtherParentsSubtree parent={p.parent} grandparent={p.grandparent} context={p.context} />
+        )}
+      </div>
     </li>
   );
 }

@@ -22,7 +22,8 @@ export type ActionName =
   | "destroy"
   | "tutorial"
   | "changelog"
-  | "undo";
+  | "undo"
+  | "toggle-type";
 
 // Some actions can only be executed under some circumstances, for example if an
 // item is selected.
@@ -45,6 +46,7 @@ export function enabled(context: Context, action: ActionName): boolean {
     "insert-sibling",
     "insert-parent",
     "insert-link",
+    "toggle-type",
   ];
 
   if (alwaysEnabled.includes(action)) {
@@ -68,13 +70,13 @@ export function execute(context: Context, action: ActionName): void {
   function node(): T.NodeRef {
     const node = T.focused(context.tree);
     if (node === null)
-      throw `Bug in 'enabled'. Ran action ${action}, even though there was no node selected.`;
+      throw `Bug in 'enabled'. Ran action '${action}', even though there was no node selected.`;
     return node;
   }
 
   const implementation = implementations[action];
   if (typeof implementation !== "function")
-    throw "Bug in 'execute'. Action ${action} did not have an implementation.";
+    throw `Bug in 'execute'. Action '${action}' did not have an implementation.`;
   implementation(context, node);
 }
 
@@ -203,6 +205,11 @@ const implementations: {
   undo(context, getFocused) {
     context.undo();
   },
+
+  "toggle-type"(context, getFocused) {
+    const newState = D.togglePage(context.state, T.thing(context.tree, getFocused()));
+    context.setState(newState);
+  },
 };
 
 export function shortcut(action: ActionName): S.Shortcut {
@@ -234,12 +241,15 @@ export function shortcut(action: ActionName): S.Shortcut {
       return {mod: true, key: "s"};
     case "insert-link":
       return {mod: true, key: "l"};
+    case "toggle-type":
+      return {mod: true, key: "t"};
     case "undo":
       return {ctrlLikeMod: true, key: "z"};
     case "new":
       return {special: `${S.format({key: "Enter"})}/${S.format({secondaryMod: true, key: "Enter"})}}`};
     case "zoom":
       return {special: "MMB"};
+
     default:
       return null;
   }

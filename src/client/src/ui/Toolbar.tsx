@@ -170,7 +170,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="insert-link"
           description="Insert a reference to an existing item at the position of the text."
-          icon="file-document"
+          icon="link"
           label="Link"
           context={props.context}
         />
@@ -188,6 +188,15 @@ export default function Toolbar(props: {context: Context}) {
           description="Show list of updates to Thinktool."
           icon="list"
           label="Updates"
+          context={props.context}
+        />
+      </ToolbarGroup>
+      <ToolbarGroup title="Type">
+        <ToolbarButton
+          action="toggle-type"
+          description="Toggle type of focused item between 'Note' (default) and 'Page' types."
+          icon="file-document"
+          label="Toggle"
           context={props.context}
         />
       </ToolbarGroup>
