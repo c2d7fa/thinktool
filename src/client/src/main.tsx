@@ -683,8 +683,6 @@ function ExpandableItem(p: {
   if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id) className += " drop-target";
   if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null) className += " drag-source";
 
-  console.log(className, p.context.drag);
-
   const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
 
   return (
