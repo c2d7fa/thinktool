@@ -243,11 +243,11 @@ a.plain-text-link:hover {
   box-shadow: #00000040 0 3px 3px -3px;
 }
 
-.page .content-line {
+.page > .content-line {
   margin-bottom: 0;
 }
 
-.page .content-line + * {
+.page > .content-line + * {
   margin-top: 1rem;
 }
 
