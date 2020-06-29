@@ -242,6 +242,17 @@ a.plain-text-link:hover {
   line-height: 150%;
 }
 
+/* Pages */
+
+.page {
+  border: 1px solid #f0f0f0;
+  border-radius: 3px;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+
+  box-shadow: #00000040 0 3px 3px -3px;
+}
+
 /* THING SELECTION POPUP */
 
 .link-autocomplete-popup {
