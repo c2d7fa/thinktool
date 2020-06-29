@@ -118,7 +118,7 @@ app.use((req, res, next) => {
       formatIp(),
       req.method,
       req.url,
-      util.inspect(req.body, {colors: true, breakLength: Infinity, compact: true}),
+      util.inspect(req.body, {colors: true, breakLength: Infinity, compact: true, depth: undefined}),
     );
   } else {
     console.log("(%s) %s %s", formatIp(), req.method, req.url);
