@@ -25,6 +25,8 @@ import * as ReactDOM from "react-dom";
 
 import undo from "./undo";
 
+import {classes} from "./util";
+
 // ==
 
 // == Components ==
@@ -669,6 +671,8 @@ function ExpandableItem(p: {
     T.otherParentsChildren(p.context.tree, p.node).length === 0 &&
     T.backreferencesChildren(p.context.tree, p.node).length === 0;
 
+  const isPage = Data.isPage(p.context.state, T.thing(p.context.tree, p.node));
+
   function beginDrag() {
     p.context.setDrag({current: p.node, target: null, finished: false});
   }
@@ -694,7 +698,7 @@ function ExpandableItem(p: {
           p.context.setSelectedThing(T.thing(p.context.tree, p.node));
         }}
       />
-      <div className="item page">
+      <div {...classes({item: true, page: isPage})}>
         <div className="content-line">
           {p.otherParentText !== undefined && <span className="other-parents-text">{p.otherParentText}</span>}
           <Content context={p.context} node={p.node} />

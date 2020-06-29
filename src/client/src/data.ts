@@ -206,6 +206,10 @@ export function parents(state: State, child: string): string[] {
   return result;
 }
 
+export function isPage(state: State, thing: string): boolean {
+  return false;
+}
+
 //#endregion
 
 export function children(state: State, thing: string): string[] {
