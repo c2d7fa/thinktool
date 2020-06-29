@@ -19,6 +19,7 @@ export async function initialize(path: string): Promise<Client.Storage.Storage> 
     `CREATE TABLE IF NOT EXISTS connection (name TEXT PRIMARY KEY, parent TEXT REFERENCES items (name) NOT NULL, child TEXT REFERENCES items (name) NOT NULL, parent_index INTEGER NOT NULL)`,
   );
 
+  // [FIXME] Should also return 'isPage'.
   async function getFullState(): Promise<Client.Communication.FullStateResponse> {
     const result = await db.all(
       `
@@ -58,6 +59,8 @@ export async function initialize(path: string): Promise<Client.Storage.Storage> 
     });
   }
 
+  // [FIXME] Should also pass 'isPage'; see server implementation of this
+  // function.
   async function updateThings(
     things: {
       name: string;

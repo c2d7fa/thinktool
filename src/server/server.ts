@@ -163,11 +163,12 @@ app.ws("/changes", async (ws, req) => {
 });
 
 app.get("/state", requireSession, async (req, res) => {
+  const message: Communication.FullStateResponse = await DB.getFullState(req.user!);
   res
     .type("json")
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
-    .send((await DB.getFullState(req.user!)) as Communication.FullStateResponse);
+    .send(message);
 });
 
 app.get("/username", requireSession, async (req, res) => {
@@ -268,6 +269,7 @@ app.post("/state/things", requireSession, requireClientId, async (req, res) => {
       thing: thing.name,
       content: thing.content,
       children: thing.children,
+      isPage: thing.isPage,
     });
   }
 
@@ -338,7 +340,8 @@ app.get("/state/things/:thing", requireSession, parseThingExists, async (req, re
   if (thingData === null) {
     res.status(404).send();
   } else {
-    res.type("json").send(thingData as Communication.ThingData);
+    const message: Communication.ThingData = thingData;
+    res.type("json").send(message);
   }
 });
 

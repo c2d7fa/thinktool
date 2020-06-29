@@ -170,6 +170,7 @@ function useContext({
                 child: Data.connectionChild(newState, c)!,
               };
             }),
+            isPage: Data.isPage(newState, thing),
           })),
         );
       }
@@ -198,6 +199,7 @@ function useContext({
             child: Data.connectionChild(oldState, c)!,
           };
         }),
+        isPage: Data.isPage(oldState, thing),
       })),
     );
   }
@@ -342,6 +344,10 @@ function App({
           }
 
           newState = Data.setContent(newState, changedThing, thingData.content);
+
+          if (Data.isPage(newState, changedThing) !== thingData.isPage) {
+            newState = Data.togglePage(newState, changedThing);
+          }
 
           const nChildren = Data.children(newState, changedThing).length;
           for (let i = 0; i < nChildren; ++i) {
