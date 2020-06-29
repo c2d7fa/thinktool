@@ -619,7 +619,8 @@ h1.link-section:first-child {
   margin-right: 0.75em;
 }
 
-.gg-trash {
+.gg-trash,
+.gg-link {
   margin-right: 1em;
 }
 

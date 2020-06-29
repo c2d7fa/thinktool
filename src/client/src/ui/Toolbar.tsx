@@ -170,7 +170,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="insert-link"
           description="Insert a reference to an existing item at the position of the text."
-          icon="file-document"
+          icon="link"
           label="Link"
           context={props.context}
         />
