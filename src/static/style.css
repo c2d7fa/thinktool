@@ -419,7 +419,7 @@ a.plain-text-link:hover {
   cursor: default;
   background-repeat: no-repeat;
 
-  background-image: url(bullet-link-expanded.svg);
+  background-image: url(bullet-expanded.svg);
 }
 
 .children {
