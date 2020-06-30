@@ -247,15 +247,6 @@ a.plain-text-link:hover {
   margin-left: -1rem; /* Align bullets */
 }
 
-.page > .content-line {
-  font-weight: bold;
-  margin-bottom: 0;
-}
-
-.page > .content-line + * {
-  margin-top: 1rem;
-}
-
 /* THING SELECTION POPUP */
 
 .link-autocomplete-popup {
