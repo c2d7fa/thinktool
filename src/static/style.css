@@ -14,6 +14,7 @@ body {
 
 ul.outline-tree {
   margin: 0 auto;
+  margin-top: 1rem;
   list-style: none;
   padding-left: 1.6em;
 }
@@ -99,14 +100,16 @@ ul.outline-root-tree {
   display: flex;
 }
 
-.item {
+.outline-item:not(:last-child) {
+  margin-bottom: 1rem;
+}
+
+.inner-item {
   flex: 1;
 }
 
 .content-line {
   display: flex;
-
-  margin-bottom: 1rem;
 }
 
 .content {
@@ -237,13 +240,15 @@ a.plain-text-link:hover {
 .page {
   border: 1px solid #f0f0f0;
   border-radius: 3px;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
+  padding: 1rem;
 
   box-shadow: #00000040 0 3px 3px -3px;
+
+  margin-left: -1rem; /* Align bullets */
 }
 
 .page > .content-line {
+  font-weight: bold;
   margin-bottom: 0;
 }
 

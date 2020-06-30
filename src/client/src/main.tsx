@@ -689,6 +689,7 @@ function ExpandableItem(p: {
   if (p.className) className += " " + p.className;
   if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id) className += " drop-target";
   if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null) className += " drag-source";
+  if (isPage) className += " page";
 
   const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
 
@@ -703,7 +704,7 @@ function ExpandableItem(p: {
           p.context.setSelectedThing(T.thing(p.context.tree, p.node));
         }}
       />
-      <div {...classes({item: true, page: isPage})}>
+      <div className="inner-item">
         <div className="content-line">
           {p.otherParentText !== undefined && <span className="other-parents-text">{p.otherParentText}</span>}
           <Content context={p.context} node={p.node} />

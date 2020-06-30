@@ -91,6 +91,10 @@
     {
       "date": "2020-06-29",
       "title": "Add basic versoin of 'Pages' feature, which lets you mark important notes as pages. Currently, this just shows a border around the page."
+    },
+    {
+      "date": "2020-06-30",
+      "title": "Improved spacing and layout of pages in the outline."
     }
   ]
 }
