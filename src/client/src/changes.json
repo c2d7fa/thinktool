@@ -103,6 +103,10 @@
     {
       "date": "2020-06-30",
       "title": "Simplified bullet graphics, so they now only distinguish between expanded and collapsed states."
+    },
+    {
+      "date": "2020-06-30",
+      "title": "Tweaked appearance of item selection popup."
     }
   ]
 }

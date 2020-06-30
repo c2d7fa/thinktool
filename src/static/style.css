@@ -250,6 +250,8 @@ a.plain-text-link:hover {
 /* THING SELECTION POPUP */
 
 .link-autocomplete-popup {
+  backdrop-filter: blur(3px);
+
   position: fixed;
   z-index: 9999;
 
@@ -259,14 +261,21 @@ a.plain-text-link:hover {
   width: 60vw;
   max-height: 60vh;
 
-  background-color: #f8f8f8;
+  background: #ffffffa0;
+  border: 1px solid #00000030;
   border-radius: 6px;
-  box-shadow: #d8d8d8 0 0 12px;
+  box-shadow: #00000020 0 0 12px;
 
   display: flex;
   flex-direction: column;
 
   overflow-y: none;
+}
+
+@supports not (backdrop-filter: blur(3px)) {
+  .link-autocomplete-popup {
+    background: #fffffff0;
+  }
 }
 
 @media (min-width: 1600px) {
@@ -319,10 +328,13 @@ a.plain-text-link:hover {
   outline: none;
   border: none;
 
-  background-color: #f0f0f0;
-  border-bottom: 1px solid #e8e8e8;
-  padding: 0.3em 1em;
+  background-color: #00000008;
+  padding: 1.2rem 1.8rem;
   border-radius: 6px 6px 0 0;
+}
+
+.link-autocomplete-popup input + .link-autocomplete-popup-results {
+  border-top: 1px solid #00000030;
 }
 
 .link-autocomplete-popup-results {
@@ -338,17 +350,24 @@ a.plain-text-link:hover {
 
 .link-autocomplete-popup-result {
   cursor: pointer;
-  padding: 0.3em 1em;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 0.6rem 1.8rem;
+  border-bottom: 1px solid #00000018;
 }
 
-.link-autocomplete-popup-result.selected-result,
+.link-autocomplete-popup-result.selected-result {
+  background-color: #00000010;
+}
+
 .link-autocomplete-popup-result:hover {
-  background-color: #e8e8e8;
+  background-color: #00000008;
+}
+
+.link-autocomplete-popup-result.selected-result:hover {
+  background-color: #00000018;
 }
 
 .link-autocomplete-popup-id {
-  color: #c0c0c0;
+  color: #00000040;
   font-family: "Titillium Web";
   font-size: 0.8em;
   text-transform: uppercase;
