@@ -19,7 +19,8 @@ export default function ThingSelectPopup(props: {
   const [text, setText_] = React.useState("");
   const [results, setResults] = React.useState<[string, string][]>([]);
   const [maxResults, setMaxResults] = React.useState<number>(50);
-  const [selectedIndex, setSelectedIndex] = React.useState<number>(-1); // -1 means nothing selected
+  const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
+  const [automaticSelection, setAutomaticSelection] = React.useState<false | {from: number}>(false);
   const ref = React.useRef<HTMLInputElement>(null);
 
   // This element should always be focused when it exists. We expect the parent
@@ -35,7 +36,18 @@ export default function ThingSelectPopup(props: {
       setResults([]);
     } else {
       setMaxResults(50);
-      setResults(search(props.state, text, maxResults));
+      const results = search(props.state, text, 50);
+      setResults(results);
+
+      if (results.length === 0) {
+        setAutomaticSelection({from: selectedIndex});
+        setSelectedIndex(-1);
+      } else {
+        if (automaticSelection) {
+          setSelectedIndex(automaticSelection.from);
+          setAutomaticSelection(false);
+        }
+      }
     }
   }
 
@@ -86,17 +98,11 @@ export default function ThingSelectPopup(props: {
     }
   }
 
-  const createResult = (
-    <li
-      onPointerDown={() => props.create(text)}
-      className={`link-autocomplete-popup-result${selectedIndex === -1 ? " selected-result" : ""}`}>
-      Create: <i>{text}</i>
-    </li>
-  );
-
   return ReactDOM.createPortal(
     <div className="link-autocomplete-popup">
       <input
+        onPointerDown={() => props.create(text)}
+        className={selectedIndex === -1 ? " selected-result" : ""}
         ref={ref}
         type="text"
         value={text}
@@ -106,7 +112,6 @@ export default function ThingSelectPopup(props: {
       />
       {text !== "" && (
         <ul className="link-autocomplete-popup-results" onScroll={onScroll}>
-          {createResult}
           {results.map((result, i) => (
             <Result
               key={result[1]}

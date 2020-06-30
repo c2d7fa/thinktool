@@ -321,6 +321,8 @@ a.plain-text-link:hover {
 }
 
 .link-autocomplete-popup input {
+  cursor: pointer;
+
   width: 100%;
 
   font: inherit;
@@ -364,6 +366,18 @@ a.plain-text-link:hover {
 
 .link-autocomplete-popup-result.selected-result:hover {
   background-color: #00000018;
+}
+
+.link-autocomplete-popup input.selected-result {
+  background-color: #00000018;
+}
+
+.link-autocomplete-popup input:hover {
+  background-color: #00000010;
+}
+
+.link-autocomplete-popup input.selected-result:hover {
+  background-color: #00000020;
 }
 
 .link-autocomplete-popup-id {
