@@ -245,6 +245,8 @@ a.plain-text-link:hover {
   box-shadow: #00000040 0 3px 3px -3px;
 
   margin-left: -1rem; /* Align bullets */
+
+  background-color: #fcfcfc;
 }
 
 /* THING SELECTION POPUP */
