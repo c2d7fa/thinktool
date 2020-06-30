@@ -95,6 +95,10 @@
     {
       "date": "2020-06-30",
       "title": "Improved spacing and layout of pages in the outline."
+    },
+    {
+      "date": "2020-06-30",
+      "title": "Pages are now expanded by default."
     }
   ]
 }

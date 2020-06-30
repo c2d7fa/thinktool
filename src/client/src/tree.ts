@@ -252,6 +252,11 @@ export function loadConnection(
     newTree = I.markExpanded(newTree, newNode, true);
   }
 
+  // Pages are always expanded
+  if (D.isPage(state, thing)) {
+    newTree = expand(state, newTree, newNode);
+  }
+
   return [newNode, newTree];
 }
 
@@ -603,9 +608,9 @@ const refreshBackreferencesChildren = (state: D.State, tree: Tree, node: NodeRef
     updateChildren: I.updateBackreferencesChildren,
   })(state, tree, node);
 
-  // If a backreference contains just a link and nothing else, automatically
-  // show its children.
   for (const backreferenceNode of backreferencesChildren(result, node)) {
+    // If a backreference contains just a link and nothing else, automatically
+    // show its children.
     const content = D.content(state, thing(result, backreferenceNode));
     if (content.length === 1 && content[0].link !== undefined) {
       result = expand(state, result, backreferenceNode);
@@ -614,6 +619,11 @@ const refreshBackreferencesChildren = (state: D.State, tree: Tree, node: NodeRef
     // We also need to update its other parents, in case they should be
     // displayed inline.
     result = refreshOtherParentsChildren(state, result, backreferenceNode);
+
+    // Pages are always expanded
+    if (D.isPage(state, thing(result, backreferenceNode))) {
+      result = expand(state, result, backreferenceNode);
+    }
   }
 
   return result;
