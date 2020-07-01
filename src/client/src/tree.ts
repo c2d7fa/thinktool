@@ -235,25 +235,27 @@ export function loadConnection(
   connection: D.Connection,
   parent?: NodeRef,
 ): [NodeRef, Tree] {
-  const thing = D.connectionChild(state, connection);
+  const childThing = D.connectionChild(state, connection);
 
-  if (thing === undefined) {
+  if (childThing === undefined) {
     throw "Unable to load connection because item did not exist.";
   }
 
-  let [newNode, newTree] = I.loadThing(tree, thing, connection);
+  let [newNode, newTree] = I.loadThing(tree, childThing, connection);
 
   // If the child has no children (including backreferences and other parents), it should be expanded by default
   if (
-    !D.hasChildren(state, thing) &&
-    D.backreferences(state, thing).length === 0 &&
+    !D.hasChildren(state, childThing) &&
+    D.backreferences(state, childThing).length === 0 &&
     !hasOtherParents(state, newTree, newNode, parent)
   ) {
     newTree = I.markExpanded(newTree, newNode, true);
   }
 
-  // Pages are always expanded
-  if (D.isPage(state, thing)) {
+  // Pages are expanded by default. However, we don't expand pages inside other
+  // pages to avoid an infinite loop or situations with a huge cascade of
+  // expanded pages.
+  if (D.isPage(state, childThing) && (parent === undefined || !D.isPage(state, thing(tree, parent)))) {
     newTree = expand(state, newTree, newNode);
   }
 
