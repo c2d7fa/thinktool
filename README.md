@@ -58,8 +58,9 @@ Then, set `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` and run
 
 ## Desktop
 
-The desktop client can be built for Linux, macOS and Windows. It should be built
-on the same platform that it's targeting.
+The desktop client can currently be built for Linux and Windows. We're planning
+on supporting macOS in the future. It must be built on the same platform that is
+being targeted.
 
 Start by setting the following environment variables:
 
@@ -70,7 +71,13 @@ On **Linux**, build the desktop client with:
 
     $ ./tools/build-desktop-linux.sh
 
-_(Missing instructions for macOS and Windows.)_
+Even on **Windows**, you need to use `bash` as your shell. Run:
+
+    $ ./tools/build-desktop-windows.sh
+
+(Note that building the desktop client clears out the `dist/static/` directory.
+This is a temporary hack; see the `build-desktop-linux.sh` and
+`build-desktop-windows.sh` files for more information.)
 
 Once you have built the desktop client, the output will be in `dist/`. Set
 `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` and run
