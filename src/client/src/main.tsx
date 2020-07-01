@@ -1052,15 +1052,24 @@ export async function thinktoolApp({apiHost}: {apiHost: string}) {
   );
 }
 
-export async function startLocalApp({storage}: {storage: Storage.Storage}) {
+export async function startLocalApp({
+  storage,
+  ExternalLink,
+}: {
+  storage: Storage.Storage;
+  ExternalLink: ExternalLinkType;
+}) {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
 
   ReactDOM.render(
-    <App
-      initialState={API.transformFullStateResponseIntoState(await storage.getFullState())}
-      initialTutorialFinished={await storage.getTutorialFinished()}
-      storage={storage}
-    />,
+    <ExternalLinkProvider value={ExternalLink}>
+      <App
+        initialState={API.transformFullStateResponseIntoState(await storage.getFullState())}
+        initialTutorialFinished={await storage.getTutorialFinished()}
+        storage={storage}
+      />
+    </ExternalLinkProvider>,
+
     appElement,
   );
 }
@@ -1096,3 +1105,4 @@ export async function thinktoolUser({apiHost}: {apiHost: string}) {
 
 export * as Storage from "./storage";
 export {Communication} from "thinktool-shared";
+export {React};
