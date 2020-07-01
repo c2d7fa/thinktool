@@ -19,6 +19,7 @@ import * as C from "./ui/content";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
+import ExternalLink from "./ui/ExternalLink";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -512,17 +513,17 @@ function App({
         />
       )}
       <div className="top-bar">
-        <a className="logo" href="/">
+        <ExternalLink className="logo" href="/">
           Thinktool
-        </a>
+        </ExternalLink>
         <button onClick={() => setToolbarShown(!toolbarShown)}>
           {toolbarShown ? "Hide" : "Show"} toolbar
         </button>
         <div id="current-user">
           {username && (
-            <a className="username" href="/user.html">
+            <ExternalLink className="username" href="/user.html">
               {username}
-            </a>
+            </ExternalLink>
           )}
           {context.server && (
             <a className="log-out" href={context.server.logOutUrl}>
@@ -991,10 +992,8 @@ function UserPage(props: {server: API.Server; username: string}) {
         <h1>Export to Roam</h1>
         <p>
           Click the button below to download a file that can be imported into{" "}
-          <a href="https://roamresearch.com/" rel="nofollow">
-            Roam Research
-          </a>
-          . To import it, select <b>Import Files</b> in the top-right menu inside Roam.
+          <ExternalLink href="https://roamresearch.com/">Roam Research</ExternalLink>. To import it, select{" "}
+          <b>Import Files</b> in the top-right menu inside Roam.
         </p>
         <p>
           All your notes will be imported to a single page, because Roam does not let you have multiple pages

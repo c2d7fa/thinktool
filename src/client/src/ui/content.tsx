@@ -5,6 +5,8 @@ import * as T from "../tree";
 import * as E from "../editing";
 import {Context} from "../context";
 
+import BaseExternalLink from "./ExternalLink"; // Silly naming conflict
+
 function annotate(content: D.Content): (string | {externalLink: string} | {link: string})[] {
   function annotateText(text: string): (string | {externalLink: string})[] {
     let result: (string | {externalLink: string})[] = [];
@@ -56,9 +58,9 @@ function annotate(content: D.Content): (string | {externalLink: string} | {link:
 
 function ExternalLink(props: {link: string}) {
   return (
-    <a className="plain-text-link" href={props.link}>
+    <BaseExternalLink className="plain-text-link" href={props.link}>
       {props.link}
-    </a>
+    </BaseExternalLink>
   );
 }
 
