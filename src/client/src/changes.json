@@ -107,6 +107,18 @@
     {
       "date": "2020-06-30",
       "title": "Improved selection popup appearance and UX. Selecting a match is now preferred to creating a new item by default."
+    },
+    {
+      "date": "2020-07-01",
+      "title": "Fixed bug causing an infinite loop when looking at a page that was its own ancestor."
+    },
+    {
+      "date": "2020-07-01",
+      "title": "Label 'Create new item' in item selection popup."
+    },
+    {
+      "date": "2020-07-01",
+      "title": "Fixed bug where bullet next to 'References' was too small."
     }
   ]
 }
