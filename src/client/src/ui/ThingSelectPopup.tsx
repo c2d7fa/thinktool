@@ -110,6 +110,7 @@ export default function ThingSelectPopup(props: {
         onBlur={() => setTimeout(() => props.hide())}
         onKeyDown={onKeyDown}
       />
+      <span className="create-label">Create new item</span>
       {text !== "" && (
         <ul className="link-autocomplete-popup-results" onScroll={onScroll}>
           {results.map((result, i) => (

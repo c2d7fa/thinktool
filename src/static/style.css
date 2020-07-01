@@ -337,7 +337,7 @@ a.plain-text-link:hover {
   border-radius: 6px 6px 0 0;
 }
 
-.link-autocomplete-popup input + .link-autocomplete-popup-results {
+.link-autocomplete-popup-results {
   border-top: 1px solid #00000030;
 }
 
@@ -380,6 +380,27 @@ a.plain-text-link:hover {
 
 .link-autocomplete-popup input.selected-result:hover {
   background-color: #00000020;
+}
+
+.link-autocomplete-popup .create-label {
+  display: inline-block;
+  position: absolute;
+  right: 1.8rem;
+  top: 1.2rem;
+
+  font-size: 0.8em;
+  font-family: "Titillium Web";
+  text-transform: uppercase;
+  vertical-align: middle;
+
+  color: transparent;
+
+  transition: color 100ms;
+}
+
+.link-autocomplete-popup input:hover + .create-label,
+.link-autocomplete-popup input.selected-result + .create-label {
+  color: #00000080;
 }
 
 .link-autocomplete-popup-id {
