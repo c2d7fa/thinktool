@@ -119,6 +119,10 @@
     {
       "date": "2020-07-01",
       "title": "Fixed bug where bullet next to 'References' was too small."
+    },
+    {
+      "date": "2020-07-01",
+      "title": "Fixed behavior of external links in desktop client, so they now open in system browser."
     }
   ]
 }
