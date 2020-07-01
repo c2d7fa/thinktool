@@ -819,7 +819,7 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
         toggle={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
         onMiddleClick={() => {}}
       />
-      <div className="item">
+      <div className="inner-item">
         <div className="content-line">
           <span className="backreferences-text">{backreferences.length} references</span>
         </div>
