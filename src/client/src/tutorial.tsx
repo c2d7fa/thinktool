@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import {ActionName} from "./actions";
+import {ExternalLink} from "./ui/ExternalLink";
 
 export type State = {step: string; finished: boolean};
 
@@ -144,9 +145,9 @@ export function StepHowToUseThinktool() {
       </p>
       <p>
         For a more thorough introduction, you can also check out this guide:{" "}
-        <a className="important-link" href="/tutorial.html" target="_blank">
+        <ExternalLink className="important-link" href="/tutorial.html">
           How to use Thinktool
-        </a>
+        </ExternalLink>
       </p>
       <p>
         <i>
