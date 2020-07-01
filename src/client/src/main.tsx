@@ -19,7 +19,7 @@ import * as C from "./ui/content";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
-import ExternalLink from "./ui/ExternalLink";
+import {ExternalLinkProvider, ExternalLink, ExternalLinkType} from "./ui/ExternalLink";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";

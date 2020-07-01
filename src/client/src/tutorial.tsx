@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import {ActionName} from "./actions";
-import ExternalLink from "./ui/ExternalLink";
+import {ExternalLink} from "./ui/ExternalLink";
 
 export type State = {step: string; finished: boolean};
 

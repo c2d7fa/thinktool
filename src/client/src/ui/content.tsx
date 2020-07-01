@@ -5,7 +5,7 @@ import * as T from "../tree";
 import * as E from "../editing";
 import {Context} from "../context";
 
-import BaseExternalLink from "./ExternalLink"; // Silly naming conflict
+import {ExternalLink as BaseExternalLink} from "./ExternalLink"; // Silly naming conflict
 
 function annotate(content: D.Content): (string | {externalLink: string} | {link: string})[] {
   function annotateText(text: string): (string | {externalLink: string})[] {
