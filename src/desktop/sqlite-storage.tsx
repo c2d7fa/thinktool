@@ -6,18 +6,45 @@ import * as Client from "thinktool-client";
 export async function initialize(path: string): Promise<Client.Storage.Storage> {
   const db = await Sqlite.open({filename: path, driver: SqliteDriver});
 
-  await db.exec(`CREATE TABLE IF NOT EXISTS property (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
-  await db.exec(
-    `INSERT OR REPLACE INTO property (key, value) VALUES ('version', '0'), ('last-opened', DATETIME())`,
-  );
-  await db.exec(`INSERT OR IGNORE INTO property (key, value) VALUES ('tutorial-finished', 'false')`);
+  let version = -1;
+  try {
+    version = +(await db.get(`SELECT value FROM property WHERE key = 'version'`)).value;
+  } catch (e) {
+    // [FIXME] This assumption may be wrong!
+    console.warn(
+      "Got exception: %o. Assuming that this means that file is not initialized, so we'll build it from scratch.",
+      e,
+    );
+  }
 
-  await db.exec(
-    `CREATE TABLE IF NOT EXISTS item (name TEXT PRIMARY KEY, content JSON NOT NULL DEFAULT '[]')`,
-  );
-  await db.exec(
-    `CREATE TABLE IF NOT EXISTS connection (name TEXT PRIMARY KEY, parent TEXT REFERENCES items (name) NOT NULL, child TEXT REFERENCES items (name) NOT NULL, parent_index INTEGER NOT NULL)`,
-  );
+  if (version === -1) {
+    console.log("Initializing database from scratch to version 1");
+
+    await db.exec(`CREATE TABLE property (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
+    await db.exec(
+      `INSERT INTO property (key, value) VALUES ('version', '1'), ('tutorial-finished', 'false')`,
+    );
+    await db.exec(
+      `CREATE TABLE item (name TEXT PRIMARY KEY, content JSON NOT NULL DEFAULT '[]', is_page INTEGER NOT NULL DEFAULT 0)`,
+    );
+    await db.exec(
+      `CREATE TABLE connection (name TEXT PRIMARY KEY, parent TEXT REFERENCES items (name) NOT NULL, child TEXT REFERENCES items (name) NOT NULL, parent_index INTEGER NOT NULL)`,
+    );
+  } else if (version === 0) {
+    console.log("Upgrading database from version 0 to version 1");
+
+    db.getDatabaseInstance().serialize(() => {
+      const db_ = db.getDatabaseInstance();
+      db_.exec(`ALTER TABLE item ADD COLUMN is_page INTEGER NOT NULL DEFAULT 0`);
+      db_.exec(`INSERT OR REPLACE INTO property (key, value) VALUES ('version', 1)`);
+    });
+  } else if (version === 1) {
+    console.log("Database is already at latest version 1");
+  } else {
+    console.error("Unsupported database version '%o'!", version);
+  }
+
+  await db.exec(`INSERT OR REPLACE INTO property (key, value) VALUES ('last-opened', DATETIME())`);
 
   // [FIXME] Should also return 'isPage'.
   async function getFullState(): Promise<Client.Communication.FullStateResponse> {
