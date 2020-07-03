@@ -131,6 +131,10 @@
     {
       "date": "2020-07-03",
       "title": "Changed behavior of opened internal links, so that toggling a link in the tree removes it instead of just collapsing it."
+    },
+    {
+      "date": "2020-07-03",
+      "title": "Added full support for pages to desktop client."
     }
   ]
 }
