@@ -123,6 +123,10 @@
     {
       "date": "2020-07-01",
       "title": "Fixed behavior of external links in desktop client, so they now open in system browser."
+    },
+    {
+      "date": "2020-07-03",
+      "title": "Changed appearance of internal links to make them more obvious."
     }
   ]
 }

@@ -181,13 +181,12 @@ a.plain-text-link:hover {
 }
 
 .link-content {
-  border-bottom: 2px solid transparent;
-
-  transition: border-color 300ms;
+  border-bottom: 2px solid #9aa9a4;
+  transition: border-color 100ms;
 }
 
-.link-bullet:hover + .link-content {
-  border-color: #484848;
+.internal-link-open .link-content {
+  border-color: #d8e3e0;
 }
 
 .internal-link .empty-content {
@@ -195,14 +194,6 @@ a.plain-text-link:hover {
   font-size: 0.8em;
   font-family: "Titillium Web";
   text-transform: uppercase;
-}
-
-.internal-link-open .link-content {
-  border-color: #c8c8c8;
-}
-
-.internal-link-open:hover {
-  border-color: #f0f0f0;
 }
 
 .opened-link > .item > .content-line .content span {
