@@ -185,10 +185,6 @@ a.plain-text-link:hover {
   transition: border-color 100ms;
 }
 
-.internal-link-open .link-content {
-  border-color: #d8e3e0;
-}
-
 .internal-link .empty-content {
   color: #c0c0c0;
   font-size: 0.8em;
@@ -196,8 +192,12 @@ a.plain-text-link:hover {
   text-transform: uppercase;
 }
 
-.opened-link > .item > .content-line .content span {
-  border-bottom: 2px solid #c8c8c8;
+.opened-link > .bullet {
+  background-image: url(bullet-link-expanded.svg);
+}
+
+.opened-link > .inner-item > .content-line span {
+  border-bottom: 2px solid #9aa9a4;
 }
 
 /* EDITOR */
