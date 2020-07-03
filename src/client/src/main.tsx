@@ -666,9 +666,16 @@ function ExpandableItem(p: {
   parent?: T.NodeRef;
   className?: string;
   otherParentText?: string;
+  isOpenedLink?: boolean;
 }) {
   function toggle() {
-    p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
+    if (p.isOpenedLink && p.parent !== undefined) {
+      p.context.setTree(
+        T.toggleLink(p.context.state, p.context.tree, p.parent, T.thing(p.context.tree, p.node)),
+      );
+    } else {
+      p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
+    }
   }
 
   const expanded = T.expanded(p.context.tree, p.node);
@@ -919,6 +926,7 @@ function Subtree(p: {
         node={child}
         parent={p.parent}
         context={p.context}
+        isOpenedLink
       />
     );
   });
