@@ -41,7 +41,7 @@ export async function initialize(path: string): Promise<Client.Storage.Storage> 
   } else if (version === 1) {
     console.log("Database is already at latest version 1");
   } else {
-    console.error("Unsupported database version '%o'!", version);
+    throw `Unsupported database version ${version}!`;
   }
 
   await db.exec(`INSERT OR REPLACE INTO property (key, value) VALUES ('last-opened', DATETIME())`);
@@ -51,7 +51,7 @@ export async function initialize(path: string): Promise<Client.Storage.Storage> 
     const result = await db.all(
       `
       SELECT
-        name, content,
+        name, content, is_page,
         (
           SELECT JSON_GROUP_ARRAY(child_connection)
           FROM (
@@ -70,6 +70,7 @@ export async function initialize(path: string): Promise<Client.Storage.Storage> 
       name: row.name,
       content: JSON.parse(row.content),
       children: JSON.parse(row.children).map((childJson: any) => JSON.parse(childJson)),
+      isPage: row["is_page"] === 1 ? true : undefined,
     }));
 
     return {things};
@@ -86,21 +87,21 @@ export async function initialize(path: string): Promise<Client.Storage.Storage> 
     });
   }
 
-  // [FIXME] Should also pass 'isPage'; see server implementation of this
-  // function.
   async function updateThings(
     things: {
       name: string;
       content: Client.Communication.Content;
       children: {name: string; child: string}[];
+      isPage: boolean;
     }[],
   ): Promise<void> {
     db.getDatabaseInstance().serialize(async () => {
       for (const thing of things) {
         await db.run(
-          `INSERT OR REPLACE INTO item (name, content) VALUES (?1, ?2)`,
+          `INSERT OR REPLACE INTO item (name, content, is_page) VALUES (?1, ?2, ?3)`,
           thing.name,
           JSON.stringify(thing.content),
+          thing.isPage ? 1 : 0,
         );
 
         // Clear old connections before inserting new connections
