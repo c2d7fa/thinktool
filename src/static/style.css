@@ -174,12 +174,25 @@ a.plain-text-link:hover {
   padding: 2px 4px;
   border-radius: 6px;
   background-color: #fcfcfc;
+
+  transition: box-shadow 200ms;
 }
 
 .internal-link-page {
-  border: 1px solid #00000020;
+  border: 2px solid #00000020;
   background-color: #ffffff;
   font-weight: bold;
+}
+
+.internal-link-open {
+  box-shadow: #00000020 0 0 3px;
+}
+
+.opened-link {
+  box-shadow: #00000020 0 0 3px;
+  border-radius: 12px;
+  padding: 0.5rem 1rem;
+  margin-left: -1rem;
 }
 
 .internal-link > .link-content {
@@ -238,8 +251,8 @@ a.plain-text-link:hover {
 /* Pages */
 
 .page {
-  border: 1px solid #00000028;
-  border-radius: 6px;
+  border: 2px solid #00000028;
+  border-radius: 12px;
   padding: 0.5rem 1rem;
 
   margin-left: -1rem; /* Align bullets */
