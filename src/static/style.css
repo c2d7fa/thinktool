@@ -227,15 +227,18 @@ a.plain-text-link:hover {
 /* Pages */
 
 .page {
-  border: 1px solid #f0f0f0;
-  border-radius: 3px;
+  border: 2px solid #f0f0f0;
+  border-radius: 6px;
   padding: 1rem;
-
-  box-shadow: #00000040 0 3px 3px -3px;
 
   margin-left: -1rem; /* Align bullets */
 
-  background-color: #fcfcfc;
+  background-color: #fefefe;
+}
+
+.page > .inner-item > .content-line .editor-inactive,
+.page > .inner-item > .content-line .editor textarea {
+  font-weight: bold;
 }
 
 /* THING SELECTION POPUP */
