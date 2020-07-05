@@ -72,11 +72,12 @@ function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) 
     !D.hasChildren(props.context.state, props.link) &&
     D.otherParents(props.context.state, props.link).length === 0;
 
+  let className = "internal-link";
+  if (T.isLinkOpen(props.context.tree, props.node, props.link)) className += " internal-link-open";
+  if (D.isPage(props.context.state, props.link)) className += " internal-link-page";
+
   return (
-    <span
-      className={`internal-link${
-        T.isLinkOpen(props.context.tree, props.node, props.link) ? " internal-link-open" : ""
-      }`}>
+    <span className={className}>
       <span
         className={`link-bullet ${terminal ? "terminal" : expanded ? "expanded" : "collapsed"}`}
         onMouseDown={(ev) => {
