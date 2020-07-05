@@ -187,15 +187,15 @@ a.plain-text-link:hover {
 }
 
 .link-bullet.collapsed {
-  background-image: url(bullet-link-collapsed.svg);
+  background-image: url(bullet-collapsed.svg);
 }
 
 .link-bullet.expanded {
-  background-image: url(bullet-link-expanded.svg);
+  background-image: url(bullet-expanded.svg);
 }
 
 .link-bullet.terminal {
-  background-image: url(bullet-link-expanded.svg);
+  background-image: url(bullet-expanded.svg);
 }
 
 .internal-link .empty-content {
@@ -206,7 +206,7 @@ a.plain-text-link:hover {
 }
 
 .opened-link > .bullet {
-  background-image: url(bullet-link-expanded.svg);
+  background-image: url(bullet-expanded.svg);
 }
 
 /* EDITOR */
