@@ -168,6 +168,12 @@ a.plain-text-link:hover {
   touch-action: none;
 }
 
+.internal-link {
+  border: 1px solid #00000018;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+
 .link-bullet.collapsed {
   background-image: url(bullet-link-collapsed.svg);
 }
@@ -180,11 +186,6 @@ a.plain-text-link:hover {
   background-image: url(bullet-link-expanded.svg);
 }
 
-.link-content {
-  border-bottom: 2px solid #9aa9a4;
-  transition: border-color 100ms;
-}
-
 .internal-link .empty-content {
   color: #c0c0c0;
   font-size: 0.8em;
@@ -194,10 +195,6 @@ a.plain-text-link:hover {
 
 .opened-link > .bullet {
   background-image: url(bullet-link-expanded.svg);
-}
-
-.opened-link > .inner-item > .content-line span {
-  border-bottom: 2px solid #9aa9a4;
 }
 
 /* EDITOR */
