@@ -170,14 +170,14 @@ a.plain-text-link:hover {
 }
 
 .internal-link {
-  border: 1px solid #00000018;
+  border: 1px solid #00000020;
   padding: 2px 4px;
   border-radius: 6px;
   background-color: #fcfcfc;
 }
 
 .internal-link-page {
-  border: 1px solid #00000018;
+  border: 1px solid #00000020;
   background-color: #ffffff;
   font-weight: bold;
 }
@@ -238,13 +238,17 @@ a.plain-text-link:hover {
 /* Pages */
 
 .page {
-  border: 2px solid #00000018;
+  border: 1px solid #00000028;
   border-radius: 6px;
-  padding: 1rem;
+  padding: 0.5rem 1rem;
 
   margin-left: -1rem; /* Align bullets */
 
   background-color: #ffffff;
+}
+
+.page .page {
+  border-color: #00000010;
 }
 
 .page > .inner-item > .content-line .editor-inactive,
