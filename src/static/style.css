@@ -170,10 +170,20 @@ a.plain-text-link:hover {
 }
 
 .internal-link {
-  border: 2px solid #00000018;
+  border: 1px solid #00000018;
   padding: 2px 4px;
   border-radius: 6px;
-  background-color: #fafafa;
+  background-color: #fcfcfc;
+}
+
+.internal-link-page {
+  border: 1px solid #00000018;
+  background-color: #ffffff;
+  font-weight: bold;
+}
+
+.internal-link > .link-content {
+  margin-left: 0.25em;
 }
 
 .link-bullet.collapsed {
@@ -228,13 +238,13 @@ a.plain-text-link:hover {
 /* Pages */
 
 .page {
-  border: 2px solid #f0f0f0;
+  border: 2px solid #00000018;
   border-radius: 6px;
   padding: 1rem;
 
   margin-left: -1rem; /* Align bullets */
 
-  background-color: #fefefe;
+  background-color: #ffffff;
 }
 
 .page > .inner-item > .content-line .editor-inactive,
@@ -417,7 +427,7 @@ a.plain-text-link:hover {
 
   padding: 2em;
 
-  background-color: #fafafa;
+  background-color: #fcfcfc;
 }
 
 .parents {
