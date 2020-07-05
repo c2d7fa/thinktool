@@ -169,7 +169,8 @@ a.plain-text-link:hover {
 }
 
 .internal-link {
-  border: 1px solid #00000018;
+  border: 2px solid #00000018;
+  background-color: #fefefe;
   padding: 2px 4px;
   border-radius: 6px;
 }
@@ -210,7 +211,7 @@ a.plain-text-link:hover {
   background: none;
   outline: none;
 
-  line-height: 150%;
+  line-height: 175%;
   height: 1.5em; /* Will be overwritten in JS */
   overflow: hidden; /* Shouldn't matter, since we resize automatically */
 
@@ -220,7 +221,7 @@ a.plain-text-link:hover {
 
 .editor-inactive {
   white-space: pre-wrap;
-  line-height: 150%;
+  line-height: 175%;
 }
 
 /* Pages */
@@ -411,6 +412,8 @@ a.plain-text-link:hover {
   align-items: center;
 
   padding: 2em;
+
+  background-color: #fcfcfc;
 }
 
 .parents {
