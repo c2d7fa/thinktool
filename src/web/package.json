@@ -4,7 +4,7 @@
   "private": true,
   "devDependencies": {
     "parcel-bundler": "^1.12.4",
-    "typescript": "^3.8.3"
+    "typescript": "^3.9.6"
   },
   "dependencies": {
     "thinktool-client": "file:../client"

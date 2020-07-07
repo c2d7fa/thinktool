@@ -1,26 +1,19 @@
-import * as nodemailer from "nodemailer";
+import sendgrid from "@sendgrid/mail";
 
-const config = {
-  port: +process.env.DIAFORM_SMTP_PORT!,
-  host: process.env.DIAFORM_SMTP_HOST,
-  username: process.env.DIAFORM_SMTP_USERNAME,
-  password: process.env.DIAFORM_SMTP_PASSWORD,
-};
+const apiKey = process.env["SENDGRID_API_KEY"];
+if (apiKey === undefined) {
+  console.error("Missing SENDGRID_API_KEY. Can't send emails. See README for more information.");
+} else {
+  sendgrid.setApiKey(apiKey);
+}
 
 export async function send({subject, to, message}: {subject: string; to: string; message: string}) {
-  const transport = nodemailer.createTransport({
-    port: config.port,
-    host: config.host,
-    auth: {
-      user: config.username,
-      pass: config.password,
-    },
-    secure: true,
-  });
-  await transport.sendMail({
-    from: "Thinktool <auto@thinktool.io>",
-    subject,
+  console.log("Sending email with subject %o to %o", subject, to);
+  await sendgrid.send({
     to,
+    from: "Thinktool <auto@thinktool.io>",
+    bcc: "cc@thinktool.io",
+    subject,
     text: message,
     replyTo: "Jonas Hvid (Thinktool) <jonas@thinktool.io>",
   });

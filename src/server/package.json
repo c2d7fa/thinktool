@@ -2,23 +2,24 @@
   "name": "thinktool-server",
   "private": true,
   "devDependencies": {
-    "thinktool-shared": "file:../shared",
     "@types/bcrypt": "latest",
-    "@types/express-ws": "latest",
     "@types/express": "latest",
+    "@types/express-ws": "latest",
     "@types/node": "latest",
-    "@types/nodemailer": "latest",
     "@types/pg": "latest",
     "bcrypt": "latest",
-    "express-ws": "latest",
     "express": "latest",
-    "nodemailer": "latest",
+    "express-ws": "latest",
     "parcel-bundler": "latest",
     "pg": "latest",
-    "typescript": "latest"
+    "thinktool-shared": "file:../shared",
+    "typescript": "^3.9.6"
   },
   "scripts": {
-    "watch": "npx parcel watch server.ts -t node -d ../../dist/server -o server.js",
+    "watch": "./node_modules/.bin/parcel watch server.ts -t node -d ../../dist/server -o server.js",
     "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^7.2.1"
   }
 }
