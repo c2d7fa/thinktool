@@ -93,12 +93,9 @@ before running the server:
 - `DIAFORM_POSTGRES_USERNAME` &mdash; Username used to authenticate with the PostgreSQL DB, e.g. `postgres`
 - `DIAFORM_POSTGRES_PASSWORD` &mdash; Password used to authenticate with the PostgreSQL DB, e.g. `postgres`
 
-To configure email sending (used for "Forgot my password" functionality), set the following variables:
+For sending emails (used for "Forgot my password" functionality), we use [SendGrid](https://sendgrid.com/). Configure the following environment variables:
 
-- `DIAFORM_SMTP_HOST` &mdash; Hostname of the SMTP server, e.g. `smtp.fastmail.com`
-- `DIAFORM_SMTP_PORT` &mdash; Port on which to connect to SMTP server, e.g. `465`
-- `DIAFORM_SMTP_USERNAME` &mdash; Username to use on SMTP server, e.g. `auto@thinktool.io`
-- `DIAFORM_SMTP_PASSWORD` &mdash; Password to use on SMTP server, e.g. `abc1def2ghi3jkl4`
+- `SENDGRID_API_KEY` &mdash; SendGrid API key; find or create under _Settings_ &rightarrow; _API Keys_
 
 Additionally, the server expects the following environment variables to be set:
 
@@ -115,10 +112,7 @@ Once you have the `thinktool` image, run it with the environment variables given
         -e DIAFORM_POSTGRES_PORT \
         -e DIAFORM_POSTGRES_USERNAME \
         -e DIAFORM_POSTGRES_PASSWORD \
-        -e DIAFORM_SMTP_PORT \
-        -e DIAFORM_SMTP_HOST \
-        -e DIAFORM_SMTP_USERNAME \
-        -e DIAFORM_SMTP_PASSWORD \
+        -e SENDGRID_API_KEY \
         -e DIAFORM_STATIC_HOST \
         -p 80:80 \
         thinktool
