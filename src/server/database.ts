@@ -1,4 +1,5 @@
 import * as bcrypt from "bcrypt";
+import * as crypto from "crypto";
 import {Communication} from "thinktool-shared";
 
 // We require the consumer of this module to call initialize() before doing
@@ -292,9 +293,15 @@ export async function setEmail(userId: UserId, email: string): Promise<void> {
 
 export async function subscribeToNewsletter(email: string): Promise<void> {
   const client = await pool.connect();
+  const unsubscribeToken = await new Promise<string>((resolve, reject) => {
+    crypto.randomBytes(12, (err, buffer) => {
+      if (err) reject(err);
+      resolve(buffer.toString("hex"));
+    });
+  });
   await client.query(
-    `INSERT INTO newsletter_subscriptions (email, registered) VALUES ($1, NOW()) ON CONFLICT (email) DO NOTHING`,
-    [email],
+    `INSERT INTO newsletter_subscriptions (email, registered, unsubscribe_token) VALUES ($1, NOW(), $2) ON CONFLICT (email) DO NOTHING`,
+    [email, unsubscribeToken],
   );
   client.release();
 }
