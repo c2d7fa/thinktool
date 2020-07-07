@@ -296,7 +296,7 @@ export async function subscribeToNewsletter(email: string): Promise<void> {
   const unsubscribeToken = await new Promise<string>((resolve, reject) => {
     crypto.randomBytes(12, (err, buffer) => {
       if (err) reject(err);
-      resolve(buffer.toString("base64"));
+      resolve(buffer.toString("hex"));
     });
   });
   await client.query(
