@@ -3,86 +3,87 @@
 import os
 import random
 import string
+import argparse
 
 import psycopg2
 
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import sendgrid
+import sendgrid.helpers.mail as mail
 
-smtp_host = os.getenv("DIAFORM_SMTP_HOST")
-smtp_port = int(os.getenv("DIAFORM_SMTP_PORT"))
-smtp_username = os.getenv("DIAFORM_SMTP_USERNAME")
-smtp_password = os.getenv("DIAFORM_SMTP_PASSWORD")
+sendgrid_client = sendgrid.SendGridAPIClient(api_key=os.environ.get("SENDGRID_API_KEY"))
 
-subject = "Working on an offline app for Thinktool"
+argparser = argparse.ArgumentParser()
+argparser.add_argument("newsletter_id")
+args = argparser.parse_args()
 
-print("Connecting over SMTP to {}:{}...".format(smtp_host, smtp_port))
-with smtplib.SMTP_SSL(host=smtp_host, port=smtp_port) as smtp_conn:
-  smtp_conn.ehlo_or_helo_if_needed()
-  smtp_conn.login(smtp_username, smtp_password)
-  print("  Logged in to SMTP server as {}.".format(smtp_username))
+newsletter_id = args.newsletter_id
 
-  postgres_conn = psycopg2.connect(
-      host=os.getenv("DIAFORM_POSTGRES_HOST"),
-      port=int(os.getenv("DIAFORM_POSTGRES_PORT")),
-      user=os.getenv("DIAFORM_POSTGRES_USERNAME"),
-      password=os.getenv("DIAFORM_POSTGRES_PASSWORD"),
-      dbname="postgres"
-  )
-  postgres = postgres_conn.cursor()
+def slurp(path):
+  with open(path) as file:
+    return file.read()
 
-  def send_email(email, text, html, unsubscribe_post_url):
-    message = MIMEMultipart("alternative") # MIME type is multipart/alternative
-    message["Subject"] = subject
-    message["From"] = "Thinktool Newsletter <newsletter@thinktool.io>"
-    message["To"] = email
-    message["List-Unsubscribe"] = "<{}>, <mailto:newsletter@thinktool.io?subject=unsubscribe>".format(unsubscribe_post_url)
-    message["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
-    message["Bcc"] = "newsletter+cc@thinktool.io"  # (Note: Intercepted by send_message; not actually sent)
-    text_part = MIMEText(text, "plain")
-    html_part = MIMEText(html, "html")
-    message.attach(text_part)
-    message.attach(html_part)
-    smtp_conn.send_message(message)
+subject = slurp(newsletter_id + ".subject")
+text_template = slurp(newsletter_id + ".txt")
+html_template = slurp(newsletter_id + ".html")
 
-  def send_newsletter(email, unsubscribe):
-    text_template = None
-    with open("newsletter.txt") as file:
-      text_template = file.read()
-    text_output = text_template.format(unsubscribe=unsubscribe)
+def send_newsletter(email, unsubscribe_token):
+  text = text_template.format(unsubscribe=unsubscribe_token)
+  html = html_template.format(unsubscribe=unsubscribe_token)
 
-    html_template = None
-    with open("newsletter.html") as file:
-      html_template = file.read()
-    html_output = html_template.format(unsubscribe=unsubscribe)
+  message = mail.Mail()
+  message.to = mail.To(email)
+  message.bcc = mail.Bcc("cc@thinktool.io")
+  message.subject = mail.Subject(subject)
+  message.header = mail.Header("List-Unsubscribe", "<mailto:newsletter@thinktool.io?subject=unsubscribe>")
+  message.from_email = mail.From("newsletter@thinktool.io", "Thinktool Newsletter")
+  message.content = [
+    mail.Content("text/plain", text),
+    mail.Content("text/html", html),
+  ]
 
-    send_email(email, text_output, html_output, "https://api.thinktool.io/unsubscribe?key={unsubscribe}".format(unsubscribe=unsubscribe))
+  sendgrid_client.send(message)
 
-  print("\x1B[1mPress ENTER to send...\x1B[0m")
+postgres_conn = psycopg2.connect(
+  host=os.getenv("DIAFORM_POSTGRES_HOST"),
+  port=int(os.getenv("DIAFORM_POSTGRES_PORT")),
+  user=os.getenv("DIAFORM_POSTGRES_USERNAME"),
+  password=os.getenv("DIAFORM_POSTGRES_PASSWORD"),
+  dbname="postgres"
+)
+postgres = postgres_conn.cursor()
 
-  postgres.execute("SELECT email, registered, unsubscribe_token FROM newsletter_subscriptions WHERE last_sent IS NULL ORDER BY registered ASC NULLS FIRST")
-  for subscription in postgres.fetchall():
-    email = subscription[0]
-    registered = subscription[1]
-    unsubscribe = subscription[2]
+postgres.execute("""
+    SELECT email, unsubscribe_token FROM newsletter_subscriptions
+    WHERE
+      NOT EXISTS (
+        SELECT * FROM newsletter_sent
+        WHERE recipient = email AND newsletter_id = %s
+      ) AND
+      unsubscribed IS NULL
+    ORDER BY registered ASC
+  """, (newsletter_id,))
 
-    # Ask for confirmation
-    print("  \x1B[30mWAIT\x1B[0m \x1B[32;1m{}\x1B[0m (registered \x1B[34m{:%Y-%m-%d}\x1B[0m): ".format(email, registered), end="")
-    try:
-      input()
-    except:
-      print("\x1B[G  \x1B[31;1mABRT\x1B[0m\x1B[E", end="")
-      print()
-      exit()
+print("\x1B[1mPress ENTER to send...\x1B[0m")
+for subscription in postgres.fetchall():
+  email = subscription[0]
+  unsubscribe = subscription[1]
 
-    # Send
-    print("\x1B[F  \x1B[1mSENT\x1B[0m\x1B[E", end="")
-    send_newsletter(email, unsubscribe)
+  # Ask for confirmation
+  print("  \x1B[30mWAIT\x1B[0m \x1B[32;1m{}\x1B[0m: ".format(email), end="")
+  try:
+    input()
+  except:
+    print("\x1B[G  \x1B[31;1mABRT\x1B[0m\x1B[E", end="")
+    print()
+    exit()
 
-    # Update sent status
-    postgres.execute("UPDATE newsletter_subscriptions SET last_sent = NOW() WHERE email = %s", (email,))
-    postgres_conn.commit()
+  # Send
+  print("\x1B[F  \x1B[1mSENT\x1B[0m\x1B[E", end="")
+  send_newsletter(email, unsubscribe)
+
+  # Update sent status
+  postgres.execute("INSERT INTO newsletter_sent (newsletter_id, recipient, sent) VALUES (%s, %s, NOW())", (newsletter_id, email))
+  postgres_conn.commit()
 
 postgres.close()
 postgres_conn.close()
