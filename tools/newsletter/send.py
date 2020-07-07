@@ -7,6 +7,11 @@ import argparse
 
 import psycopg2
 
+import sendgrid
+import sendgrid.helpers.mail as mail
+
+sendgrid_client = sendgrid.SendGridAPIClient(api_key=os.environ.get("SENDGRID_API_KEY"))
+
 argparser = argparse.ArgumentParser()
 argparser.add_argument("newsletter_id")
 args = argparser.parse_args()
@@ -24,12 +29,19 @@ html_template = slurp(newsletter_id + ".html")
 def send_newsletter(email, unsubscribe_token):
   text = text_template.format(unsubscribe=unsubscribe_token)
   html = html_template.format(unsubscribe=unsubscribe_token)
-  from_address = "Thinktool Newsletter <newsletter@thinktool.io>"
-  to_address = email
-  list_unsubscribe = "<mailto:newsletter@thinktool.io?subject=unsubscribe>"
-  bcc = "cc@thinktool.io"
-  print("Subject: {!r}\nFrom: {!r}\nTo: {!r}\nList-Unsubscribe: {!r}\nBCC: {!r}\nText: {!r}\nHTML: {!r}".format(subject, from_address, to_address, list_unsubscribe, bcc, text, html))
-  # [TODO] Implement sending!
+
+  message = mail.Mail()
+  message.to = mail.To(email)
+  message.bcc = mail.Bcc("cc@thinktool.io")
+  message.subject = mail.Subject(subject)
+  message.header = mail.Header("List-Unsubscribe", "<mailto:newsletter@thinktool.io?subject=unsubscribe>")
+  message.from_email = mail.From("newsletter@thinktool.io", "Thinktool Newsletter")
+  message.content = [
+    mail.Content("text/plain", text),
+    mail.Content("text/html", html),
+  ]
+
+  sendgrid_client.send(message)
 
 postgres_conn = psycopg2.connect(
   host=os.getenv("DIAFORM_POSTGRES_HOST"),
