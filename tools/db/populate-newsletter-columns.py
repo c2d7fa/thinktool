@@ -21,7 +21,7 @@ for subscription in postgres.fetchall():
   email = subscription[0]
   unsubscribe_token = "".join(random.choices(string.ascii_letters + string.digits, k=24))
   print("  {} \x1B[34m{}\x1B[0m".format(email, unsubscribe_token))
-  postgres.execute("UPDATE newsletter_subscriptions SET unsubscribe_token = %(unsubscribe_token)s WHERE email = %(email)s", {"unsubscribe_token": unsubscribe_token, "email": email})
+  postgres.execute("UPDATE newsletter_subscriptions SET unsubscribe_token = %(unsubscribe_token)s WHERE email = %(email)s AND unsubscribe_token IS NULL", {"unsubscribe_token": unsubscribe_token, "email": email})
 
 postgres.close()
 postgres_conn.commit()
