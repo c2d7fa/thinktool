@@ -36,6 +36,7 @@ def send_newsletter(email, unsubscribe_token):
   message.subject = mail.Subject(subject)
   message.header = mail.Header("List-Unsubscribe", "<mailto:newsletter@thinktool.io?subject=unsubscribe>")
   message.from_email = mail.From("newsletter@thinktool.io", "Thinktool Newsletter")
+  message.reply_to = mail.ReplyTo("jonas@thinktool.io", "Jonas Hvid (Thinktool)")
   message.content = [
     mail.Content("text/plain", text),
     mail.Content("text/html", html),
