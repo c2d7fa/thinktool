@@ -37,9 +37,17 @@ The application consists of two parts:
 3. Electron-based desktop client, output to `/dist/desktop/`
 
 The static resources should be deployed to a static site hosting service, while
-the server code should be run on an appropriate server using Node.js.
+the server code should be run on an appropriate server using Node.js. The
+desktop client is bundled as an executable app.
 
-The desktop client is bundled as an executable app.
+You will need to have the following dependencies installed:
+
+- Node.js and NPM
+- Docker
+- Bash and the GNU core utilities
+- Curl
+- Azure CLI
+- PostgreSQL
 
 ## Static Resources
 
@@ -101,7 +109,7 @@ Additionally, the server expects the following environment variables to be set:
 
 - `DIAFORM_STATIC_HOST` &mdash; Base URL of the server hosting static resources, e.g. `https://thinktool.io`
 
-Build the server as a Docker:
+Build the server as a Docker image:
 
     # docker build -t thinktool -f tools/Dockerfile .
 
