@@ -49,6 +49,17 @@ You will need to have the following dependencies installed:
 - Azure CLI
 - PostgreSQL
 
+## Development
+
+If you don't want to install this on your development machine, there is a
+`Dockerfile` descirbing a Debian system with most of those dependencies
+installed available in the `tools/dev/` directory. Use a separate Docker
+container for PostgreSQL. For example:
+
+    $ docker build tools/dev -t thinktool-dev
+    $ docker run -e POSTGRES_PASSWORD=password -v postgres-data:/var/lib/postgresql/data -d postgres
+    $ docker run -ti -v $(pwd):/work thinktool-dev
+
 ## Static Resources
 
 Set the following environment variables:
