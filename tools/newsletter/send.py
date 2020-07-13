@@ -27,8 +27,8 @@ text_template = slurp(newsletter_id + ".txt")
 html_template = slurp(newsletter_id + ".html")
 
 def send_newsletter(email, unsubscribe_token):
-  text = text_template.format(unsubscribe=unsubscribe_token)
-  html = html_template.format(unsubscribe=unsubscribe_token)
+  text = text_template.format(unsubscribe=unsubscribe_token, email=email)
+  html = html_template.format(unsubscribe=unsubscribe_token, email=email)
 
   message = mail.Mail()
   message.to = mail.To(email)

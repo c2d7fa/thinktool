@@ -1,0 +1,33 @@
+THINKTOOL NEWSLETTER FOR JULY 2020
+
+Hi. Thanks for subscribing to this newsletter about Thinktool, an associative note-taking app!
+
+OFFLINE?
+
+Your notes should be accessible anywhere, even when you're offline. So why did I decide to make Thinktool an online service? Excellent question — please allow me to deflect that question and distract you with this instead: Thinktool now has an offline desktop version!
+
+That's right, you can download Thinktool (https://thinktool.io/download.html), and use it offline. Well, kind of. Apparently, turning a web app into an offline desktop app is harder than it sounds, so the current version is *very* much a work-in-progress. I wouldn't recommend using it for anything serious just yet.
+
+Indeed, Thinktool as a whole is a work-in-progress. I've had to balance the limited amount of time that I have between polishing the existing experience and adding new features. Large features like this desktop app take a long time. So next month I've decided to take a break from it and focus on improving other parts of the app instead.
+
+EASY IS HARD
+
+Thinktool has some good ideas, like mixing bidirectional linking (shamelessly stolen from Roam Research) with multiple parents. However, people who are new to Thinktool find it difficult to learn how to use it effectively. The learning curve is too steep.
+
+That's why I'm dedicating this month to softening the learning curve. I started by writing a couple of blog posts (https://thinktool.io/blog/) introducing people to Thinktool, but more importantly, I want to improve the interactive tutorial that starts when you first open the app.
+
+It's surprisingly hard to explain something as "simple" as Thinktool in a way that's concise, understandable and engaging. I'm doing my best though! Thanks to the people who've sent me their feedback on the current tutorial. That's been really helpful.
+
+Making Thinktool easier to learn isn't just about the tutorial. I've also implemented a couple of minor UI improvements, like making links more obvious and improving the search box that pops up when inserting a link. Oh, and I added a very basic "pages" feature, that I may or may not keep. You can use this to mark important items, so they stand out from other notes in the outline – like how you might use pages in Roam.
+
+ANOTHER COOL NOTE-TAKING APP
+
+While I was looking for inspiration for UI improvements, I stumbled across another note-taking app that I don't see mentioned a lot. It's called Supernotes (https://supernotes.app/), and except from Thinktool, it's the only note-taking app I know of with support for both bidirectional linking and multiple parents. If that sounds interesting, maybe give it a try!
+
+THANKS FOR READING
+
+I hope you enjoyed this newsletter. Otherwise, you can unsubscribe by following this link: https://api.thinktool.io/unsubscribe?key={unsubscribe}
+
+If you want to tell me something or ask a question, just reply to this email. You can also always reach me at jonas@thinktool.io
+
+— Jonas
