@@ -22,6 +22,10 @@ def slurp(path):
   with open(path) as file:
     return file.read()
 
+def spit(path, content):
+  with open(path, "w") as file:
+    file.write(content)
+
 subject = slurp(newsletter_id + ".subject")
 text_template = slurp(newsletter_id + ".txt")
 html_template = slurp(newsletter_id + ".html")
@@ -32,7 +36,6 @@ def send_newsletter(email, unsubscribe_token):
 
   message = mail.Mail()
   message.to = mail.To(email)
-  message.bcc = mail.Bcc("cc@thinktool.io")
   message.subject = mail.Subject(subject)
   message.header = mail.Header("List-Unsubscribe", "<mailto:newsletter@thinktool.io?subject=unsubscribe>")
   message.from_email = mail.From("newsletter@thinktool.io", "Thinktool Newsletter")
@@ -41,6 +44,9 @@ def send_newsletter(email, unsubscribe_token):
     mail.Content("text/plain", text),
     mail.Content("text/html", html),
   ]
+
+  spit("last_sent.txt", text)
+  spit("last_sent.html", html)
 
   sendgrid_client.send(message)
 
