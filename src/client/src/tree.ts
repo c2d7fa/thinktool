@@ -252,13 +252,6 @@ export function loadConnection(
     newTree = I.markExpanded(newTree, newNode, true);
   }
 
-  // Pages are expanded by default. However, we don't expand pages inside other
-  // pages to avoid an infinite loop or situations with a huge cascade of
-  // expanded pages.
-  if (D.isPage(state, childThing) && (parent === undefined || !D.isPage(state, thing(tree, parent)))) {
-    newTree = expand(state, newTree, newNode);
-  }
-
   return [newNode, newTree];
 }
 
@@ -621,11 +614,6 @@ const refreshBackreferencesChildren = (state: D.State, tree: Tree, node: NodeRef
     // We also need to update its other parents, in case they should be
     // displayed inline.
     result = refreshOtherParentsChildren(state, result, backreferenceNode);
-
-    // Pages are always expanded
-    if (D.isPage(state, thing(result, backreferenceNode))) {
-      result = expand(state, result, backreferenceNode);
-    }
   }
 
   return result;

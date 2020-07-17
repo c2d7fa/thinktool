@@ -98,7 +98,7 @@
     },
     {
       "date": "2020-06-30",
-      "title": "Pages are now expanded by default."
+      "title": "Pages are now expanded by default. (Reverted 2020-07-17.)"
     },
     {
       "date": "2020-06-30",
@@ -139,6 +139,10 @@
     {
       "date": "2020-07-05",
       "title": "Changed appearance of internal links and pages."
+    },
+    {
+      "date": "2020-07-17",
+      "title": "Pages are no longer expanded automatically."
     }
   ]
 }
