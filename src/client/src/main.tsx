@@ -459,7 +459,7 @@ function App({
 
   const appRef = React.useRef<HTMLDivElement>(null);
 
-  const [showSplash, setShowSplash] = React.useState<boolean>(true);
+  const [showSplash, setShowSplash] = React.useState<boolean>(Tutorial.isActive(context.tutorialState));
 
   return (
     <div
