@@ -12,3 +12,8 @@ RUN curl -sSL https://get.docker.com | bash -
 
 # Azure CLI (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?view=azure-cli-latest)
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash -
+
+# Tmux and Tmuxp (see session.tmuxp.yaml)
+RUN apt-get install -y tmux tmuxp
+
+WORKDIR /work

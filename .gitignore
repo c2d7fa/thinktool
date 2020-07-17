@@ -1,6 +1,6 @@
 /conf/
+*.envrc
 .cache/
-.envrc
 build/
 dist/
 node_modules/

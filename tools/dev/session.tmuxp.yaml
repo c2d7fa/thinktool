@@ -8,7 +8,7 @@ windows:
           - node server.js
       - shell_command:
           - cd dist/static
-          - python -m http.server 8080
+          - python3 -m http.server 8080
       - shell_command:
           - ./tools/build-static.sh
       - shell_command:
