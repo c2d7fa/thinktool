@@ -19,6 +19,7 @@ import * as C from "./ui/content";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
+import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLink, ExternalLinkType} from "./ui/ExternalLink";
 
 import * as React from "react";
@@ -458,6 +459,8 @@ function App({
 
   const appRef = React.useRef<HTMLDivElement>(null);
 
+  const [showSplash, setShowSplash] = React.useState<boolean>(true);
+
   return (
     <div
       ref={appRef}
@@ -540,6 +543,8 @@ function App({
         hide={() => context.setChangelogShown(false)}
       />
       <ThingOverview context={context} />
+      {showSplash &&
+        ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );
 }

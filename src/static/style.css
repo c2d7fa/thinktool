@@ -275,7 +275,7 @@ a.plain-text-link:hover {
   backdrop-filter: blur(3px);
 
   position: fixed;
-  z-index: 9999;
+  z-index: 1000;
 
   left: 20vw;
   top: 15vh;
@@ -1112,4 +1112,30 @@ h1.link-section:first-child {
 .changelog-entry > ul {
   list-style: disc;
   padding-left: 2rem;
+}
+
+/* Splash screen */
+
+.splash-outer {
+  z-index: 900;
+
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+
+  background-color: #ffffff60;
+  backdrop-filter: blur(6px);
+
+  display: grid;
+  place-items: center;
+}
+
+.splash-main {
+  background-color: #f8f8f8;
+  padding: 2rem;
+  border-radius: 6px;
+  border: 2px solid #e0e0e0;
+  box-shadow: #00000020 0 0 18px;
 }
