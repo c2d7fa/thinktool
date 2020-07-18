@@ -294,7 +294,7 @@ p {
 }
 
 #top-bar nav > * + * {
-  margin-left: 1.5rem;
+  margin-left: 2rem;
 }
 
 #top-bar nav a:not(.demo) {
@@ -325,26 +325,32 @@ p {
   background-color: #f8f8f8;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 800px) {
   #top-bar #logo {
     font-size: 1.2em;
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 650px) {
   #top-bar {
     font-size: 0.8em;
   }
 }
 
-@media (max-width: 350px) {
-  #top-bar nav *:nth-child(3) {
+@media (max-width: 500px) {
+  #top-bar nav *:nth-child(2) {
     display: none !important;
   }
 }
 
-@media (max-width: 265px) {
+@media (max-width: 380px) {
   #top-bar nav *:nth-child(1) {
+    display: none !important;
+  }
+}
+
+@media (max-width: 330px) {
+  #top-bar nav *:nth-child(3) {
     display: none !important;
   }
 }
