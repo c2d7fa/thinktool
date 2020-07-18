@@ -143,6 +143,10 @@
     {
       "date": "2020-07-17",
       "title": "Pages are no longer expanded automatically."
+    },
+    {
+      "date": "2020-07-17",
+      "title": "Changed appearance of selected (zoomed-in) item to make its behavior less surprising."
     }
   ]
 }

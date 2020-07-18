@@ -481,23 +481,12 @@ a.plain-text-link:hover {
 }
 
 .selected-content {
-  display: flex;
+  font-weight: bold;
+  border-bottom: 2px solid #e0e0e0;
 }
 
-.selected-content::before {
-  content: "";
-  display: inline-block;
-
-  width: 18px;
-  height: 18px;
-  margin-top: 3px;
-  margin-right: calc(1rem);
-  margin-left: calc(-1rem - 18px);
-
-  cursor: default;
-  background-repeat: no-repeat;
-
-  background-image: url(bullet-expanded.svg);
+.selected-content textarea {
+  font-weight: bold;
 }
 
 .children {
