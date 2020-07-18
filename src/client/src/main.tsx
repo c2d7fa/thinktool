@@ -536,7 +536,9 @@ function App({
         </div>
       </div>
       {toolbarShown ? <Toolbar context={context} /> : null}
-      <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />
+      {!showSplash && (
+        <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />
+      )}
       <Changelog
         changelog={context.changelog}
         visible={context.changelogShown}
