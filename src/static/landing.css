@@ -600,6 +600,16 @@ form input {
   background: radial-gradient(circle at bottom, #f4f4f4 0%, #fcfcfc 150%);
   box-shadow: 0 3px 6px -3px #c0c0c0;
   border: 1px solid #f4f4f4;
+
+  transition: transform 150ms;
+}
+
+.post:hover {
+  transform: scale(1.05);
+}
+
+.post:active {
+  transform: scale(1.025);
 }
 
 .posts li + li {
@@ -622,6 +632,15 @@ form input {
   display: block;
   font-size: 0.8em;
   margin: 0;
+}
+
+.newsletter-post h1 {
+  color: #808080;
+}
+
+.newsletter-post time {
+  display: inline;
+  margin-left: 0.5rem;
 }
 
 /* #endregion */
