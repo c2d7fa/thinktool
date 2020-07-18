@@ -40,18 +40,21 @@ export default function Splash(props: {splashCompleted(): void}) {
 
 const page1 = (
   <>
-    <div className="placeholder-image"></div>
+    <div className="splash-image"></div>
     <h1>Welcome to Thinktool</h1>
-    <p>With multiple parents and bidirectional linking, you'll waste less time on organizing your notes.</p>
+    <p>
+      With multiple parents and bidirectional linking, you'll spend your time <em>writing</em> notes, not
+      organizing them.
+    </p>
   </>
 );
 
 const page2 = (
   <>
-    <div className="placeholder-image"></div>
+    <div className="splash-image"></div>
     <h1>Multiple parents</h1>
     <p>
-      Items can have multiple parents, so you don't have to choose one place for them. Thinktool keeps
+      Items can have multiple parents, so you can put each item everywhere it belongs. Thinktool keeps
       everything in sync.
     </p>
   </>
@@ -59,11 +62,13 @@ const page2 = (
 
 const page3 = (
   <>
-    <div className="placeholder-image"></div>
+    <div className="splash-image">
+      <img src="/splash-bidirectional-links.svg" />
+    </div>
     <h1>Bidirectional links</h1>
     <p>
-      Associate related items with links. You don't have to keep track of where an item is linked – Thinktool
-      does that for you.
+      Use links to associate related items. Thinktool will find and collect references to each of the items in
+      your library.
     </p>
   </>
 );
