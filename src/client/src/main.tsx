@@ -819,32 +819,29 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
     return null;
   }
 
-  return (
-    <li className="outline-item">
-      <Bullet
-        beginDrag={() => {}}
-        status={T.backreferencesExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
-        toggle={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
-        onMiddleClick={() => {}}
-      />
-      <div className="inner-item">
-        <div className="content-line">
-          <span className="backreferences-text">{backreferences.length} references</span>
-        </div>
-        {T.backreferencesExpanded(p.context.tree, p.parent) && (
-          <BackreferencesSubtree parent={p.parent} context={p.context} />
-        )}
-      </div>
-    </li>
-  );
-}
-
-function BackreferencesSubtree(p: {context: Context; parent: T.NodeRef}) {
   const children = T.backreferencesChildren(p.context.tree, p.parent).map((child) => {
     return <ExpandableItem key={child.id} node={child} context={p.context} />;
   });
 
-  return <ul className="outline-tree">{children}</ul>;
+  return (
+    <>
+      <li className="outline-item">
+        <div className="inner-item">
+          <div className="content-line">
+            <span
+              onClick={() =>
+                p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))
+              }
+              className="backreferences-text">
+              {backreferences.length} references
+              {!T.backreferencesExpanded(p.context.tree, p.parent) && <>&ensp;&#x22ef;</>}
+            </span>
+          </div>
+        </div>
+      </li>
+      {T.backreferencesExpanded(p.context.tree, p.parent) && children}
+    </>
+  );
 }
 
 function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef}) {
