@@ -56,7 +56,9 @@ const welcomePage = (
 
 const parentsPage = (
   <>
-    <div className="splash-image"></div>
+    <div className="splash-image">
+      <img src="/splash-multiple-parents.svg" />
+    </div>
     <h1>Multiple parents</h1>
     <p>
       Organize your library freely. You can place the same item under multiple parents. Thinktool keeps
