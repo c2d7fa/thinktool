@@ -40,7 +40,12 @@ export default function Splash(props: {splashCompleted(): void}) {
 
 const page1 = (
   <>
-    <div className="splash-image"></div>
+    <div className="splash-image">
+      <img
+        src="/splash-welcome.png"
+        style={{display: "block", width: "75%", height: "100%", objectFit: "cover", margin: "auto"}}
+      />
+    </div>
     <h1>Welcome to Thinktool</h1>
     <p>
       With multiple parents and bidirectional linking, you'll spend your time <em>writing</em> notes, not

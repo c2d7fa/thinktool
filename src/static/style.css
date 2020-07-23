@@ -3,6 +3,10 @@
 @import url("https://fonts.googleapis.com/css?family=Raleway:400,400i,500,600,700&display=swap");
 @import url("https://fonts.googleapis.com/css?family=Montserrat:500,500i,800,800i&display=swap&subset=cyrillic,latin-ext");
 
+:root {
+  --overview-bg-color: #fcfcfc;
+}
+
 body {
   margin: 0;
   color: #303030;
@@ -444,7 +448,7 @@ a.plain-text-link:hover {
 
   padding: 2em;
 
-  background-color: #fcfcfc;
+  background-color: var(--overview-bg-color);
 }
 
 .parents {
@@ -1209,11 +1213,10 @@ button.suggested-button {
 }
 
 .splash-image {
-  display: block;
   border-radius: 6px;
   width: 100%;
   height: 15rem;
-  background-color: #00000008;
+  background-color: var(--overview-bg-color);
   border: 1px solid #e0e0e0;
   padding: 1px;
 }
