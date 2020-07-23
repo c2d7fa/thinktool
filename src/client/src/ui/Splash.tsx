@@ -5,7 +5,7 @@ import * as React from "react";
 // features and how to get started.
 
 export default function Splash(props: {splashCompleted(): void}) {
-  const pages = [page1, page2, page3];
+  const pages = [welcomePage, linksPage, parentsPage];
   const [currentPageIndex, setCurrentPageIndex] = React.useState<number>(0);
   const currentPage = pages[currentPageIndex];
 
@@ -38,7 +38,7 @@ export default function Splash(props: {splashCompleted(): void}) {
   );
 }
 
-const page1 = (
+const welcomePage = (
   <>
     <div className="splash-image">
       <img
@@ -48,24 +48,24 @@ const page1 = (
     </div>
     <h1>Welcome to Thinktool</h1>
     <p>
-      With multiple parents and bidirectional linking, you'll spend your time <em>writing</em> notes, not
+      With bidirectional links and multiple parents, you'll spend your time <em>writing</em> notes, not
       organizing them.
     </p>
   </>
 );
 
-const page2 = (
+const parentsPage = (
   <>
     <div className="splash-image"></div>
     <h1>Multiple parents</h1>
     <p>
-      Items can have multiple parents, so you can put each item everywhere it belongs. Thinktool keeps
-      everything in sync.
+      Organize your library freely. You can place the same item under multiple parents. Thinktool keeps
+      everything synced.
     </p>
   </>
 );
 
-const page3 = (
+const linksPage = (
   <>
     <div className="splash-image">
       <img src="/splash-bidirectional-links.svg" />
