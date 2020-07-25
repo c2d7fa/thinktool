@@ -139,8 +139,28 @@ ul.outline-root-tree {
   font-family: "Titillium Web";
   text-transform: uppercase;
   color: #808080;
-  cursor: default;
   vertical-align: middle;
+}
+
+.other-parents-text {
+  cursor: default;
+}
+
+button.backreferences-text {
+  /* Because this is a button, but it shouldn't look like one. */
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0;
+}
+
+.backreferences-text {
+  cursor: pointer;
+  transition: color 150ms;
+}
+
+.backreferences-text:hover {
+  color: #404040;
 }
 
 a.plain-text-link {

@@ -835,14 +835,14 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
       <li className="outline-item">
         <div className="inner-item">
           <div className="content-line">
-            <span
+            <button
               onClick={() =>
                 p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))
               }
               className="backreferences-text">
               {backreferences.length} references
               {!T.backreferencesExpanded(p.context.tree, p.parent) && <>&ensp;&#x22ef;</>}
-            </span>
+            </button>
           </div>
         </div>
       </li>
