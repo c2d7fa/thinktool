@@ -7,6 +7,7 @@
 
 :root {
   --main-bg-color: #fcfcfc;
+  --outline-width: 80ex;
 }
 
 /* #endregion */
@@ -53,20 +54,7 @@ body {
 }
 
 .parents {
-  max-width: calc(80ex + 6em);
-  padding: 1em;
-  width: 100%;
-
-  background: linear-gradient(180deg, #fcfcfc 0%, #fafafa 100%);
-  border-radius: 6px 6px;
-
-  display: flex;
-  flex-direction: column;
-}
-
-.parents-inner {
-  max-width: 80ex;
-  align-self: center;
+  max-width: var(--outline-width);
   width: 100%;
 }
 
@@ -81,7 +69,7 @@ body {
 
 .overview-main {
   margin: 4em 0;
-  max-width: 80ex;
+  max-width: var(--outline-width);
   width: 100%;
 }
 
@@ -99,22 +87,10 @@ body {
 }
 
 .references {
-  max-width: calc(80ex + 6em);
+  max-width: var(--outline-width);
   width: 100%;
-  padding: 1em;
 
   color: #404040;
-  background: linear-gradient(180deg, #f8f8f8 0%, #fafafa 100%);
-  border-radius: 6px;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.references-inner {
-  max-width: 80ex;
-  width: 100%;
 }
 
 h1.link-section {

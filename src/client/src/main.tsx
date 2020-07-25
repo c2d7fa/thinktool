@@ -567,10 +567,8 @@ function ThingOverview(p: {context: Context}) {
       {hasReferences && (
         <>
           <div className="references">
-            <div className="references-inner">
-              <h1 className="link-section">References</h1>
-              <ReferencesOutline context={p.context} />
-            </div>
+            <h1 className="link-section">References</h1>
+            <ReferencesOutline context={p.context} />
           </div>
         </>
       )}
@@ -594,18 +592,14 @@ function ParentsOutline(p: {context: Context}) {
   if (parentItems.length === 0) {
     return (
       <div className="parents">
-        <div className="parents-inner">
-          <span className="no-parents">No parents</span>
-        </div>
+        <span className="no-parents">No parents</span>
       </div>
     );
   } else {
     return (
       <div className="parents">
-        <div className="parents-inner">
-          <h1 className="link-section">Parents</h1>
-          {subtree}
-        </div>
+        <h1 className="link-section">Parents</h1>
+        {subtree}
       </div>
     );
   }
