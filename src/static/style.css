@@ -199,6 +199,9 @@ a.plain-text-link:hover {
   border-radius: 6px;
   background-color: #fcfcfc;
 
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+
   transition: box-shadow 200ms;
 }
 

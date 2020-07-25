@@ -155,6 +155,10 @@
     {
       "date": "2020-07-25",
       "title": "Change UI of references so that it's now a heading instead of a node in the outline."
+    },
+    {
+      "date": "2020-07-25",
+      "title": "Improved appearance of internal links that are long enough to cause line breaks."
     }
   ]
 }
