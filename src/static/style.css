@@ -3,6 +3,10 @@
 @import url("https://fonts.googleapis.com/css?family=Raleway:400,400i,500,600,700&display=swap");
 @import url("https://fonts.googleapis.com/css?family=Montserrat:500,500i,800,800i&display=swap&subset=cyrillic,latin-ext");
 
+:root {
+  --overview-bg-color: #fcfcfc;
+}
+
 body {
   margin: 0;
   color: #303030;
@@ -275,7 +279,7 @@ a.plain-text-link:hover {
   backdrop-filter: blur(3px);
 
   position: fixed;
-  z-index: 9999;
+  z-index: 1000;
 
   left: 20vw;
   top: 15vh;
@@ -444,7 +448,7 @@ a.plain-text-link:hover {
 
   padding: 2em;
 
-  background-color: #fcfcfc;
+  background-color: var(--overview-bg-color);
 }
 
 .parents {
@@ -1101,4 +1105,122 @@ h1.link-section:first-child {
 .changelog-entry > ul {
   list-style: disc;
   padding-left: 2rem;
+}
+
+/* Splash screen */
+
+.splash-outer {
+  z-index: 900;
+
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+
+  background-color: #ffffff60;
+  backdrop-filter: blur(6px);
+
+  display: grid;
+  place-items: center;
+}
+
+.splash-main {
+  background-color: #f8f8f8;
+  padding: 2rem;
+  border-radius: 6px;
+  border: 2px solid #e0e0e0;
+  box-shadow: #00000020 0 0 18px;
+
+  width: 30rem;
+}
+
+.splash-main h1 {
+  font-size: 1em;
+  font-family: "Montserrat";
+  text-transform: uppercase;
+}
+
+.splash-main > * {
+  margin: 0;
+}
+
+.splash-main > * + * {
+  margin-top: 1rem;
+}
+
+.splash-header {
+  color: #00000040;
+  font-size: 0.8em;
+  font-style: italic;
+}
+
+.splash-nav {
+  display: grid;
+  grid-template-columns: [prev] 50% [next] 50%;
+}
+
+.splash-nav button:first-child {
+  grid-column: prev;
+  justify-self: start;
+}
+
+.splash-nav button:last-child {
+  grid-column: next;
+  justify-self: end;
+}
+
+.splash-nav button {
+  background: none;
+  margin: none;
+  border: none;
+  outline: none;
+
+  background-color: #00000010;
+  color: #000000a0;
+  padding: 0.25em 0.5em;
+  border-radius: 6px;
+
+  font-family: inherit;
+  font-size: 1em;
+
+  transition: background-color 300ms;
+
+  cursor: pointer;
+}
+
+button.suggested-button {
+  background-color: hsl(190, 20%, 40%);
+  color: hsl(190, 10%, 95%);
+  font-weight: bold;
+}
+
+.splash-nav button:not(:disabled):hover {
+  background-color: #00000028;
+}
+
+.splash-nav button.suggested-button:not(:disabled):hover {
+  background-color: hsl(190, 30%, 50%);
+}
+
+.splash-nav button + button {
+  margin-left: 1em;
+}
+
+.splash-nav button:disabled {
+  background-color: #00000004;
+  color: #00000040;
+}
+
+.splash-image {
+  border-radius: 6px;
+  width: 100%;
+  height: 15rem;
+  background-color: var(--overview-bg-color);
+  border: 1px solid #e0e0e0;
+  padding: 1px;
+}
+
+.splash-image img {
+  border-radius: 5px;
 }

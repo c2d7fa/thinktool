@@ -147,6 +147,10 @@
     {
       "date": "2020-07-17",
       "title": "Changed appearance of selected (zoomed-in) item to make its behavior less surprising."
+    },
+    {
+      "date": "2020-07-23",
+      "title": "Made a quick \"slideshow\" that introduces the core features of Thinktool when you first start the app."
     }
   ]
 }
