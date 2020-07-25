@@ -57,12 +57,14 @@ ul.outline-tree {
   padding-left: 1em;
 }
 
+/* #region Bullets */
+
 .bullet {
   user-select: none;
   display: inline-block;
-  width: 12px !important;
-  height: 12px !important;
-  margin-top: 7px;
+  width: 20px !important;
+  height: 20px !important;
+  margin-top: 5px;
   margin-right: 1em;
   cursor: pointer;
   background-repeat: no-repeat;
@@ -73,17 +75,45 @@ ul.outline-tree {
   touch-action: none;
 }
 
-.bullet.collapsed {
-  background-image: url(bullet-collapsed.svg);
+.bullet .bullet-hover-rect {
+  opacity: 0%;
+  fill: #e0e0e0;
+  transition: opacity 150ms, fill 150ms;
 }
 
-.bullet.expanded {
-  background-image: url(bullet-expanded.svg);
+.bullet .bullet-circle {
+  transition: fill 150ms;
+}
+
+.bullet:hover .bullet-hover-rect {
+  opacity: 100%;
+}
+
+.bullet.expanded .bullet-circle {
+  fill: #d0d0d0;
+}
+
+.bullet.expanded .bullet-hover-rect {
+  fill: #f0f0f0;
+}
+
+.bullet.collapsed .bullet-circle {
+  fill: #606060;
 }
 
 .bullet.terminal {
-  background-image: url(bullet-terminal.svg);
+  cursor: default;
 }
+
+.bullet.terminal .bullet-circle {
+  fill: #d0d0d0;
+}
+
+.bullet.terminal .bullet-hover-rect {
+  display: none;
+}
+
+/* #endregion */
 
 ul.outline-root-tree {
   padding-left: 0;
@@ -227,15 +257,15 @@ a.plain-text-link:hover {
 }
 
 .link-bullet.collapsed {
-  background-image: url(bullet-collapsed.svg);
+  background-image: url(bullet-link-collapsed.svg);
 }
 
 .link-bullet.expanded {
-  background-image: url(bullet-expanded.svg);
+  background-image: url(bullet-link-expanded.svg);
 }
 
 .link-bullet.terminal {
-  background-image: url(bullet-expanded.svg);
+  background-image: url(bullet-link-expanded.svg);
 }
 
 .internal-link .empty-content {
@@ -243,10 +273,6 @@ a.plain-text-link:hover {
   font-size: 0.8em;
   font-family: "Titillium Web";
   text-transform: uppercase;
-}
-
-.opened-link > .bullet {
-  background-image: url(bullet-expanded.svg);
 }
 
 /* EDITOR */

@@ -21,6 +21,7 @@ import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLink, ExternalLinkType} from "./ui/ExternalLink";
+import Bullet from "./ui/Bullet";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -727,28 +728,6 @@ function ExpandableItem(p: {
         {expanded && !terminal && subtree}
       </div>
     </li>
-  );
-}
-
-function Bullet(p: {
-  status: "expanded" | "collapsed" | "terminal";
-  toggle: () => void;
-  beginDrag: () => void;
-  onMiddleClick?(): void;
-}) {
-  function onAuxClick(ev: React.MouseEvent<never>): void {
-    // ev.button === 1 checks for middle click.
-    if (ev.button === 1 && p.onMiddleClick !== undefined) p.onMiddleClick();
-  }
-
-  return (
-    <span
-      className={`bullet ${p.status}`}
-      onMouseDown={p.beginDrag}
-      onTouchStart={p.beginDrag}
-      onClick={() => p.toggle()}
-      onAuxClick={onAuxClick}
-    />
   );
 }
 
