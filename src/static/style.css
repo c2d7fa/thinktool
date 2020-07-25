@@ -120,11 +120,14 @@ h1.link-section:first-child {
   padding: 0;
 }
 
-.item {
-  display: flex;
+.subtree-container > .subtree {
+  padding-left: 2rem;
 }
 
-.item:not(:last-child) {
+.item {
+  display: flex;
+  flex-direction: row;
+
   margin-bottom: 1rem;
 }
 
@@ -132,16 +135,8 @@ h1.link-section:first-child {
 
 /* #region Content */
 
-.inner-item {
-  flex: 1;
-}
-
-.content-line {
-  display: flex;
-}
-
 .content {
-  flex: 1;
+  width: 100%;
   cursor: text;
 }
 
@@ -158,6 +153,7 @@ h1.link-section:first-child {
 .backreferences-text,
 .other-parents-text {
   display: inline-block;
+  white-space: nowrap;
 
   margin-right: 0.5rem;
 
@@ -411,11 +407,6 @@ a.plain-text-link:hover {
 
 .page .page {
   border-color: #00000010;
-}
-
-.page > .inner-item > .content-line .editor-inactive,
-.page > .inner-item > .content-line .editor textarea {
-  font-weight: bold;
 }
 
 /* #endregion */
