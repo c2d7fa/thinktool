@@ -228,11 +228,6 @@ export function toggle(state: D.State, tree: Tree, node: NodeRef): Tree {
     // We want references to be expanded by default if there are just few of
     // them.
     result = refreshBackreferencesChildren(state, result, node);
-    console.log(
-      "Backreferences of %s: %o",
-      D.contentText(state, thing(result, node)),
-      backreferencesChildren(result, node),
-    );
     if (backreferencesChildren(result, node).length <= 3 && !backreferencesExpanded(result, node)) {
       result = toggleBackreferences(state, result, node);
     }
