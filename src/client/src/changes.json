@@ -150,7 +150,11 @@
     },
     {
       "date": "2020-07-23",
-      "title": "Made a quick \"slideshow\" that introduces the core features of Thinktool when you first start the app."
+      "title": "Made a short \"slideshow\" that introduces the core features of Thinktool when you first start the app."
+    },
+    {
+      "date": "2020-07-25",
+      "title": "Change UI of references so that it's now a heading instead of a node in the outline."
     }
   ]
 }
