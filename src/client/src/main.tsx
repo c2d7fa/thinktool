@@ -384,7 +384,7 @@ function App({
       const [x, y] = [ev.clientX, ev.clientY];
 
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("outline-item")) {
+      while (element && !element.classList.contains("item")) {
         element = element?.parentElement;
       }
 
@@ -399,7 +399,7 @@ function App({
       const [x, y] = [ev.changedTouches[0].clientX, ev.changedTouches[0].clientY];
 
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("outline-item")) {
+      while (element && !element.classList.contains("item")) {
         element = element?.parentElement;
       }
 
@@ -643,8 +643,8 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   }
 
   return (
-    <li className="outline-item">
-      <span className="item-line">
+    <li className="item">
+      <span>
         <Bullet
           beginDrag={() => {
             return;
@@ -694,7 +694,7 @@ function ExpandableItem(p: {
     p.context.setDrag({current: p.node, target: null, finished: false});
   }
 
-  let className = "outline-item";
+  let className = "item";
 
   if (p.className) className += " " + p.className;
   if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id) className += " drop-target";
@@ -805,7 +805,7 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
 
   return (
     <>
-      <li className="outline-item">
+      <li className="item">
         <div className="inner-item">
           <div className="content-line">
             <button
@@ -856,7 +856,7 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
   }
 
   return (
-    <li className="outline-item">
+    <li className="item">
       <Bullet
         beginDrag={() => {}}
         status={T.otherParentsExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}

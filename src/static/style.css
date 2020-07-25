@@ -120,11 +120,11 @@ h1.link-section:first-child {
   padding: 0;
 }
 
-.outline-item {
+.item {
   display: flex;
 }
 
-.outline-item:not(:last-child) {
+.item:not(:last-child) {
   margin-bottom: 1rem;
 }
 
@@ -369,7 +369,7 @@ a.plain-text-link:hover {
 
 /* #region Drag and drop */
 
-.outline-item {
+.item {
   position: relative;
 }
 
