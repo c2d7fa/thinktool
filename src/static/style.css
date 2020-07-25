@@ -374,15 +374,30 @@ a.plain-text-link:hover {
 
 /* #region Drag and drop */
 
-.drop-target {
-  border-top: 3px solid #d0d0d0;
-  margin-top: -3px;
+.outline-item {
+  position: relative;
+}
+
+.drop-target::before {
+  content: "";
+  display: block;
+  position: absolute;
+
+  pointer-events: none;
+
+  left: 0;
+  right: 0;
+  height: 3px;
+
+  margin-bottom: 3px;
+
+  background-color: #d0d0d0;
+  border-radius: 1.5px;
 }
 
 .drag-source {
-  padding: 3px;
-  margin: -3px;
-  background-color: #eee;
+  opacity: 50%;
+  transition: opacity 150ms;
 }
 
 /* #endregion */
