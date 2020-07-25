@@ -38,6 +38,8 @@ body {
 }
 
 .app {
+  background-color: var(--main-bg-color);
+
   /* Needs to be clickable, so it can handle focus. */
   outline: none;
   min-height: 100vh;
@@ -47,10 +49,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-
   padding: 2em;
-
-  background-color: var(--main-bg-color);
 }
 
 .parents {
