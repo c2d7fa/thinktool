@@ -3,9 +3,30 @@
 @import url("https://fonts.googleapis.com/css?family=Raleway:400,400i,500,600,700&display=swap");
 @import url("https://fonts.googleapis.com/css?family=Montserrat:500,500i,800,800i&display=swap&subset=cyrillic,latin-ext");
 
+/* #region Variables */
+
 :root {
-  --overview-bg-color: #fcfcfc;
+  --main-bg-color: #fcfcfc;
 }
+
+/* #endregion */
+
+/* #region General components */
+
+.email {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 2px solid #00000028;
+  transition: border-color 150ms;
+}
+
+.email:hover {
+  border-color: #00000080;
+}
+
+/* #endregion */
+
+/* #region Main container and overview */
 
 body {
   margin: 0;
@@ -16,6 +37,107 @@ body {
   line-height: 150%;
 }
 
+.app {
+  /* Needs to be clickable, so it can handle focus. */
+  outline: none;
+  min-height: 100vh;
+}
+
+.overview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 2em;
+
+  background-color: var(--main-bg-color);
+}
+
+.parents {
+  max-width: calc(80ex + 6em);
+  padding: 1em;
+  width: 100%;
+
+  background: linear-gradient(180deg, #fcfcfc 0%, #fafafa 100%);
+  border-radius: 6px 6px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.parents-inner {
+  max-width: 80ex;
+  align-self: center;
+  width: 100%;
+}
+
+.no-parents {
+  cursor: default;
+  color: #c0c0c0;
+  font-size: 0.8em;
+  font-family: "Titillium Web";
+  text-transform: uppercase;
+  padding-left: 1.5rem;
+}
+
+.overview-main {
+  margin: 4em 0;
+  max-width: 80ex;
+  width: 100%;
+}
+
+.selected-content {
+  font-weight: bold;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.selected-content textarea {
+  font-weight: bold;
+}
+
+.children {
+  margin-top: 2em;
+}
+
+.references {
+  max-width: calc(80ex + 6em);
+  width: 100%;
+  padding: 1em;
+
+  color: #404040;
+  background: linear-gradient(180deg, #f8f8f8 0%, #fafafa 100%);
+  border-radius: 6px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.references-inner {
+  max-width: 80ex;
+  width: 100%;
+}
+
+h1.link-section {
+  margin-top: calc(1em - 1.25ex);
+  margin-bottom: 1em;
+
+  font-size: 0.8em;
+  color: #b0b0b0;
+  cursor: default;
+  font-family: "Titillium Web";
+  font-weight: normal;
+  text-transform: uppercase;
+}
+
+h1.link-section:first-child {
+  margin-top: 0;
+}
+
+/* #endregion */
+
+/* #region Outline structure */
+
 ul.outline-tree {
   margin: 0 auto;
   margin-top: 1rem;
@@ -23,111 +145,9 @@ ul.outline-tree {
   padding-left: 1.6em;
 }
 
-/* General UI elements */
-
-.toggle-button {
-  display: inline-flex;
-}
-
-.toggle-button button:first-child {
-  margin-right: 0;
-  border-radius: 3px 0 0 3px;
-}
-
-.toggle-button button:last-child {
-  margin-left: 0;
-  border-radius: 0 3px 3px 0;
-}
-
-.toggle-button .active-toggle {
-  background-color: #e4e4e4;
-  color: #787878;
-}
-
-/* Outer container */
-.app {
-  outline: none;
-  min-height: 100vh;
-}
-
-/* OUTLINE */
-
-/* Root tree */
+/* No padding on root item */
 :not(.outline-item) > .outline-tree {
   padding-left: 1em;
-}
-
-/* #region Bullets */
-
-.bullet {
-  user-select: none;
-  display: inline-block;
-  width: 20px !important;
-  height: 20px !important;
-  margin-top: 5px;
-  margin-right: 1em;
-  cursor: pointer;
-  background-repeat: no-repeat;
-
-  text-align: center;
-  vertical-align: middle;
-
-  touch-action: none;
-}
-
-.bullet .bullet-hover-rect {
-  opacity: 0%;
-  fill: #e0e0e0;
-  transition: opacity 150ms, fill 150ms;
-}
-
-.bullet .bullet-circle {
-  transition: fill 150ms;
-}
-
-.bullet:hover .bullet-hover-rect {
-  opacity: 100%;
-}
-
-.bullet.expanded .bullet-circle {
-  fill: #d0d0d0;
-}
-
-.bullet.expanded .bullet-hover-rect {
-  fill: #f0f0f0;
-}
-
-.bullet.collapsed .bullet-circle {
-  fill: #606060;
-}
-
-.bullet.terminal {
-  cursor: default;
-}
-
-.bullet.terminal .bullet-circle {
-  fill: #d0d0d0;
-}
-
-.bullet.terminal .bullet-hover-rect {
-  display: none;
-}
-
-/* #endregion */
-
-ul.outline-root-tree {
-  padding-left: 0;
-}
-
-.drop-target {
-  border-top: 3px solid #d0d0d0;
-  margin-top: -3px;
-}
-
-.drag-source {
-  padding: 3px;
-  margin: -3px;
-  background-color: #eee;
 }
 
 .outline-item {
@@ -137,6 +157,10 @@ ul.outline-root-tree {
 .outline-item:not(:last-child) {
   margin-bottom: 1rem;
 }
+
+/* #endregion */
+
+/* #region Content */
 
 .inner-item {
   flex: 1;
@@ -158,6 +182,8 @@ ul.outline-root-tree {
 .placeholder-empty {
   color: #c8c8c8;
 }
+
+/* #region Backreferences and other parents */
 
 .backreferences-text,
 .other-parents-text {
@@ -193,6 +219,10 @@ button.backreferences-text {
   color: #404040;
 }
 
+/* #endregion */
+
+/* #region External links */
+
 a.plain-text-link {
   word-break: break-all;
   color: inherit;
@@ -206,7 +236,9 @@ a.plain-text-link:hover {
   border-color: #00000080;
 }
 
-/* Internal links */
+/* #endregion */
+
+/* #region Internal links */
 
 .link-bullet {
   user-select: none;
@@ -275,7 +307,11 @@ a.plain-text-link:hover {
   text-transform: uppercase;
 }
 
-/* EDITOR */
+/* #endregion */
+
+/* #endregion */
+
+/* #region Editor */
 
 .editor textarea {
   color: inherit;
@@ -301,7 +337,82 @@ a.plain-text-link:hover {
   line-height: 175%;
 }
 
-/* Pages */
+/* #endregion */
+
+/* #region Bullets */
+
+.bullet {
+  user-select: none;
+  display: inline-block;
+  width: 20px !important;
+  height: 20px !important;
+  margin-top: 5px;
+  margin-right: 1em;
+  cursor: pointer;
+  background-repeat: no-repeat;
+
+  text-align: center;
+  vertical-align: middle;
+
+  touch-action: none;
+}
+
+.bullet .bullet-hover-rect {
+  opacity: 0%;
+  fill: #e0e0e0;
+  transition: opacity 150ms, fill 150ms;
+}
+
+.bullet .bullet-circle {
+  transition: fill 150ms;
+}
+
+.bullet:hover .bullet-hover-rect {
+  opacity: 100%;
+}
+
+.bullet.expanded .bullet-circle {
+  fill: #d0d0d0;
+}
+
+.bullet.expanded .bullet-hover-rect {
+  fill: #f0f0f0;
+}
+
+.bullet.collapsed .bullet-circle {
+  fill: #606060;
+}
+
+.bullet.terminal {
+  cursor: default;
+}
+
+.bullet.terminal .bullet-circle {
+  fill: #d0d0d0;
+}
+
+.bullet.terminal .bullet-hover-rect {
+  display: none;
+}
+
+/* #endregion */
+
+/* #region Drag and drop */
+
+.drop-target {
+  border-top: 3px solid #d0d0d0;
+  margin-top: -3px;
+}
+
+.drag-source {
+  padding: 3px;
+  margin: -3px;
+  background-color: #eee;
+}
+
+/* #endregion */
+
+/* #region Pages */
 
 .page {
   border: 2px solid #00000028;
@@ -322,7 +433,9 @@ a.plain-text-link:hover {
   font-weight: bold;
 }
 
-/* THING SELECTION POPUP */
+/* #endregion */
+
+/* #region Search popup */
 
 .link-autocomplete-popup {
   backdrop-filter: blur(3px);
@@ -488,100 +601,9 @@ a.plain-text-link:hover {
   content: "#";
 }
 
-/* OVERVIEW */
+/* #endregion */
 
-.overview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  padding: 2em;
-
-  background-color: var(--overview-bg-color);
-}
-
-.parents {
-  max-width: calc(80ex + 6em);
-  padding: 1em;
-  width: 100%;
-
-  background: linear-gradient(180deg, #fcfcfc 0%, #fafafa 100%);
-  border-radius: 6px 6px;
-
-  display: flex;
-  flex-direction: column;
-}
-
-.parents-inner {
-  max-width: 80ex;
-  align-self: center;
-  width: 100%;
-}
-
-.no-parents {
-  cursor: default;
-  color: #c0c0c0;
-  font-size: 0.8em;
-  font-family: "Titillium Web";
-  text-transform: uppercase;
-  padding-left: 1.5rem;
-}
-
-.overview-main {
-  margin: 4em 0;
-  max-width: 80ex;
-  width: 100%;
-}
-
-.selected-content {
-  font-weight: bold;
-  border-bottom: 2px solid #e0e0e0;
-}
-
-.selected-content textarea {
-  font-weight: bold;
-}
-
-.children {
-  margin-top: 2em;
-}
-
-.references {
-  max-width: calc(80ex + 6em);
-  width: 100%;
-  padding: 1em;
-
-  color: #404040;
-  background: linear-gradient(180deg, #f8f8f8 0%, #fafafa 100%);
-  border-radius: 6px;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.references-inner {
-  max-width: 80ex;
-  width: 100%;
-}
-
-h1.link-section {
-  margin-top: calc(1em - 1.25ex);
-  margin-bottom: 1em;
-
-  font-size: 0.8em;
-  color: #b0b0b0;
-  cursor: default;
-  font-family: "Titillium Web";
-  font-weight: normal;
-  text-transform: uppercase;
-}
-
-h1.link-section:first-child {
-  margin-top: 0;
-}
-
-/* TOP BAR */
+/* #region Top bar */
 
 .top-bar {
   padding: 0.35em;
@@ -649,8 +671,6 @@ h1.link-section:first-child {
   background-color: #dcdcdc;
 }
 
-/* Current user */
-
 #current-user {
   margin-left: auto; /* Right align */
   cursor: default;
@@ -685,7 +705,9 @@ h1.link-section:first-child {
   color: #404040;
 }
 
-/* TOOLBAR */
+/* #endregion */
+
+/* #region Toolbar */
 
 .toolbar {
   position: sticky;
@@ -844,7 +866,9 @@ h1.link-section:first-child {
   background-color: #e8e8e8;
 }
 
-/* Tutorial */
+/* #endregion */
+
+/* #region Tutorial */
 
 .toolbar button.tutorial-relevant {
   text-shadow: 0 0 8px hsl(45, 100%, 50%);
@@ -1017,73 +1041,9 @@ h1.link-section:first-child {
   color: #00000040;
 }
 
-.email {
-  color: inherit;
-  text-decoration: none;
-  border-bottom: 2px solid #00000028;
-  transition: border-color 150ms;
-}
+/* #endregion */
 
-.email:hover {
-  border-color: #00000080;
-}
-
-/* Table view */
-
-.children-table table {
-  margin-top: 1em;
-  /*border-collapse: collapse;*/
-  width: 100%;
-
-  border-spacing: 0 1em;
-}
-
-.children-table table td {
-  vertical-align: top;
-  padding: 0.5em;
-  border: 1px solid #f0f0f0;
-  border-left: none;
-}
-
-.children-table tbody tr td:first-child {
-  border-radius: 6px 0 0 6px;
-  border-left: 1px solid #f0f0f0;
-}
-
-.children-table tbody tr td:last-child {
-  border-radius: 0 6px 6px 0;
-}
-
-.children-table table td > ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-
-  margin-bottom: -0.8em; /* Cancel out padding on list item */
-}
-
-.children-table table td > ul > li {
-  margin: 0;
-  padding: 0;
-}
-
-.children-table thead td {
-  border: none;
-  padding: 0;
-}
-
-.children-table thead td > span {
-  cursor: default;
-  padding: 0 0.25em;
-  border-radius: 6px;
-  font-family: "Titillium Web", sans-serif;
-  font-size: 0.8em;
-  text-transform: uppercase;
-  background-color: #e9eef0;
-  color: #7d9196;
-}
-
-/* Changelog */
+/* #region Changelog */
 
 .changelog {
   position: fixed;
@@ -1156,7 +1116,9 @@ h1.link-section:first-child {
   padding-left: 2rem;
 }
 
-/* Splash screen */
+/* #endregion */
+
+/* #region Introduction slideshow */
 
 .splash-outer {
   z-index: 900;
@@ -1265,7 +1227,7 @@ button.suggested-button {
   border-radius: 6px;
   width: 100%;
   height: 15rem;
-  background-color: var(--overview-bg-color);
+  background-color: var(--main-bg-color);
   border: 1px solid #e0e0e0;
   padding: 1px;
 }
@@ -1273,3 +1235,5 @@ button.suggested-button {
 .splash-image img {
   border-radius: 5px;
 }
+
+/* #endregion */
