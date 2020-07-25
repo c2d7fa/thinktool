@@ -587,7 +587,7 @@ function ParentsOutline(p: {context: Context}) {
     },
   );
 
-  const subtree = <ul className="outline-tree">{parentItems}</ul>;
+  const subtree = <ul className="subtree">{parentItems}</ul>;
 
   if (parentItems.length === 0) {
     return (
@@ -615,7 +615,7 @@ function ReferencesOutline(p: {context: Context}) {
   if (referenceItems.length === 0) {
     return null;
   } else {
-    return <ul className="outline-tree">{referenceItems}</ul>;
+    return <ul className="subtree">{referenceItems}</ul>;
   }
 }
 
@@ -881,7 +881,7 @@ function OtherParentsSubtree(p: {context: Context; parent: T.NodeRef; grandparen
     return <ExpandableItem key={child.id} node={child} context={p.context} />;
   });
 
-  return <ul className="outline-tree">{children}</ul>;
+  return <ul className="subtree">{children}</ul>;
 }
 
 function Subtree(p: {
@@ -909,7 +909,7 @@ function Subtree(p: {
   });
 
   return (
-    <ul className="outline-tree">
+    <ul className="subtree">
       {openedLinksChildren}
       {children}
       {p.children}
