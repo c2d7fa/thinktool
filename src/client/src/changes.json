@@ -171,6 +171,10 @@
     {
       "date": "2020-07-26",
       "title": "Added border to other parents to make them stand out more."
+    },
+    {
+      "date": "2020-07-26",
+      "title": "Made various changes to the typography of the app itself."
     }
   ]
 }

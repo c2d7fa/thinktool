@@ -103,7 +103,7 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
   return (
     <div className="tutorial">
       <h1>
-        {props.state.step}.{" "}
+        {props.state.step}{" "}
         <span className="step">
           (Step {stepIndex(props.state) + 1} of {amountSteps(props.state)})
         </span>

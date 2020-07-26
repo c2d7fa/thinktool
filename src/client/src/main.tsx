@@ -521,7 +521,7 @@ function App({
           Thinktool
         </ExternalLink>
         <button onClick={() => setToolbarShown(!toolbarShown)}>
-          {toolbarShown ? "Hide" : "Show"} toolbar
+          {toolbarShown ? "Hide" : "Show"} Toolbar
         </button>
         <div id="current-user">
           {username && (
@@ -531,7 +531,7 @@ function App({
           )}
           {context.server && (
             <a className="log-out" href={context.server.logOutUrl}>
-              log out
+              Log Out
             </a>
           )}
         </div>
@@ -590,11 +590,7 @@ function ParentsOutline(p: {context: Context}) {
   const subtree = <ul className="subtree">{parentItems}</ul>;
 
   if (parentItems.length === 0) {
-    return (
-      <div className="parents">
-        <span className="no-parents">No parents</span>
-      </div>
-    );
+    return null;
   } else {
     return (
       <div className="parents">
@@ -809,8 +805,8 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
               p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))
             }
             className="backreferences-text">
-            {backreferences.length} references
-            {!T.backreferencesExpanded(p.context.tree, p.parent) && <>&ensp;&#x22ef;</>}
+            {backreferences.length} References
+            {!T.backreferencesExpanded(p.context.tree, p.parent) && "..."}
           </button>
         </div>
       </li>
@@ -840,7 +836,7 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
             <ExpandableItem
               className="other-parent"
               key={JSON.stringify(otherParentNode)}
-              otherParentText={p.grandparent ? "other parent" : "parent"}
+              otherParentText={p.grandparent ? "Other Parent" : "Parent"}
               context={p.context}
               node={otherParentNode}
               parent={p.parent}
@@ -860,7 +856,7 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
           toggle={() => p.context.setTree(T.toggleOtherParents(p.context.state, p.context.tree, p.parent))}
         />
         <span className="other-parents-text">
-          {otherParents.length} {p.grandparent ? " other parents" : "parents"}
+          {otherParents.length} {p.grandparent ? " Other Parents" : "Parents"}
         </span>
       </div>
       {T.otherParentsExpanded(p.context.tree, p.parent) && (
