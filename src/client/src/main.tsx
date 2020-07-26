@@ -694,21 +694,17 @@ function ExpandableItem(p: {
     p.context.setDrag({current: p.node, target: null, finished: false});
   }
 
-  let subtreeClassName = "subtree-container";
-  if (p.className) subtreeClassName += " " + p.className;
-  if (isPage) subtreeClassName += " page";
-
-  let itemClassName = "item";
-  if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id)
-    itemClassName += " drop-target";
-  if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null)
-    itemClassName += " drag-source";
+  let className = "item";
+  if (p.className) className += " " + p.className;
+  if (isPage) className += " page";
+  if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id) className += " drop-target";
+  if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null) className += " drag-source";
 
   const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
 
   return (
-    <li className={subtreeClassName}>
-      <div className={itemClassName} data-id={p.node.id}>
+    <li className="subtree-container">
+      <div className={className} data-id={p.node.id}>
         {/* data-id is used for drag and drop. */}
         <Bullet
           beginDrag={beginDrag}
