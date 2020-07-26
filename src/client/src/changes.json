@@ -163,6 +163,14 @@
     {
       "date": "2020-07-25",
       "title": "Added indicator when hovering over bullet to make it more obvious that you can click on it."
+    },
+    {
+      "date": "2020-07-26",
+      "title": "Tweaked UI of opened links so the border is now only around the item itself, not its children"
+    },
+    {
+      "date": "2020-07-26",
+      "title": "Added border to other parents to make them stand out more."
     }
   ]
 }
