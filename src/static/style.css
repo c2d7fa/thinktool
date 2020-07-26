@@ -412,7 +412,7 @@ a.plain-text-link:hover {
 }
 
 .bullet.parent-bullet .bullet-hover-rect {
-  opacity: 50%;
+  opacity: 60%;
   fill: hsl(90, 20%, 80%);
 }
 
@@ -422,8 +422,39 @@ a.plain-text-link:hover {
   stroke-linejoin: round;
 }
 
-.bullet.parent-bullet.expanded:not(:hover) .bullet-hover-rect {
-  opacity: 20%;
+.bullet.parent-bullet.expanded .bullet-hover-rect {
+  opacity: 30%;
+}
+
+.bullet.parent-bullet:hover .bullet-hover-rect {
+  opacity: 100%;
+}
+
+/* #endregion */
+
+/* #region References bullet */
+
+.bullet.reference-bullet.collapsed .bullet-circle {
+  fill: hsl(180, 30%, 30%);
+  stroke: hsl(180, 30%, 30%);
+}
+
+.bullet.reference-bullet.expanded .bullet-circle {
+  fill: hsl(180, 20%, 70%);
+  stroke: hsl(180, 20%, 70%);
+}
+
+.bullet.reference-bullet .bullet-hover-rect {
+  opacity: 60%;
+  fill: hsl(180, 20%, 80%);
+}
+
+.bullet.reference-bullet.expanded .bullet-hover-rect {
+  opacity: 30%;
+}
+
+.bullet.reference-bullet:hover .bullet-hover-rect {
+  opacity: 100%;
 }
 
 /* #endregion */

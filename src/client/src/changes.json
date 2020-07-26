@@ -183,6 +183,10 @@
     {
       "date": "2020-07-26",
       "title": "Improved appearance of other parents by using a different bullet graphic instead of border."
+    },
+    {
+      "date": "2020-07-26",
+      "title": "Also added special bullet graphic for references, to match parents."
     }
   ]
 }

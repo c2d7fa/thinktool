@@ -583,7 +583,7 @@ function ThingOverview(p: {context: Context}) {
 function ParentsOutline(p: {context: Context}) {
   const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map(
     (child: T.NodeRef) => {
-      return <ExpandableItem key={child.id} node={child} context={p.context} />;
+      return <ExpandableItem isOtherParent key={child.id} node={child} context={p.context} />;
     },
   );
 
@@ -604,7 +604,7 @@ function ParentsOutline(p: {context: Context}) {
 function ReferencesOutline(p: {context: Context}) {
   const referenceItems = T.backreferencesChildren(p.context.tree, T.root(p.context.tree)).map(
     (child: T.NodeRef) => {
-      return <ExpandableItem key={child.id} node={child} context={p.context} />;
+      return <ExpandableItem isReference key={child.id} node={child} context={p.context} />;
     },
   );
 
@@ -666,6 +666,7 @@ function ExpandableItem(p: {
   otherParentText?: string;
   isOpenedLink?: boolean;
   isOtherParent?: boolean;
+  isReference?: boolean;
 }) {
   function toggle() {
     if (p.isOpenedLink && p.parent !== undefined) {
@@ -699,7 +700,11 @@ function ExpandableItem(p: {
 
   const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
 
-  const bulletAttrs: {specialType?: "parent"} = p.isOtherParent ? {specialType: "parent"} : {};
+  const bulletAttrs: {specialType?: "parent" | "reference"} = p.isOtherParent
+    ? {specialType: "parent"}
+    : p.isReference
+    ? {specialType: "reference"}
+    : {};
 
   return (
     <li className="subtree-container">
@@ -797,7 +802,7 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
   }
 
   const children = T.backreferencesChildren(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem key={child.id} node={child} context={p.context} />;
+    return <ExpandableItem isReference key={child.id} node={child} context={p.context} />;
   });
 
   return (

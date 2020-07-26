@@ -5,7 +5,7 @@ export default function Bullet(props: {
   toggle: () => void;
   beginDrag: () => void;
   onMiddleClick?(): void;
-  specialType?: "parent";
+  specialType?: "parent" | "reference";
 }) {
   function onAuxClick(ev: React.MouseEvent<never>): void {
     // ev.button === 1 checks for middle click.
@@ -15,7 +15,13 @@ export default function Bullet(props: {
   if (props.specialType === "parent") console.log("special parent");
 
   const attrs = {
-    className: `bullet ${props.status}${props.specialType === "parent" ? " parent-bullet" : ""}`,
+    className: `bullet ${props.status}${
+      props.specialType === "parent"
+        ? " parent-bullet"
+        : props.specialType === "reference"
+        ? " reference-bullet"
+        : ""
+    }`,
     onMouseDown: props.beginDrag,
     onTouchStart: props.beginDrag,
     onClick: props.toggle,
@@ -27,6 +33,8 @@ export default function Bullet(props: {
       <rect className="bullet-hover-rect" x="0" y="0" width="20" height="20" rx="5" />
       {props.specialType === "parent" ? (
         <path className="bullet-circle" d="M 10,7 13,12 7,12 z" />
+      ) : props.specialType === "reference" ? (
+        <rect className="bullet-circle" x="5" y="8" width="10" height="4" rx="2" />
       ) : (
         <circle className="bullet-circle" cx="10" cy="10" r="5" />
       )}
