@@ -700,10 +700,12 @@ function ExpandableItem(p: {
 
   const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
 
-  const bulletAttrs: {specialType?: "parent" | "reference"} = p.isOtherParent
+  const bulletAttrs: {specialType?: "parent" | "reference" | "opened-link"} = p.isOtherParent
     ? {specialType: "parent"}
     : p.isReference
     ? {specialType: "reference"}
+    : p.isOpenedLink
+    ? {specialType: "opened-link"}
     : {};
 
   return (

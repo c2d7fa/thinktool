@@ -5,7 +5,7 @@ export default function Bullet(props: {
   toggle: () => void;
   beginDrag: () => void;
   onMiddleClick?(): void;
-  specialType?: "parent" | "reference";
+  specialType?: "parent" | "reference" | "opened-link";
 }) {
   function onAuxClick(ev: React.MouseEvent<never>): void {
     // ev.button === 1 checks for middle click.
@@ -20,6 +20,8 @@ export default function Bullet(props: {
         ? " parent-bullet"
         : props.specialType === "reference"
         ? " reference-bullet"
+        : props.specialType === "opened-link"
+        ? " opened-link-bullet"
         : ""
     }`,
     onMouseDown: props.beginDrag,
@@ -35,6 +37,8 @@ export default function Bullet(props: {
         <path className="bullet-circle" d="M 10,7 13,12 7,12 z" />
       ) : props.specialType === "reference" ? (
         <rect className="bullet-circle" x="5" y="8" width="10" height="4" rx="2" />
+      ) : props.specialType === "opened-link" ? (
+        <path className="bullet-circle" d="M 12,10 7,13 7,7 z" />
       ) : (
         <circle className="bullet-circle" cx="10" cy="10" r="5" />
       )}
