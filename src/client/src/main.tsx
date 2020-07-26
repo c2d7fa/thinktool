@@ -665,6 +665,7 @@ function ExpandableItem(p: {
   className?: string;
   otherParentText?: string;
   isOpenedLink?: boolean;
+  isOtherParent?: boolean;
 }) {
   function toggle() {
     if (p.isOpenedLink && p.parent !== undefined) {
@@ -698,11 +699,14 @@ function ExpandableItem(p: {
 
   const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
 
+  const bulletAttrs: {specialType?: "parent"} = p.isOtherParent ? {specialType: "parent"} : {};
+
   return (
     <li className="subtree-container">
       <div className={className} data-id={p.node.id}>
         {/* data-id is used for drag and drop. */}
         <Bullet
+          {...bulletAttrs}
           beginDrag={beginDrag}
           status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
           toggle={toggle}
@@ -834,6 +838,7 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
         {otherParentNodes.map((otherParentNode) => {
           return (
             <ExpandableItem
+              isOtherParent
               className="other-parent"
               key={JSON.stringify(otherParentNode)}
               otherParentText={p.grandparent ? "Other Parent" : "Parent"}
@@ -868,7 +873,7 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
 
 function OtherParentsSubtree(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef}) {
   const children = T.otherParentsChildren(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem key={child.id} node={child} context={p.context} />;
+    return <ExpandableItem isOtherParent key={child.id} node={child} context={p.context} />;
   });
 
   return <ul className="subtree">{children}</ul>;

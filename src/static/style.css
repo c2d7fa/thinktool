@@ -183,17 +183,18 @@ body {
 }
 
 .other-parents-text {
-  font-family: "Recursive", monospace;
-  font-weight: var(--ui-inactive-weight);
-  font-variation-settings: "MONO" 0.4, "CASL" 0;
+  cursor: default;
+
+  font-family: var(--ui-font-family);
+  font-variation-settings: var(--ui-variation-settings);
   letter-spacing: 0px;
 
-  margin-right: 1rem;
-  margin-top: 0.2em;
-}
+  align-self: flex-end;
+  margin-right: 0.5rem;
 
-.other-parents-text {
-  cursor: default;
+  color: hsl(90, 30%, 30%);
+
+  align-self: top;
 }
 
 button.backreferences-text {
@@ -217,13 +218,6 @@ button.backreferences-text {
 .backreferences-text:hover {
   color: #606060;
   background-color: #f0f0f0;
-}
-
-.other-parent {
-  border: 2px solid hsl(90, 20%, 70%);
-  border-radius: 12px;
-  padding: 0.2rem 0.5rem;
-  margin-left: -0.5rem; /* Align bullets */
 }
 
 /* #endregion */
@@ -349,10 +343,15 @@ a.plain-text-link:hover {
 .bullet {
   user-select: none;
   display: inline-block;
+
+  /* We have to really insist on this for some reason */
   width: 20px !important;
   height: 20px !important;
-  margin-top: 5px;
-  margin-right: 1em;
+  min-width: 20px !important;
+  min-height: 20px !important;
+
+  margin-top: 7px;
+  margin-right: 1rem;
   cursor: pointer;
   background-repeat: no-repeat;
 
@@ -399,6 +398,35 @@ a.plain-text-link:hover {
 .bullet.terminal .bullet-hover-rect {
   display: none;
 }
+
+/* #region Other parents bullets */
+
+.bullet.parent-bullet.collapsed .bullet-circle {
+  fill: hsl(90, 30%, 30%);
+  stroke: hsl(90, 30%, 30%);
+}
+
+.bullet.parent-bullet.expanded .bullet-circle {
+  fill: hsl(90, 20%, 70%);
+  stroke: hsl(90, 20%, 70%);
+}
+
+.bullet.parent-bullet .bullet-hover-rect {
+  opacity: 50%;
+  fill: hsl(90, 20%, 80%);
+}
+
+.bullet.parent-bullet path.bullet-circle {
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bullet.parent-bullet.expanded:not(:hover) .bullet-hover-rect {
+  opacity: 20%;
+}
+
+/* #endregion */
 
 /* #endregion */
 

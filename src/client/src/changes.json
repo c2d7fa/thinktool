@@ -179,6 +179,10 @@
     {
       "date": "2020-07-26",
       "title": "Made some minor improvements to the tutorial."
+    },
+    {
+      "date": "2020-07-26",
+      "title": "Improved appearance of other parents by using a different bullet graphic instead of border."
     }
   ]
 }
