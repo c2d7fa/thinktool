@@ -205,6 +205,8 @@ button.backreferences-text {
   margin: 0 -3px;
   background-color: transparent;
 
+  color: hsl(180, 30%, 30%);
+
   transition: background-color 150ms;
 }
 
