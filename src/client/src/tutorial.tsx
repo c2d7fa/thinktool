@@ -5,20 +5,19 @@ import {ExternalLink} from "./ui/ExternalLink";
 
 export type State = {step: string; finished: boolean};
 
-const initialState = {step: "How to use Thinktool", finished: false};
+const initialState = {step: "Getting started", finished: false};
 
 export function initialize(finished: boolean) {
   if (!finished) return initialState;
-  return {step: "How to use Thinktool", finished: true};
+  return {step: "Getting started", finished: true};
 }
 
 const steps: {name: string; introduces: ActionName[]}[] = [
-  {name: "How to use Thinktool", introduces: []},
-  {name: "Getting started", introduces: ["new", "new-child", "insert-child"]},
+  {name: "Getting started", introduces: ["new", "new-child"]},
+  {name: "Multiple parents", introduces: ["insert-child", "insert-sibling", "insert-parent"]},
   {name: "Reorganizing", introduces: ["remove", "destroy", "indent", "unindent", "up", "down"]},
-  {name: "Flexible hierarchy", introduces: ["insert-sibling", "insert-child", "insert-parent"]},
   {name: "Bidirectional linking", introduces: ["insert-link"]},
-  {name: "Staying focused", introduces: ["find", "zoom"]},
+  {name: "Navigation", introduces: ["find", "zoom"]},
   {name: "The end", introduces: ["tutorial"]},
 ];
 
@@ -108,17 +107,15 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
           (Step {stepIndex(props.state) + 1} of {amountSteps(props.state)})
         </span>
       </h1>
-      {props.state.step === "How to use Thinktool" ? (
-        <StepHowToUseThinktool />
-      ) : props.state.step === "Getting started" ? (
+      {props.state.step === "Getting started" ? (
         <StepGettingStarted />
       ) : props.state.step === "Reorganizing" ? (
         <StepReorganizing />
-      ) : props.state.step === "Flexible hierarchy" ? (
+      ) : props.state.step === "Multiple parents" ? (
         <StepFlexibleHierarchy />
       ) : props.state.step === "Bidirectional linking" ? (
         <StepBidirectionalLinks />
-      ) : props.state.step === "Staying focused" ? (
+      ) : props.state.step === "Navigation" ? (
         <StepStayingFocused />
       ) : props.state.step === "The end" ? (
         <StepHaveFun />
@@ -167,11 +164,14 @@ export function StepGettingStarted() {
   return (
     <>
       <p>
-        <i>Now, let's get started with the basics.</i>
+        <i>Let's start with the basics.</i>
       </p>
       <p>
-        <strong>Create a couple of new items.</strong> You can do this by clicking the buttons in the toolbar.
-        Select an existing item, and then use
+        The outline contains <em>items</em>. Click on an item to focus it, and then try editing its content.
+      </p>
+      <p>
+        <strong>Create some items.</strong> Focus an existing item by clicking on it, and then play around
+        with
         <span className="fake-button">
           <span className="icon gg-add-r"></span>New
         </span>
@@ -179,22 +179,30 @@ export function StepGettingStarted() {
         <span className="fake-button">
           <span className="icon gg-arrow-bottom-right-r"></span>New Child
         </span>
-        to create a tree of items.
+        in the toolbar to create a tree of items.
       </p>
       <p>
         <i>Most buttons also have keyboard shortcuts. Hover over a button to see its shortcuts.</i>
       </p>
       <p>
-        <strong>Structure your items.</strong> In Thinktool, one item can be in multiple places. Use the
-        <span className="fake-button">
-          <span className="icon gg-arrow-bottom-right-o"></span>Child
-        </span>
-        button to add an existing item as a child. Just search for the child by its content and select it from
-        the popup menu.
+        <strong>Collapse and expand</strong> items by clicking the bullet next to them. Items with hidden
+        children will have a darker bullet.
       </p>
-      <p>
-        <i>Notice how Thinktool automatically lets you know that an item is in multiple places.</i>
-      </p>
+      {false && (
+        <>
+          <p>
+            <strong>Structure your items.</strong> In Thinktool, one item can be in multiple places. Use the
+            <span className="fake-button">
+              <span className="icon gg-arrow-bottom-right-o"></span>Child
+            </span>
+            button to add an existing item as a child. Just search for the child by its content and select it
+            from the popup menu.
+          </p>
+          <p>
+            <i>Notice how Thinktool automatically lets you know that an item is in multiple places.</i>
+          </p>
+        </>
+      )}
     </>
   );
 }
@@ -203,15 +211,15 @@ export function StepReorganizing() {
   return (
     <>
       <p>
-        <i>For Thinktool to be really useful, try to keep your database clean and organized.</i>
+        <i>Now that you have some items, try reorganizing them.</i>
       </p>
       <p>
         <strong>Remove an item from its parent</strong> with
         <span className="fake-button">
           <span className="icon gg-remove-r"></span>Remove.
         </span>
-        Note that this does <em>not</em> remove that item from the database, so if it exists in any other
-        places, it can still be found there.
+        This does <em>not</em> remove that item from the database, so if it has any other parents, you can
+        still find it there.
       </p>
       <p>
         <strong>To completely delete an item,</strong> use{" "}
@@ -247,36 +255,28 @@ export function StepFlexibleHierarchy() {
   return (
     <>
       <p>
-        <i>Let's say you're studying philosophy and want to take notes about what you read.</i>
-      </p>
-      <p>
         <i>
-          You may want to add different areas of philosophy like ethics, epistemology and metaphysics as items
-          in Thinktool. Then you can add important philosophers under those items, then the books they've
-          authored, and then your notes.
+          Thinktool lets you have more than one parent for each item. You can find the item under all of its
+          parents.
         </i>
       </p>
       <p>
-        <i>
-          But what if one philosopher has worked in multiple areas of philosophy? This is where Thinktool
-          shines, because Thinktool lets you put one item in multiple places at the same time.
-        </i>
-      </p>
-      <p>
-        <strong>Make an existing item a parent</strong> of the currently selected item with
+        <strong>Connect an existing item as a parent of the currently focused item.</strong> To do this, click
+        on an item to focus it, click{" "}
         <span className="fake-button">
-          <span className="icon gg-arrow-top-left-o"></span>Parent.
+          <span className="icon gg-arrow-top-left-o"></span>Parent,
         </span>
-        Now you can find that item under both its parents.
+        and then type some of the content of the existing item that you want to add as a parent.
       </p>
+      <p>Now you can find the original item under both its parents!</p>
       <p>
         <i>
-          Tip: You can also use parents to categorize items, so you can easily find them again &ndash; like
-          tags in other apps.
+          In Thinktool, you can use parents like tags, keywords or categories in other note-taking
+          applications.
         </i>
       </p>
       <p>
-        <strong>Likewise,</strong> you can add an existing item as a sibling of the selected item with
+        <strong>You can also</strong> add an existing item as a sibling of the focused item with
         <span className="fake-button">
           <span className="icon gg-add"></span>Sibling
         </span>
@@ -284,6 +284,12 @@ export function StepFlexibleHierarchy() {
         <span className="fake-button">
           <span className="icon gg-arrow-bottom-right-o"></span>Child.
         </span>
+      </p>
+      <p>
+        <i>
+          By the way, notice how Thinktool automatically shows you other parents for each item. This can
+          sometimes help you find items that are related to the one you're looking at.
+        </i>
       </p>
     </>
   );
@@ -293,23 +299,29 @@ export function StepBidirectionalLinks() {
   return (
     <>
       <p>
-        <i>
-          Sometimes it doesn't really make sense to organize items into trees. Links let you describe loose
-          relationships between your items.
-        </i>
+        <i>Thinktool has bidirectional links like Roam Research or Obsidian.</i>
       </p>
       <p>
         <strong>Try adding a link</strong> by first placing your cursor inside an item, and then pressing the
         <span className="fake-button">
           <span className="icon gg-file-document"></span>Link
         </span>
-        button. Type the name of an existing item or create a new item.
+        button. Type the name of another item and select it.
       </p>
-      <p>After creating a link, deselect the item. Now you can click the link to show the linked item.</p>
       <p>
-        Notice how thinktool automatically shows you all the places where a given item is linked, called its{" "}
-        <em>references</em>. Links in Thinktool are <em>bidirectional</em>, because you can follow them in
-        both directions.
+        This will insert some nonsense like "#q3kmmx8" at your cursor – don't worry about it, that's just how
+        links are represented in Thinktool. Unfocus the item you're editing by clicking somewhere else to see
+        the link.
+      </p>
+      <p>
+        <strong>Expand the link.</strong> Just click on the bullet inside the link. You can see the linked
+        item, its children and its parents directly in the outline.
+      </p>
+      <p>
+        <i>
+          Thinktool automatically shows you all the places where a given item is linked, called its
+          "references". Links in Thinktool are bidirectional, because you can follow them in both directions.
+        </i>
       </p>
     </>
   );
@@ -319,24 +331,19 @@ export function StepStayingFocused() {
   return (
     <>
       <p>
-        <i>You probably don't want to always see every item in your database.</i>
-      </p>
-      <p>
-        <strong>Navigate to an item</strong> by selecting it, and then pressing
+        <strong>Navigate to an item.</strong> First focus it by clicking on it, and then press
         <span className="fake-button">
           <span className="icon gg-maximize-alt"></span>Zoom.
         </span>
-        Now you can see that item's parents and children, as well as any references to it, in an expanded
-        view.
+        Now you can see just that item's children, as well as any parents and references in an expanded view.
       </p>
       <p>
         <strong>Find a specific item</strong> using the
         <span className="fake-button">
           <span className="icon gg-search"></span>Find
         </span>
-        button. Here you can search for an item by its content. Select an item to go straight to it.
+        button. Just search for an item by its content, and then select it to jump there.
       </p>
-      <p>You can also use this to create a new item that is not connected to any other items.</p>
     </>
   );
 }
@@ -355,13 +362,11 @@ export function StepHaveFun() {
         button.
       </p>
       <p>
-        <i>
-          If you need any help, have feedback or want to submit a bug report or feature request, you are more
-          than welcome to send me an email at{" "}
-          <a className="email" href="mailto:jonas@thinktool.io">
-            jonas@thinktool.io
-          </a>
-        </i>
+        This tutorial is a work-in-progress. I'd love to hear your feedback – just send me an email at{" "}
+        <a className="email" href="mailto:jonas@thinktool.io">
+          jonas@thinktool.io
+        </a>
+        . You're also welcome to email me for any other reason!
       </p>
       <p>
         <i>Thanks for trying out Thinktool!</i>
