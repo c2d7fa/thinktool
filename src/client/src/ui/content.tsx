@@ -6,6 +6,7 @@ import * as E from "../editing";
 import {Context} from "../context";
 
 import {ExternalLink as BaseExternalLink} from "./ExternalLink"; // Silly naming conflict
+import Bullet from "./Bullet";
 
 function annotate(content: D.Content): (string | {externalLink: string} | {link: string})[] {
   function annotateText(text: string): (string | {externalLink: string})[] {
@@ -76,19 +77,26 @@ function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) 
   if (T.isLinkOpen(props.context.tree, props.node, props.link)) className += " internal-link-open";
   if (D.isPage(props.context.state, props.link)) className += " internal-link-page";
 
+  function toggle() {
+    props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, props.link));
+  }
+
   return (
-    <span className={className}>
-      <span
-        className={`link-bullet ${terminal ? "terminal" : expanded ? "expanded" : "collapsed"}`}
-        onMouseDown={(ev) => {
-          ev.preventDefault();
+    <span
+      className={className}
+      onMouseDown={(ev) => {
+        ev.preventDefault();
+      }}
+      onClick={toggle}>
+      <Bullet
+        specialType="link"
+        status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
+        toggle={toggle}
+        beginDrag={(ev) => {
+          // [TODO] This is undefined on mobile. This may or may not cause issues; I haven't tested it.
+          if (ev !== undefined) ev.preventDefault();
         }}
-        onClick={(ev) => {
-          props.context.setTree(
-            T.toggleLink(props.context.state, props.context.tree, props.node, props.link),
-          );
-          ev.preventDefault();
-        }}></span>
+      />
       <span className="link-content">
         {content === "" ? <span className="empty-content">{props.link}</span> : content}
       </span>

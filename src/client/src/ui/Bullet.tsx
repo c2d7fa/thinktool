@@ -3,16 +3,14 @@ import * as React from "react";
 export default function Bullet(props: {
   status: "expanded" | "collapsed" | "terminal";
   toggle: () => void;
-  beginDrag: () => void;
+  beginDrag: (ev?: React.MouseEvent<never>) => void;
   onMiddleClick?(): void;
-  specialType?: "parent" | "reference" | "opened-link";
+  specialType?: "parent" | "reference" | "opened-link" | "link";
 }) {
   function onAuxClick(ev: React.MouseEvent<never>): void {
     // ev.button === 1 checks for middle click.
     if (ev.button === 1 && props.onMiddleClick !== undefined) props.onMiddleClick();
   }
-
-  if (props.specialType === "parent") console.log("special parent");
 
   const attrs = {
     className: `bullet ${props.status}${
@@ -22,10 +20,12 @@ export default function Bullet(props: {
         ? " reference-bullet"
         : props.specialType === "opened-link"
         ? " opened-link-bullet"
+        : props.specialType === "link"
+        ? " link-bullet"
         : ""
     }`,
-    onMouseDown: props.beginDrag,
-    onTouchStart: props.beginDrag,
+    onMouseDown: (ev: React.MouseEvent<never>) => props.beginDrag(ev),
+    onTouchStart: (ev: React.TouchEvent<never>) => props.beginDrag(),
     onClick: props.toggle,
     onAuxClick: onAuxClick,
   };
@@ -38,6 +38,8 @@ export default function Bullet(props: {
       ) : props.specialType === "reference" ? (
         <rect className="bullet-circle" x="5" y="8" width="10" height="4" rx="2" />
       ) : props.specialType === "opened-link" ? (
+        <path className="bullet-circle" d="M 12,10 7,13 7,7 z" />
+      ) : props.specialType === "link" ? (
         <path className="bullet-circle" d="M 12,10 7,13 7,7 z" />
       ) : (
         <circle className="bullet-circle" cx="10" cy="10" r="5" />

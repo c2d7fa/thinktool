@@ -243,57 +243,28 @@ a.plain-text-link:hover {
 
 /* #region Internal links */
 
-.link-bullet {
-  user-select: none;
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 3px;
-  cursor: pointer;
-  background-repeat: no-repeat;
-
-  text-align: center;
-  vertical-align: middle;
-
-  touch-action: none;
-}
-
 .internal-link {
-  border: 1px solid #00000020;
+  cursor: pointer;
+
   padding: 2px 4px;
   border-radius: 6px;
-  background-color: #fcfcfc;
 
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 
-  transition: box-shadow 200ms;
+  border: 1px solid hsla(40, 80%, 80%, 60%);
+
+  transition: border 150ms;
+}
+
+.internal-link:hover {
+  border: 1px solid hsl(40, 80%, 80%);
 }
 
 .internal-link-page {
   border: 2px solid #00000020;
   background-color: #ffffff;
   font-weight: bold;
-}
-
-.internal-link-open {
-  box-shadow: #00000020 0 0 3px;
-}
-
-.internal-link > .link-content {
-  margin-left: 0.25em;
-}
-
-.link-bullet.collapsed {
-  background-image: url(bullet-link-collapsed.svg);
-}
-
-.link-bullet.expanded {
-  background-image: url(bullet-link-expanded.svg);
-}
-
-.link-bullet.terminal {
-  background-image: url(bullet-link-expanded.svg);
 }
 
 .internal-link .empty-content {
@@ -348,7 +319,6 @@ a.plain-text-link:hover {
   margin-top: 7px;
   margin-right: 1rem;
   cursor: pointer;
-  background-repeat: no-repeat;
 
   text-align: center;
   vertical-align: middle;
@@ -456,19 +426,14 @@ a.plain-text-link:hover {
 
 /* #region Opened link bullets */
 
-.bullet.opened-link-bullet.collapsed .bullet-circle {
-  fill: hsl(300, 30%, 30%);
-  stroke: hsl(300, 30%, 30%);
-}
-
-.bullet.opened-link-bullet.expanded .bullet-circle {
-  fill: hsl(300, 20%, 70%);
-  stroke: hsl(300, 20%, 70%);
+.bullet.opened-link-bullet .bullet-circle {
+  fill: hsl(40, 80%, 60%);
+  stroke: hsl(40, 80%, 60%);
 }
 
 .bullet.opened-link-bullet .bullet-hover-rect {
   opacity: 60%;
-  fill: hsl(300, 20%, 80%);
+  fill: hsl(40, 80%, 80%);
 }
 
 .bullet.opened-link-bullet path.bullet-circle {
@@ -477,11 +442,43 @@ a.plain-text-link:hover {
   stroke-linejoin: round;
 }
 
-.bullet.opened-link-bullet.expanded .bullet-hover-rect {
-  opacity: 30%;
+.bullet.opened-link-bullet:hover .bullet-hover-rect {
+  opacity: 100%;
 }
 
-.bullet.opened-link-bullet:hover .bullet-hover-rect {
+/* #endregion */
+
+/* #region (Inline) link bullets */
+
+.bullet.link-bullet {
+  cursor: pointer;
+
+  margin: 0;
+  margin-bottom: 3px;
+  margin-right: 4px;
+  margin-left: -1px;
+}
+
+.bullet.link-bullet .bullet-circle {
+  fill: hsl(40, 80%, 60%);
+  stroke: hsl(40, 80%, 60%);
+}
+
+.bullet.link-bullet .bullet-hover-rect {
+  fill: hsl(40, 80%, 80%);
+}
+
+.internal-link-open > .bullet.link-bullet .bullet-hover-rect {
+  opacity: 60%;
+}
+
+.bullet.link-bullet path.bullet-circle {
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.internal-link:hover > .bullet.link-bullet .bullet-hover-rect {
   opacity: 100%;
 }
 

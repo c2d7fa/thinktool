@@ -187,6 +187,10 @@
     {
       "date": "2020-07-26",
       "title": "Also added special bullet graphic for references, to match parents."
+    },
+    {
+      "date": "2020-07-27",
+      "title": "Updated appearance of links to match new parents and references style."
     }
   ]
 }
