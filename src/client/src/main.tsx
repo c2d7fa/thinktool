@@ -838,6 +838,7 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
         {otherParentNodes.map((otherParentNode) => {
           return (
             <ExpandableItem
+              className="other-parent"
               key={JSON.stringify(otherParentNode)}
               otherParentText={p.grandparent ? "other parent" : "parent"}
               context={p.context}
@@ -852,7 +853,7 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
 
   return (
     <li className="subtree-container">
-      <div className="item">
+      <div className="item other-parent">
         <Bullet
           beginDrag={() => {}}
           status={T.otherParentsExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}

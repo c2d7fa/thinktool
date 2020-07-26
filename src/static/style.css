@@ -185,6 +185,13 @@ button.backreferences-text {
   color: #404040;
 }
 
+.other-parent {
+  border: 2px solid hsl(90, 20%, 70%);
+  border-radius: 12px;
+  padding: 0.2rem 0.5rem;
+  margin-left: -0.5rem; /* Align bullets */
+}
+
 /* #endregion */
 
 /* #region External links */
