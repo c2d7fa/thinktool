@@ -3,9 +3,31 @@
 @import url("https://fonts.googleapis.com/css?family=Raleway:400,400i,500,600,700&display=swap");
 @import url("https://fonts.googleapis.com/css?family=Montserrat:500,500i,800,800i&display=swap&subset=cyrillic,latin-ext");
 
+/* #region Variables */
+
 :root {
-  --overview-bg-color: #fcfcfc;
+  --main-bg-color: #fcfcfc;
+  --outline-width: 80ex;
 }
+
+/* #endregion */
+
+/* #region General components */
+
+.email {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 2px solid #00000028;
+  transition: border-color 150ms;
+}
+
+.email:hover {
+  border-color: #00000080;
+}
+
+/* #endregion */
+
+/* #region Main container and overview */
 
 body {
   margin: 0;
@@ -16,46 +38,279 @@ body {
   line-height: 150%;
 }
 
-ul.outline-tree {
-  margin: 0 auto;
-  margin-top: 1rem;
-  list-style: none;
-  padding-left: 1.6em;
-}
-
-/* General UI elements */
-
-.toggle-button {
-  display: inline-flex;
-}
-
-.toggle-button button:first-child {
-  margin-right: 0;
-  border-radius: 3px 0 0 3px;
-}
-
-.toggle-button button:last-child {
-  margin-left: 0;
-  border-radius: 0 3px 3px 0;
-}
-
-.toggle-button .active-toggle {
-  background-color: #e4e4e4;
-  color: #787878;
-}
-
-/* Outer container */
 .app {
+  background-color: var(--main-bg-color);
+
+  /* Needs to be clickable, so it can handle focus. */
   outline: none;
   min-height: 100vh;
 }
 
-/* OUTLINE */
-
-/* Root tree */
-:not(.outline-item) > .outline-tree {
-  padding-left: 1em;
+.overview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2em;
 }
+
+.parents {
+  max-width: var(--outline-width);
+  width: 100%;
+}
+
+.no-parents {
+  cursor: default;
+  color: #c0c0c0;
+  font-size: 0.8em;
+  font-family: "Titillium Web";
+  text-transform: uppercase;
+  padding-left: 1.5rem;
+}
+
+.overview-main {
+  margin: 4em 0;
+  max-width: var(--outline-width);
+  width: 100%;
+}
+
+.selected-content {
+  font-weight: bold;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.selected-content textarea {
+  font-weight: bold;
+}
+
+.children {
+  margin-top: 2em;
+}
+
+.references {
+  max-width: var(--outline-width);
+  width: 100%;
+
+  color: #404040;
+}
+
+h1.link-section {
+  margin-top: calc(1em - 1.25ex);
+  margin-bottom: 1em;
+
+  font-size: 0.8em;
+  color: #b0b0b0;
+  cursor: default;
+  font-family: "Titillium Web";
+  font-weight: normal;
+  text-transform: uppercase;
+}
+
+h1.link-section:first-child {
+  margin-top: 0;
+}
+
+/* #endregion */
+
+/* #region Outline structure */
+
+.subtree {
+  margin: 0 auto;
+  margin-top: 1rem;
+  list-style: none;
+  padding: 0;
+}
+
+.subtree-container > .subtree {
+  padding-left: 2rem;
+}
+
+.item {
+  display: flex;
+  flex-direction: row;
+
+  margin-bottom: 1rem;
+}
+
+/* #endregion */
+
+/* #region Content */
+
+.content {
+  width: 100%;
+  cursor: text;
+}
+
+.content.placeholder-child {
+  color: #b0b0b0;
+}
+
+.placeholder-empty {
+  color: #c8c8c8;
+}
+
+/* #region Backreferences and other parents */
+
+.backreferences-text,
+.other-parents-text {
+  display: inline-block;
+  white-space: nowrap;
+
+  margin-right: 0.5rem;
+
+  font-size: 0.8em;
+  font-family: "Titillium Web";
+  text-transform: uppercase;
+  color: #808080;
+  vertical-align: middle;
+}
+
+.other-parents-text {
+  cursor: default;
+}
+
+button.backreferences-text {
+  /* Because this is a button, but it shouldn't look like one. */
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0;
+}
+
+.backreferences-text {
+  cursor: pointer;
+  transition: color 150ms;
+}
+
+.backreferences-text:hover {
+  color: #404040;
+}
+
+.other-parent {
+  border: 2px solid hsl(90, 20%, 70%);
+  border-radius: 12px;
+  padding: 0.2rem 0.5rem;
+  margin-left: -0.5rem; /* Align bullets */
+}
+
+/* #endregion */
+
+/* #region External links */
+
+a.plain-text-link {
+  word-break: break-all;
+  color: inherit;
+  text-decoration: none;
+
+  border-bottom: 2px solid #00000028;
+  transition: border-color 150ms;
+}
+
+a.plain-text-link:hover {
+  border-color: #00000080;
+}
+
+/* #endregion */
+
+/* #region Internal links */
+
+.link-bullet {
+  user-select: none;
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 3px;
+  cursor: pointer;
+  background-repeat: no-repeat;
+
+  text-align: center;
+  vertical-align: middle;
+
+  touch-action: none;
+}
+
+.internal-link {
+  border: 1px solid #00000020;
+  padding: 2px 4px;
+  border-radius: 6px;
+  background-color: #fcfcfc;
+
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+
+  transition: box-shadow 200ms;
+}
+
+.internal-link-page {
+  border: 2px solid #00000020;
+  background-color: #ffffff;
+  font-weight: bold;
+}
+
+.internal-link-open {
+  box-shadow: #00000020 0 0 3px;
+}
+
+.opened-link {
+  box-shadow: #00000020 0 0 3px;
+  border-radius: 12px;
+  padding: 0.2rem 0.5rem;
+  margin-left: -0.5rem; /* Align bullets */
+}
+
+.internal-link > .link-content {
+  margin-left: 0.25em;
+}
+
+.link-bullet.collapsed {
+  background-image: url(bullet-link-collapsed.svg);
+}
+
+.link-bullet.expanded {
+  background-image: url(bullet-link-expanded.svg);
+}
+
+.link-bullet.terminal {
+  background-image: url(bullet-link-expanded.svg);
+}
+
+.internal-link .empty-content {
+  color: #c0c0c0;
+  font-size: 0.8em;
+  font-family: "Titillium Web";
+  text-transform: uppercase;
+}
+
+/* #endregion */
+
+/* #endregion */
+
+/* #region Editor */
+
+.editor textarea {
+  color: inherit;
+
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  resize: none;
+  border: none;
+  background: none;
+  outline: none;
+
+  line-height: 175%;
+  height: 1.5em; /* Will be overwritten in JS */
+  overflow: hidden; /* Shouldn't matter, since we resize automatically */
+
+  font-family: "Roboto", sans-serif;
+  font-size: 1em;
+}
+
+.editor-inactive {
+  white-space: pre-wrap;
+  line-height: 175%;
+}
+
+/* #endregion */
 
 /* #region Bullets */
 
@@ -115,200 +370,44 @@ ul.outline-tree {
 
 /* #endregion */
 
-ul.outline-root-tree {
-  padding-left: 0;
+/* #region Drag and drop */
+
+.item {
+  position: relative;
 }
 
-.drop-target {
-  border-top: 3px solid #d0d0d0;
-  margin-top: -3px;
+.drop-target::before {
+  content: "";
+  display: block;
+  position: absolute;
+
+  pointer-events: none;
+
+  left: 0;
+  right: 0;
+  height: 3px;
+
+  margin-bottom: 3px;
+
+  background-color: #d0d0d0;
+  border-radius: 1.5px;
 }
 
 .drag-source {
-  padding: 3px;
-  margin: -3px;
-  background-color: #eee;
+  opacity: 50%;
+  transition: opacity 150ms;
 }
 
-.outline-item {
-  display: flex;
-}
+/* #endregion */
 
-.outline-item:not(:last-child) {
-  margin-bottom: 1rem;
-}
-
-.inner-item {
-  flex: 1;
-}
-
-.content-line {
-  display: flex;
-}
-
-.content {
-  flex: 1;
-  cursor: text;
-}
-
-.content.placeholder-child {
-  color: #b0b0b0;
-}
-
-.placeholder-empty {
-  color: #c8c8c8;
-}
-
-.backreferences-text,
-.other-parents-text {
-  display: inline-block;
-
-  margin-right: 0.5rem;
-
-  font-size: 0.8em;
-  font-family: "Titillium Web";
-  text-transform: uppercase;
-  color: #808080;
-  vertical-align: middle;
-}
-
-.other-parents-text {
-  cursor: default;
-}
-
-button.backreferences-text {
-  /* Because this is a button, but it shouldn't look like one. */
-  background: none;
-  border: none;
-  outline: none;
-  padding: 0;
-}
-
-.backreferences-text {
-  cursor: pointer;
-  transition: color 150ms;
-}
-
-.backreferences-text:hover {
-  color: #404040;
-}
-
-a.plain-text-link {
-  word-break: break-all;
-  color: inherit;
-  text-decoration: none;
-
-  border-bottom: 2px solid #00000028;
-  transition: border-color 150ms;
-}
-
-a.plain-text-link:hover {
-  border-color: #00000080;
-}
-
-/* Internal links */
-
-.link-bullet {
-  user-select: none;
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 3px;
-  cursor: pointer;
-  background-repeat: no-repeat;
-
-  text-align: center;
-  vertical-align: middle;
-
-  touch-action: none;
-}
-
-.internal-link {
-  border: 1px solid #00000020;
-  padding: 2px 4px;
-  border-radius: 6px;
-  background-color: #fcfcfc;
-
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-
-  transition: box-shadow 200ms;
-}
-
-.internal-link-page {
-  border: 2px solid #00000020;
-  background-color: #ffffff;
-  font-weight: bold;
-}
-
-.internal-link-open {
-  box-shadow: #00000020 0 0 3px;
-}
-
-.opened-link {
-  box-shadow: #00000020 0 0 3px;
-  border-radius: 12px;
-  padding: 0.5rem 1rem;
-  margin-left: -1rem;
-}
-
-.internal-link > .link-content {
-  margin-left: 0.25em;
-}
-
-.link-bullet.collapsed {
-  background-image: url(bullet-link-collapsed.svg);
-}
-
-.link-bullet.expanded {
-  background-image: url(bullet-link-expanded.svg);
-}
-
-.link-bullet.terminal {
-  background-image: url(bullet-link-expanded.svg);
-}
-
-.internal-link .empty-content {
-  color: #c0c0c0;
-  font-size: 0.8em;
-  font-family: "Titillium Web";
-  text-transform: uppercase;
-}
-
-/* EDITOR */
-
-.editor textarea {
-  color: inherit;
-
-  width: 100%;
-  padding: 0;
-  margin: 0;
-  resize: none;
-  border: none;
-  background: none;
-  outline: none;
-
-  line-height: 175%;
-  height: 1.5em; /* Will be overwritten in JS */
-  overflow: hidden; /* Shouldn't matter, since we resize automatically */
-
-  font-family: "Roboto", sans-serif;
-  font-size: 1em;
-}
-
-.editor-inactive {
-  white-space: pre-wrap;
-  line-height: 175%;
-}
-
-/* Pages */
+/* #region Pages */
 
 .page {
   border: 2px solid #00000028;
   border-radius: 12px;
-  padding: 0.5rem 1rem;
+  padding: 0.2rem 0.5rem;
 
-  margin-left: -1rem; /* Align bullets */
+  margin-left: -0.5rem; /* Align bullets */
 
   background-color: #ffffff;
 }
@@ -317,12 +416,9 @@ a.plain-text-link:hover {
   border-color: #00000010;
 }
 
-.page > .inner-item > .content-line .editor-inactive,
-.page > .inner-item > .content-line .editor textarea {
-  font-weight: bold;
-}
+/* #endregion */
 
-/* THING SELECTION POPUP */
+/* #region Search popup */
 
 .link-autocomplete-popup {
   backdrop-filter: blur(3px);
@@ -488,100 +584,9 @@ a.plain-text-link:hover {
   content: "#";
 }
 
-/* OVERVIEW */
+/* #endregion */
 
-.overview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  padding: 2em;
-
-  background-color: var(--overview-bg-color);
-}
-
-.parents {
-  max-width: calc(80ex + 6em);
-  padding: 1em;
-  width: 100%;
-
-  background: linear-gradient(180deg, #fcfcfc 0%, #fafafa 100%);
-  border-radius: 6px 6px;
-
-  display: flex;
-  flex-direction: column;
-}
-
-.parents-inner {
-  max-width: 80ex;
-  align-self: center;
-  width: 100%;
-}
-
-.no-parents {
-  cursor: default;
-  color: #c0c0c0;
-  font-size: 0.8em;
-  font-family: "Titillium Web";
-  text-transform: uppercase;
-  padding-left: 1.5rem;
-}
-
-.overview-main {
-  margin: 4em 0;
-  max-width: 80ex;
-  width: 100%;
-}
-
-.selected-content {
-  font-weight: bold;
-  border-bottom: 2px solid #e0e0e0;
-}
-
-.selected-content textarea {
-  font-weight: bold;
-}
-
-.children {
-  margin-top: 2em;
-}
-
-.references {
-  max-width: calc(80ex + 6em);
-  width: 100%;
-  padding: 1em;
-
-  color: #404040;
-  background: linear-gradient(180deg, #f8f8f8 0%, #fafafa 100%);
-  border-radius: 6px;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.references-inner {
-  max-width: 80ex;
-  width: 100%;
-}
-
-h1.link-section {
-  margin-top: calc(1em - 1.25ex);
-  margin-bottom: 1em;
-
-  font-size: 0.8em;
-  color: #b0b0b0;
-  cursor: default;
-  font-family: "Titillium Web";
-  font-weight: normal;
-  text-transform: uppercase;
-}
-
-h1.link-section:first-child {
-  margin-top: 0;
-}
-
-/* TOP BAR */
+/* #region Top bar */
 
 .top-bar {
   padding: 0.35em;
@@ -649,8 +654,6 @@ h1.link-section:first-child {
   background-color: #dcdcdc;
 }
 
-/* Current user */
-
 #current-user {
   margin-left: auto; /* Right align */
   cursor: default;
@@ -685,7 +688,9 @@ h1.link-section:first-child {
   color: #404040;
 }
 
-/* TOOLBAR */
+/* #endregion */
+
+/* #region Toolbar */
 
 .toolbar {
   position: sticky;
@@ -844,7 +849,9 @@ h1.link-section:first-child {
   background-color: #e8e8e8;
 }
 
-/* Tutorial */
+/* #endregion */
+
+/* #region Tutorial */
 
 .toolbar button.tutorial-relevant {
   text-shadow: 0 0 8px hsl(45, 100%, 50%);
@@ -1017,73 +1024,9 @@ h1.link-section:first-child {
   color: #00000040;
 }
 
-.email {
-  color: inherit;
-  text-decoration: none;
-  border-bottom: 2px solid #00000028;
-  transition: border-color 150ms;
-}
+/* #endregion */
 
-.email:hover {
-  border-color: #00000080;
-}
-
-/* Table view */
-
-.children-table table {
-  margin-top: 1em;
-  /*border-collapse: collapse;*/
-  width: 100%;
-
-  border-spacing: 0 1em;
-}
-
-.children-table table td {
-  vertical-align: top;
-  padding: 0.5em;
-  border: 1px solid #f0f0f0;
-  border-left: none;
-}
-
-.children-table tbody tr td:first-child {
-  border-radius: 6px 0 0 6px;
-  border-left: 1px solid #f0f0f0;
-}
-
-.children-table tbody tr td:last-child {
-  border-radius: 0 6px 6px 0;
-}
-
-.children-table table td > ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-
-  margin-bottom: -0.8em; /* Cancel out padding on list item */
-}
-
-.children-table table td > ul > li {
-  margin: 0;
-  padding: 0;
-}
-
-.children-table thead td {
-  border: none;
-  padding: 0;
-}
-
-.children-table thead td > span {
-  cursor: default;
-  padding: 0 0.25em;
-  border-radius: 6px;
-  font-family: "Titillium Web", sans-serif;
-  font-size: 0.8em;
-  text-transform: uppercase;
-  background-color: #e9eef0;
-  color: #7d9196;
-}
-
-/* Changelog */
+/* #region Changelog */
 
 .changelog {
   position: fixed;
@@ -1156,7 +1099,9 @@ h1.link-section:first-child {
   padding-left: 2rem;
 }
 
-/* Splash screen */
+/* #endregion */
+
+/* #region Introduction slideshow */
 
 .splash-outer {
   z-index: 900;
@@ -1265,7 +1210,7 @@ button.suggested-button {
   border-radius: 6px;
   width: 100%;
   height: 15rem;
-  background-color: var(--overview-bg-color);
+  background-color: var(--main-bg-color);
   border: 1px solid #e0e0e0;
   padding: 1px;
 }
@@ -1273,3 +1218,5 @@ button.suggested-button {
 .splash-image img {
   border-radius: 5px;
 }
+
+/* #endregion */

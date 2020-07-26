@@ -384,7 +384,7 @@ function App({
       const [x, y] = [ev.clientX, ev.clientY];
 
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("outline-item")) {
+      while (element && !element.classList.contains("item")) {
         element = element?.parentElement;
       }
 
@@ -399,7 +399,7 @@ function App({
       const [x, y] = [ev.changedTouches[0].clientX, ev.changedTouches[0].clientY];
 
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("outline-item")) {
+      while (element && !element.classList.contains("item")) {
         element = element?.parentElement;
       }
 
@@ -567,10 +567,8 @@ function ThingOverview(p: {context: Context}) {
       {hasReferences && (
         <>
           <div className="references">
-            <div className="references-inner">
-              <h1 className="link-section">References</h1>
-              <ReferencesOutline context={p.context} />
-            </div>
+            <h1 className="link-section">References</h1>
+            <ReferencesOutline context={p.context} />
           </div>
         </>
       )}
@@ -589,23 +587,19 @@ function ParentsOutline(p: {context: Context}) {
     },
   );
 
-  const subtree = <ul className="outline-tree">{parentItems}</ul>;
+  const subtree = <ul className="subtree">{parentItems}</ul>;
 
   if (parentItems.length === 0) {
     return (
       <div className="parents">
-        <div className="parents-inner">
-          <span className="no-parents">No parents</span>
-        </div>
+        <span className="no-parents">No parents</span>
       </div>
     );
   } else {
     return (
       <div className="parents">
-        <div className="parents-inner">
-          <h1 className="link-section">Parents</h1>
-          {subtree}
-        </div>
+        <h1 className="link-section">Parents</h1>
+        {subtree}
       </div>
     );
   }
@@ -621,7 +615,7 @@ function ReferencesOutline(p: {context: Context}) {
   if (referenceItems.length === 0) {
     return null;
   } else {
-    return <ul className="outline-tree">{referenceItems}</ul>;
+    return <ul className="subtree">{referenceItems}</ul>;
   }
 }
 
@@ -649,8 +643,8 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   }
 
   return (
-    <li className="outline-item">
-      <span className="item-line">
+    <li className="item">
+      <span>
         <Bullet
           beginDrag={() => {
             return;
@@ -700,33 +694,30 @@ function ExpandableItem(p: {
     p.context.setDrag({current: p.node, target: null, finished: false});
   }
 
-  let className = "outline-item";
-
+  let className = "item";
   if (p.className) className += " " + p.className;
+  if (isPage) className += " page";
   if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id) className += " drop-target";
   if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null) className += " drag-source";
-  if (isPage) className += " page";
 
   const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
 
   return (
-    <li className={className} data-id={p.node.id}>
-      {/* data-id is used for drag and drop. */}
-      <Bullet
-        beginDrag={beginDrag}
-        status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
-        toggle={toggle}
-        onMiddleClick={() => {
-          p.context.setSelectedThing(T.thing(p.context.tree, p.node));
-        }}
-      />
-      <div className="inner-item">
-        <div className="content-line">
-          {p.otherParentText !== undefined && <span className="other-parents-text">{p.otherParentText}</span>}
-          <Content context={p.context} node={p.node} />
-        </div>
-        {expanded && !terminal && subtree}
+    <li className="subtree-container">
+      <div className={className} data-id={p.node.id}>
+        {/* data-id is used for drag and drop. */}
+        <Bullet
+          beginDrag={beginDrag}
+          status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
+          toggle={toggle}
+          onMiddleClick={() => {
+            p.context.setSelectedThing(T.thing(p.context.tree, p.node));
+          }}
+        />
+        {p.otherParentText !== undefined && <span className="other-parents-text">{p.otherParentText}</span>}
+        <Content context={p.context} node={p.node} />
       </div>
+      {expanded && !terminal && subtree}
     </li>
   );
 }
@@ -811,18 +802,16 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
 
   return (
     <>
-      <li className="outline-item">
-        <div className="inner-item">
-          <div className="content-line">
-            <button
-              onClick={() =>
-                p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))
-              }
-              className="backreferences-text">
-              {backreferences.length} references
-              {!T.backreferencesExpanded(p.context.tree, p.parent) && <>&ensp;&#x22ef;</>}
-            </button>
-          </div>
+      <li className="item">
+        <div>
+          <button
+            onClick={() =>
+              p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))
+            }
+            className="backreferences-text">
+            {backreferences.length} references
+            {!T.backreferencesExpanded(p.context.tree, p.parent) && <>&ensp;&#x22ef;</>}
+          </button>
         </div>
       </li>
       {T.backreferencesExpanded(p.context.tree, p.parent) && children}
@@ -849,6 +838,7 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
         {otherParentNodes.map((otherParentNode) => {
           return (
             <ExpandableItem
+              className="other-parent"
               key={JSON.stringify(otherParentNode)}
               otherParentText={p.grandparent ? "other parent" : "parent"}
               context={p.context}
@@ -862,22 +852,20 @@ function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?:
   }
 
   return (
-    <li className="outline-item">
-      <Bullet
-        beginDrag={() => {}}
-        status={T.otherParentsExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
-        toggle={() => p.context.setTree(T.toggleOtherParents(p.context.state, p.context.tree, p.parent))}
-      />
-      <div className="item">
-        <div className="content-line">
-          <span className="other-parents-text">
-            {otherParents.length} {p.grandparent ? " other parents" : "parents"}
-          </span>
-        </div>
-        {T.otherParentsExpanded(p.context.tree, p.parent) && (
-          <OtherParentsSubtree parent={p.parent} grandparent={p.grandparent} context={p.context} />
-        )}
+    <li className="subtree-container">
+      <div className="item other-parent">
+        <Bullet
+          beginDrag={() => {}}
+          status={T.otherParentsExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
+          toggle={() => p.context.setTree(T.toggleOtherParents(p.context.state, p.context.tree, p.parent))}
+        />
+        <span className="other-parents-text">
+          {otherParents.length} {p.grandparent ? " other parents" : "parents"}
+        </span>
       </div>
+      {T.otherParentsExpanded(p.context.tree, p.parent) && (
+        <OtherParentsSubtree parent={p.parent} grandparent={p.grandparent} context={p.context} />
+      )}
     </li>
   );
 }
@@ -887,7 +875,7 @@ function OtherParentsSubtree(p: {context: Context; parent: T.NodeRef; grandparen
     return <ExpandableItem key={child.id} node={child} context={p.context} />;
   });
 
-  return <ul className="outline-tree">{children}</ul>;
+  return <ul className="subtree">{children}</ul>;
 }
 
 function Subtree(p: {
@@ -915,7 +903,7 @@ function Subtree(p: {
   });
 
   return (
-    <ul className="outline-tree">
+    <ul className="subtree">
       {openedLinksChildren}
       {children}
       {p.children}
