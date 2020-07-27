@@ -2,13 +2,13 @@
 
 set -e
 
+echo "Installing dependencies..."
+npm ci
+
 echo "Building images..."
 mkdir -p dist/static
 cp -r src/static/*.svg dist/static
 cp -r src/static/*.png dist/static
-
-echo "Building stylesheets..."
-cp -r src/static/*.css dist/static
 
 echo "Building static HTML..."
 cp -r src/static/*.html dist/static/
@@ -19,9 +19,11 @@ cp src/static/sitemap.txt dist/static
 echo "Building robots.txt..."
 cp src/static/robots.txt dist/static
 
-echo "Building HTML templates..."
-npm ci
+echo "Building stylesheets..."
+cp -r src/style/*.css dist/static
+./node_modules/.bin/sass src/style:dist/static
 
+echo "Building HTML templates..."
 node <<"EOF"
 const h = require("handlebars")
 const fs = require("fs")
@@ -39,6 +41,8 @@ for (const file of fs.readdirSync("src/markup")) {
   fs.writeFileSync(outPath, html)
 }
 EOF
+
+
 
 echo "Building blog..."
 ./tools/build-blog.sh

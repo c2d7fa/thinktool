@@ -2,6 +2,7 @@
   "name": "thinktool",
   "private": true,
   "devDependencies": {
-    "handlebars": "latest"
+    "handlebars": "latest",
+    "sass": "latest"
   }
 }
