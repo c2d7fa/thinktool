@@ -194,7 +194,11 @@
     },
     {
       "date": "2020-07-27",
-      "title": "Fix appearance of links that would have a line break inserted between the bullet and the first word."
+      "title": "Fixed appearance of links that would have a line break inserted between the bullet and the first word."
+    },
+    {
+      "date": "2020-07-28",
+      "title": "Improved appearnace of toolbar to better match the rest of the app."
     }
   ]
 }

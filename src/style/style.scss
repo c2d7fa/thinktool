@@ -522,8 +522,6 @@ a.plain-text-link:hover {
 /* #region Search popup */
 
 .link-autocomplete-popup {
-  backdrop-filter: blur(3px);
-
   position: fixed;
   z-index: 1000;
 
@@ -533,10 +531,10 @@ a.plain-text-link:hover {
   width: 60vw;
   max-height: 60vh;
 
-  background: #ffffffa0;
+  @include core.transparent-white-overlay;
   border: 1px solid #00000030;
   border-radius: 6px;
-  box-shadow: #00000020 0 0 12px;
+  box-shadow: core.$overlay-box-shadow-color 0 0 core.$overlay-box-shadow-radius;
 
   display: flex;
   flex-direction: column;
@@ -693,18 +691,17 @@ a.plain-text-link:hover {
 /* #region Top bar */
 
 .top-bar {
-  padding: 0.35em;
   display: flex;
   justify-content: flex-start;
 
-  background: linear-gradient(180deg, #fcfcfc 0%, #fafafa 100%);
-  color: #a0a0a0;
+  padding: (core.$ui-small-font-size / 2) 1rem;
+  @include core.transparent-white-overlay;
+  z-index: 1500;
 }
 
 .logo {
   font-family: "Montserrat";
-  margin-left: 0.5em;
-  margin-right: 1em;
+  margin-right: 1rem;
   color: #606060;
   text-transform: uppercase;
   font-weight: bold;
@@ -802,19 +799,18 @@ a.plain-text-link:hover {
   position: sticky;
   top: 0;
   width: 100%;
+  overflow-x: auto;
+  z-index: 550;
 
-  padding: 0.35em 0;
-  padding-bottom: 0.75em;
-  background-color: #f8f8f8;
-  box-shadow: #e0e0e0 0 3px 6px -3px, inset #e8e8e8 0 3px 6px -3px;
+  font-size: core.$ui-small-font-size;
+  padding-bottom: core.$ui-small-font-size;
+  @include core.transparent-white-overlay;
 
   display: flex;
+}
 
-  font-size: 0.8em;
-
-  overflow-x: auto;
-
-  z-index: 550;
+.overview {
+  border-top: core.$toolbar-border;
 }
 
 @media (max-height: 580px) {
@@ -1223,9 +1219,10 @@ a.plain-text-link:hover {
 .splash-main {
   background-color: #f8f8f8;
   padding: 2rem;
-  border-radius: 6px;
   border: 2px solid #e0e0e0;
-  box-shadow: #00000020 0 0 18px;
+
+  box-shadow: core.$overlay-box-shadow-color 0 0 core.$overlay-box-shadow-radius;
+  border-radius: 6px;
 
   width: 30rem;
 }
