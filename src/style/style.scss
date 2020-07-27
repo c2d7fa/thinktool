@@ -12,7 +12,7 @@ $outline-width: 80ex;
   color: inherit;
   text-decoration: none;
   border-bottom: 2px solid #00000028;
-  transition: border-color 150ms;
+  transition: border-color core.$quick-transition-time;
 }
 
 .email:hover {
@@ -22,7 +22,7 @@ $outline-width: 80ex;
 button {
   @include core.ui-font;
   font-weight: $active-weight;
-  transition: font-weight 150ms;
+  transition: font-weight core.$quick-transition-time;
 }
 
 button:disabled {
@@ -80,7 +80,7 @@ body {
   @include core.ui-font;
   font-weight: 400;
 
-  transition: color 150ms, font-weight 150ms;
+  transition: color core.$quick-transition-time, font-weight core.$quick-transition-time;
 }
 
 .overview-main {
@@ -182,12 +182,12 @@ button.backreferences-text {
 
   color: hsl(180, 30%, 30%);
 
-  transition: background-color 150ms;
+  transition: background-color core.$quick-transition-time;
 }
 
 .backreferences-text {
   cursor: pointer;
-  transition: color 150ms;
+  transition: color core.$quick-transition-time;
 
   margin-right: 0.5rem;
 }
@@ -207,7 +207,7 @@ a.plain-text-link {
   text-decoration: none;
 
   border-bottom: 2px solid #00000028;
-  transition: border-color 150ms;
+  transition: border-color core.$quick-transition-time;
 }
 
 a.plain-text-link:hover {
@@ -229,7 +229,7 @@ a.plain-text-link:hover {
 
   border: 1px solid hsla(40, 80%, 80%, 60%);
 
-  transition: border 150ms;
+  transition: border core.$quick-transition-time;
 }
 
 .internal-link:hover {
@@ -304,11 +304,11 @@ a.plain-text-link:hover {
 .bullet .bullet-hover-rect {
   opacity: 0%;
   fill: #e0e0e0;
-  transition: opacity 150ms, fill 150ms;
+  transition: opacity core.$quick-transition-time, fill core.$quick-transition-time;
 }
 
 .bullet .bullet-circle {
-  transition: fill 150ms;
+  transition: fill core.$quick-transition-time;
 }
 
 .bullet:hover .bullet-hover-rect {
@@ -496,7 +496,7 @@ a.plain-text-link:hover {
 
 .drag-source {
   opacity: 50%;
-  transition: opacity 150ms;
+  transition: opacity core.$quick-transition-time;
 }
 
 /* #endregion */
@@ -590,21 +590,6 @@ a.plain-text-link:hover {
   }
 }
 
-.link-autocomplete-popup input {
-  cursor: pointer;
-
-  width: 100%;
-
-  font: inherit;
-  background: none;
-  outline: none;
-  border: none;
-
-  background-color: #00000008;
-  padding: 1.2rem 1.8rem;
-  border-radius: core.$overlay-border-radius core.$overlay-border-radius 0 0;
-}
-
 .link-autocomplete-popup-results {
   border-top: core.$overlay-border;
 }
@@ -620,43 +605,58 @@ a.plain-text-link:hover {
   overflow-wrap: break-word;
 }
 
+.link-autocomplete-popup input {
+  cursor: pointer;
+
+  width: 100%;
+
+  font: inherit;
+  background: none;
+  outline: none;
+  border: none;
+
+  background-color: #00000008;
+  padding: 1rem 2rem;
+  border-radius: core.$overlay-border-radius core.$overlay-border-radius 0 0;
+
+  &:hover {
+    background-color: #00000010;
+  }
+
+  &.selected-result {
+    background-color: #00000018;
+
+    &:hover {
+      background-color: #00000020;
+    }
+  }
+}
+
 .link-autocomplete-popup-result {
   cursor: pointer;
-  padding: 0.6rem 1.8rem;
+  padding: 0.5rem 2rem;
   border-bottom: 1px solid #00000018;
-}
 
-.link-autocomplete-popup-result.selected-result {
-  background-color: #00000010;
-}
+  &:hover {
+    background-color: #00000008;
+  }
 
-.link-autocomplete-popup-result:hover {
-  background-color: #00000008;
-}
+  &.selected-result {
+    background-color: #00000010;
 
-.link-autocomplete-popup-result.selected-result:hover {
-  background-color: #00000018;
-}
-
-.link-autocomplete-popup input.selected-result {
-  background-color: #00000018;
-}
-
-.link-autocomplete-popup input:hover {
-  background-color: #00000010;
-}
-
-.link-autocomplete-popup input.selected-result:hover {
-  background-color: #00000020;
+    &:hover {
+      background-color: #00000018;
+    }
+  }
 }
 
 .link-autocomplete-popup .create-label {
   display: inline-block;
   position: absolute;
-  right: 1.8rem;
-  top: 1.2rem;
+  right: 2rem;
+  top: 1rem;
 
-  font-size: 0.8em;
+  font-size: core.$ui-small-font-size;
   vertical-align: middle;
 
   @include core.ui-font;
@@ -664,7 +664,7 @@ a.plain-text-link:hover {
 
   color: transparent;
 
-  transition: color 100ms;
+  transition: color core.$quick-transition-time;
 }
 
 .link-autocomplete-popup input:hover + .create-label,
@@ -931,7 +931,7 @@ a.plain-text-link:hover {
   margin: 0.25em -0.25em -0.25em 0em;
   padding: 0.25em 0.5em 0.25em 1em;
 
-  transition: color 150ms, background-color 150ms;
+  transition: color core.$quick-transition-time background-color core.$quick-transition-time;
 
   display: flex;
   align-items: center;
@@ -976,7 +976,7 @@ a.plain-text-link:hover {
   color: inherit;
   text-decoration: none;
   border-bottom: 2px solid #00000028;
-  transition: border-color 150ms;
+  transition: border-color core.$quick-transition-time;
 }
 
 .tutorial a.important-link:hover {
@@ -1100,7 +1100,7 @@ a.plain-text-link:hover {
 
   color: #000000a0;
 
-  transition: background-color 300ms;
+  transition: background-color core.$quick-transition-time;
 }
 
 .tutorial-navigation button:not(:disabled):hover {
@@ -1161,7 +1161,7 @@ a.plain-text-link:hover {
 
   color: #a0a0a0;
 
-  transition: color 150ms;
+  transition: color core.$quick-transition-time;
 }
 
 .changelog > button:hover {
@@ -1284,7 +1284,7 @@ a.plain-text-link:hover {
 
   font-size: 1em;
 
-  transition: background-color 300ms;
+  transition: background-color core.$quick-transition-time;
 
   cursor: pointer;
 }
