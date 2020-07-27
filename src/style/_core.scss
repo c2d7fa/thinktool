@@ -47,7 +47,6 @@ $toolbar-border: 1px solid #00000020;
   border-radius: 3px;
 
   background-color: transparent;
-  transition: background-color $quick-transition-time;
 
   &:hover:not(:disabled) {
     background-color: color.scale($color, $alpha: -90%);

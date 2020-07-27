@@ -1,6 +1,6 @@
 @use "core";
 
-$inactive-weight: 325;
+$inactive-weight: 350;
 $active-weight: 475;
 
 $main-bg-color: #fcfcfc;
@@ -25,10 +25,11 @@ button {
   @include core.ui-font;
   font-weight: $active-weight;
 
-  transition: font-weight core.$quick-transition-time;
+  transition: all core.$quick-transition-time;
 
   &:disabled {
     cursor: default;
+    opacity: 60%;
     font-weight: $inactive-weight;
   }
 }
