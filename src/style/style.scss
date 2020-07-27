@@ -532,8 +532,8 @@ a.plain-text-link:hover {
   max-height: 60vh;
 
   @include core.transparent-white-overlay;
-  border: 1px solid #00000030;
-  border-radius: 6px;
+  border: core.$overlay-border;
+  border-radius: core.$overlay-border-radius;
   box-shadow: core.$overlay-box-shadow-color 0 0 core.$overlay-box-shadow-radius;
 
   display: flex;
@@ -602,11 +602,11 @@ a.plain-text-link:hover {
 
   background-color: #00000008;
   padding: 1.2rem 1.8rem;
-  border-radius: 6px 6px 0 0;
+  border-radius: core.$overlay-border-radius core.$overlay-border-radius 0 0;
 }
 
 .link-autocomplete-popup-results {
-  border-top: 1px solid #00000030;
+  border-top: core.$overlay-border;
 }
 
 .link-autocomplete-popup-results {
@@ -995,7 +995,8 @@ a.plain-text-link:hover {
   width: 24rem;
   padding: 1rem;
   background-color: hsl(45, 100%, 85%);
-  border-radius: 6px;
+  border: core.$overlay-border;
+  border-radius: core.$overlay-border-radius;
 
   max-height: 90vh;
   max-height: calc(100vh - 6rem);
@@ -1219,10 +1220,10 @@ a.plain-text-link:hover {
 .splash-main {
   background-color: #f8f8f8;
   padding: 2rem;
-  border: 2px solid #e0e0e0;
 
+  border: core.$overlay-border;
   box-shadow: core.$overlay-box-shadow-color 0 0 core.$overlay-box-shadow-radius;
-  border-radius: 6px;
+  border-radius: core.$overlay-border-radius;
 
   width: 30rem;
 }
