@@ -8,7 +8,7 @@ cp -r src/static/*.svg dist/static
 cp -r src/static/*.png dist/static
 
 echo "Building stylesheets..."
-cp -r src/static/*.css dist/static
+cp -r src/style/*.css dist/static
 
 echo "Building static HTML..."
 cp -r src/static/*.html dist/static/
