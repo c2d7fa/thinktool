@@ -455,7 +455,7 @@ a.plain-text-link:hover {
 
   margin: 0;
   margin-bottom: 3px;
-  margin-right: 4px;
+  margin-right: 0px;
   margin-left: -1px;
 }
 
@@ -480,6 +480,16 @@ a.plain-text-link:hover {
 
 .internal-link:hover > .bullet.link-bullet .bullet-hover-rect {
   opacity: 100%;
+}
+
+/* Don't break between bullet and first word. */
+
+.internal-link {
+  white-space: nowrap;
+}
+
+.link-content {
+  white-space: normal;
 }
 
 /* #endregion */

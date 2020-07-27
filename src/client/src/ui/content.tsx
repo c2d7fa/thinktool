@@ -97,6 +97,7 @@ function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) 
           if (ev !== undefined) ev.preventDefault();
         }}
       />
+      &nbsp;
       <span className="link-content">
         {content === "" ? <span className="empty-content">{props.link}</span> : content}
       </span>

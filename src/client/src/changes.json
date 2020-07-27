@@ -191,6 +191,10 @@
     {
       "date": "2020-07-27",
       "title": "Updated appearance of links to match new parents and references style."
+    },
+    {
+      "date": "2020-07-27",
+      "title": "Fix appearance of links that would have a line break inserted between the bullet and the first word."
     }
   ]
 }
