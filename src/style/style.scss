@@ -20,13 +20,16 @@ $outline-width: 80ex;
 }
 
 button {
+  cursor: pointer;
+
   @include core.ui-font;
   font-weight: $active-weight;
-  transition: font-weight core.$quick-transition-time;
-}
 
-button:disabled {
-  font-weight: $inactive-weight;
+  transition: font-weight core.$quick-transition-time;
+
+  &:disabled {
+    font-weight: $inactive-weight;
+  }
 }
 
 h1,
@@ -150,16 +153,13 @@ body {
 
 /* #region Backreferences and other parents */
 
-.backreferences-text,
 .other-parents-text {
   display: inline-block;
   white-space: nowrap;
 
   font-size: 0.8em;
   color: #808080;
-}
 
-.other-parents-text {
   cursor: default;
 
   @include core.ui-font;
@@ -173,28 +173,13 @@ body {
 }
 
 button.backreferences-text {
-  border: none;
-  outline: none;
+  display: inline-block;
+  white-space: nowrap;
 
-  padding: 3px;
-  margin: 0 -3px;
-  background-color: transparent;
-
+  font-size: 0.8em;
   color: hsl(180, 30%, 30%);
 
-  transition: background-color core.$quick-transition-time;
-}
-
-.backreferences-text {
-  cursor: pointer;
-  transition: color core.$quick-transition-time;
-
-  margin-right: 0.5rem;
-}
-
-.backreferences-text:hover {
-  color: #606060;
-  background-color: #f0f0f0;
+  @include core.subtle-button(hsl(180, 30%, 30%));
 }
 
 /* #endregion */
@@ -894,15 +879,13 @@ a.plain-text-link:hover {
   color: #a0a0a0;
 
   display: inline-block;
-  margin: 0;
+  margin: 0 0 (core.$ui-tiny-font-size / 2) 0;
   padding: 0;
-  margin-left: 0.5rem;
   white-space: nowrap;
 
-  font-size: 0.9em;
-  font-weight: $inactive-weight;
-
   @include core.ui-font;
+  font-weight: $inactive-weight;
+  font-size: core.$ui-tiny-font-size;
 }
 
 .toolbar-group > div {
@@ -911,44 +894,30 @@ a.plain-text-link:hover {
   align-items: flex-start;
 }
 
-.toolbar button {
-  background: none;
-  padding: 0;
-  margin: 0;
-  border: none;
-  outline: none;
+// [TODO] The spacing of the toolbar buttons doesn't match everything else. This
+// is mostly due to the icons having inconsistent spacing.
 
+$toolbar-button-disabled-opacity: 0.7;
+
+.toolbar button {
   white-space: nowrap;
 
-  font-size: 1em;
+  font-size: core.$ui-small-font-size;
 
   color: #606060;
+  @include core.subtle-button(#606060);
 
-  padding: 0 1ex;
-  background-color: transparent;
-  border-radius: 3px;
-
-  margin: 0.25em -0.25em -0.25em 0em;
+  margin: 0.25em -0.25em -0.25em -0.5em;
   padding: 0.25em 0.5em 0.25em 1em;
-
-  transition: color core.$quick-transition-time background-color core.$quick-transition-time;
 
   display: flex;
   align-items: center;
-}
 
-.toolbar button:disabled {
-  color: #b0b0b0;
-}
+  transition: opacity core.$quick-transition-time;
 
-.toolbar button:not(:disabled):hover {
-  cursor: pointer;
-
-  background-color: #f0f0f0;
-}
-
-.toolbar button:not(:disabled):active {
-  background-color: #e8e8e8;
+  &:disabled {
+    opacity: $toolbar-button-disabled-opacity * 100%;
+  }
 }
 
 /* #endregion */
@@ -964,11 +933,11 @@ a.plain-text-link:hover {
 }
 
 .toolbar button.tutorial-not-introduced {
-  color: #d0d0d0;
-}
+  opacity: 40%;
 
-.toolbar button:disabled.tutorial-not-introduced {
-  color: #e0e0e0;
+  &:disabled {
+    opacity: $toolbar-button-disabled-opacity * 40%;
+  }
 }
 
 .tutorial a.important-link {
