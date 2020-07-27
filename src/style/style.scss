@@ -28,6 +28,7 @@ button {
   transition: font-weight core.$quick-transition-time;
 
   &:disabled {
+    cursor: default;
     font-weight: $inactive-weight;
   }
 }
@@ -897,8 +898,6 @@ a.plain-text-link:hover {
 // [TODO] The spacing of the toolbar buttons doesn't match everything else. This
 // is mostly due to the icons having inconsistent spacing.
 
-$toolbar-button-disabled-opacity: 0.7;
-
 .toolbar button {
   white-space: nowrap;
 
@@ -912,12 +911,6 @@ $toolbar-button-disabled-opacity: 0.7;
 
   display: flex;
   align-items: center;
-
-  transition: opacity core.$quick-transition-time;
-
-  &:disabled {
-    opacity: $toolbar-button-disabled-opacity * 100%;
-  }
 }
 
 /* #endregion */
@@ -933,11 +926,7 @@ $toolbar-button-disabled-opacity: 0.7;
 }
 
 .toolbar button.tutorial-not-introduced {
-  opacity: 40%;
-
-  &:disabled {
-    opacity: $toolbar-button-disabled-opacity * 40%;
-  }
+  opacity: 30%;
 }
 
 .tutorial a.important-link {
