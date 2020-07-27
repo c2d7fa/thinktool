@@ -1,24 +1,10 @@
-@import url("https://fonts.googleapis.com/css?family=Montserrat:500,500i,800,800i&display=swap&subset=cyrillic,latin-ext");
-@import url("https://fonts.googleapis.com/css2?family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..800,0..1,0..1,0..1&display=swap");
-@import url("https://rsms.me/inter/inter.css");
+@use "core";
 
-/* #region Variables */
+$inactive-weight: 325;
+$active-weight: 475;
 
-:root {
-  --main-bg-color: #fcfcfc;
-  --outline-width: 80ex;
-
-  --ui-font-family: "Recursive", monospace;
-  --ui-variation-settings: "MONO" 0.4, "CASL" 0;
-  --ui-inactive-weight: 325;
-  --ui-active-weight: 475;
-
-  --id-font-family: var(--ui-font-family);
-  --id-variation-settings: "MONO" 0.4, "CASL" 0;
-  --id-weight: var(--ui-inactive-weight);
-}
-
-/* #endregion */
+$main-bg-color: #fcfcfc;
+$outline-width: 80ex;
 
 /* #region General components */
 
@@ -34,26 +20,19 @@
 }
 
 button {
-  font-family: var(--ui-font-family);
-  font-variation-settings: var(--ui-variation-settings);
-  font-weight: var(--ui-active-weight);
-  letter-spacing: 0px;
-
+  @include core.ui-font;
+  font-weight: $active-weight;
   transition: font-weight 150ms;
 }
 
 button:disabled {
-  font-weight: var(--ui-inactive-weight);
+  font-weight: $inactive-weight;
 }
 
 h1,
 h2,
 h3 {
-  font-family: "Recursive", sans-serif !important;
-  font-weight: 800 !important;
-  font-variation-settings: "MONO" 0.2, "CASL" 0.5 !important;
-  text-transform: none !important;
-  letter-spacing: 0 !important;
+  @include core.heading-font;
 }
 
 /* #endregion */
@@ -71,7 +50,7 @@ body {
 }
 
 .app {
-  background-color: var(--main-bg-color);
+  background-color: $main-bg-color;
 
   /* Needs to be clickable, so it can handle focus. */
   outline: none;
@@ -86,7 +65,7 @@ body {
 }
 
 .parents {
-  max-width: var(--outline-width);
+  max-width: $outline-width;
   width: 100%;
 }
 
@@ -98,17 +77,15 @@ body {
   color: #808080;
   cursor: default;
 
-  font-family: "Recursive", monospace;
+  @include core.ui-font;
   font-weight: 400;
-  font-variation-settings: "MONO" 0.4, "CASL" 0;
-  letter-spacing: 0px;
 
   transition: color 150ms, font-weight 150ms;
 }
 
 .overview-main {
   margin: 1rem 0;
-  max-width: var(--outline-width);
+  max-width: $outline-width;
   width: 100%;
 }
 
@@ -126,7 +103,7 @@ body {
 }
 
 .references {
-  max-width: var(--outline-width);
+  max-width: $outline-width;
   width: 100%;
 
   color: #404040;
@@ -185,9 +162,7 @@ body {
 .other-parents-text {
   cursor: default;
 
-  font-family: var(--ui-font-family);
-  font-variation-settings: var(--ui-variation-settings);
-  letter-spacing: 0px;
+  @include core.ui-font;
 
   align-self: flex-end;
   margin-right: 0.5rem;
@@ -686,10 +661,8 @@ a.plain-text-link:hover {
   font-size: 0.8em;
   vertical-align: middle;
 
-  font-family: var(--ui-font-family);
-  font-weight: var(--ui-active-weight);
-  font-variation-settings: var(--ui-active-weight);
-  letter-spacing: 0px;
+  @include core.ui-font;
+  font-weight: $active-weight;
 
   color: transparent;
 
@@ -705,9 +678,8 @@ a.plain-text-link:hover {
   color: #00000040;
   margin-left: 1em;
 
-  font-family: var(--id-font-family);
-  font-variation-settings: var(--id-variation-settings);
-  font-weight: var(--id-weight);
+  @include core.ui-font;
+  font-weight: $inactive-weight;
   font-size: 0.8em;
   vertical-align: middle;
 }
@@ -792,15 +764,14 @@ a.plain-text-link:hover {
   text-align: right;
 
   font-size: 0.8em;
-  font-family: var(--ui-font-family);
-  font-variation-settings: var(--ui-variation-settings);
+  @include core.ui-font;
 }
 
 #current-user a.username {
   text-decoration: inherit;
   color: inherit;
 
-  font-weight: var(--ui-active-weight);
+  font-weight: $active-weight;
 
   margin-right: 0.5em;
 }
@@ -933,10 +904,9 @@ a.plain-text-link:hover {
   white-space: nowrap;
 
   font-size: 0.9em;
-  font-weight: var(--ui-inactive-weight);
+  font-weight: $inactive-weight;
 
-  font-family: var(--ui-font-family);
-  font-variation-settings: var(--ui-variation-settings);
+  @include core.ui-font;
 }
 
 .toolbar-group > div {
@@ -1348,7 +1318,7 @@ button.suggested-button {
   border-radius: 6px;
   width: 100%;
   height: 15rem;
-  background-color: var(--main-bg-color);
+  background-color: $main-bg-color;
   border: 1px solid #e0e0e0;
   padding: 1px;
 }
