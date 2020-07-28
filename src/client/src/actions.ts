@@ -23,7 +23,8 @@ export type ActionName =
   | "tutorial"
   | "changelog"
   | "undo"
-  | "toggle-type";
+  | "toggle-type"
+  | "home";
 
 // Some actions can only be executed under some circumstances, for example if an
 // item is selected.
@@ -32,7 +33,7 @@ export type ActionName =
 // given action should be disabled, and pressing the shortcut should not execute
 // the action.
 export function enabled(context: Context, action: ActionName): boolean {
-  const alwaysEnabled: ActionName[] = ["find", "new", "changelog", "undo"];
+  const alwaysEnabled: ActionName[] = ["find", "new", "changelog", "undo", "home"];
   const requireTarget: ActionName[] = [
     "zoom",
     "new-child",
@@ -209,6 +210,11 @@ const implementations: {
   "toggle-type"(context, getFocused) {
     const newState = D.togglePage(context.state, T.thing(context.tree, getFocused()));
     context.setState(newState);
+  },
+
+  home(context, getFocused) {
+    const newTree = T.fromRoot(context.state, "0");
+    context.setTree(newTree);
   },
 };
 

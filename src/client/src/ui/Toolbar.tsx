@@ -71,6 +71,13 @@ export default function Toolbar(props: {context: Context}) {
     <div className="toolbar">
       <ToolbarGroup title="Navigate">
         <ToolbarButton
+          action="home"
+          description="Jump back to the default item."
+          icon="home"
+          label="Home"
+          context={props.context}
+        />
+        <ToolbarButton
           action="find"
           description="Search for a specific item by its content."
           icon="search"
@@ -79,7 +86,7 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action="zoom"
-          description="Zoom in on selected item"
+          description="Jump to the selected item"
           icon="expand-arrows-alt"
           label="Zoom"
           context={props.context}
