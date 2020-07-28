@@ -796,9 +796,24 @@ a.plain-text-link:hover {
   display: flex;
 }
 
+/* #region Toolbar border */
+
+// When the toolbar is hidden, there should be a border on the top bar instead.
+// This is a somewhat awkward way to achieve that.
+
+.toolbar {
+  border-bottom: core.$toolbar-border;
+}
+
+.toolbar ~ .overview {
+  border-top: none;
+}
+
 .overview {
   border-top: core.$toolbar-border;
 }
+
+/* #endregion */
 
 @media (max-height: 580px) {
   .toolbar {
