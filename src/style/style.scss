@@ -708,74 +708,29 @@ a.plain-text-link:hover {
 }
 
 .top-bar button {
-  background: none;
-  padding: 0;
-  margin: 0;
-  border: none;
-  outline: none;
-
   white-space: nowrap;
 
-  font-size: 0.8em;
-
-  color: #808080;
-
-  padding: 0 1ex;
-  background-color: #f0f0f0;
-  border-radius: 3px;
-
-  transition: color 0.3s ease, background-color 0.3s ease;
-
-  margin-right: 0.5em;
-}
-
-.top-bar button:hover {
-  cursor: pointer;
-
-  color: #606060;
-  background-color: #e8e8e8;
-}
-
-.top-bar button:active {
-  background-color: #dcdcdc;
+  font-size: core.$ui-small-font-size;
+  color: core.$top-bar-ui-color;
+  @include core.subtle-button(core.$top-bar-ui-color);
 }
 
 #current-user {
-  cursor: default;
-  color: #b0b0b0;
-
   margin-left: auto; /* Right align */
   text-align: right;
 
-  font-size: 0.8em;
-  @include core.ui-font;
-}
+  a {
+    @extend button;
+    text-decoration: inherit;
 
-#current-user a.username {
-  text-decoration: inherit;
-  color: inherit;
+    font-size: core.$ui-small-font-size;
+    color: core.$top-bar-ui-color;
+    @include core.subtle-button(core.$top-bar-ui-color);
+  }
 
-  font-weight: $active-weight;
-
-  margin-right: 0.5em;
-}
-
-#current-user a.log-out {
-  display: inline-block;
-
-  color: inherit;
-  margin-left: 1ex;
-  text-decoration: none;
-
-  transition: color 0.3s ease;
-}
-
-#current-user a.log-out:hover {
-  color: #808080;
-}
-
-#current-user a.log-out:active {
-  color: #404040;
+  a.username {
+    margin-right: 1rem;
+  }
 }
 
 /* #endregion */

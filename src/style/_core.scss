@@ -9,6 +9,8 @@ $ui-small-font-size: 0.9rem;
 
 $quick-transition-time: 150ms;
 
+$top-bar-ui-color: #00000060;
+
 @mixin transparent-white-overlay {
   backdrop-filter: blur(6px);
   background-color: #ffffffc0;
