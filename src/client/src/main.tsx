@@ -750,6 +750,7 @@ function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: 
       <li>
         <span className="other-parent-small">
           <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
+          &nbsp;
           {truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
         </span>
       </li>
