@@ -32,6 +32,15 @@ import {classes} from "./util";
 
 // ==
 
+// [TODO] Move this to utility library
+function truncateEllipsis(text: string, maxLength: number) {
+  if (text.length >= maxLength) {
+    return text.substr(0, maxLength - 3) + "...";
+  } else {
+    return text;
+  }
+}
+
 // == Components ==
 
 function extractThingFromURL(): string {
@@ -663,7 +672,6 @@ function ExpandableItem(p: {
   node: T.NodeRef;
   parent?: T.NodeRef;
   className?: string;
-  otherParentText?: string;
   isOpenedLink?: boolean;
   isOtherParent?: boolean;
   isReference?: boolean;
@@ -710,22 +718,9 @@ function ExpandableItem(p: {
 
   return (
     <li className="subtree-container">
+      {/* data-id is used for drag and drop. */}
       <div className={className} data-id={p.node.id}>
-        {/* data-id is used for drag and drop. */}
-        <ul className="other-parents-small">
-          <li>
-            <span className="other-parent-small">
-              <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
-              Some Item
-            </span>
-          </li>
-          <li>
-            <span className="other-parent-small">
-              <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
-              Another Parent
-            </span>
-          </li>
-        </ul>
+        <OtherParentsSmall context={p.context} child={p.node} parent={p.parent} />
         <Bullet
           {...bulletAttrs}
           beginDrag={beginDrag}
@@ -735,12 +730,32 @@ function ExpandableItem(p: {
             p.context.setSelectedThing(T.thing(p.context.tree, p.node));
           }}
         />
-        {p.otherParentText !== undefined && <span className="other-parents-text">{p.otherParentText}</span>}
         <Content context={p.context} node={p.node} />
       </div>
       {expanded && !terminal && subtree}
     </li>
   );
+}
+
+function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
+  const otherParents = Data.otherParents(
+    props.context.state,
+    T.thing(props.context.tree, props.child),
+    props.parent && T.thing(props.context.tree, props.parent),
+  );
+
+  const listItems = otherParents.map((otherParentThing) => {
+    return (
+      <li>
+        <span className="other-parent-small">
+          <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
+          {truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
+        </span>
+      </li>
+    );
+  });
+
+  return <ul className="other-parents-small">{listItems}</ul>;
 }
 
 function Content(p: {context: Context; node: T.NodeRef}) {
@@ -840,66 +855,6 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
   );
 }
 
-function OtherParentsItem(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef}) {
-  const otherParents = Data.otherParents(
-    p.context.state,
-    T.thing(p.context.tree, p.parent),
-    p.grandparent && T.thing(p.context.tree, p.grandparent),
-  );
-
-  if (otherParents.length === 0) {
-    return null;
-  }
-
-  if (otherParents.length <= 2) {
-    let newTree = p.context.tree;
-    const otherParentNodes = T.otherParentsChildren(newTree, p.parent);
-    return (
-      <>
-        {otherParentNodes.map((otherParentNode) => {
-          return (
-            <ExpandableItem
-              isOtherParent
-              className="other-parent"
-              key={JSON.stringify(otherParentNode)}
-              otherParentText={p.grandparent ? "Other Parent" : "Parent"}
-              context={p.context}
-              node={otherParentNode}
-              parent={p.parent}
-            />
-          );
-        })}
-      </>
-    );
-  }
-
-  return (
-    <li className="subtree-container">
-      <div className="item other-parent">
-        <Bullet
-          beginDrag={() => {}}
-          status={T.otherParentsExpanded(p.context.tree, p.parent) ? "expanded" : "collapsed"}
-          toggle={() => p.context.setTree(T.toggleOtherParents(p.context.state, p.context.tree, p.parent))}
-        />
-        <span className="other-parents-text">
-          {otherParents.length} {p.grandparent ? " Other Parents" : "Parents"}
-        </span>
-      </div>
-      {T.otherParentsExpanded(p.context.tree, p.parent) && (
-        <OtherParentsSubtree parent={p.parent} grandparent={p.grandparent} context={p.context} />
-      )}
-    </li>
-  );
-}
-
-function OtherParentsSubtree(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef}) {
-  const children = T.otherParentsChildren(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem isOtherParent key={child.id} node={child} context={p.context} />;
-  });
-
-  return <ul className="subtree">{children}</ul>;
-}
-
 function Subtree(p: {
   context: Context;
   parent: T.NodeRef;
@@ -929,14 +884,6 @@ function Subtree(p: {
       {openedLinksChildren}
       {children}
       {p.children}
-      {!p.omitReferences && (
-        <OtherParentsItem
-          key="other-parents"
-          parent={p.parent}
-          grandparent={p.grandparent}
-          context={p.context}
-        />
-      )}
       {!p.omitReferences && <BackreferencesItem key="backreferences" parent={p.parent} context={p.context} />}
     </ul>
   );
