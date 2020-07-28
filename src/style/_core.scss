@@ -53,4 +53,8 @@ $toolbar-border: 1px solid #00000020;
   &:hover:not(:disabled) {
     background-color: color.scale($color, $alpha: -90%);
   }
+
+  &:active:not(:disabled) {
+    background-color: color.scale($color, $alpha: -83%);
+  }
 }
