@@ -173,11 +173,11 @@ export function StepGettingStarted() {
         <strong>Create some items.</strong> Focus an existing item by clicking on it, and then play around
         with
         <span className="fake-button">
-          <span className="icon gg-add-r"></span>New
+          <span className="icon fas fa-plus-square"></span>New
         </span>
         and
         <span className="fake-button">
-          <span className="icon gg-arrow-bottom-right-r"></span>New Child
+          <span className="icon fas fa-caret-square-down"></span>New Child
         </span>
         in the toolbar to create a tree of items.
       </p>
@@ -188,21 +188,6 @@ export function StepGettingStarted() {
         <strong>Collapse and expand</strong> items by clicking the bullet next to them. Items with hidden
         children will have a darker bullet.
       </p>
-      {false && (
-        <>
-          <p>
-            <strong>Structure your items.</strong> In Thinktool, one item can be in multiple places. Use the
-            <span className="fake-button">
-              <span className="icon gg-arrow-bottom-right-o"></span>Child
-            </span>
-            button to add an existing item as a child. Just search for the child by its content and select it
-            from the popup menu.
-          </p>
-          <p>
-            <i>Notice how Thinktool automatically lets you know that an item is in multiple places.</i>
-          </p>
-        </>
-      )}
     </>
   );
 }
@@ -216,7 +201,7 @@ export function StepReorganizing() {
       <p>
         <strong>Remove an item from its parent</strong> with
         <span className="fake-button">
-          <span className="icon gg-remove-r"></span>Remove.
+          <span className="icon fas fa-minus-square"></span>Remove.
         </span>
         This does <em>not</em> remove that item from the database, so if it has any other parents, you can
         still find it there.
@@ -224,26 +209,26 @@ export function StepReorganizing() {
       <p>
         <strong>To completely delete an item,</strong> use{" "}
         <span className="fake-button">
-          <span className="icon gg-trash"></span>Destroy
+          <span className="icon fas fa-trash"></span>Destroy
         </span>
         instead. This removes the item from all its parents, and permanently deletes it from the database.
       </p>
       <p>
         <strong>Reorder items</strong> with
         <span className="fake-button">
-          <span className="icon gg-push-chevron-up"></span>Up
+          <span className="icon fas fa-chevron-up"></span>Up
         </span>
         and
         <span className="fake-button">
-          <span className="icon gg-push-chevron-down"></span>Down
+          <span className="icon fas fa-chevron-right"></span>Down
         </span>
         , or use
         <span className="fake-button">
-          <span className="icon gg-push-chevron-left"></span>Unindent
+          <span className="icon fas fa-chevron-left"></span>Unindent
         </span>
         and
         <span className="fake-button">
-          <span className="icon gg-push-chevron-right"></span>Indent
+          <span className="icon fas fa-chevron-right"></span>Indent
         </span>
         to reorganize items among their neighbours.
       </p>
@@ -264,7 +249,7 @@ export function StepFlexibleHierarchy() {
         <strong>Connect an existing item as a parent of the currently focused item.</strong> To do this, click
         on an item to focus it, click{" "}
         <span className="fake-button">
-          <span className="icon gg-arrow-top-left-o"></span>Parent,
+          <span className="icon fas fa-chevron-circle-up"></span>Parent,
         </span>
         and then type some of the content of the existing item that you want to add as a parent.
       </p>
@@ -278,11 +263,11 @@ export function StepFlexibleHierarchy() {
       <p>
         <strong>You can also</strong> add an existing item as a sibling of the focused item with
         <span className="fake-button">
-          <span className="icon gg-add"></span>Sibling
+          <span className="icon fas fa-plus-circle"></span>Sibling
         </span>
         or as a child with
         <span className="fake-button">
-          <span className="icon gg-arrow-bottom-right-o"></span>Child.
+          <span className="icon fas fa-chevron-circle-down"></span>Child.
         </span>
       </p>
       <p>
@@ -304,7 +289,7 @@ export function StepBidirectionalLinks() {
       <p>
         <strong>Try adding a link</strong> by first placing your cursor inside an item, and then pressing the
         <span className="fake-button">
-          <span className="icon gg-file-document"></span>Link
+          <span className="icon fas fa-link"></span>Link
         </span>
         button. Type the name of another item and select it.
       </p>
@@ -333,14 +318,14 @@ export function StepStayingFocused() {
       <p>
         <strong>Navigate to an item.</strong> First focus it by clicking on it, and then press
         <span className="fake-button">
-          <span className="icon gg-maximize-alt"></span>Zoom.
+          <span className="icon fas fa-expand-arrows-alt"></span>Zoom.
         </span>
         Now you can see just that item's children, as well as any parents and references in an expanded view.
       </p>
       <p>
         <strong>Find a specific item</strong> using the
         <span className="fake-button">
-          <span className="icon gg-search"></span>Find
+          <span className="icon fas fa-search"></span>Find
         </span>
         button. Just search for an item by its content, and then select it to jump there.
       </p>
@@ -357,7 +342,7 @@ export function StepHaveFun() {
       <p>
         <strong>If you want to do the tutorial again,</strong> just press the
         <span className="fake-button">
-          <span className="icon gg-info"></span>Tutorial
+          <span className="icon fas fa-info"></span>Tutorial
         </span>{" "}
         button.
       </p>

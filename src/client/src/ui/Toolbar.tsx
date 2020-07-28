@@ -60,7 +60,7 @@ function ToolbarButton(props: {
       }}
       title={props.description + (shortcut === "" ? "" : ` [${shortcut}]`)}
       disabled={!Ac.enabled(props.context, props.action)}>
-      <span className={`icon gg-${props.icon}`}></span>
+      <span className={`icon fas fa-${props.icon}`}></span>
       {props.label}
     </button>
   );
@@ -80,7 +80,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="zoom"
           description="Zoom in on selected item"
-          icon="maximize-alt"
+          icon="expand-arrows-alt"
           label="Zoom"
           context={props.context}
         />
@@ -89,21 +89,21 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="new"
           description="Create a new item as a sibling of the currently selected item"
-          icon="add-r"
+          icon="plus-square"
           label="New"
           context={props.context}
         />
         <ToolbarButton
           action="new-child"
           description="Create a new child of the selected item"
-          icon="arrow-bottom-right-r"
+          icon="caret-square-down"
           label="New Child"
           context={props.context}
         />
         <ToolbarButton
           action="remove"
           description="Remove the selected item from its parent. This does not delete the item."
-          icon="remove-r"
+          icon="minus-square"
           label="Remove"
           context={props.context}
         />
@@ -119,28 +119,28 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="unindent"
           description="Unindent the selected item"
-          icon="push-chevron-left"
+          icon="chevron-left"
           label="Unindent"
           context={props.context}
         />
         <ToolbarButton
           action="indent"
           description="Indent the selected item"
-          icon="push-chevron-right"
+          icon="chevron-right"
           label="Indent"
           context={props.context}
         />
         <ToolbarButton
           action="up"
           description="Move the selected item up"
-          icon="push-chevron-up"
+          icon="chevron-up"
           label="Up"
           context={props.context}
         />
         <ToolbarButton
           action="down"
           description="Move the selected item down"
-          icon="push-chevron-down"
+          icon="chevron-down"
           label="Down"
           context={props.context}
         />
@@ -149,21 +149,21 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="insert-sibling"
           description="Insert an existing item as a sibling after the currently selected item."
-          icon="add"
+          icon="plus-circle"
           label="Sibling"
           context={props.context}
         />
         <ToolbarButton
           action="insert-child"
           description="Insert an existing item as a child of the currently selected item."
-          icon="arrow-bottom-right-o"
+          icon="chevron-circle-down"
           label="Child"
           context={props.context}
         />
         <ToolbarButton
           action="insert-parent"
           description="Insert an existing item as a parent of the currently selected item."
-          icon="arrow-top-left-o"
+          icon="chevron-circle-up"
           label="Parent"
           context={props.context}
         />
@@ -195,7 +195,7 @@ export default function Toolbar(props: {context: Context}) {
         <ToolbarButton
           action="toggle-type"
           description="Toggle type of focused item between 'Note' (default) and 'Page' types."
-          icon="file-document"
+          icon="sticky-note"
           label="Toggle"
           context={props.context}
         />
