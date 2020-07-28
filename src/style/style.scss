@@ -119,10 +119,9 @@ body {
 /* #region Outline structure */
 
 .subtree {
+  @include core.reset-list;
   margin: 0 auto;
   margin-top: 1rem;
-  list-style: none;
-  padding: 0;
 }
 
 .subtree-container > .subtree {
@@ -130,10 +129,65 @@ body {
 }
 
 .item {
+  margin-bottom: 1rem;
+
+  display: grid;
+  grid: "empty parents" auto "bullet item" auto / calc(20px + 1rem) 1fr;
+
+  .bullet {
+    grid-area: bullet;
+  }
+
+  .other-parents-small {
+    grid-area: parents;
+  }
+
+  // [TODO] This should also include the "Other parents" label.
+  .content {
+    grid-area: item;
+  }
+}
+
+/* #endregion */
+
+/* #region Other parents list */
+
+.other-parents-small {
   display: flex;
   flex-direction: row;
 
-  margin-bottom: 1rem;
+  @include core.reset-list;
+
+  font-size: core.$other-parents-small-font-size;
+
+  li {
+    display: inline-block;
+    line-height: 100%;
+  }
+
+  li + li {
+    margin-left: 0.5em;
+  }
+
+  .other-parent-small {
+    padding: 0 3px;
+    color: hsl(90, 30%, 30%);
+    border: 1px solid hsl(90, 20%, 80%);
+    border-radius: 3px;
+
+    .bullet {
+      margin: 0;
+      margin-top: -2px;
+      margin-right: 0.5em;
+
+      width: 10px !important;
+      height: 10px !important;
+      min-width: 10px !important;
+      min-height: 10px !important;
+      max-width: 10px !important;
+      max-height: 10px !important;
+    }
+  }
 }
 
 /* #endregion */
@@ -584,10 +638,8 @@ a.plain-text-link:hover {
 .link-autocomplete-popup-results {
   flex: 1 1 100%;
 
-  margin: 0;
-  padding: 0;
+  @include core.reset-list;
 
-  list-style: none;
   overflow-y: auto;
   overflow-wrap: break-word;
 }
@@ -1054,9 +1106,7 @@ a.plain-text-link:hover {
 }
 
 .changelog-entries {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+  @include core.reset-list;
 
   display: flex;
   flex-direction: column;

@@ -712,6 +712,20 @@ function ExpandableItem(p: {
     <li className="subtree-container">
       <div className={className} data-id={p.node.id}>
         {/* data-id is used for drag and drop. */}
+        <ul className="other-parents-small">
+          <li>
+            <span className="other-parent-small">
+              <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
+              Some Item
+            </span>
+          </li>
+          <li>
+            <span className="other-parent-small">
+              <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
+              Another Parent
+            </span>
+          </li>
+        </ul>
         <Bullet
           {...bulletAttrs}
           beginDrag={beginDrag}

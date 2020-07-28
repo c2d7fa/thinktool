@@ -7,6 +7,8 @@
 $ui-tiny-font-size: 0.9 * 0.9rem;
 $ui-small-font-size: 0.9rem;
 
+$other-parents-small-font-size: $ui-tiny-font-size;
+
 $quick-transition-time: 150ms;
 
 @mixin transparent-white-overlay {
@@ -51,4 +53,10 @@ $toolbar-border: 1px solid #00000020;
   &:hover:not(:disabled) {
     background-color: color.scale($color, $alpha: -90%);
   }
+}
+
+@mixin reset-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
