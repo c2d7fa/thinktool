@@ -530,7 +530,8 @@ function App({
           Thinktool
         </ExternalLink>
         <button onClick={() => setToolbarShown(!toolbarShown)}>
-          {toolbarShown ? "Hide" : "Show"} Toolbar
+          <i className="icon fas fa-bars" />
+          {toolbarShown ? "Hide" : "Show"} Menu
         </button>
         <div id="current-user">
           {username && (

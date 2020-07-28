@@ -11,6 +11,8 @@ $other-parents-small-font-size: $ui-tiny-font-size;
 
 $quick-transition-time: 150ms;
 
+$top-bar-ui-color: #00000060;
+
 @mixin transparent-white-overlay {
   backdrop-filter: blur(6px);
   background-color: #ffffffc0;
@@ -52,6 +54,10 @@ $toolbar-border: 1px solid #00000020;
 
   &:hover:not(:disabled) {
     background-color: color.scale($color, $alpha: -90%);
+  }
+
+  &:active:not(:disabled) {
+    background-color: color.scale($color, $alpha: -83%);
   }
 }
 

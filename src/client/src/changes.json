@@ -199,6 +199,14 @@
     {
       "date": "2020-07-28",
       "title": "Various minor UI improvements, including toolbar, search popup and tutorial."
+    },
+    {
+      "date": "2020-07-28",
+      "title": "Added 'Home' action to the toolbar."
+    },
+    {
+      "date": "2020-07-28",
+      "title": "Improved appearance of top bar."
     }
   ]
 }

@@ -17,7 +17,7 @@ const steps: {name: string; introduces: ActionName[]}[] = [
   {name: "Multiple parents", introduces: ["insert-child", "insert-sibling", "insert-parent"]},
   {name: "Reorganizing", introduces: ["remove", "destroy", "indent", "unindent", "up", "down"]},
   {name: "Bidirectional linking", introduces: ["insert-link"]},
-  {name: "Navigation", introduces: ["find", "zoom"]},
+  {name: "Navigation", introduces: ["find", "zoom", "home"]},
   {name: "The end", introduces: ["tutorial"]},
 ];
 
@@ -321,6 +321,12 @@ export function StepStayingFocused() {
           <span className="icon fas fa-expand-arrows-alt"></span>Zoom.
         </span>
         Now you can see just that item's children, as well as any parents and references in an expanded view.
+      </p>
+      <p>
+        <strong>If you get lost,</strong> you can always go back to the default item with{" "}
+        <span className="fake-button">
+          <span className="icon fas fa-home"></span>Home.
+        </span>
       </p>
       <p>
         <strong>Find a specific item</strong> using the
