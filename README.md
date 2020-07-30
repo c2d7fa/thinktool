@@ -1,4 +1,18 @@
-# Directory Structure
+# Thinktool
+
+This repository contains the source code of Thinktool, an associative note-taking application inspired by TheBrain and Roam Research.
+
+## This is not open source!
+
+Please note that this software is not open source. The omission of a `LICENSE` file is intentional.
+
+As such, the instructions in this README are mostly written for myself, and may not be sufficient to compile this project on your own. That being said, you may find some hints in `.github/workflows`.
+
+This project is also not currently accepting issues or pull requests. Please see Thinktool's web page for information about how to contact me with your feedback about Thinktool. Also, I may occationally force push to this repository, since I'm not expecting anyone else to clone it.
+
+If I abandon this project in the future, I intend to make it open source. If you can see that I have not touched this repository in several months, feel free to send me an email reminding me of this fact!
+
+## Directory Structure
 
 Source code:
 
@@ -28,7 +42,7 @@ Tools and configuration:
 | `/tools/`     | Scripts and other tools used for building, development and deployment. |
 | `/tools/dev/` | Tools used for development only.                                       |
 
-# Deployment
+## Deployment
 
 The application consists of two parts:
 
@@ -49,18 +63,18 @@ You will need to have the following dependencies installed:
 - Azure CLI
 - PostgreSQL
 
-## Development
+### Development
 
-If you don't want to install this on your development machine, there is a
-`Dockerfile` descirbing a Debian system with most of those dependencies
-installed available in the `tools/dev/` directory. Use a separate Docker
-container for PostgreSQL. For example:
+If you don't want to install these dependencies on your development machine,
+there is a `Dockerfile` descirbing a Debian system with most of those
+dependencies installed available in the `tools/dev/` directory. Use a separate
+Docker container for PostgreSQL. For example:
 
     $ docker build tools/dev -t thinktool-dev
     $ docker run -e POSTGRES_PASSWORD=password -v postgres-data:/var/lib/postgresql/data -d postgres
     $ docker run -ti -v $(pwd):/work thinktool-dev
 
-## Static Resources
+### Static Resources
 
 Set the following environment variables:
 
@@ -75,7 +89,7 @@ Then build the web client and other static resources with:
 Then, set `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` and run
 `./tools/deploy-static.sh` to deploy static files to Microsoft Azure Storage.
 
-## Desktop
+### Desktop
 
 The desktop client can currently be built for Linux and Windows. We're planning
 on supporting macOS in the future. It must be built on the same platform that is
@@ -102,7 +116,7 @@ Once you have built the desktop client, the output will be in `dist/`. Set
 `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` and run
 `./tools/deploy-static.sh` to deploy these files to Microsoft Azure Storage.
 
-## Server
+### Server
 
 The server uses a PostgreSQL database. Set the following environment variables
 before running the server:
@@ -111,6 +125,8 @@ before running the server:
 - `DIAFORM_POSTGRES_PORT` &mdash; Port that the database is running on, e.g. `5432`
 - `DIAFORM_POSTGRES_USERNAME` &mdash; Username used to authenticate with the PostgreSQL DB, e.g. `postgres`
 - `DIAFORM_POSTGRES_PASSWORD` &mdash; Password used to authenticate with the PostgreSQL DB, e.g. `postgres`
+
+You will need to manually set up the database schema. See `tools/db/_initialize.sql`, though this may be outdated.
 
 For sending emails (used for "Forgot my password" functionality), we use [SendGrid](https://sendgrid.com/). Configure the following environment variables:
 
