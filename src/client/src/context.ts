@@ -2,7 +2,7 @@ import {State} from "./data";
 import * as T from "./tree";
 import {Tree} from "./tree";
 import * as Tutorial from "./tutorial";
-import {Communication} from "thinktool-shared";
+import {Communication} from "@thinktool/shared";
 import {Server} from "./server-api";
 import {Storage} from "./storage";
 

@@ -1,5 +1,5 @@
 import * as D from "./data";
-import {General as G} from "thinktool-shared";
+import {General as G} from "@thinktool/shared";
 
 export type RoamImport = RoamImportPage[];
 export type RoamImportPage = {title: string; children: RoamImportItem[]};

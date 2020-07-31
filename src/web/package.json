@@ -1,13 +1,18 @@
 {
-  "name": "thinktool-web-client",
-  "version": "0.0.1",
-  "private": true,
+  "name": "@thinktool/web",
+  "version": "1.0.0",
+  "description": "The web client for Thinktool.",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/c2d7fa/thinktool.git"
+  },
   "devDependencies": {
     "parcel-bundler": "^1.12.4",
     "typescript": "^3.9.6"
   },
   "dependencies": {
-    "thinktool-client": "file:../client"
+    "@thinktool/client": "^1.0.0"
   },
   "scripts": {
     "bundle": "./node_modules/.bin/parcel build -d ../../dist/static -o bundle.js -t browser main.tsx",

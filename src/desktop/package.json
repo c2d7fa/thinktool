@@ -1,7 +1,12 @@
 {
-  "name": "thinktool-desktop-client",
-  "version": "0.1.4",
-  "private": true,
+  "name": "@thinktool/desktop",
+  "version": "1.0.0",
+  "description": "The desktop client for Thinktool.",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/c2d7fa/thinktool.git"
+  },
   "devDependencies": {
     "@types/sqlite3": "^3.1.6",
     "electron": "^8.3.0",
@@ -12,7 +17,7 @@
   "dependencies": {
     "sqlite": "^4.0.9",
     "sqlite3": "^4.2.0",
-    "thinktool-client": "file:../client"
+    "@thinktool/client": "1.0.0"
   },
   "scripts": {
     "check": "./node_modules/.bin/tsc --noEmit",

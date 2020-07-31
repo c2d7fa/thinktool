@@ -1,6 +1,6 @@
 import * as bcrypt from "bcrypt";
 import * as crypto from "crypto";
-import {Communication} from "thinktool-shared";
+import {Communication} from "@thinktool/shared";
 
 // We require the consumer of this module to call initialize() before doing
 // anything else.

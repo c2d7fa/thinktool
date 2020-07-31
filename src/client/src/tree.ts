@@ -1,4 +1,4 @@
-import {General as G} from "thinktool-shared";
+import {General as G} from "@thinktool/shared";
 import * as D from "./data";
 import * as I from "./tree-internal";
 

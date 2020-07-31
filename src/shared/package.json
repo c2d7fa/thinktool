@@ -1,7 +1,12 @@
 {
-  "name": "thinktool-shared",
+  "name": "@thinktool/shared",
   "version": "1.0.0",
-  "private": true,
+  "description": "Code for Thinktool, shared between server and client.",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/c2d7fa/thinktool.git"
+  },
   "scripts": {
     "build": "./node_modules/.bin/tsc"
   },

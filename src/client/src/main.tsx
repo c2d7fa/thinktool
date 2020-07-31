@@ -1,4 +1,4 @@
-import {General as G, Communication} from "thinktool-shared";
+import {General as G, Communication} from "@thinktool/shared";
 
 import * as ChangelogData from "./changes.json";
 
@@ -1092,5 +1092,5 @@ export async function thinktoolUser({apiHost}: {apiHost: string}) {
 }
 
 export * as Storage from "./storage";
-export {Communication} from "thinktool-shared";
+export {Communication} from "@thinktool/shared";
 export {React};

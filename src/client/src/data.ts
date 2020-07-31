@@ -1,4 +1,4 @@
-import {General as G, Communication} from "thinktool-shared";
+import {General as G, Communication} from "@thinktool/shared";
 
 export type Content = Communication.Content;
 

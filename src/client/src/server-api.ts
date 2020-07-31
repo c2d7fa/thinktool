@@ -1,5 +1,5 @@
 import * as D from "./data";
-import {Communication} from "thinktool-shared";
+import {Communication} from "@thinktool/shared";
 
 export type Server = ReturnType<typeof initialize>;
 

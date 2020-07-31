@@ -1,5 +1,5 @@
 import * as API from "./server-api";
-import {Communication} from "thinktool-shared";
+import {Communication} from "@thinktool/shared";
 
 export interface Storage {
   getFullState(): Promise<Communication.FullStateResponse>;

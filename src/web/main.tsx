@@ -1,4 +1,4 @@
-import * as Client from "thinktool-client";
+import * as Client from "@thinktool/client";
 
 import * as Configuration from "../../conf/client.json";
 import * as DemoData from "./demo-data.json";
