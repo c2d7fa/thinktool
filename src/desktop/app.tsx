@@ -1,7 +1,7 @@
 import * as Electron from "electron";
 
 import * as Client from "@thinktool/client";
-const React = Client.React; // If we try to use our own React, we get an error when building.
+import * as React from "react";
 
 function ExternalLink(props: {href: string; children: React.ReactNode; [k: string]: any}) {
   const attrs: object = {...props};

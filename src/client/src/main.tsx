@@ -1093,4 +1093,3 @@ export async function thinktoolUser({apiHost}: {apiHost: string}) {
 
 export * as Storage from "./storage";
 export {Communication} from "@thinktool/shared";
-export {React};

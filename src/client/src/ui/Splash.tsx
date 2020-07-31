@@ -42,7 +42,7 @@ const welcomePage = (
   <>
     <div className="splash-image">
       <img
-        src="/splash-welcome.png"
+        src="splash-welcome.png"
         style={{display: "block", width: "75%", height: "100%", objectFit: "cover", margin: "auto"}}
       />
     </div>
@@ -57,7 +57,7 @@ const welcomePage = (
 const parentsPage = (
   <>
     <div className="splash-image">
-      <img src="/splash-multiple-parents.svg" />
+      <img src="splash-multiple-parents.svg" />
     </div>
     <h1>Multiple parents</h1>
     <p>
@@ -70,7 +70,7 @@ const parentsPage = (
 const linksPage = (
   <>
     <div className="splash-image">
-      <img src="/splash-bidirectional-links.svg" />
+      <img src="splash-bidirectional-links.svg" />
     </div>
     <h1>Bidirectional links</h1>
     <p>
