@@ -12,7 +12,9 @@
     "typescript": "^3.9.6"
   },
   "dependencies": {
-    "@thinktool/client": "^1.0.0"
+    "@thinktool/client": "^1.0.0",
+    "@thinktool/shared": "^1.0.0",
+    "core-js": "^3.6.5"
   },
   "scripts": {
     "bundle": "./node_modules/.bin/parcel build -d ../../dist/static -o bundle.js -t browser main.tsx",
