@@ -16,11 +16,11 @@ If I abandon this project in the future, I intend to make it open source. If you
 
 Source code:
 
-| Directory      | Purpose                                            |
-| -------------- | -------------------------------------------------- |
-| `/src/share/`  | Code shared between client and server.             |
+| Directory      | Purpose                                            | Package                                                                                                                                         |
+| -------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/src/shared/` | Code shared between client and server.             | [![@thinktool/shared](https://img.shields.io/npm/v/@thinktool/shared?label=@thinktool/shared)](https://www.npmjs.com/package/@thinktool/shared) |
+| `/src/client/` | Client code shared between web and desktop client. | [![@thinktool/client](https://img.shields.io/npm/v/@thinktool/client?label=@thinktool/client)](https://www.npmjs.com/package/@thinktool/client) |
 | `/src/server/` | Code for dynamic Node.js server.                   |
-| `/src/client/` | Client code shared between web and desktop client. |
 | `/src/web/`    | Code specific to web client.                       |
 | `/src/desktop` | Code specific to desktop client.                   |
 | `/src/markup/` | Source for HTML markup.                            |
