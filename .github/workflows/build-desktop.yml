@@ -1,0 +1,35 @@
+name: Build desktop apps as artifacts
+on:
+  push:
+    branches:
+      - build-desktop
+jobs:
+  desktop-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v1
+      - name: Build desktop client for Linux
+        run: ./tools/build-desktop-linux.sh
+        env:
+          DIAFORM_API_HOST: ${{secrets.api_host}}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux
+          path: dist/static
+  desktop-windows:
+    runs-on: windows-2019
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Build desktop client for Windows
+        run: ./tools/build-desktop-windows.sh
+        shell: bash
+        env:
+          DIAFORM_API_HOST: ${{secrets.api_host}}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows
+          path: dist/static
