@@ -1,4 +1,4 @@
-import {General as G} from "@thinktool/shared";
+import * as Misc from "@johv/miscjs";
 import * as D from "./data";
 import * as I from "./tree-internal";
 
@@ -47,7 +47,7 @@ function refEq(x: NodeRef, y: NodeRef): boolean {
 
 function parent(tree: Tree, child: NodeRef): NodeRef | undefined {
   for (const node of I.allNodes(tree)) {
-    if (G.includesBy(children(tree, node), child, refEq)) return node;
+    if (Misc.includesBy(children(tree, node), child, refEq)) return node;
   }
   return undefined;
 }
@@ -127,7 +127,7 @@ function genericRefreshChildren({
     const treeChildren = getTreeChildren(tree, parent).map((ch) => thing(tree, ch));
 
     if (!expanded(tree, parent)) return tree;
-    if (G.arrayEq(stateChildren, treeChildren)) return tree;
+    if (Misc.arrayEq(stateChildren, treeChildren)) return tree;
 
     if (stateChildren.length === treeChildren.length + 1) {
       // Assume new child was inserted
@@ -137,18 +137,18 @@ function genericRefreshChildren({
       for (let i = 0; i < stateChildren.length; i++) {
         if (getTreeChildren(result, parent)[i] === undefined) {
           const [newChild, newResult] = load(state, result, stateChildren[i], parent);
-          result = updateChildren(newResult, parent, (cs) => G.splice(cs, i, 0, newChild));
+          result = updateChildren(newResult, parent, (cs) => Misc.splice(cs, i, 0, newChild));
         } else {
           if (thing(result, getTreeChildren(result, parent)[i]) === stateChildren[i]) continue;
           const [newChild, newResult] = load(state, result, stateChildren[i], parent);
           result = updateChildren(newResult, parent, (cs) =>
-            G.splice(cs, i, 0, newChild, getTreeChildren(result, parent)[i]),
+            Misc.splice(cs, i, 0, newChild, getTreeChildren(result, parent)[i]),
           );
         }
       }
 
       // In case our assumption was wrong, truncate any extra elements that were inserted.
-      result = updateChildren(result, parent, (cs) => G.splice(cs, stateChildren.length));
+      result = updateChildren(result, parent, (cs) => Misc.splice(cs, stateChildren.length));
 
       return result;
     } else {
@@ -320,7 +320,7 @@ export function unindent(state: D.State, tree: Tree, node: NodeRef): [D.State, T
 }
 
 function childIndex(tree: Tree, parent: NodeRef, child: NodeRef): number {
-  const result = G.indexOfBy(children(tree, parent), child, refEq);
+  const result = Misc.indexOfBy(children(tree, parent), child, refEq);
   if (result === undefined) throw "Parent does not contain child";
   return result;
 }
@@ -361,14 +361,14 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
     // the same parent. Then, we want to remove those nodes from their parents.
 
     if (thing(newTree, n) === thing(tree, parent_)) {
-      newTree = I.updateChildren(newTree, n, (ch) => G.splice(ch, indexInParent(tree, node)!, 1));
+      newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, indexInParent(tree, node)!, 1));
     }
 
     // Add new nodes
     if (thing(newTree, n) === thing(newTree, destination.parent)) {
       const [newNode, newTree_] = loadConnection(newState, newTree, newConnection, destination.parent);
       newTree = newTree_;
-      newTree = I.updateChildren(newTree, n, (ch) => G.splice(ch, destination.index, 0, newNode));
+      newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, destination.index, 0, newNode));
     }
   }
 
@@ -452,7 +452,7 @@ export function createSiblingBefore(
 
   const [newNode, newTree_] = loadConnection(newState, tree, newConnection, parent_);
   let newTree = newTree_;
-  newTree = I.updateChildren(newTree, parent_, (children) => G.splice(children, index, 0, newNode));
+  newTree = I.updateChildren(newTree, parent_, (children) => Misc.splice(children, index, 0, newNode));
   newTree = focus(newTree, newNode);
 
   // Also update other parents
@@ -486,7 +486,7 @@ export function createSiblingAfter(
 
   const [newNode, newTree_] = loadConnection(newState, tree, newConnection, parent_);
   let newTree = newTree_;
-  newTree = I.updateChildren(newTree, parent_, (children) => G.splice(children, index, 0, newNode));
+  newTree = I.updateChildren(newTree, parent_, (children) => Misc.splice(children, index, 0, newNode));
   newTree = focus(newTree, newNode);
 
   // Also update other parents
@@ -515,7 +515,7 @@ export function remove(state: D.State, tree: Tree, node: NodeRef): [D.State, Tre
   // Remove nodes from tree to match state
   for (const n of I.allNodes(tree)) {
     if (thing(newTree, n) === thing(tree, parent_)) {
-      newTree = I.updateChildren(newTree, n, (ch) => G.splice(ch, indexInParent(tree, node)!, 1));
+      newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, indexInParent(tree, node)!, 1));
     }
   }
 
@@ -536,7 +536,7 @@ export function insertChild(
   // Load node into the tree
   const [childNode, newTree_] = loadConnection(newState, newTree, newConnection, node);
   newTree = newTree_;
-  newTree = I.updateChildren(newTree, node, (children) => G.splice(children, position, 0, childNode));
+  newTree = I.updateChildren(newTree, node, (children) => Misc.splice(children, position, 0, childNode));
   newTree = focus(newTree, childNode);
 
   // Also refresh other parents
@@ -593,7 +593,7 @@ export function removeThing(state: D.State, tree: Tree, node: NodeRef): [D.State
     if (thing(newTree, n) === thing(tree, node)) {
       const p = parent(tree, n);
       if (p !== undefined) {
-        newTree = I.updateChildren(newTree, p, (ch) => G.splice(ch, indexInParent(newTree, n)!, 1));
+        newTree = I.updateChildren(newTree, p, (ch) => Misc.splice(ch, indexInParent(newTree, n)!, 1));
       }
     }
   }

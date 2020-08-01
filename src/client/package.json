@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/client",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Client code for Thinktool, shared between web and desktop client.",
   "license": "UNLICENSED",
   "repository": {
@@ -24,7 +24,8 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "@thinktool/shared": "^1.0.0",
+    "@johv/miscjs": "^1.0.0",
+    "@thinktool/shared": "^2.0.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
   },

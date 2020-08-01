@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The API server for Thinktool.",
   "license": "UNLICENSED",
   "repository": {
@@ -8,6 +8,7 @@
     "url": "https://github.com/c2d7fa/thinktool.git"
   },
   "devDependencies": {
+    "@thinktool/shared": "^2.0.0",
     "@types/bcrypt": "latest",
     "@types/express": "latest",
     "@types/express-ws": "latest",
@@ -18,7 +19,6 @@
     "express-ws": "latest",
     "parcel-bundler": "latest",
     "pg": "latest",
-    "@thinktool/shared": "1.0.0",
     "typescript": "^3.9.6"
   },
   "scripts": {
