@@ -223,12 +223,6 @@ a.plain-text-link:hover {
   border: 1px solid hsl(40, 80%, 80%);
 }
 
-.internal-link-page {
-  border: 2px solid #00000020;
-  background-color: #ffffff;
-  font-weight: bold;
-}
-
 .internal-link .empty-content {
   color: #c0c0c0;
 }
@@ -484,24 +478,6 @@ a.plain-text-link:hover {
 .drag-source {
   opacity: 50%;
   transition: opacity core.$quick-transition-time;
-}
-
-/* #endregion */
-
-/* #region Pages */
-
-.page {
-  border: 2px solid #00000028;
-  border-radius: 12px;
-  padding: 0.2rem 0.5rem;
-
-  margin-left: -0.5rem; /* Align bullets */
-
-  background-color: #ffffff;
-}
-
-.page .page {
-  border-color: #00000010;
 }
 
 /* #endregion */

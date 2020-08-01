@@ -198,15 +198,6 @@ export default function Toolbar(props: {context: Context}) {
           context={props.context}
         />
       </ToolbarGroup>
-      <ToolbarGroup title="Type">
-        <ToolbarButton
-          action="toggle-type"
-          description="Toggle type of focused item between 'Note' (default) and 'Page' types."
-          icon="sticky-note"
-          label="Toggle"
-          context={props.context}
-        />
-      </ToolbarGroup>
     </div>
   );
 }
