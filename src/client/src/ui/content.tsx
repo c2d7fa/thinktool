@@ -97,7 +97,10 @@ function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) 
           jump();
         }
       }}
-      onClick={toggle}>
+      onClick={(ev) => {
+        if (ev.shiftKey) jump();
+        else toggle();
+      }}>
       <Bullet
         specialType="link"
         status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}

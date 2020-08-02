@@ -214,7 +214,7 @@
     },
     {
       "date": "2020-08-02",
-      "title": "Made it possible to middle click a link to go there directly."
+      "title": "Made it possible to middle click or shift click a link to jump to it."
     }
   ]
 }
