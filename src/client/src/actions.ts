@@ -254,7 +254,7 @@ export function shortcut(action: ActionName): S.Shortcut {
     case "new":
       return {special: `${S.format({key: "Enter"})}/${S.format({secondaryMod: true, key: "Enter"})}}`};
     case "zoom":
-      return {special: "MMB"};
+      return {special: "Middle click bullet"};
 
     default:
       return null;

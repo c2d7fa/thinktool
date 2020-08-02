@@ -211,6 +211,14 @@
     {
       "date": "2020-08-01",
       "title": "Removed pages again. I wasn't really able to do anything interesting with this feature."
+    },
+    {
+      "date": "2020-08-02",
+      "title": "Made it possible to middle click or shift click a link to jump to it."
+    },
+    {
+      "date": "2020-08-02",
+      "title": "Renamed 'Zoom' to 'Jump'."
     }
   ]
 }
