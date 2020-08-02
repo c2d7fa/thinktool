@@ -81,11 +81,21 @@ function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) 
     props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, props.link));
   }
 
+  function jump() {
+    props.context.setSelectedThing(props.link);
+  }
+
   return (
     <span
       className={className}
       onMouseDown={(ev) => {
         ev.preventDefault();
+      }}
+      onAuxClick={(ev) => {
+        const isMiddleClick = ev.button === 1;
+        if (isMiddleClick) {
+          jump();
+        }
       }}
       onClick={toggle}>
       <Bullet
