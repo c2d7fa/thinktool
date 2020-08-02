@@ -86,9 +86,9 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action="zoom"
-          description="Jump to the selected item"
-          icon="expand-arrows-alt"
-          label="Zoom"
+          description="Jump to the currently selected item. To select an item, just click somewhere inside that item's text."
+          icon="hand-point-right"
+          label="Jump"
           context={props.context}
         />
       </ToolbarGroup>
