@@ -200,10 +200,13 @@ export function expand(state: D.State, tree: Tree, node: NodeRef): Tree {
 function hasOtherParents(state: D.State, tree: Tree, node: NodeRef, wrtParent?: NodeRef): boolean {
   if (wrtParent === undefined) {
     const parent_ = parent(tree, node);
-    if (parent_ === undefined) return false;
-    return D.otherParents(state, thing(tree, node), thing(tree, parent_)).length !== 0;
+    if (parent_ === undefined) {
+      return D.parents(state, thing(tree, node)).length > 0;
+    } else {
+      return D.otherParents(state, thing(tree, node), thing(tree, parent_)).length > 0;
+    }
   } else {
-    return D.otherParents(state, thing(tree, node), thing(tree, wrtParent)).length !== 0;
+    return D.otherParents(state, thing(tree, node), thing(tree, wrtParent)).length > 0;
   }
 }
 
@@ -618,9 +621,8 @@ const refreshBackreferencesChildren = (state: D.State, tree: Tree, node: NodeRef
       result = expand(state, result, backreferenceNode);
     }
 
-    // We also need to update its other parents, in case they should be
-    // displayed inline.
-    result = refreshOtherParentsChildren(state, result, backreferenceNode);
+    // We also need to update its other parents.
+    //result = refreshOtherParentsChildren(state, result, backreferenceNode);
   }
 
   return result;
