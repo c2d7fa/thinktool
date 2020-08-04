@@ -337,20 +337,26 @@ p {
   }
 }
 
-@media (max-width: 500px) {
-  #top-bar nav *:nth-child(2) {
-    display: none !important;
-  }
-}
-
-@media (max-width: 380px) {
+@media (max-width: 720px) {
   #top-bar nav *:nth-child(1) {
     display: none !important;
   }
 }
 
-@media (max-width: 330px) {
+@media (max-width: 500px) {
   #top-bar nav *:nth-child(3) {
+    display: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  #top-bar nav *:nth-child(2) {
+    display: none !important;
+  }
+}
+
+@media (max-width: 330px) {
+  #top-bar nav *:nth-child(4) {
     display: none !important;
   }
 }
