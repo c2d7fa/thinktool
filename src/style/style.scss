@@ -814,16 +814,15 @@ a.plain-text-link:hover {
   opacity: 30%;
 }
 
-.tutorial a.important-link {
-  font-weight: bold;
+.tutorial a {
   color: inherit;
   text-decoration: none;
   border-bottom: 2px solid #00000028;
   transition: border-color core.$quick-transition-time;
-}
 
-.tutorial a.important-link:hover {
-  border-color: #00000080;
+  &:hover {
+    border-color: #00000080;
+  }
 }
 
 .tutorial ~ .overview {

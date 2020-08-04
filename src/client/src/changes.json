@@ -223,6 +223,10 @@
     {
       "date": "2020-08-02",
       "title": "Fixed bug where it was sometimes impossible to expand items that only had other parents but no children."
+    },
+    {
+      "date": "2020-08-05",
+      "title": "Added link to 'r/thinktool' subreddit to toolbar and mentioned it in tutorial."
     }
   ]
 }
