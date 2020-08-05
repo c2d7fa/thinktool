@@ -119,10 +119,7 @@ body {
 /* #region Outline structure */
 
 .subtree {
-  margin: 0 auto;
-  margin-top: 1rem;
-  list-style: none;
-  padding: 0;
+  @include core.reset-list;
 }
 
 .subtree-container > .subtree {
@@ -130,10 +127,79 @@ body {
 }
 
 .item {
+  margin-bottom: 1rem;
+
+  display: grid;
+  grid: "empty parents" auto "bullet item" auto / 20px 1fr;
+  gap: 1px 1rem;
+
+  .bullet {
+    grid-area: bullet;
+  }
+
+  .other-parents-small {
+    grid-area: parents;
+  }
+
+  .content {
+    grid-area: item;
+  }
+}
+
+/* #endregion */
+
+/* #region Other parents list */
+
+.other-parents-small {
   display: flex;
   flex-direction: row;
 
-  margin-bottom: 1rem;
+  @include core.reset-list;
+
+  font-size: core.$other-parents-small-font-size;
+
+  li {
+    display: inline-block;
+    line-height: 100%;
+  }
+
+  li + li {
+    margin-left: 0.5em;
+  }
+
+  .other-parent-small {
+    padding: 0 3px;
+    color: hsl(90, 30%, 30%);
+    border: 1px solid hsl(90, 20%, 80%);
+    border-radius: 3px;
+
+    .bullet {
+      margin: 0;
+      margin-top: -2px;
+
+      width: 10px !important;
+      height: 10px !important;
+      min-width: 10px !important;
+      min-height: 10px !important;
+      max-width: 10px !important;
+      max-height: 10px !important;
+
+      .bullet-hover-rect {
+        opacity: 0%;
+      }
+    }
+
+    transition: border-color core.$quick-transition-time;
+
+    cursor: pointer;
+    &:hover {
+      border-color: hsl(90, 20%, 80%);
+
+      .bullet .bullet-hover-rect {
+        opacity: 100%;
+      }
+    }
+  }
 }
 
 /* #endregion */
@@ -560,10 +626,8 @@ a.plain-text-link:hover {
 .link-autocomplete-popup-results {
   flex: 1 1 100%;
 
-  margin: 0;
-  padding: 0;
+  @include core.reset-list;
 
-  list-style: none;
   overflow-y: auto;
   overflow-wrap: break-word;
 }
@@ -984,9 +1048,7 @@ a.plain-text-link:hover {
 }
 
 .changelog-entries {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+  @include core.reset-list;
 
   display: flex;
   flex-direction: column;

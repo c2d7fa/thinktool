@@ -227,6 +227,14 @@
     {
       "date": "2020-08-05",
       "title": "Added link to 'r/thinktool' subreddit to toolbar and mentioned it in tutorial."
+    },
+    {
+      "date": "2020-08-05",
+      "title": "Show other parents above items (instead of showing them as children)."
+    },
+    {
+      "date": "2020-08-05",
+      "title": "Clicking on parents now jumps there by default, instead of expanding them below the item."
     }
   ]
 }

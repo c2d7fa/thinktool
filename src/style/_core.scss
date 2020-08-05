@@ -7,6 +7,8 @@
 $ui-tiny-font-size: 0.9 * 0.9rem;
 $ui-small-font-size: 0.9rem;
 
+$other-parents-small-font-size: $ui-tiny-font-size;
+
 $quick-transition-time: 150ms;
 
 $top-bar-ui-color: #00000060;
@@ -57,4 +59,10 @@ $toolbar-border: 1px solid #00000020;
   &:active:not(:disabled) {
     background-color: color.scale($color, $alpha: -83%);
   }
+}
+
+@mixin reset-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
