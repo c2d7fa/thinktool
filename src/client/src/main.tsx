@@ -749,7 +749,11 @@ function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: 
   const listItems = otherParents.map((otherParentThing) => {
     return (
       <li>
-        <span className="other-parent-small">
+        <span
+          className="other-parent-small"
+          onClick={() => {
+            props.context.setSelectedThing(otherParentThing);
+          }}>
           <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
           &nbsp;
           {truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
