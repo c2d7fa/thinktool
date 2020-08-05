@@ -753,7 +753,8 @@ function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: 
           className="other-parent-small"
           onClick={() => {
             props.context.setSelectedThing(otherParentThing);
-          }}>
+          }}
+          title={Data.contentText(props.context.state, otherParentThing)}>
           <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
           &nbsp;
           {truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
