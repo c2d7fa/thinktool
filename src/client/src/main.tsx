@@ -683,8 +683,20 @@ function ExpandableItem(p: {
       p.context.setTree(
         T.toggleLink(p.context.state, p.context.tree, p.parent, T.thing(p.context.tree, p.node)),
       );
+    } else if (p.isOtherParent) {
+      // Behavior of parents is swapped – clicking jumps, middle click expands.
+      p.context.setSelectedThing(T.thing(p.context.tree, p.node));
     } else {
       p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
+    }
+  }
+
+  function jump() {
+    if (p.isOtherParent) {
+      // Behavior of parents is swapped – clicking jumps, middle click expands.
+      p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
+    } else {
+      p.context.setSelectedThing(T.thing(p.context.tree, p.node));
     }
   }
 
@@ -728,9 +740,7 @@ function ExpandableItem(p: {
           beginDrag={beginDrag}
           status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
           toggle={toggle}
-          onMiddleClick={() => {
-            p.context.setSelectedThing(T.thing(p.context.tree, p.node));
-          }}
+          onMiddleClick={jump}
         />
         <Content context={p.context} node={p.node} />
       </div>

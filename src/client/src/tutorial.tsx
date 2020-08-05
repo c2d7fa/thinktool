@@ -271,10 +271,8 @@ export function StepFlexibleHierarchy() {
         </span>
       </p>
       <p>
-        <i>
-          By the way, notice how Thinktool automatically shows you other parents for each item. This can
-          sometimes help you find items that are related to the one you're looking at.
-        </i>
+        By the way, notice how Thinktool automatically shows you each item's other parents. You can click on
+        these to jump there.
       </p>
     </>
   );
@@ -329,8 +327,9 @@ export function StepStayingFocused() {
         <strong>In fact, you can jump to any item.</strong> First focus the item by clicking on it, and then
         press
         <span className="fake-button">
-          <span className="icon fas fa-hand-point-right"></span>Jump.
-        </span>
+          <span className="icon fas fa-hand-point-right"></span>Jump,
+        </span>{" "}
+        or just middle click on the bullet.
       </p>
       <p>
         <strong>If you get lost,</strong> you can always go back to the default item with{" "}
