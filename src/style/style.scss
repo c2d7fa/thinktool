@@ -120,8 +120,6 @@ body {
 
 .subtree {
   @include core.reset-list;
-  margin: 0 auto;
-  margin-top: 1rem;
 }
 
 .subtree-container > .subtree {
@@ -132,7 +130,8 @@ body {
   margin-bottom: 1rem;
 
   display: grid;
-  grid: "empty parents" auto "bullet item" auto / calc(20px + 1rem) 1fr;
+  grid: "empty parents" auto "bullet item" auto / 20px 1fr;
+  gap: 1px 1rem;
 
   .bullet {
     grid-area: bullet;
@@ -142,7 +141,6 @@ body {
     grid-area: parents;
   }
 
-  // [TODO] This should also include the "Other parents" label.
   .content {
     grid-area: item;
   }
