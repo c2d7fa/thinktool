@@ -1,8 +1,6 @@
 name: Deploy static web resources
 on:
-  push:
-    branches:
-      - prod-static
+  - workflow_dispatch
 jobs:
   deploy:
     runs-on: ubuntu-latest

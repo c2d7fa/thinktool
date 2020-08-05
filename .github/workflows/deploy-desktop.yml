@@ -1,8 +1,6 @@
 name: Compile and upload desktop apps
 on:
-  push:
-    branches:
-      - prod-desktop
+  - workflow_dispatch
 jobs:
   desktop-linux:
     runs-on: ubuntu-latest

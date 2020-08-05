@@ -1,8 +1,6 @@
 name: Build desktop apps as artifacts
 on:
-  push:
-    branches:
-      - build-desktop
+  - workflow_dispatch
 jobs:
   desktop-linux:
     runs-on: ubuntu-latest
