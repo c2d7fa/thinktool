@@ -1,16 +1,16 @@
-name: Deploy static resources
+name: Deploy static web resources
 on:
   push:
     branches:
       - prod-static
 jobs:
-  static:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v1
       - name: Build static resources
-        run: ./tools/build-client.sh && ./tools/build-static.sh
+        run: ./tools/build-web.sh
         env:
           DIAFORM_API_HOST: ${{secrets.api_host}}
       - name: Deploy to Azure Storage and purge Cloudflare cache

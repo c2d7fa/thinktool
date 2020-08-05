@@ -4,6 +4,7 @@ import * as Tutorial from "../tutorial";
 import {Context} from "../context";
 import * as Ac from "../actions";
 import * as Sh from "../shortcuts";
+import {ExternalLink} from "./ExternalLink";
 
 function ToolbarGroup(props: {children: React.ReactNode; title?: string}) {
   if (props.title === undefined) {
@@ -31,6 +32,8 @@ function ToolbarButton(props: {
 }) {
   const shortcut = Sh.format(Ac.shortcut(props.action));
 
+  const iconClasses = props.icon === "reddit" ? "fab fa-reddit-alien" : `fas fa-${props.icon}`;
+
   return (
     <button
       className={
@@ -53,6 +56,11 @@ function ToolbarButton(props: {
         // Last tested 2020-05-31. Don't remove this without testing on macOS.
         ev.preventDefault();
       }}
+      onAuxClick={(ev) => {
+        console.log("Clicked button %o (aux)", props.action);
+        Ac.execute(props.context, props.action);
+        ev.preventDefault();
+      }}
       onClick={(ev) => {
         console.log("Clicked button %o", props.action);
         Ac.execute(props.context, props.action);
@@ -60,7 +68,7 @@ function ToolbarButton(props: {
       }}
       title={props.description + (shortcut === "" ? "" : ` [${shortcut}]`)}
       disabled={!Ac.enabled(props.context, props.action)}>
-      <span className={`icon fas fa-${props.icon}`}></span>
+      <span className={`icon ${iconClasses}`}></span>
       {props.label}
     </button>
   );
@@ -86,9 +94,9 @@ export default function Toolbar(props: {context: Context}) {
         />
         <ToolbarButton
           action="zoom"
-          description="Jump to the selected item"
-          icon="expand-arrows-alt"
-          label="Zoom"
+          description="Jump to the currently selected item. To select an item, just click somewhere inside that item's text."
+          icon="hand-point-right"
+          label="Jump"
           context={props.context}
         />
       </ToolbarGroup>
@@ -183,6 +191,22 @@ export default function Toolbar(props: {context: Context}) {
         />
       </ToolbarGroup>
       <ToolbarGroup title="Help">
+        {/* Because we want the behavior of the subreddit button to follow that of ExternalLink,
+            which may differ between the web and desktop clients, we set up a fake link, and
+            then make the button fake-click the link. This is pretty silly, but it seems to
+            work.
+            
+            See the Actions module for the implementation. */}
+        <div id="exceedingly-silly-link-hack" style={{display: "none"}}>
+          <ExternalLink href="https://old.reddit.com/r/thinktool/">You should not see this!</ExternalLink>
+        </div>
+        <ToolbarButton
+          action="forum"
+          description="Open the subreddit."
+          icon="reddit"
+          label="Forum"
+          context={props.context}
+        />
         <ToolbarButton
           action="tutorial"
           description="Go through the tutorial again."
@@ -195,15 +219,6 @@ export default function Toolbar(props: {context: Context}) {
           description="Show list of updates to Thinktool."
           icon="list"
           label="Updates"
-          context={props.context}
-        />
-      </ToolbarGroup>
-      <ToolbarGroup title="Type">
-        <ToolbarButton
-          action="toggle-type"
-          description="Toggle type of focused item between 'Note' (default) and 'Page' types."
-          icon="sticky-note"
-          label="Toggle"
           context={props.context}
         />
       </ToolbarGroup>

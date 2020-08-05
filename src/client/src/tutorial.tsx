@@ -18,7 +18,7 @@ const steps: {name: string; introduces: ActionName[]}[] = [
   {name: "Reorganizing", introduces: ["remove", "destroy", "indent", "unindent", "up", "down"]},
   {name: "Bidirectional linking", introduces: ["insert-link"]},
   {name: "Navigation", introduces: ["find", "zoom", "home"]},
-  {name: "The end", introduces: ["tutorial"]},
+  {name: "The end", introduces: ["tutorial", "forum"]},
 ];
 
 export function isActive(state: State): boolean {
@@ -316,11 +316,21 @@ export function StepStayingFocused() {
   return (
     <>
       <p>
-        <strong>Navigate to an item.</strong> First focus it by clicking on it, and then press
+        <i>
+          Your workspace can quickly get cluttered when following links or looking at parents. You can jump to
+          items to show them in an expanded view.
+        </i>
+      </p>
+      <p>
+        <strong>To jump to a link,</strong> simply middle click or shift click the link. The linked item will
+        then open in an expanded view, showing just that item.
+      </p>
+      <p>
+        <strong>In fact, you can jump to any item.</strong> First focus the item by clicking on it, and then
+        press
         <span className="fake-button">
-          <span className="icon fas fa-expand-arrows-alt"></span>Zoom.
+          <span className="icon fas fa-hand-point-right"></span>Jump.
         </span>
-        Now you can see just that item's children, as well as any parents and references in an expanded view.
       </p>
       <p>
         <strong>If you get lost,</strong> you can always go back to the default item with{" "}
@@ -329,7 +339,7 @@ export function StepStayingFocused() {
         </span>
       </p>
       <p>
-        <strong>Find a specific item</strong> using the
+        <strong>You can also find a specific item</strong> using the
         <span className="fake-button">
           <span className="icon fas fa-search"></span>Find
         </span>
@@ -353,11 +363,17 @@ export function StepHaveFun() {
         button.
       </p>
       <p>
-        This tutorial is a work-in-progress. I'd love to hear your feedback – just send me an email at{" "}
-        <a className="email" href="mailto:jonas@thinktool.io">
-          jonas@thinktool.io
-        </a>
-        . You're also welcome to email me for any other reason!
+        If you have any questions, feedback or other comments, post them to{" "}
+        <ExternalLink href="https://old.reddit.com/r/thinktool/">the subreddit</ExternalLink>, which you can
+        always get to by pressing{" "}
+        <span className="fake-button">
+          <span className="icon fab fa-reddit-alien"></span>Forum
+        </span>
+        .
+      </p>
+      <p>
+        If you prefer, you are also welcome to email me directly at{" "}
+        <ExternalLink href="mailto:jonas@thinktool.io">jonas@thinktool.io</ExternalLink>.
       </p>
       <p>
         <i>Thanks for trying out Thinktool!</i>

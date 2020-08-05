@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import {Communication} from "thinktool-shared";
+import {Communication} from "@thinktool/shared";
 
 function grouped(changelog: Communication.Changelog): {[date: string]: string[]} {
   let result: {[date: string]: string[]} = {};

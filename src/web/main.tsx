@@ -1,8 +1,10 @@
-import * as Client from "thinktool-client";
+import "core-js/stable";
+
+import * as Client from "@thinktool/client";
 
 import * as Configuration from "../../conf/client.json";
 import * as DemoData from "./demo-data.json";
-import {Communication} from "../shared/dist";
+import {Communication} from "@thinktool/shared";
 
 (window as any).thinktoolApp = () => Client.thinktoolApp({apiHost: Configuration.apiHost});
 (window as any).thinktoolDemo = () =>

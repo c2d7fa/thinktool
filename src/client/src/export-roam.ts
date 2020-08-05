@@ -1,5 +1,5 @@
 import * as D from "./data";
-import {General as G} from "thinktool-shared";
+import * as Misc from "@johv/miscjs";
 
 export type RoamImport = RoamImportPage[];
 export type RoamImportPage = {title: string; children: RoamImportItem[]};
@@ -70,7 +70,7 @@ function exportData(state: D.State): RoamImport {
 
   let exportedLooseItems: RoamImportItem[] = [];
   while (i++ < 1000) {
-    const nextLooseItem = G.setMinus(referencedItems, placedItems)[0];
+    const nextLooseItem = Misc.setMinus(referencedItems, placedItems)[0];
     if (nextLooseItem === undefined) break;
     exportedLooseItems.push(exportItem(nextLooseItem));
   }

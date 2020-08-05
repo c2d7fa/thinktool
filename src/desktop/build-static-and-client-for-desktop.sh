@@ -1,22 +1,24 @@
 #!/usr/bin/env bash
 
-SRC=..
-
 set -e
 
 mkdir -p build
 
+cd ../..
+
+echo "Installing dependencies..."
+npm ci
+
 echo "Buliding images..."
-cp $SRC/static/*.svg build
+cp src/static/*.svg src/desktop/build
+cp src/static/*.png src/desktop/build
 
-echo "Building CSS..."
-cp $SRC/static/style.css build
+echo "Building stylesheets..."
+node_modules/.bin/sass src/style:src/desktop/build
 
-echo "Building client-specific resources..."
+cd src/desktop
+
+echo "Building static resources specific to desktop client..."
 cp -r static/* build
 
-echo "Building client code..."
-cd ../..
-./tools/build-client.sh
-cd src/desktop
-cp ../../dist/static/bundle.{js,js.map} build
+echo "Building JavaScript..."

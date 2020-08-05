@@ -1,4 +1,4 @@
-import {General as G} from "thinktool-shared";
+import * as Misc from "@johv/miscjs";
 import * as D from "./data";
 
 export interface Node {
@@ -196,7 +196,7 @@ export function openedLinkNode(tree: Tree, node: NodeRef, link: string): NodeRef
 
 export function setOpenedLinkNode(tree: Tree, node: NodeRef, link: string, linkNode: NodeRef | null) {
   if (linkNode === null) {
-    return updateNode(tree, node, (n) => ({...n, openedLinks: G.removeKey(n.openedLinks, link)}));
+    return updateNode(tree, node, (n) => ({...n, openedLinks: Misc.removeKey(n.openedLinks, link)}));
   } else {
     return updateNode(tree, node, (n) => ({...n, openedLinks: {...n.openedLinks, [link]: linkNode}}));
   }

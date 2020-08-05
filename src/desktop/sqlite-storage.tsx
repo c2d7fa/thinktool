@@ -1,7 +1,7 @@
 import * as Sqlite from "sqlite";
 import {Database as SqliteDriver} from "sqlite3";
 
-import * as Client from "thinktool-client";
+import * as Client from "@thinktool/client";
 
 export async function initialize(path: string): Promise<Client.Storage.Storage> {
   const db = await Sqlite.open({filename: path, driver: SqliteDriver});

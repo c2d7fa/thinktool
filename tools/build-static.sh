@@ -42,7 +42,5 @@ for (const file of fs.readdirSync("src/markup")) {
 }
 EOF
 
-
-
 echo "Building blog..."
 ./tools/build-blog.sh

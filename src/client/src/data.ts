@@ -1,4 +1,5 @@
-import {General as G, Communication} from "thinktool-shared";
+import {Communication} from "@thinktool/shared";
+import * as Misc from "@johv/miscjs";
 
 export type Content = Communication.Content;
 
@@ -107,7 +108,7 @@ export function insertChild(
       ...result.things,
       [parent]: {
         ...parentData,
-        children: G.splice(parentData.children, index, 0, {connectionId}),
+        children: Misc.splice(parentData.children, index, 0, {connectionId}),
       },
     },
   };
@@ -149,7 +150,7 @@ export function removeChild(state: State, parent: string, index: number): State 
       ...result.things,
       [parent]: {
         ...parentData,
-        children: G.removeBy(
+        children: Misc.removeBy(
           parentData.children,
           removedConnection,
           (x, y) => x.connectionId === y.connectionId,
@@ -164,7 +165,7 @@ export function removeChild(state: State, parent: string, index: number): State 
       ...result.things,
       [child]: {
         ...childData,
-        parents: G.removeBy(
+        parents: Misc.removeBy(
           childData.parents,
           removedConnection,
           (x, y) => x.connectionId === y.connectionId,
@@ -173,7 +174,7 @@ export function removeChild(state: State, parent: string, index: number): State 
     },
   };
 
-  result = {...result, connections: G.removeKey(result.connections, removedConnection.connectionId)};
+  result = {...result, connections: Misc.removeKey(result.connections, removedConnection.connectionId)};
 
   return result;
 }
@@ -257,7 +258,7 @@ export function remove(state: State, removedThing: string): State {
   let newState = state;
   for (const parent of parents(newState, removedThing)) {
     while (children(newState, parent).includes(removedThing)) {
-      newState = removeChild(newState, parent, G.indexOfBy(children(newState, parent), removedThing)!);
+      newState = removeChild(newState, parent, Misc.indexOfBy(children(newState, parent), removedThing)!);
     }
   }
 

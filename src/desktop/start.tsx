@@ -1,6 +1,6 @@
 import * as Electron from "electron";
 
-import * as Client from "thinktool-client";
+import * as Client from "@thinktool/client";
 import * as SqliteStorage from "./sqlite-storage";
 
 // Get rid of warning about the default value of allowRenderProcessReuse being

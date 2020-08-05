@@ -1,4 +1,5 @@
-import {General as G, Communication} from "thinktool-shared";
+import {Communication} from "@thinktool/shared";
+import * as Misc from "@johv/miscjs";
 
 import * as ChangelogData from "./changes.json";
 
@@ -116,8 +117,8 @@ function diffState(
       } else if (JSON.stringify(oldState.things[thing]) !== JSON.stringify(newState.things[thing])) {
         if (
           // [TODO] Can we get better typechecking here?
-          JSON.stringify(G.removeKey(oldState.things[thing] as any, "content")) ===
-          JSON.stringify(G.removeKey(newState.things[thing] as any, "content"))
+          JSON.stringify(Misc.removeKey(oldState.things[thing] as any, "content")) ===
+          JSON.stringify(Misc.removeKey(newState.things[thing] as any, "content"))
         ) {
           changedContent.push(thing);
         } else {
@@ -1054,5 +1055,4 @@ export async function thinktoolUser({apiHost}: {apiHost: string}) {
 }
 
 export * as Storage from "./storage";
-export {Communication} from "thinktool-shared";
-export {React};
+export {Communication} from "@thinktool/shared";
