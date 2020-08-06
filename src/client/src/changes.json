@@ -235,6 +235,10 @@
     {
       "date": "2020-08-05",
       "title": "Clicking on parents now jumps there by default, instead of expanding them below the item."
+    },
+    {
+      "date": "2020-08-06",
+      "title": "When pasting multiple paragraphs, each paragaph is now inserted as its own item."
     }
   ]
 }
