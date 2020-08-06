@@ -247,6 +247,29 @@ export function ContentEditor(props: {
     }
   }, [editing]);
 
+  function onPaste(ev: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const text = ev.clipboardData.getData("text/plain");
+
+    if (E.isParagraphFormattedText(text)) {
+      const paragraphs = E.paragraphs(text);
+
+      let [state, tree] = [props.context.state, props.context.tree];
+      let lastNode = props.node;
+
+      for (const paragraph of paragraphs) {
+        const [state_, tree_, thing, lastNode_] = T.createSiblingAfter(state, tree, lastNode);
+        [state, tree, lastNode] = [state_, tree_, lastNode_];
+
+        state = D.setContent(state, thing, E.contentFromEditString(paragraph));
+      }
+
+      props.context.setState(state);
+      props.context.setTree(tree);
+
+      return ev.preventDefault();
+    }
+  }
+
   return (
     <div className={`editor ${props.className}`}>
       <textarea
@@ -261,6 +284,7 @@ export function ContentEditor(props: {
             props.context.setSelectionInFocusedContent({start, end});
         }}
         onKeyDown={onKeyDown}
+        onPaste={onPaste}
       />
     </div>
   );
