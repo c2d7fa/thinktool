@@ -14,6 +14,8 @@ Electron.app.whenReady().then(async () => {
     },
   });
 
+  window.setMenu(null);
+
   const path = Electron.dialog.showSaveDialogSync(window, {
     title: "Open or Create File",
     buttonLabel: "Open",

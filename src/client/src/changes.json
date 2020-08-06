@@ -239,6 +239,10 @@
     {
       "date": "2020-08-06",
       "title": "When pasting multiple paragraphs, each paragaph is now inserted as its own item."
+    },
+    {
+      "date": "2020-08-06",
+      "title": "(Desktop client:) Removed the unused menu bar."
     }
   ]
 }
