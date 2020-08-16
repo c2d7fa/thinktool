@@ -1,5 +1,6 @@
+@use "components";
+
 @import url("https://fonts.googleapis.com/css?family=Titillium+Web:400,400i&display=swap");
-@import url("https://fonts.googleapis.com/css?family=Montserrat:500,500i,800,800i&display=swap&subset=cyrillic,latin-ext");
 
 body {
   margin: 0;
@@ -30,14 +31,14 @@ main {
   height: 0;
   overflow: hidden;
   max-width: 100%;
-}
 
-.video-embed iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 .block:not(:last-of-type) {
@@ -84,39 +85,39 @@ main {
 
   box-shadow: 0 3px 6px -3px #c0c0c0;
   border: 1px solid #f4f4f4;
-}
 
-.feature .description {
-  padding: 1rem;
-}
+  .description {
+    padding: 1rem;
+  }
 
-.feature h1 {
-  font-size: 1em;
-}
+  h1 {
+    font-size: 1em;
+  }
 
-.feature h1 + p {
-  margin-top: 0;
-}
+  h1 + p {
+    margin-top: 0;
+  }
 
-.feature .screenshot {
-  margin-top: auto;
-  border-radius: 0 0 6px 6px;
-  height: 240px;
-  background-color: #ffffff;
-  border-top: 1px solid #f0f0f0;
+  .screenshot {
+    margin-top: auto;
+    border-radius: 0 0 6px 6px;
+    height: 240px;
+    background-color: #ffffff;
+    border-top: 1px solid #f0f0f0;
 
-  display: flex;
-  justify-content: center;
-  overflow: hidden;
-  padding: 1rem 0;
-  box-sizing: border;
-}
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+    padding: 1rem 0;
+    box-sizing: border;
 
-.feature .screenshot img {
-  width: auto;
-  max-width: 100%;
-  max-height: 100%;
-  margin: auto;
+    img {
+      width: auto;
+      max-width: 100%;
+      max-height: 100%;
+      margin: auto;
+    }
+  }
 }
 
 @media (max-width: 1380px) {
@@ -167,11 +168,11 @@ main {
   justify-content: center;
 
   margin: -1rem;
-}
 
-.horizontal > * {
-  margin: 1rem;
-  flex: 1 1 100%;
+  & > * {
+    margin: 1rem;
+    flex: 1 1 100%;
+  }
 }
 
 @media (max-width: 900px) {
@@ -190,19 +191,19 @@ a {
   color: inherit;
   text-decoration: none;
   margin: 0;
-}
 
-a span {
-  border-bottom: 2px solid #00000028;
-  transition: border-color 150ms;
-}
+  span {
+    border-bottom: 2px solid #00000028;
+    transition: border-color 150ms;
+  }
 
-a:hover span {
-  border-color: #00000060;
-}
+  &:hover span {
+    border-color: #00000060;
+  }
 
-a:active span {
-  border-color: #00000010;
+  &:active span {
+    border-color: #00000010;
+  }
 }
 
 h1 {
@@ -212,14 +213,14 @@ h1 {
   font-weight: 800;
 }
 
-h1 + p {
-  margin-top: 1.5em;
-}
-
 p {
   margin: 0;
   margin-top: 1em;
   line-height: 175%;
+
+  h1 + & {
+    margin-top: 1.5em;
+  }
 }
 
 .demo {
@@ -240,6 +241,16 @@ p {
   transition: box-shadow 150ms ease, transform 150ms ease;
 
   white-space: nowrap;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: #00000080 0 0 12px;
+  }
+
+  &:active {
+    transform: scale(1.05);
+    box-shadow: #00000060 0 0 9px;
+  }
 }
 
 .demo-big {
@@ -253,16 +264,6 @@ p {
   font-size: 0.8em;
 }
 
-.demo:hover {
-  transform: scale(1.1);
-  box-shadow: #00000080 0 0 12px;
-}
-
-.demo:active {
-  transform: scale(1.05);
-  box-shadow: #00000060 0 0 9px;
-}
-
 #top-bar {
   padding: 1em 2em;
   background: radial-gradient(circle at bottom, #f0f0f0 0%, #fcfcfc 150%);
@@ -271,93 +272,82 @@ p {
   align-items: center;
 
   box-shadow: 0 0 6px 0 #d8d8d8;
-}
 
-#top-bar #logo {
-  text-transform: uppercase;
-  font-size: 2em;
-  font-weight: bold;
-  display: inline-block;
-  cursor: default;
-  user-select: none;
-
-  margin-right: auto;
-}
-
-#top-bar a#logo {
-  cursor: pointer;
-}
-
-#top-bar nav {
-  display: flex;
-  align-items: center;
-}
-
-#top-bar nav > * + * {
-  margin-left: 2rem;
-}
-
-#top-bar nav a:not(.demo) {
-  display: inline-block;
-
-  text-transform: uppercase;
-  background-color: inherit;
-  font-family: "Titillium Web";
-  border-radius: 6px;
-
-  color: #b0b0b0;
-  text-decoration: none;
-
-  transition: color 0.3s ease, background-color 0.3s ease;
-
-  user-select: none;
-
-  white-space: nowrap;
-}
-
-#top-bar nav a:not(.demo):hover {
-  color: #808080;
-  background-color: #f8f8f8;
-}
-
-#top-bar nav a:not(.demo):active {
-  color: #404040;
-  background-color: #f8f8f8;
-}
-
-@media (max-width: 800px) {
-  #top-bar #logo {
-    font-size: 1.2em;
+  #logo {
+    @include components.logo;
+    font-size: 2rem;
+    margin-right: auto;
   }
-}
 
-@media (max-width: 650px) {
-  #top-bar {
+  nav {
+    display: flex;
+    align-items: center;
+  }
+
+  nav > * + * {
+    margin-left: 2rem;
+  }
+
+  nav a:not(.demo) {
+    display: inline-block;
+
+    text-transform: uppercase;
+    background-color: inherit;
+    font-family: "Titillium Web";
+    border-radius: 6px;
+
+    color: #b0b0b0;
+    text-decoration: none;
+
+    transition: color 0.3s ease, background-color 0.3s ease;
+
+    user-select: none;
+
+    white-space: nowrap;
+  }
+
+  nav a:not(.demo):hover {
+    color: #808080;
+    background-color: #f8f8f8;
+  }
+
+  nav a:not(.demo):active {
+    color: #404040;
+    background-color: #f8f8f8;
+  }
+
+  @media (max-width: 800px) {
+    #logo {
+      font-size: 1.2em;
+    }
+  }
+
+  @media (max-width: 720px) {
+    nav *:nth-child(1) {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 650px) {
     font-size: 0.8em;
   }
-}
 
-@media (max-width: 720px) {
-  #top-bar nav *:nth-child(1) {
-    display: none !important;
+  @media (max-width: 500px) {
+    nav *:nth-child(3) {
+      display: none !important;
+    }
   }
-}
 
-@media (max-width: 500px) {
-  #top-bar nav *:nth-child(3) {
-    display: none !important;
+  @media (max-width: 380px) {
+    nav *:nth-child(2) {
+      display: none !important;
+    }
   }
-}
 
-@media (max-width: 380px) {
-  #top-bar nav *:nth-child(2) {
-    display: none !important;
-  }
-}
-
-@media (max-width: 330px) {
-  #top-bar nav *:nth-child(4) {
-    display: none !important;
+  @media (max-width: 330px) {
+    nav *:nth-child(4) {
+      display: none !important;
+    }
   }
 }
 
@@ -434,8 +424,7 @@ footer {
   margin-top: auto;
 }
 
-/* Login page */
-/* [TODO] Move this to separate file */
+/* #region Login page */
 
 .login {
   display: flex;
@@ -588,6 +577,8 @@ form input {
   margin-top: 1rem;
   display: inline-block;
 }
+
+/* #endregion */
 
 /* #region Blog index */
 

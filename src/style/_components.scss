@@ -1,5 +1,14 @@
 @use "base.scss";
 
+@mixin logo {
+  font-family: "Montserrat";
+  text-transform: uppercase;
+  font-weight: bold;
+  display: inline-block;
+  user-select: none;
+  text-decoration: none;
+}
+
 @mixin overlay {
   backdrop-filter: blur(6px);
   background-color: #ffffffc0;

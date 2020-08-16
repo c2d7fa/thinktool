@@ -692,24 +692,14 @@ a.plain-text-link:hover {
   z-index: 1500;
 }
 
-.logo {
-  font-family: "Montserrat";
+.top-bar .logo {
+  @include components.logo;
   margin-right: 1rem;
+
+  transition: color base.$quick-transition-time;
   color: #606060;
-  text-transform: uppercase;
-  font-weight: bold;
-  display: inline-block;
-  user-select: none;
-  text-decoration: none;
-}
-
-.logo:hover {
-  color: #202020;
-}
-
-@media (max-width: 480px) {
-  .top-bar .logo {
-    display: none;
+  &:hover {
+    color: #404040;
   }
 }
 
