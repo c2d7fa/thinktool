@@ -10,6 +10,7 @@ $ui-small-font-size: 0.9rem;
 $other-parents-small-font-size: $ui-tiny-font-size;
 
 $quick-transition-time: 150ms;
+$slow-transition-time: 300ms;
 
 $top-bar-ui-color: #00000060;
 
@@ -34,6 +35,8 @@ $toolbar-border: 1px solid #00000020;
 }
 
 @mixin subtle-button($color: #000000) {
+  @include ui-font;
+
   border: none;
   outline: none;
 
@@ -42,6 +45,8 @@ $toolbar-border: 1px solid #00000020;
   border-radius: 3px;
 
   background-color: transparent;
+
+  transition: all $quick-transition-time;
 
   &:hover:not(:disabled) {
     background-color: color.scale($color, $alpha: -90%);

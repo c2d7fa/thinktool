@@ -218,8 +218,6 @@ body {
 
 button.backreferences-text {
   @include components.ui-heading;
-  cursor: pointer;
-
   color: hsl(180, 30%, 30%);
   @include base.subtle-button(hsl(180, 30%, 30%));
 }
@@ -779,10 +777,7 @@ a.plain-text-link:hover {
 }
 
 .icon {
-  display: inline-block;
-  text-align: center;
-  width: 1em;
-  margin-right: 0.5em;
+  @include components.icon-before;
 }
 
 .toolbar-group h6 {

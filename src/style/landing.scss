@@ -1,4 +1,5 @@
 @use "components";
+@use "base";
 
 @import url("https://fonts.googleapis.com/css?family=Titillium+Web:400,400i&display=swap");
 
@@ -11,7 +12,6 @@ body {
 
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
 main {
@@ -238,18 +238,16 @@ p {
   background: radial-gradient(hsl(12, 90%, 63%), hsl(6, 90%, 60%));
   box-shadow: #00000040 0 0 6px;
 
-  transition: box-shadow 150ms ease, transform 150ms ease;
+  transition: transform base.$slow-transition-time;
 
   white-space: nowrap;
 
   &:hover {
     transform: scale(1.1);
-    box-shadow: #00000080 0 0 12px;
   }
 
   &:active {
     transform: scale(1.05);
-    box-shadow: #00000060 0 0 9px;
   }
 }
 
@@ -265,18 +263,25 @@ p {
 }
 
 #top-bar {
-  padding: 1em 2em;
-  background: radial-gradient(circle at bottom, #f0f0f0 0%, #fcfcfc 150%);
+  position: sticky;
+  top: 0;
+
+  @include components.overlay;
+  z-index: 9000;
+  border-bottom: base.$overlay-border;
+
+  padding: 1rem 1.5rem;
+
   display: flex;
   justify-content: flex-end;
   align-items: center;
 
-  box-shadow: 0 0 6px 0 #d8d8d8;
-
   #logo {
     @include components.logo;
     font-size: 2rem;
-    margin-right: auto;
+    margin-right: auto; // Left align
+
+    color: #404040;
   }
 
   nav {
@@ -285,25 +290,20 @@ p {
   }
 
   nav > * + * {
-    margin-left: 2rem;
+    margin-left: 1.5rem;
   }
 
   nav a:not(.demo) {
     display: inline-block;
 
-    text-transform: uppercase;
-    background-color: inherit;
-    font-family: "Titillium Web";
-    border-radius: 6px;
-
     color: #b0b0b0;
-    text-decoration: none;
+    @include base.subtle-button(#b0b0b0);
 
-    transition: color 0.3s ease, background-color 0.3s ease;
+    margin-left: 1.5rem;
 
-    user-select: none;
-
-    white-space: nowrap;
+    i {
+      @include components.icon-before;
+    }
   }
 
   nav a:not(.demo):hover {
@@ -316,36 +316,36 @@ p {
     background-color: #f8f8f8;
   }
 
-  @media (max-width: 800px) {
+  @media (max-width: 860px) {
     #logo {
       font-size: 1.2em;
     }
   }
 
-  @media (max-width: 720px) {
-    nav *:nth-child(1) {
+  @media (max-width: 760px) {
+    nav > *:nth-child(3) {
       display: none !important;
     }
   }
 
-  @media (max-width: 650px) {
+  @media (max-width: 620px) {
     font-size: 0.8em;
   }
 
-  @media (max-width: 500px) {
-    nav *:nth-child(3) {
+  @media (max-width: 530px) {
+    nav > *:nth-child(5) {
       display: none !important;
     }
   }
 
-  @media (max-width: 380px) {
-    nav *:nth-child(2) {
+  @media (max-width: 430px) {
+    nav > *:nth-child(2) {
       display: none !important;
     }
   }
 
-  @media (max-width: 330px) {
-    nav *:nth-child(4) {
+  @media (max-width: 360px) {
+    nav > *:nth-child(1) {
       display: none !important;
     }
   }
