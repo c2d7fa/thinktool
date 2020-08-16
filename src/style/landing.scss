@@ -91,7 +91,9 @@ main {
   }
 
   h1 {
-    font-size: 1em;
+    font-size: 1.2em;
+    margin-bottom: 0.5em;
+    @include components.heading;
   }
 
   h1 + p {
@@ -208,9 +210,8 @@ a {
 
 h1 {
   margin: 0;
-  text-transform: uppercase;
+  @include components.heading;
   font-size: 1.5em;
-  font-weight: 800;
 }
 
 p {
