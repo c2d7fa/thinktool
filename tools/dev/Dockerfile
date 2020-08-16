@@ -16,4 +16,7 @@ RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash -
 # Tmux and Tmuxp (see session.tmuxp.yaml)
 RUN apt-get install -y tmux tmuxp
 
+# Other development tools
+RUN apt-get install -y git
+
 WORKDIR /work
