@@ -13,15 +13,6 @@ $quick-transition-time: 150ms;
 
 $top-bar-ui-color: #00000060;
 
-@mixin transparent-white-overlay {
-  backdrop-filter: blur(6px);
-  background-color: #ffffffc0;
-
-  @supports not (backdrop-filter: blur(6px)) {
-    background-color: #fffffff0;
-  }
-}
-
 $overlay-box-shadow-color: #00000020;
 $overlay-box-shadow-radius: 12px;
 $overlay-border: 1px solid #00000030;
@@ -32,7 +23,7 @@ $toolbar-border: 1px solid #00000020;
 @mixin ui-font {
   font-family: "Recursive", monospace;
   font-variation-settings: "MONO" 0.4, "CASL" 0;
-  letter-spacing: 0px;
+  letter-spacing: 0;
 }
 
 @mixin heading-font {

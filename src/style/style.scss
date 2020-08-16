@@ -1,7 +1,5 @@
-@use "core";
-
-$inactive-weight: 350;
-$active-weight: 475;
+@use "components";
+@use "base";
 
 $main-bg-color: #fcfcfc;
 $outline-width: 80ex;
@@ -12,7 +10,7 @@ $outline-width: 80ex;
   color: inherit;
   text-decoration: none;
   border-bottom: 2px solid #00000028;
-  transition: border-color core.$quick-transition-time;
+  transition: border-color base.$quick-transition-time;
 }
 
 .email:hover {
@@ -20,24 +18,7 @@ $outline-width: 80ex;
 }
 
 button {
-  cursor: pointer;
-
-  @include core.ui-font;
-  font-weight: $active-weight;
-
-  transition: all core.$quick-transition-time;
-
-  &:disabled {
-    cursor: default;
-    opacity: 60%;
-    font-weight: $inactive-weight;
-  }
-}
-
-h1,
-h2,
-h3 {
-  @include core.heading-font;
+  @include components.button;
 }
 
 /* #endregion */
@@ -75,17 +56,12 @@ body {
 }
 
 .link-section {
+  @include components.ui-heading;
+
   margin-top: 0;
   margin-bottom: 0.5rem;
 
-  font-size: 0.8em;
   color: #808080;
-  cursor: default;
-
-  @include core.ui-font;
-  font-weight: 400;
-
-  transition: color core.$quick-transition-time, font-weight core.$quick-transition-time;
 }
 
 .overview-main {
@@ -119,7 +95,7 @@ body {
 /* #region Outline structure */
 
 .subtree {
-  @include core.reset-list;
+  @include base.reset-list;
 }
 
 .subtree-container > .subtree {
@@ -154,9 +130,9 @@ body {
   display: flex;
   flex-direction: row;
 
-  @include core.reset-list;
+  @include base.reset-list;
 
-  font-size: core.$other-parents-small-font-size;
+  font-size: base.$other-parents-small-font-size;
 
   li {
     display: inline-block;
@@ -189,7 +165,7 @@ body {
       }
     }
 
-    transition: border-color core.$quick-transition-time;
+    transition: border-color base.$quick-transition-time;
 
     cursor: pointer;
     &:hover {
@@ -230,7 +206,7 @@ body {
 
   cursor: default;
 
-  @include core.ui-font;
+  @include base.ui-font;
 
   align-self: flex-end;
   margin-right: 0.5rem;
@@ -241,13 +217,11 @@ body {
 }
 
 button.backreferences-text {
-  display: inline-block;
-  white-space: nowrap;
+  @include components.ui-heading;
+  cursor: pointer;
 
-  font-size: 0.8em;
   color: hsl(180, 30%, 30%);
-
-  @include core.subtle-button(hsl(180, 30%, 30%));
+  @include base.subtle-button(hsl(180, 30%, 30%));
 }
 
 /* #endregion */
@@ -260,7 +234,7 @@ a.plain-text-link {
   text-decoration: none;
 
   border-bottom: 2px solid #00000028;
-  transition: border-color core.$quick-transition-time;
+  transition: border-color base.$quick-transition-time;
 }
 
 a.plain-text-link:hover {
@@ -282,7 +256,7 @@ a.plain-text-link:hover {
 
   border: 1px solid hsla(40, 80%, 80%, 60%);
 
-  transition: border core.$quick-transition-time;
+  transition: border base.$quick-transition-time;
 }
 
 .internal-link:hover {
@@ -351,11 +325,11 @@ a.plain-text-link:hover {
 .bullet .bullet-hover-rect {
   opacity: 0%;
   fill: #e0e0e0;
-  transition: opacity core.$quick-transition-time, fill core.$quick-transition-time;
+  transition: opacity base.$quick-transition-time, fill base.$quick-transition-time;
 }
 
 .bullet .bullet-circle {
-  transition: fill core.$quick-transition-time;
+  transition: fill base.$quick-transition-time;
 }
 
 .bullet:hover .bullet-hover-rect {
@@ -543,7 +517,7 @@ a.plain-text-link:hover {
 
 .drag-source {
   opacity: 50%;
-  transition: opacity core.$quick-transition-time;
+  transition: opacity base.$quick-transition-time;
 }
 
 /* #endregion */
@@ -560,10 +534,8 @@ a.plain-text-link:hover {
   width: 60vw;
   max-height: 60vh;
 
-  @include core.transparent-white-overlay;
-  border: core.$overlay-border;
-  border-radius: core.$overlay-border-radius;
-  box-shadow: core.$overlay-box-shadow-color 0 0 core.$overlay-box-shadow-radius;
+  @include components.overlay;
+  @include components.popup-with-shadow;
 
   display: flex;
   flex-direction: column;
@@ -620,13 +592,13 @@ a.plain-text-link:hover {
 }
 
 .link-autocomplete-popup-results {
-  border-top: core.$overlay-border;
+  border-top: base.$overlay-border;
 }
 
 .link-autocomplete-popup-results {
   flex: 1 1 100%;
 
-  @include core.reset-list;
+  @include base.reset-list;
 
   overflow-y: auto;
   overflow-wrap: break-word;
@@ -644,7 +616,7 @@ a.plain-text-link:hover {
 
   background-color: #00000008;
   padding: 1rem 2rem;
-  border-radius: core.$overlay-border-radius core.$overlay-border-radius 0 0;
+  border-radius: base.$overlay-border-radius base.$overlay-border-radius 0 0;
 
   &:hover {
     background-color: #00000010;
@@ -683,15 +655,14 @@ a.plain-text-link:hover {
   right: 2rem;
   top: 1rem;
 
-  font-size: core.$ui-small-font-size;
+  font-size: base.$ui-small-font-size;
   vertical-align: middle;
 
-  @include core.ui-font;
-  font-weight: $active-weight;
+  @include components.button;
 
   color: transparent;
 
-  transition: color core.$quick-transition-time;
+  transition: color base.$quick-transition-time;
 }
 
 .link-autocomplete-popup input:hover + .create-label,
@@ -700,13 +671,8 @@ a.plain-text-link:hover {
 }
 
 .link-autocomplete-popup-id {
-  color: #00000040;
+  @include components.item-id;
   margin-left: 1em;
-
-  @include core.ui-font;
-  font-weight: $inactive-weight;
-  font-size: 0.8em;
-  vertical-align: middle;
 }
 
 .link-autocomplete-popup-id::before {
@@ -721,8 +687,8 @@ a.plain-text-link:hover {
   display: flex;
   justify-content: flex-start;
 
-  padding: (core.$ui-small-font-size / 2) 1rem;
-  @include core.transparent-white-overlay;
+  padding: (base.$ui-small-font-size / 2) 1rem;
+  @include components.overlay;
   z-index: 1500;
 }
 
@@ -750,9 +716,9 @@ a.plain-text-link:hover {
 .top-bar button {
   white-space: nowrap;
 
-  font-size: core.$ui-small-font-size;
-  color: core.$top-bar-ui-color;
-  @include core.subtle-button(core.$top-bar-ui-color);
+  font-size: base.$ui-small-font-size;
+  color: base.$top-bar-ui-color;
+  @include base.subtle-button(base.$top-bar-ui-color);
 }
 
 #current-user {
@@ -763,9 +729,9 @@ a.plain-text-link:hover {
     @extend button;
     text-decoration: inherit;
 
-    font-size: core.$ui-small-font-size;
-    color: core.$top-bar-ui-color;
-    @include core.subtle-button(core.$top-bar-ui-color);
+    font-size: base.$ui-small-font-size;
+    color: base.$top-bar-ui-color;
+    @include base.subtle-button(base.$top-bar-ui-color);
   }
 
   a.username {
@@ -784,9 +750,9 @@ a.plain-text-link:hover {
   overflow-x: auto;
   z-index: 550;
 
-  font-size: core.$ui-small-font-size;
-  padding-bottom: core.$ui-small-font-size;
-  @include core.transparent-white-overlay;
+  font-size: base.$ui-small-font-size;
+  padding-bottom: base.$ui-small-font-size;
+  @include components.overlay;
 
   display: flex;
 }
@@ -797,7 +763,7 @@ a.plain-text-link:hover {
 // This is a somewhat awkward way to achieve that.
 
 .toolbar {
-  border-bottom: core.$toolbar-border;
+  border-bottom: base.$toolbar-border;
 }
 
 .toolbar ~ .overview {
@@ -805,7 +771,7 @@ a.plain-text-link:hover {
 }
 
 .overview {
-  border-top: core.$toolbar-border;
+  border-top: base.$toolbar-border;
 }
 
 /* #endregion */
@@ -830,17 +796,9 @@ a.plain-text-link:hover {
 }
 
 .toolbar-group h6 {
-  cursor: default;
+  @include components.ui-heading;
+  font-size: base.$ui-tiny-font-size;
   color: #a0a0a0;
-
-  display: inline-block;
-  margin: 0;
-  padding: 0;
-  white-space: nowrap;
-
-  @include core.ui-font;
-  font-weight: $inactive-weight;
-  font-size: core.$ui-tiny-font-size;
 }
 
 .toolbar-group > div {
@@ -853,10 +811,10 @@ a.plain-text-link:hover {
 .toolbar button {
   white-space: nowrap;
 
-  font-size: core.$ui-small-font-size;
+  font-size: base.$ui-small-font-size;
 
   color: #606060;
-  @include core.subtle-button(#606060);
+  @include base.subtle-button(#606060);
 
   display: flex;
   align-items: center;
@@ -882,7 +840,7 @@ a.plain-text-link:hover {
   color: inherit;
   text-decoration: none;
   border-bottom: 2px solid #00000028;
-  transition: border-color core.$quick-transition-time;
+  transition: border-color base.$quick-transition-time;
 
   &:hover {
     border-color: #00000080;
@@ -901,8 +859,8 @@ a.plain-text-link:hover {
   width: 24rem;
   padding: 1rem;
   background-color: hsl(45, 100%, 85%);
-  border: core.$overlay-border;
-  border-radius: core.$overlay-border-radius;
+  border: base.$overlay-border;
+  border-radius: base.$overlay-border-radius;
 
   max-height: 90vh;
   max-height: calc(100vh - 6rem);
@@ -926,6 +884,7 @@ a.plain-text-link:hover {
 }
 
 .tutorial h1 {
+  @include components.heading;
   font-size: 1.25em;
   margin: 0;
 }
@@ -942,8 +901,8 @@ a.plain-text-link:hover {
 .tutorial .fake-button {
   white-space: nowrap;
 
-  font-size: core.$ui-small-font-size;
-  @include core.ui-font;
+  font-size: base.$ui-small-font-size;
+  @include base.ui-font;
 
   vertical-align: bottom;
   margin: 0 0.25em;
@@ -977,7 +936,7 @@ a.plain-text-link:hover {
 
   color: #000000a0;
 
-  transition: background-color core.$quick-transition-time;
+  transition: background-color base.$quick-transition-time;
 }
 
 .tutorial-navigation button:not(:disabled):hover {
@@ -1038,7 +997,7 @@ a.plain-text-link:hover {
 
   color: #a0a0a0;
 
-  transition: color core.$quick-transition-time;
+  transition: color base.$quick-transition-time;
 }
 
 .changelog > button:hover {
@@ -1048,7 +1007,7 @@ a.plain-text-link:hover {
 }
 
 .changelog-entries {
-  @include core.reset-list;
+  @include base.reset-list;
 
   display: flex;
   flex-direction: column;
@@ -1096,9 +1055,9 @@ a.plain-text-link:hover {
   background-color: #f8f8f8;
   padding: 2rem;
 
-  border: core.$overlay-border;
-  box-shadow: core.$overlay-box-shadow-color 0 0 core.$overlay-box-shadow-radius;
-  border-radius: core.$overlay-border-radius;
+  border: base.$overlay-border;
+  box-shadow: base.$overlay-box-shadow-color 0 0 base.$overlay-box-shadow-radius;
+  border-radius: base.$overlay-border-radius;
 
   width: 30rem;
 }
@@ -1159,7 +1118,7 @@ a.plain-text-link:hover {
 
   font-size: 1em;
 
-  transition: background-color core.$quick-transition-time;
+  transition: background-color base.$quick-transition-time;
 
   cursor: pointer;
 }
