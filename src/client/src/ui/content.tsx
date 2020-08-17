@@ -10,7 +10,6 @@ import {Context} from "../context";
 
 import {ExternalLink as BaseExternalLink} from "./ExternalLink"; // Silly naming conflict
 import Bullet from "./Bullet";
-import {Schema} from "prosemirror-model";
 
 function annotate(content: D.Content): (string | {externalLink: string} | {link: string})[] {
   function annotateText(text: string): (string | {externalLink: string})[] {
@@ -169,25 +168,18 @@ export function ContentEditor(props: {
   context: Context;
   node: T.NodeRef;
   className?: string;
-  onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
+  onKeyDown?(ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
 }) {
+  const schema = new PM.Schema({nodes: {doc: {content: "text*"}, text: {}}});
+
   const ref = React.useRef<HTMLDivElement>(null);
+  const viewRef = React.useRef<PV.EditorView<typeof schema> | null>(null);
 
   // Initialize editor
   React.useEffect(() => {
     function dispatchTransaction(transaction: PS.Transaction<typeof schema>) {
-      const newState = view.state.apply(transaction);
-
-      // When presisng up on the first line or down on the last line, we want to
-      // move between items. So we need some way of detecting that we are on the
-      // first or last line.
-      if (view.endOfTextblock("up", newState)) {
-        console.log("First line");
-      }
-      if (view.endOfTextblock("down", newState)) {
-        console.log("Last line");
-      }
+      const newState = viewRef.current!.state.apply(transaction);
 
       props.context.setState(
         D.setContent(
@@ -196,10 +188,37 @@ export function ContentEditor(props: {
           E.contentFromEditString(transaction.doc.textContent),
         ),
       );
-      view.updateState(newState);
+      viewRef.current!.updateState(newState);
     }
 
-    const schema = new PM.Schema({nodes: {doc: {content: "text*"}, text: {}}});
+    const keyPlugin = new PS.Plugin({
+      props: {
+        handleKeyDown(view, ev) {
+          const notes = {
+            startOfItem: view.endOfTextblock("backward"),
+            endOfItem: view.endOfTextblock("forward"),
+          };
+
+          // When presisng up on the first line or down on the last line, we want to
+          // move between items. So we need some way of detecting that we are on the
+          // first or last line.
+          if (
+            !(ev.ctrlKey || ev.altKey) &&
+            ((ev.key === "ArrowUp" && view.endOfTextblock("up")) ||
+              (ev.key === "ArrowDown" && view.endOfTextblock("down")))
+          ) {
+            if (props.onKeyDown !== undefined) {
+              props.onKeyDown(ev, notes);
+              return true; // Handled
+            }
+          }
+
+          console.log("Unhandled event: %o", ev);
+          return false;
+        },
+      },
+    });
+
     const state = PS.EditorState.create({
       schema,
       doc: schema.node("doc", {}, [
@@ -207,9 +226,20 @@ export function ContentEditor(props: {
           E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))),
         ),
       ]),
+      plugins: [keyPlugin],
     });
-    const view = new PV.EditorView(ref.current!, {state, dispatchTransaction});
+
+    viewRef.current = new PV.EditorView(ref.current!, {state, dispatchTransaction});
   }, []);
+
+  React.useEffect(
+    function acceptFocus() {
+      if (T.hasFocus(props.context.tree, props.node)) {
+        viewRef.current?.focus();
+      }
+    },
+    [T.focused(props.context.tree)],
+  );
 
   return <div className={`editor-inactive ${props.className}`} ref={ref}></div>;
 }
