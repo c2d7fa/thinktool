@@ -1,4 +1,7 @@
 import * as React from "react";
+import * as PS from "prosemirror-state";
+import * as PV from "prosemirror-view";
+import * as PM from "prosemirror-model";
 
 import * as D from "../data";
 import * as T from "../tree";
@@ -7,6 +10,7 @@ import {Context} from "../context";
 
 import {ExternalLink as BaseExternalLink} from "./ExternalLink"; // Silly naming conflict
 import Bullet from "./Bullet";
+import {Schema} from "prosemirror-model";
 
 function annotate(content: D.Content): (string | {externalLink: string} | {link: string})[] {
   function annotateText(text: string): (string | {externalLink: string})[] {
@@ -167,127 +171,37 @@ export function ContentEditor(props: {
   className?: string;
   onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
-  setForceEditor(forceEditor: boolean): void;
 }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  // Initialize editor
   React.useEffect(() => {
-    if (T.hasFocus(props.context.tree, props.node)) textareaRef.current?.focus();
-  }, [props.context.tree]);
-
-  function onKeyDown(ev: React.KeyboardEvent): void {
-    // When the user presses up on the first line or down on the last line, we
-    // want to let the parent handle the event. Unfortunately, there is not
-    // easy way to check which line the cursor is on, so we must use a hack
-    // here.
-    //
-    // We choose to *always* the the standard cursor movement event fire, but
-    // once the cursor has been moved, we check to see if it is in the first
-    // character (which will be true if it was moved up from the first line),
-    // or on the last character (which will happen if it was moved  down from
-    // the last line).
-    //
-    // This breaks if the user presses up on the first column of the second
-    // line, or if they press down on the last column of the penultimate line.
-    // We don't handle that case.
-    if ((ev.key === "ArrowUp" || ev.key === "ArrowDown") && !(ev.ctrlKey || ev.altKey)) {
-      // Only handle event after cursor has been moved.
-      if (props.onKeyDown !== undefined) {
-        ev.persist(); // So they can access ev after timeout.
-        setTimeout(() => {
-          if (textareaRef.current?.selectionStart === 0) {
-            props.onKeyDown!(ev, {startOfItem: true, endOfItem: false});
-          } else if (textareaRef.current?.selectionEnd === textareaRef.current?.value.length) {
-            props.onKeyDown!(ev, {startOfItem: false, endOfItem: true});
-          }
-        });
-      }
-      return;
-    }
-
-    const startOfItem = textareaRef.current?.selectionStart === 0;
-    const endOfItem = textareaRef.current?.selectionEnd === textareaRef.current?.value.length;
-
-    if (props.onKeyDown !== undefined && props.onKeyDown(ev, {startOfItem, endOfItem})) {
-      // The event was handled by our parent.
-      ev.preventDefault();
-    }
-  }
-
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-
-  const [editing, setEditing_] = React.useState<string>(
-    E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))),
-  );
-  function setEditing(editing: string) {
-    setEditing_(editing);
-    props.context.setState(
-      D.setContent(
-        props.context.state,
-        T.thing(props.context.tree, props.node),
-        E.contentFromEditString(editing),
-      ),
-    );
-  }
-
-  React.useEffect(() => {
-    if (
-      E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))) !==
-      editing
-    ) {
-      setEditing_(
-        E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))),
+    function dispatchTransaction(transaction: PS.Transaction<typeof schema>) {
+      props.context.setState(
+        D.setContent(
+          props.context.state,
+          T.thing(props.context.tree, props.node),
+          E.contentFromEditString(transaction.doc.textContent),
+        ),
       );
+      view.updateState(view.state.apply(transaction));
     }
-  }, [props.context.state]);
 
-  // Automatically resize textarea to fit content.
-  React.useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "0"; // Necessary for shrinking
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
-    }
-  }, [editing]);
+    const schema = new PM.Schema({nodes: {doc: {content: "text*"}, text: {}}});
+    const state = PS.EditorState.create({
+      schema,
+      doc: schema.node("doc", {}, [
+        schema.text(
+          E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))),
+        ),
+      ]),
+    });
+    const view = new PV.EditorView(ref.current!, {state, dispatchTransaction});
 
-  function onPaste(ev: React.ClipboardEvent<HTMLTextAreaElement>) {
-    const text = ev.clipboardData.getData("text/plain");
+    console.log(state, view);
+  }, []);
 
-    if (E.isParagraphFormattedText(text)) {
-      const paragraphs = E.paragraphs(text);
-
-      let [state, tree] = [props.context.state, props.context.tree];
-      let lastNode = props.node;
-
-      for (const paragraph of paragraphs) {
-        const [state_, tree_, thing, lastNode_] = T.createSiblingAfter(state, tree, lastNode);
-        [state, tree, lastNode] = [state_, tree_, lastNode_];
-
-        state = D.setContent(state, thing, E.contentFromEditString(paragraph));
-      }
-
-      props.context.setState(state);
-      props.context.setTree(tree);
-
-      return ev.preventDefault();
-    }
-  }
-
-  return (
-    <div className={`editor ${props.className}`}>
-      <textarea
-        ref={textareaRef}
-        value={editing}
-        onChange={(ev) => setEditing(ev.target.value)}
-        onFocus={(ev) => props.context.setTree(T.focus(props.context.tree, props.node))}
-        onSelect={(ev) => {
-          const start = textareaRef.current?.selectionStart;
-          const end = textareaRef.current?.selectionEnd;
-          if (start !== undefined && end !== undefined)
-            props.context.setSelectionInFocusedContent({start, end});
-        }}
-        onKeyDown={onKeyDown}
-        onPaste={onPaste}
-      />
-    </div>
-  );
+  return <div className={`editor-inactive ${props.className}`} ref={ref}></div>;
 }
 
 export function Content(props: {
@@ -297,10 +211,8 @@ export function Content(props: {
   onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
 }) {
-  const [forceEditor, setForceEditor] = React.useState<boolean>(false);
-
-  if (T.hasFocus(props.context.tree, props.node) || forceEditor) {
-    return <ContentEditor {...props} setForceEditor={setForceEditor} />;
+  if (T.hasFocus(props.context.tree, props.node)) {
+    return <ContentEditor {...props} />;
   } else {
     return <RenderedContent {...props} />;
   }
