@@ -28,6 +28,22 @@
         totally private and secure.</p>
     </div>
 
+    <div class="block edge newsletter-outer">
+      <div class="small centered newsletter">
+        <div>
+          <h1>Get notified when the desktop client is ready.</h1>
+          <p>Receive monthly updates about new features
+            and get a look behind the scenes at Thinktool by subscribing to the
+            newsletter.</p>
+        </div>
+        <form action="{{apiUrl}}/newsletter/subscribe" method="POST">
+          <input type="email" name="email" required placeholder="you@example.com" />
+          <input type="submit" value="Subscribe" />
+        </form>
+      </div>
+    </div>
+
+
     <div class="block box small centered">
       <p>The current version is a <strong>pre-prototype intended purely for testing</strong>. If you use this, you may
         lose your data. It is not currently possible to synchronize your data in the desktop client to the online
@@ -44,22 +60,12 @@
       <p>A build for <strong>macOS</strong> will hopefully be available fairly soon.</p>
       <p><i>Last updated <time datetime="2020-08-06T04:42:14">August 6, 2020</time>.</i></p>
     </div>
-
-    <div class="block edge newsletter-outer">
-      <div class="small centered newsletter">
-        <div>
-          <h1>Get notified when the desktop client is in better shape.</h1>
-          <p>Receive monthly updates about new features
-            and get a look behind the scenes at Thinktool by subscribing to the
-            newsletter.</p>
-        </div>
-        <form action="{{apiUrl}}/newsletter/subscribe" method="POST">
-          <input type="email" name="email" required placeholder="you@example.com" />
-          <input type="submit" value="Subscribe" />
-        </form>
-      </div>
-    </div>
   </main>
+
+  <footer>
+    Made by <a href="https://johv.dk/"><span>Jonas Hvid</span></a>. Message me at <a class="email"
+      href="mailto:jonas@thinktool.io"><span>jonas@thinktool.io</span></a>.
+  </footer>
 
   <script data-goatcounter="https://thinktool.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
