@@ -10,17 +10,9 @@ $ui-small-font-size: 0.9rem;
 $other-parents-small-font-size: $ui-tiny-font-size;
 
 $quick-transition-time: 150ms;
+$slow-transition-time: 300ms;
 
 $top-bar-ui-color: #00000060;
-
-@mixin transparent-white-overlay {
-  backdrop-filter: blur(6px);
-  background-color: #ffffffc0;
-
-  @supports not (backdrop-filter: blur(6px)) {
-    background-color: #fffffff0;
-  }
-}
 
 $overlay-box-shadow-color: #00000020;
 $overlay-box-shadow-radius: 12px;
@@ -32,7 +24,7 @@ $toolbar-border: 1px solid #00000020;
 @mixin ui-font {
   font-family: "Recursive", monospace;
   font-variation-settings: "MONO" 0.4, "CASL" 0;
-  letter-spacing: 0px;
+  letter-spacing: 0;
 }
 
 @mixin heading-font {
@@ -43,6 +35,8 @@ $toolbar-border: 1px solid #00000020;
 }
 
 @mixin subtle-button($color: #000000) {
+  @include ui-font;
+
   border: none;
   outline: none;
 
@@ -51,6 +45,8 @@ $toolbar-border: 1px solid #00000020;
   border-radius: 3px;
 
   background-color: transparent;
+
+  transition: all $quick-transition-time;
 
   &:hover:not(:disabled) {
     background-color: color.scale($color, $alpha: -90%);

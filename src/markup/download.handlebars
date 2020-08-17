@@ -6,26 +6,43 @@
   <link rel="stylesheet" href="/landing.css">
   <link rel="icon" href="/icon.png" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://kit.fontawesome.com/d7c222beb5.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
   <div id="top-bar">
     <a href="/" id="logo">Thinktool</a>
     <nav>
-      <a href="https://reddit.com/r/thinktool">Forum</a>
-      <a href="/blog/">Blog</a>
-      <a href="/download.html">Download</a>
-      <a id="login-link" href="/login.html">Log in</a>
+      <a href="https://reddit.com/r/thinktool"><i class="fab fa-reddit-alien"></i>Forum</a>
+      <a href="/blog/"><i class="fas fa-newspaper"></i>Blog</a>
+      <a href="/download.html"><i class="fas fa-desktop"></i>Download</a>
+      <a href="/login.html"><i class="fas fa-sign-in-alt"></i>Log in</a>
       <a href="/demo.html" class="demo demo-small">Demo</a>
     </nav>
   </div>
   <main>
     <div class="block small centered">
-      <h1>Thinktool on the desktop.</h1>
+      <h1>Desktop application for Thinktool</h1>
 
       <p>I'm working on creating an offline desktop app for Thinktool. With this, you can be confident that your data is
         totally private and secure.</p>
     </div>
+
+    <div class="block edge newsletter-outer">
+      <div class="small centered newsletter">
+        <div>
+          <h1>Get notified when the desktop client is ready.</h1>
+          <p>Receive monthly updates about new features
+            and get a look behind the scenes at Thinktool by subscribing to the
+            newsletter.</p>
+        </div>
+        <form action="{{apiUrl}}/newsletter/subscribe" method="POST">
+          <input type="email" name="email" required placeholder="you@example.com" />
+          <input type="submit" value="Subscribe" />
+        </form>
+      </div>
+    </div>
+
 
     <div class="block box small centered">
       <p>The current version is a <strong>pre-prototype intended purely for testing</strong>. If you use this, you may
@@ -43,22 +60,12 @@
       <p>A build for <strong>macOS</strong> will hopefully be available fairly soon.</p>
       <p><i>Last updated <time datetime="2020-08-06T04:42:14">August 6, 2020</time>.</i></p>
     </div>
-
-    <div class="block edge newsletter-outer">
-      <div class="small centered newsletter">
-        <div>
-          <h1>Get notified when the desktop client is in better shape.</h1>
-          <p>Receive monthly updates about new features
-            and get a look behind the scenes at Thinktool by subscribing to the
-            newsletter.</p>
-        </div>
-        <form action="{{apiUrl}}/newsletter/subscribe" method="POST">
-          <input type="email" name="email" required placeholder="you@example.com" />
-          <input type="submit" value="Subscribe" />
-        </form>
-      </div>
-    </div>
   </main>
+
+  <footer>
+    Made by <a href="https://johv.dk/"><span>Jonas Hvid</span></a>. Message me at <a class="email"
+      href="mailto:jonas@thinktool.io"><span>jonas@thinktool.io</span></a>.
+  </footer>
 
   <script data-goatcounter="https://thinktool.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>

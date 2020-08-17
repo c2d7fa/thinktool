@@ -1,0 +1,75 @@
+@use "base.scss";
+
+@mixin logo {
+  font-family: "Montserrat";
+  text-transform: uppercase;
+  font-weight: bold;
+  display: inline-block;
+  user-select: none;
+  text-decoration: none;
+}
+
+@mixin overlay {
+  backdrop-filter: blur(6px);
+  background-color: #ffffffc0;
+
+  @supports not (backdrop-filter: blur(6px)) {
+    background-color: #fffffff0;
+  }
+}
+
+@mixin popup-with-shadow {
+  border: base.$overlay-border;
+  border-radius: base.$overlay-border-radius;
+  box-shadow: base.$overlay-box-shadow-color 0 0 base.$overlay-box-shadow-radius;
+}
+
+$inactive-weight: 350;
+$active-weight: 475;
+
+// Just the "foreground" (e.g. font)
+@mixin button {
+  cursor: pointer;
+
+  @include base.ui-font;
+  font-weight: $active-weight;
+
+  transition: all base.$quick-transition-time;
+
+  &:disabled {
+    cursor: default;
+    opacity: 60%;
+    font-weight: $inactive-weight;
+  }
+}
+
+// Headings in text
+@mixin heading {
+  @include base.heading-font;
+}
+
+// Headings and separators that are part of the UI
+@mixin ui-heading {
+  @include heading;
+  margin: 0;
+  white-space: nowrap;
+  font-size: 0.8em;
+  font-weight: 400;
+  cursor: default;
+}
+
+@mixin item-id {
+  color: #00000040;
+
+  @include base.ui-font;
+  font-weight: $inactive-weight;
+  font-size: 0.8em;
+  vertical-align: middle;
+}
+
+@mixin icon-before {
+  display: inline-block;
+  text-align: center;
+  width: 1em;
+  margin-right: 0.5em;
+}
