@@ -186,12 +186,13 @@ export function ContentEditor(props: {
       // This appraoch *seems* to work, even though it's really hacky.
       // Basically, we compare rects of the container and the selection,
       // allowing for a bit of fuzziness to take into account padding and such.
-      const selectionRect = window.getSelection()?.getRangeAt(0).getBoundingClientRect()!;
+      const acceptableError = 8;
+      const selectionRect = view.coordsAtPos(transaction.selection.anchor);
       const elementRect = ref.current?.getBoundingClientRect()!;
-      if (selectionRect.top - elementRect.top < selectionRect.height / 2) {
+      if (selectionRect.top - elementRect.top < acceptableError) {
         console.log("Probably on first line");
       }
-      if (elementRect.bottom - selectionRect.bottom < selectionRect.height / 2) {
+      if (elementRect.bottom - selectionRect.bottom < acceptableError) {
         console.log("Probably on last line");
       }
 
