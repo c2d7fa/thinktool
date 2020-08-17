@@ -779,7 +779,7 @@ function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: 
 function Content(p: {context: Context; node: T.NodeRef}) {
   function onKeyDown(
     ev: React.KeyboardEvent<{}>,
-    notes: {startOfItem: boolean; endOfItem: boolean},
+    notes: {startOfItem: boolean; endOfItem: boolean; firstLine: boolean; lastLine: boolean},
   ): boolean {
     function tryAction(action: Actions.ActionName): boolean {
       if (Sh.matches(ev, Actions.shortcut(action))) {
@@ -798,10 +798,10 @@ function Content(p: {context: Context; node: T.NodeRef}) {
     } else if (ev.key === "Tab") {
       p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
       return true;
-    } else if (ev.key === "ArrowUp") {
+    } else if (ev.key === "ArrowUp" && !ev.ctrlKey && !ev.altKey && notes.firstLine) {
       p.context.setTree(T.focusUp(p.context.tree));
       return true;
-    } else if (ev.key === "ArrowDown") {
+    } else if (ev.key === "ArrowDown" && !ev.ctrlKey && !ev.altKey && notes.lastLine) {
       p.context.setTree(T.focusDown(p.context.tree));
       return true;
     } else if (tryAction("new-child")) {

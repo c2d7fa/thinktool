@@ -197,35 +197,29 @@ export function ContentEditor(props: {
           const notes = {
             startOfItem: view.endOfTextblock("backward"),
             endOfItem: view.endOfTextblock("forward"),
+            firstLine: view.endOfTextblock("up"),
+            lastLine: view.endOfTextblock("down"),
           };
 
-          // When presisng up on the first line or down on the last line, we want to
-          // move between items. So we need some way of detecting that we are on the
-          // first or last line.
-          if (
-            !(ev.ctrlKey || ev.altKey) &&
-            ((ev.key === "ArrowUp" && view.endOfTextblock("up")) ||
-              (ev.key === "ArrowDown" && view.endOfTextblock("down")))
-          ) {
-            if (props.onKeyDown !== undefined) {
-              props.onKeyDown(ev, notes);
-              return true; // Handled
-            }
+          if (props.onKeyDown !== undefined) {
+            // 'props.onKeyDown' will return 'true' if it handles the event,
+            // 'false' otherwise. This is the correct behavior in this case.
+            return props.onKeyDown(ev, notes);
           }
 
-          console.log("Unhandled event: %o", ev);
+          // We don't want to handle anything by default.
           return false;
         },
       },
     });
 
+    const stringContent = E.contentToEditString(
+      D.content(props.context.state, T.thing(props.context.tree, props.node)),
+    );
+
     const state = PS.EditorState.create({
       schema,
-      doc: schema.node("doc", {}, [
-        schema.text(
-          E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))),
-        ),
-      ]),
+      doc: schema.node("doc", {}, stringContent === "" ? [] : [schema.text(stringContent)]),
       plugins: [keyPlugin],
     });
 
