@@ -177,6 +177,24 @@ export function ContentEditor(props: {
   // Initialize editor
   React.useEffect(() => {
     function dispatchTransaction(transaction: PS.Transaction<typeof schema>) {
+      console.log(transaction);
+
+      // When presisng up on the first line or down on the last line, we want to
+      // move between items. So we need some way of detecting that we are on the
+      // first or last line.
+      //
+      // This appraoch *seems* to work, even though it's really hacky.
+      // Basically, we compare rects of the container and the selection,
+      // allowing for a bit of fuzziness to take into account padding and such.
+      const selectionRect = window.getSelection()?.getRangeAt(0).getBoundingClientRect()!;
+      const elementRect = ref.current?.getBoundingClientRect()!;
+      if (selectionRect.top - elementRect.top < selectionRect.height / 2) {
+        console.log("Probably on first line");
+      }
+      if (elementRect.bottom - selectionRect.bottom < selectionRect.height / 2) {
+        console.log("Probably on last line");
+      }
+
       props.context.setState(
         D.setContent(
           props.context.state,
@@ -197,8 +215,6 @@ export function ContentEditor(props: {
       ]),
     });
     const view = new PV.EditorView(ref.current!, {state, dispatchTransaction});
-
-    console.log(state, view);
   }, []);
 
   return <div className={`editor-inactive ${props.className}`} ref={ref}></div>;
