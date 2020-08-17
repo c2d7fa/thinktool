@@ -177,23 +177,16 @@ export function ContentEditor(props: {
   // Initialize editor
   React.useEffect(() => {
     function dispatchTransaction(transaction: PS.Transaction<typeof schema>) {
-      console.log(transaction);
+      const newState = view.state.apply(transaction);
 
       // When presisng up on the first line or down on the last line, we want to
       // move between items. So we need some way of detecting that we are on the
       // first or last line.
-      //
-      // This appraoch *seems* to work, even though it's really hacky.
-      // Basically, we compare rects of the container and the selection,
-      // allowing for a bit of fuzziness to take into account padding and such.
-      const acceptableError = 8;
-      const selectionRect = view.coordsAtPos(transaction.selection.anchor);
-      const elementRect = ref.current?.getBoundingClientRect()!;
-      if (selectionRect.top - elementRect.top < acceptableError) {
-        console.log("Probably on first line");
+      if (view.endOfTextblock("up", newState)) {
+        console.log("First line");
       }
-      if (elementRect.bottom - selectionRect.bottom < acceptableError) {
-        console.log("Probably on last line");
+      if (view.endOfTextblock("down", newState)) {
+        console.log("Last line");
       }
 
       props.context.setState(
@@ -203,7 +196,7 @@ export function ContentEditor(props: {
           E.contentFromEditString(transaction.doc.textContent),
         ),
       );
-      view.updateState(view.state.apply(transaction));
+      view.updateState(newState);
     }
 
     const schema = new PM.Schema({nodes: {doc: {content: "text*"}, text: {}}});
