@@ -178,6 +178,9 @@ export function ContentEditor(props: {
 
   // Initialize editor
   React.useEffect(() => {
+    // Note: See the "Data flow" section in https://prosemirror.net/docs/guide/#view
+    // for an idea about how me might accomplish this in a smarter way.
+
     function dispatchTransaction(transaction: PS.Transaction<typeof schema>) {
       const newState = viewRef.current!.state.apply(transaction);
 
