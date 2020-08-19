@@ -184,6 +184,14 @@ export function ContentEditor(props: {
     function dispatchTransaction(transaction: PS.Transaction<typeof schema>) {
       const newState = viewRef.current!.state.apply(transaction);
 
+      // Other parts of the application want to access the selection.
+      //
+      // [FIXME] This is buggy and I don't know why. It seems to work more
+      // reliably (or perhaps exclusively) when using the toolbar, but not when
+      // using keyboard shortcuts.
+      const selection = newState.selection;
+      props.context.setSelectionInFocusedContent({start: selection.from, end: selection.to});
+
       props.context.setState(
         D.setContent(
           props.context.state,
