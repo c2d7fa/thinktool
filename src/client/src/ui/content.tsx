@@ -203,6 +203,35 @@ export function ContentEditor(props: {
     },
   });
 
+  const pastePlugin = new PS.Plugin({
+    props: {
+      handlePaste(view, ev, slice) {
+        const text = ev.clipboardData?.getData("text/plain");
+
+        if (text !== undefined && E.isParagraphFormattedText(text)) {
+          const paragraphs = E.paragraphs(text);
+
+          let [state, tree] = [props.context.state, props.context.tree];
+          let lastNode = props.node;
+
+          for (const paragraph of paragraphs) {
+            const [state_, tree_, thing, lastNode_] = T.createSiblingAfter(state, tree, lastNode);
+            [state, tree, lastNode] = [state_, tree_, lastNode_];
+
+            state = D.setContent(state, thing, E.contentFromEditString(paragraph));
+          }
+
+          props.context.setState(state);
+          props.context.setTree(tree);
+
+          return true;
+        }
+
+        return false;
+      },
+    },
+  });
+
   const stringContent = E.contentToEditString(
     D.content(props.context.state, T.thing(props.context.tree, props.node)),
   );
@@ -210,7 +239,7 @@ export function ContentEditor(props: {
   const initialState = PS.EditorState.create({
     schema,
     doc: schema.node("doc", {}, stringContent === "" ? [] : [schema.text(stringContent)]),
-    plugins: [keyPlugin],
+    plugins: [keyPlugin, pastePlugin],
   });
 
   const [editorState, setEditorState] = React.useState(initialState);
@@ -255,7 +284,7 @@ export function ContentEditor(props: {
         PS.EditorState.create({
           schema,
           doc: schema.node("doc", {}, stringContent === "" ? [] : [schema.text(stringContent)]),
-          plugins: [keyPlugin],
+          plugins: [keyPlugin, pastePlugin],
         }),
       );
     }
