@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-# Before running this script, make sure that the image represented by the
-# Dockerfile in this directory is installed as 'thinktool-dev'. Run from the
-# top-level directory in this project.
+# Run this script from the top-level directory in this project.
 
 # Also make sure that there's a running PostgreSQL instance on 127.0.0.1:5432.
+
+docker build . -f tools/dev/Dockerfile -t thinktool-dev
 
 docker run \
   -ti --rm --name thinktool-dev \

@@ -74,6 +74,10 @@ Docker container for PostgreSQL. For example:
     $ docker run -e POSTGRES_PASSWORD=password -v postgres-data:/var/lib/postgresql/data -d postgres
     $ docker run -ti -v $(pwd):/work thinktool-dev
 
+There is also a script that does this for you:
+
+    $ tools/dev/start-docker.sh
+
 ### Static Resources
 
 Set the following environment variables:
