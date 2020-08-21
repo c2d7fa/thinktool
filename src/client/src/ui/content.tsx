@@ -174,73 +174,98 @@ export function ContentEditor(props: {
   const schema = new PM.Schema({nodes: {doc: {content: "text*"}, text: {}}});
 
   const ref = React.useRef<HTMLDivElement>(null);
-  const viewRef = React.useRef<PV.EditorView<typeof schema> | null>(null);
+
+  const onKeyDownRef = React.useRef<
+    ((ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}) => boolean) | undefined
+  >(props.onKeyDown);
+
+  React.useEffect(() => {
+    onKeyDownRef.current = props.onKeyDown;
+  }, [props.onKeyDown]);
+
+  const keyPlugin = new PS.Plugin({
+    props: {
+      handleKeyDown(view, ev) {
+        const notes = {
+          startOfItem: view.endOfTextblock("backward"),
+          endOfItem: view.endOfTextblock("forward"),
+          firstLine: view.endOfTextblock("up"),
+          lastLine: view.endOfTextblock("down"),
+        };
+
+        if (onKeyDownRef.current !== undefined) {
+          return onKeyDownRef.current(ev, notes);
+        }
+
+        // We don't want to handle anything by default.
+        return false;
+      },
+    },
+  });
+
+  const stringContent = E.contentToEditString(
+    D.content(props.context.state, T.thing(props.context.tree, props.node)),
+  );
+
+  const initialState = PS.EditorState.create({
+    schema,
+    doc: schema.node("doc", {}, stringContent === "" ? [] : [schema.text(stringContent)]),
+    plugins: [keyPlugin],
+  });
+
+  const [editorState, setEditorState] = React.useState(initialState);
+
+  const editorViewRef = React.useRef<PV.EditorView<typeof schema> | null>(null);
 
   // Initialize editor
   React.useEffect(() => {
-    // Note: See the "Data flow" section in https://prosemirror.net/docs/guide/#view
-    // for an idea about how me might accomplish this in a smarter way.
-
+    console.log("Building editor");
     function dispatchTransaction(transaction: PS.Transaction<typeof schema>) {
-      const newState = viewRef.current!.state.apply(transaction);
-
-      // Other parts of the application want to access the selection.
-      //
-      // [FIXME] This is buggy and I don't know why. It seems to work more
-      // reliably (or perhaps exclusively) when using the toolbar, but not when
-      // using keyboard shortcuts.
-      const selection = newState.selection;
-      props.context.setSelectionInFocusedContent({start: selection.from, end: selection.to});
-
-      props.context.setState(
-        D.setContent(
-          props.context.state,
-          T.thing(props.context.tree, props.node),
-          E.contentFromEditString(transaction.doc.textContent),
-        ),
-      );
-      viewRef.current!.updateState(newState);
+      setEditorState((previousState) => previousState.apply(transaction));
     }
 
-    const keyPlugin = new PS.Plugin({
-      props: {
-        handleKeyDown(view, ev) {
-          const notes = {
-            startOfItem: view.endOfTextblock("backward"),
-            endOfItem: view.endOfTextblock("forward"),
-            firstLine: view.endOfTextblock("up"),
-            lastLine: view.endOfTextblock("down"),
-          };
+    editorViewRef.current = new PV.EditorView(ref.current!, {state: initialState, dispatchTransaction});
+  }, []);
 
-          if (props.onKeyDown !== undefined) {
-            // 'props.onKeyDown' will return 'true' if it handles the event,
-            // 'false' otherwise. This is the correct behavior in this case.
-            return props.onKeyDown(ev, notes);
-          }
-
-          // We don't want to handle anything by default.
-          return false;
-        },
-      },
-    });
-
-    const stringContent = E.contentToEditString(
-      D.content(props.context.state, T.thing(props.context.tree, props.node)),
+  React.useEffect(() => {
+    props.context.setState(
+      D.setContent(
+        props.context.state,
+        T.thing(props.context.tree, props.node),
+        E.contentFromEditString(editorState.doc.textContent),
+      ),
     );
 
-    const state = PS.EditorState.create({
-      schema,
-      doc: schema.node("doc", {}, stringContent === "" ? [] : [schema.text(stringContent)]),
-      plugins: [keyPlugin],
-    });
+    editorViewRef.current!.updateState(editorState);
 
-    viewRef.current = new PV.EditorView(ref.current!, {state, dispatchTransaction});
-  }, []);
+    // Other parts of the application want to access the selection.
+    //
+    // [FIXME] This is buggy and I don't know why. It seems to work more
+    // reliably (or perhaps exclusively) when using the toolbar, but not when
+    // using keyboard shortcuts.
+    const selection = editorState.selection;
+    props.context.setSelectionInFocusedContent({start: selection.from, end: selection.to});
+  }, [editorState]);
+
+  React.useEffect(() => {
+    if (
+      E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))) !==
+      editorState.doc.textContent
+    ) {
+      setEditorState(
+        PS.EditorState.create({
+          schema,
+          doc: schema.node("doc", {}, stringContent === "" ? [] : [schema.text(stringContent)]),
+          plugins: [keyPlugin],
+        }),
+      );
+    }
+  }, [props.context.state]);
 
   React.useEffect(
     function acceptFocus() {
       if (T.hasFocus(props.context.tree, props.node)) {
-        viewRef.current?.focus();
+        editorViewRef.current?.focus();
       }
     },
     [T.focused(props.context.tree)],
@@ -259,6 +284,11 @@ export function Content(props: {
   if (T.hasFocus(props.context.tree, props.node)) {
     return <ContentEditor {...props} />;
   } else {
+    console.log(
+      "Rendering... %o has content %o",
+      props.node,
+      D.content(props.context.state, T.thing(props.context.tree, props.node)),
+    );
     return <RenderedContent {...props} />;
   }
 }
