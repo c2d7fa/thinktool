@@ -125,7 +125,7 @@ function RenderedContent(props: {
   context: Context;
   node: T.NodeRef;
   className?: string;
-  onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
+  onKeyDown?(ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
 }) {
   let fragments: React.ReactNode[] = [];
@@ -302,7 +302,7 @@ export function Content(props: {
   context: Context;
   node: T.NodeRef;
   className?: string;
-  onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
+  onKeyDown?(ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
 }) {
   if (T.hasFocus(props.context.tree, props.node)) {

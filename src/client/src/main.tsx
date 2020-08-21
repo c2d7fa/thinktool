@@ -778,7 +778,7 @@ function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: 
 
 function Content(p: {context: Context; node: T.NodeRef}) {
   function onKeyDown(
-    ev: React.KeyboardEvent<{}>,
+    ev: KeyboardEvent,
     notes: {startOfItem: boolean; endOfItem: boolean; firstLine: boolean; lastLine: boolean},
   ): boolean {
     function tryAction(action: Actions.ActionName): boolean {
