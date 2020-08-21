@@ -164,7 +164,7 @@ function RenderedContent(props: {
   );
 }
 
-export function ContentEditor(props: {
+function ContentEditor(props: {
   context: Context;
   node: T.NodeRef;
   className?: string;
@@ -298,7 +298,7 @@ export function ContentEditor(props: {
   return <div className={`editor-inactive ${props.className}`} ref={ref}></div>;
 }
 
-export function Content(props: {
+export default function Editor(props: {
   context: Context;
   node: T.NodeRef;
   className?: string;

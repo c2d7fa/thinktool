@@ -16,7 +16,7 @@ import * as ExportRoam from "./export-roam";
 import * as Sh from "./shortcuts";
 import * as Editing from "./editing";
 
-import * as C from "./ui/content";
+import Editor from "./ui/Editor";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
@@ -570,7 +570,7 @@ function ThingOverview(p: {context: Context}) {
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        <C.Content context={p.context} node={T.root(p.context.tree)} className="selected-content" />
+        <Editor context={p.context} node={T.root(p.context.tree)} className="selected-content" />
         <div className="children">
           <Outline context={p.context} />
         </div>
@@ -840,7 +840,7 @@ function Content(p: {context: Context; node: T.NodeRef}) {
     }
   }
 
-  return <C.Content context={p.context} node={p.node} className="content" onKeyDown={onKeyDown} />;
+  return <Editor context={p.context} node={p.node} className="content" onKeyDown={onKeyDown} />;
 }
 
 function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
