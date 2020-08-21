@@ -158,7 +158,7 @@ function RenderedContent(props: {
           props.context.setTree(T.focus(props.context.tree, props.node));
         }
       }}
-      className={`editor-inactive ${props.className}`}>
+      className={`editor ${props.className}`}>
       {fragments.length === 0 ? <span className="placeholder-empty">(Empty)</span> : <span>{fragments}</span>}
     </div>
   );
