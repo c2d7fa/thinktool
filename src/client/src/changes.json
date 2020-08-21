@@ -243,6 +243,10 @@
     {
       "date": "2020-08-06",
       "title": "(Desktop client:) Removed the unused menu bar."
+    },
+    {
+      "date": "2020-08-21",
+      "title": "Various under-the-hood improvements to the editor component."
     }
   ]
 }

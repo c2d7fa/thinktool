@@ -271,29 +271,24 @@ a.plain-text-link:hover {
 
 /* #region Editor */
 
-.editor textarea {
+.editor {
   color: inherit;
 
   width: 100%;
   padding: 0;
   margin: 0;
-  resize: none;
-  border: none;
-  background: none;
-  outline: none;
 
   line-height: 175%;
-  height: 1.5em; /* Will be overwritten in JS */
-  overflow: hidden; /* Shouldn't matter, since we resize automatically */
+}
 
-  font-family: inherit;
-  letter-spacing: inherit;
-  font-size: 1em;
+.editor .ProseMirror {
+  outline: none;
 }
 
 .editor-inactive {
+  @extend .editor;
+
   white-space: pre-wrap;
-  line-height: 175%;
 }
 
 /* #endregion */

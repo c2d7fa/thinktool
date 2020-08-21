@@ -1,4 +1,7 @@
 import * as React from "react";
+import * as PS from "prosemirror-state";
+import * as PV from "prosemirror-view";
+import * as PM from "prosemirror-model";
 
 import * as D from "../data";
 import * as T from "../tree";
@@ -122,7 +125,7 @@ function RenderedContent(props: {
   context: Context;
   node: T.NodeRef;
   className?: string;
-  onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
+  onKeyDown?(ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
 }) {
   let fragments: React.ReactNode[] = [];
@@ -155,152 +158,155 @@ function RenderedContent(props: {
           props.context.setTree(T.focus(props.context.tree, props.node));
         }
       }}
-      className={`editor-inactive ${props.className}`}>
+      className={`editor ${props.className}`}>
       {fragments.length === 0 ? <span className="placeholder-empty">(Empty)</span> : <span>{fragments}</span>}
     </div>
   );
 }
 
-export function ContentEditor(props: {
+function ContentEditor(props: {
   context: Context;
   node: T.NodeRef;
   className?: string;
-  onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
+  onKeyDown?(ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
-  setForceEditor(forceEditor: boolean): void;
 }) {
+  const schema = new PM.Schema({nodes: {doc: {content: "text*"}, text: {}}});
+
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  const onKeyDownRef = React.useRef<
+    ((ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}) => boolean) | undefined
+  >(props.onKeyDown);
+
   React.useEffect(() => {
-    if (T.hasFocus(props.context.tree, props.node)) textareaRef.current?.focus();
-  }, [props.context.tree]);
+    onKeyDownRef.current = props.onKeyDown;
+  }, [props.onKeyDown]);
 
-  function onKeyDown(ev: React.KeyboardEvent): void {
-    // When the user presses up on the first line or down on the last line, we
-    // want to let the parent handle the event. Unfortunately, there is not
-    // easy way to check which line the cursor is on, so we must use a hack
-    // here.
-    //
-    // We choose to *always* the the standard cursor movement event fire, but
-    // once the cursor has been moved, we check to see if it is in the first
-    // character (which will be true if it was moved up from the first line),
-    // or on the last character (which will happen if it was moved  down from
-    // the last line).
-    //
-    // This breaks if the user presses up on the first column of the second
-    // line, or if they press down on the last column of the penultimate line.
-    // We don't handle that case.
-    if ((ev.key === "ArrowUp" || ev.key === "ArrowDown") && !(ev.ctrlKey || ev.altKey)) {
-      // Only handle event after cursor has been moved.
-      if (props.onKeyDown !== undefined) {
-        ev.persist(); // So they can access ev after timeout.
-        setTimeout(() => {
-          if (textareaRef.current?.selectionStart === 0) {
-            props.onKeyDown!(ev, {startOfItem: true, endOfItem: false});
-          } else if (textareaRef.current?.selectionEnd === textareaRef.current?.value.length) {
-            props.onKeyDown!(ev, {startOfItem: false, endOfItem: true});
+  const keyPlugin = new PS.Plugin({
+    props: {
+      handleKeyDown(view, ev) {
+        const notes = {
+          startOfItem: view.endOfTextblock("backward"),
+          endOfItem: view.endOfTextblock("forward"),
+          firstLine: view.endOfTextblock("up"),
+          lastLine: view.endOfTextblock("down"),
+        };
+
+        if (onKeyDownRef.current !== undefined) {
+          return onKeyDownRef.current(ev, notes);
+        }
+
+        // We don't want to handle anything by default.
+        return false;
+      },
+    },
+  });
+
+  const pastePlugin = new PS.Plugin({
+    props: {
+      handlePaste(view, ev, slice) {
+        const text = ev.clipboardData?.getData("text/plain");
+
+        if (text !== undefined && E.isParagraphFormattedText(text)) {
+          const paragraphs = E.paragraphs(text);
+
+          let [state, tree] = [props.context.state, props.context.tree];
+          let lastNode = props.node;
+
+          for (const paragraph of paragraphs) {
+            const [state_, tree_, thing, lastNode_] = T.createSiblingAfter(state, tree, lastNode);
+            [state, tree, lastNode] = [state_, tree_, lastNode_];
+
+            state = D.setContent(state, thing, E.contentFromEditString(paragraph));
           }
-        });
-      }
-      return;
-    }
 
-    const startOfItem = textareaRef.current?.selectionStart === 0;
-    const endOfItem = textareaRef.current?.selectionEnd === textareaRef.current?.value.length;
+          props.context.setState(state);
+          props.context.setTree(tree);
 
-    if (props.onKeyDown !== undefined && props.onKeyDown(ev, {startOfItem, endOfItem})) {
-      // The event was handled by our parent.
-      ev.preventDefault();
-    }
-  }
+          return true;
+        }
 
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+        return false;
+      },
+    },
+  });
 
-  const [editing, setEditing_] = React.useState<string>(
-    E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))),
+  const stringContent = E.contentToEditString(
+    D.content(props.context.state, T.thing(props.context.tree, props.node)),
   );
-  function setEditing(editing: string) {
-    setEditing_(editing);
+
+  const initialState = PS.EditorState.create({
+    schema,
+    doc: schema.node("doc", {}, stringContent === "" ? [] : [schema.text(stringContent)]),
+    plugins: [keyPlugin, pastePlugin],
+  });
+
+  const [editorState, setEditorState] = React.useState(initialState);
+
+  const editorViewRef = React.useRef<PV.EditorView<typeof schema> | null>(null);
+
+  // Initialize editor
+  React.useEffect(() => {
+    function dispatchTransaction(transaction: PS.Transaction<typeof schema>) {
+      setEditorState((previousState) => previousState.apply(transaction));
+    }
+
+    editorViewRef.current = new PV.EditorView(ref.current!, {state: initialState, dispatchTransaction});
+  }, []);
+
+  React.useEffect(() => {
     props.context.setState(
       D.setContent(
         props.context.state,
         T.thing(props.context.tree, props.node),
-        E.contentFromEditString(editing),
+        E.contentFromEditString(editorState.doc.textContent),
       ),
     );
-  }
+
+    editorViewRef.current!.updateState(editorState);
+
+    // Other parts of the application want to access the selection.
+    const selection = editorState.selection;
+    props.context.setSelectionInFocusedContent({start: selection.from, end: selection.to});
+  }, [editorState]);
 
   React.useEffect(() => {
     if (
       E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))) !==
-      editing
+      editorState.doc.textContent
     ) {
-      setEditing_(
-        E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))),
+      setEditorState(
+        PS.EditorState.create({
+          schema,
+          doc: schema.node("doc", {}, stringContent === "" ? [] : [schema.text(stringContent)]),
+          plugins: [keyPlugin, pastePlugin],
+        }),
       );
     }
   }, [props.context.state]);
 
-  // Automatically resize textarea to fit content.
-  React.useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "0"; // Necessary for shrinking
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
-    }
-  }, [editing]);
-
-  function onPaste(ev: React.ClipboardEvent<HTMLTextAreaElement>) {
-    const text = ev.clipboardData.getData("text/plain");
-
-    if (E.isParagraphFormattedText(text)) {
-      const paragraphs = E.paragraphs(text);
-
-      let [state, tree] = [props.context.state, props.context.tree];
-      let lastNode = props.node;
-
-      for (const paragraph of paragraphs) {
-        const [state_, tree_, thing, lastNode_] = T.createSiblingAfter(state, tree, lastNode);
-        [state, tree, lastNode] = [state_, tree_, lastNode_];
-
-        state = D.setContent(state, thing, E.contentFromEditString(paragraph));
+  React.useEffect(
+    function acceptFocus() {
+      if (T.hasFocus(props.context.tree, props.node)) {
+        editorViewRef.current?.focus();
       }
-
-      props.context.setState(state);
-      props.context.setTree(tree);
-
-      return ev.preventDefault();
-    }
-  }
-
-  return (
-    <div className={`editor ${props.className}`}>
-      <textarea
-        ref={textareaRef}
-        value={editing}
-        onChange={(ev) => setEditing(ev.target.value)}
-        onFocus={(ev) => props.context.setTree(T.focus(props.context.tree, props.node))}
-        onSelect={(ev) => {
-          const start = textareaRef.current?.selectionStart;
-          const end = textareaRef.current?.selectionEnd;
-          if (start !== undefined && end !== undefined)
-            props.context.setSelectionInFocusedContent({start, end});
-        }}
-        onKeyDown={onKeyDown}
-        onPaste={onPaste}
-      />
-    </div>
+    },
+    [T.focused(props.context.tree)],
   );
+
+  return <div className={`editor-inactive ${props.className}`} ref={ref}></div>;
 }
 
-export function Content(props: {
+export default function Editor(props: {
   context: Context;
   node: T.NodeRef;
   className?: string;
-  onKeyDown?(ev: React.KeyboardEvent<{}>, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
+  onKeyDown?(ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
 }) {
-  const [forceEditor, setForceEditor] = React.useState<boolean>(false);
-
-  if (T.hasFocus(props.context.tree, props.node) || forceEditor) {
-    return <ContentEditor {...props} setForceEditor={setForceEditor} />;
+  if (T.hasFocus(props.context.tree, props.node)) {
+    return <ContentEditor {...props} />;
   } else {
     return <RenderedContent {...props} />;
   }
