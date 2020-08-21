@@ -267,10 +267,6 @@ export function ContentEditor(props: {
     editorViewRef.current!.updateState(editorState);
 
     // Other parts of the application want to access the selection.
-    //
-    // [FIXME] This is buggy and I don't know why. It seems to work more
-    // reliably (or perhaps exclusively) when using the toolbar, but not when
-    // using keyboard shortcuts.
     const selection = editorState.selection;
     props.context.setSelectionInFocusedContent({start: selection.from, end: selection.to});
   }, [editorState]);
