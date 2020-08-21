@@ -219,7 +219,6 @@ export function ContentEditor(props: {
 
   // Initialize editor
   React.useEffect(() => {
-    console.log("Building editor");
     function dispatchTransaction(transaction: PS.Transaction<typeof schema>) {
       setEditorState((previousState) => previousState.apply(transaction));
     }
@@ -284,11 +283,6 @@ export function Content(props: {
   if (T.hasFocus(props.context.tree, props.node)) {
     return <ContentEditor {...props} />;
   } else {
-    console.log(
-      "Rendering... %o has content %o",
-      props.node,
-      D.content(props.context.state, T.thing(props.context.tree, props.node)),
-    );
     return <RenderedContent {...props} />;
   }
 }
