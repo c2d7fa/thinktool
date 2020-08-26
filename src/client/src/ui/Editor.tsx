@@ -268,7 +268,25 @@ function ContentEditor(props: {
 
     // Other parts of the application want to access the selection.
     const selection = editorState.selection;
-    props.context.setSelectionInFocusedContent({start: selection.from, end: selection.to});
+    props.context.registerActiveEditor({
+      selection: E.contentToEditString(
+        D.content(props.context.state, T.thing(props.context.tree, props.node)),
+      ).substring(selection.from, selection.to),
+
+      replaceSelection(selection) {
+        editorViewRef.current!.focus();
+
+        // This is a massive hack due to the fact that we are horrible at
+        // handling state changes. When the user inserts a link, an action is
+        // run. This action creates a popup, and registers a callback that will
+        // call this function. That callback is called with a newer version of
+        // the state than what this function has access to. We don't want to
+        // override the callback's state from this function, so we wait a bit so
+        // that we will hopefully have the latest version of the state by the
+        // time that the code below runs.
+        requestAnimationFrame(() => setEditorState((es) => es.apply(es.tr.insertText(selection))));
+      },
+    });
   }, [editorState]);
 
   React.useEffect(() => {

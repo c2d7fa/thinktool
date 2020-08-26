@@ -12,6 +12,11 @@ export interface DragInfo {
   finished: boolean | "copy";
 }
 
+export interface ActiveEditor {
+  selection: string;
+  replaceSelection(text: string): void;
+}
+
 export interface Context {
   storage: Storage;
   server?: Server;
@@ -39,12 +44,17 @@ export interface Context {
   selectedThing: string;
   setSelectedThing(value: string): void;
 
-  activePopup: ((state: State, tree: Tree, target: T.NodeRef, selection: string) => [State, Tree]) | null;
+  activePopup:
+    | ((state: State, tree: Tree, target: T.NodeRef, selection: string) => [State, Tree] | void)
+    | null;
   setActivePopup(
-    callback: ((state: State, tree: Tree, target: T.NodeRef, selection: string) => [State, Tree]) | null,
+    callback:
+      | ((state: State, tree: Tree, target: T.NodeRef, selection: string) => [State, Tree] | void)
+      | null,
   ): void;
   popupTarget: T.NodeRef | null;
   setPopupTarget(popupTarget: T.NodeRef | null): void;
-  selectionInFocusedContent: {start: number; end: number} | null;
-  setSelectionInFocusedContent(selection: {start: number; end: number} | null): void;
+
+  activeEditor: ActiveEditor | null;
+  registerActiveEditor(activeEditor: ActiveEditor | null): void;
 }

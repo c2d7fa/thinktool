@@ -112,19 +112,12 @@ const implementations: {
   "insert-link"(context, getFocused) {
     const node = getFocused();
 
-    const textSelection = context.selectionInFocusedContent;
-    if (textSelection === null) throw "Selection wasn't saved; can't insert link.";
-
     context.setPopupTarget(node);
     context.setActivePopup((state, tree, target, selection) => {
-      if (target !== node) throw "Invalid target/node";
-
-      const editing = E.contentToEditString(D.content(context.state, T.thing(context.tree, node)));
-      const newEditing =
-        editing.substring(0, textSelection.start) + `#${selection}` + editing.substring(textSelection.end);
-      const newState = D.setContent(state, T.thing(tree, target), E.contentFromEditString(newEditing));
-
-      return [newState, tree];
+      if (target !== node) console.error("Unexpected target/node");
+      if (context.activeEditor === null) throw "No active editor.";
+      context.activeEditor.replaceSelection(`#${selection}`);
+      return [state, tree];
     });
   },
 

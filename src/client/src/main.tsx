@@ -4,7 +4,7 @@ import * as Misc from "@johv/miscjs";
 import * as ChangelogData from "./changes.json";
 
 import {State} from "./data";
-import {Context, DragInfo} from "./context";
+import {Context, DragInfo, ActiveEditor} from "./context";
 
 import * as Data from "./data";
 import * as T from "./tree";
@@ -250,10 +250,9 @@ function useContext({
     ((state: State, tree: T.Tree, target: T.NodeRef, selection: string) => [State, T.Tree]) | null
   >(null);
   const [popupTarget, setPopupTarget] = React.useState<T.NodeRef | null>(null);
-  const [selectionInFocusedContent, setSelectionInFocusedContent] = React.useState<{
-    start: number;
-    end: number;
-  } | null>(null);
+
+  // Editor:
+  const [activeEditor, registerActiveEditor] = React.useState<ActiveEditor | null>(null);
 
   // Tutorial:
   const [tutorialState, setTutorialState_] = React.useState<Tutorial.State>(
@@ -298,8 +297,8 @@ function useContext({
     },
     popupTarget,
     setPopupTarget,
-    selectionInFocusedContent,
-    setSelectionInFocusedContent,
+    activeEditor,
+    registerActiveEditor,
     tutorialState,
     setTutorialState,
     changelogShown,
@@ -495,9 +494,12 @@ function App({
             }
             const [state2, selection] = Data.create(context.state);
             const state3 = Data.setContent(state2, selection, [content]);
-            const [newState, newTree] = context.activePopup!(state3, context.tree, target, selection);
-            context.setState(newState);
-            context.setTree(newTree);
+            const result = context.activePopup!(state3, context.tree, target, selection);
+            if (typeof result === "object") {
+              const [newState, newTree] = result;
+              context.setState(newState);
+              context.setTree(newTree);
+            }
           }}
           submit={(selection: string) => {
             const target = context.popupTarget;
@@ -505,25 +507,14 @@ function App({
               console.warn("Aborting popup action because nothing is focused.");
               return;
             }
-            const [newState, newTree] = context.activePopup!(context.state, context.tree, target, selection);
-            context.setState(newState);
-            context.setTree(newTree);
-          }}
-          seedText={(() => {
-            const start = context.selectionInFocusedContent?.start;
-            const end = context.selectionInFocusedContent?.end;
-
-            if (
-              start !== undefined &&
-              end !== undefined &&
-              start - end !== 0 &&
-              context.popupTarget !== null
-            ) {
-              return Editing.contentToEditString(
-                Data.content(context.state, T.thing(context.tree, context.popupTarget)),
-              ).substring(start, end);
+            const result = context.activePopup!(context.state, context.tree, target, selection);
+            if (typeof result === "object") {
+              const [newState, newTree] = result;
+              context.setState(newState);
+              context.setTree(newTree);
             }
-          })()}
+          }}
+          seedText={context.activeEditor?.selection}
         />
       )}
       <div className="top-bar">

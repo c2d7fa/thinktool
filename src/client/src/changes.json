@@ -247,6 +247,10 @@
     {
       "date": "2020-08-21",
       "title": "Various under-the-hood improvements to the editor component."
+    },
+    {
+      "date": "2020-08-26",
+      "title": "Text cursor is now placed in the correct position after inserting a link."
     }
   ]
 }
