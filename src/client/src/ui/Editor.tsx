@@ -256,53 +256,37 @@ function ContentEditor(props: {
   }, []);
 
   React.useEffect(() => {
-    props.context.setState(
-      D.setContent(
-        props.context.state,
-        T.thing(props.context.tree, props.node),
-        E.contentFromEditString(editorState.doc.textContent),
-      ),
-    );
+    if (editorViewRef.current!.state !== editorState) {
+      editorViewRef.current!.updateState(editorState);
 
-    editorViewRef.current!.updateState(editorState);
+      // Other parts of the application want to access the selection.
+      const selection = editorState.selection;
+      props.context.registerActiveEditor({
+        selection: E.contentToEditString(
+          D.content(props.context.state, T.thing(props.context.tree, props.node)),
+        ).substring(selection.from, selection.to),
 
-    // Other parts of the application want to access the selection.
-    const selection = editorState.selection;
-    props.context.registerActiveEditor({
-      selection: E.contentToEditString(
-        D.content(props.context.state, T.thing(props.context.tree, props.node)),
-      ).substring(selection.from, selection.to),
+        replaceSelection(selection) {
+          editorViewRef.current!.focus();
 
-      replaceSelection(selection) {
-        editorViewRef.current!.focus();
+          setEditorState((es) => es.apply(es.tr.insertText(selection)));
+        },
+      });
+    }
 
-        // This is a massive hack due to the fact that we are horrible at
-        // handling state changes. When the user inserts a link, an action is
-        // run. This action creates a popup, and registers a callback that will
-        // call this function. That callback is called with a newer version of
-        // the state than what this function has access to. We don't want to
-        // override the callback's state from this function, so we wait a bit so
-        // that we will hopefully have the latest version of the state by the
-        // time that the code below runs.
-        requestAnimationFrame(() => setEditorState((es) => es.apply(es.tr.insertText(selection))));
-      },
-    });
-  }, [editorState]);
-
-  React.useEffect(() => {
     if (
       E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))) !==
       editorState.doc.textContent
     ) {
-      setEditorState(
-        PS.EditorState.create({
-          schema,
-          doc: schema.node("doc", {}, stringContent === "" ? [] : [schema.text(stringContent)]),
-          plugins: [keyPlugin, pastePlugin],
-        }),
+      props.context.setState(
+        D.setContent(
+          props.context.state,
+          T.thing(props.context.tree, props.node),
+          E.contentFromEditString(editorState.doc.textContent),
+        ),
       );
     }
-  }, [props.context.state]);
+  });
 
   React.useEffect(
     function acceptFocus() {
