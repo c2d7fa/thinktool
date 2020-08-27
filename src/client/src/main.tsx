@@ -14,7 +14,6 @@ import * as Storage from "./storage";
 import * as Actions from "./actions";
 import * as ExportRoam from "./export-roam";
 import * as Sh from "./shortcuts";
-import * as Editing from "./editing";
 
 import Editor from "./ui/Editor";
 import ThingSelectPopup from "./ui/ThingSelectPopup";
@@ -28,8 +27,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import undo from "./undo";
-
-import {classes} from "./util";
 
 // ==
 
