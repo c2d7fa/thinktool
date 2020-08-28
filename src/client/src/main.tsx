@@ -776,7 +776,7 @@ function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: 
 
   const listItems = otherParents.map((otherParentThing) => {
     return (
-      <li>
+      <li key={otherParentThing}>
         <span
           className="other-parent-small"
           onClick={() => {
