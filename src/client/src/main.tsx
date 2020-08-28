@@ -27,6 +27,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import undo from "./undo";
+import {classes} from "./util";
 
 // ==
 
@@ -657,84 +658,113 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   );
 }
 
-function ExpandableItem(p: {
+// [TODO] We want to remove the direct dependency on Context from ExpandableItem
+// to simplify the flow of state changes and make dependencies more obvious.
+// While this is a WIP, we have ExpandableItem_, which should be merged back
+// into ExpandableItem eventually.
+//
+// ExpandableItem_ still depends on Context, but only to forward it onto its
+// child components Subtree, OtherParentsSmall and Content. We should refactor
+// those too.
+function ExpandableItem_(props: {
   context: Context;
+
   node: T.NodeRef;
   parent?: T.NodeRef;
-  className?: string;
-  isOpenedLink?: boolean;
-  isOtherParent?: boolean;
-  isReference?: boolean;
+
+  dragInfo: DragInfo;
+  beginDrag(): void;
+
+  kind: "child" | "reference" | "opened-link" | "parent";
+  status: "collapsed" | "expanded" | "terminal";
+
+  toggle(): void;
+  jump(): void;
 }) {
-  function toggle() {
-    if (p.isOpenedLink && p.parent !== undefined) {
-      p.context.setTree(
-        T.toggleLink(p.context.state, p.context.tree, p.parent, T.thing(p.context.tree, p.node)),
-      );
-    } else if (p.isOtherParent) {
-      // Behavior of parents is swapped – clicking jumps, middle click expands.
-      p.context.setSelectedThing(T.thing(p.context.tree, p.node));
-    } else {
-      p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
-    }
-  }
+  const [onBulletClick, onBulletMiddleClick] =
+    props.kind === "parent" ? [props.jump, props.toggle] : [props.toggle, props.jump];
 
-  function jump() {
-    if (p.isOtherParent) {
-      // Behavior of parents is swapped – clicking jumps, middle click expands.
-      p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
-    } else {
-      p.context.setSelectedThing(T.thing(p.context.tree, p.node));
-    }
-  }
+  const className = classes({
+    item: true,
+    "drop-target": props.dragInfo.current !== null && props.dragInfo.target?.id === props.node.id,
+    "drag-source": props.dragInfo.current?.id === props.node.id && props.dragInfo.target !== null,
+    "opened-link": props.kind === "opened-link",
+  });
 
-  const expanded = T.expanded(p.context.tree, p.node);
-  const terminal =
-    expanded &&
-    T.children(p.context.tree, p.node).length === 0 &&
-    T.otherParentsChildren(p.context.tree, p.node).length === 0 &&
-    T.backreferencesChildren(p.context.tree, p.node).length === 0 &&
-    T.openedLinksChildren(p.context.tree, p.node).length === 0;
-
-  const isPage = Data.isPage(p.context.state, T.thing(p.context.tree, p.node));
-
-  function beginDrag() {
-    p.context.setDrag({current: p.node, target: null, finished: false});
-  }
-
-  let className = "item";
-  if (p.className) className += " " + p.className;
-  if (isPage) className += " page";
-  if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id) className += " drop-target";
-  if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null) className += " drag-source";
-
-  const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
-
-  const bulletAttrs: {specialType?: "parent" | "reference" | "opened-link"} = p.isOtherParent
-    ? {specialType: "parent"}
-    : p.isReference
-    ? {specialType: "reference"}
-    : p.isOpenedLink
-    ? {specialType: "opened-link"}
-    : {};
+  const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
   return (
     <li className="subtree-container">
       {/* data-id is used for drag and drop. */}
-      <div className={className} data-id={p.node.id}>
-        <OtherParentsSmall context={p.context} child={p.node} parent={p.parent} />
+      <div className={className} data-id={props.node.id}>
+        <OtherParentsSmall context={props.context} child={props.node} parent={props.parent} />
         <Bullet
-          {...bulletAttrs}
-          beginDrag={beginDrag}
-          status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
-          toggle={toggle}
-          onMiddleClick={jump}
+          specialType={props.kind === "child" ? undefined : props.kind}
+          beginDrag={props.beginDrag}
+          status={props.status}
+          toggle={onBulletClick}
+          onMiddleClick={onBulletMiddleClick}
         />
-        <Content context={p.context} node={p.node} />
+        <Content context={props.context} node={props.node} />
       </div>
-      {expanded && !terminal && subtree}
+      {props.status === "expanded" && subtree}
     </li>
   );
+}
+
+function ExpandableItem(props: {
+  context: Context;
+  node: T.NodeRef;
+  parent?: T.NodeRef;
+
+  kind: "child" | "reference" | "opened-link" | "parent";
+}) {
+  function itemStatus(context: Context, node: T.NodeRef): "collapsed" | "expanded" | "terminal" {
+    if (!T.expanded(context.tree, node)) {
+      return "collapsed";
+    } else if (
+      T.children(context.tree, node).length === 0 &&
+      T.otherParentsChildren(context.tree, node).length === 0 &&
+      T.backreferencesChildren(context.tree, node).length === 0 &&
+      T.openedLinksChildren(context.tree, node).length === 0
+    ) {
+      return "terminal";
+    } else {
+      return "expanded";
+    }
+  }
+
+  const derived = {
+    toggle() {
+      if (props.kind === "opened-link" && props.parent !== undefined) {
+        props.context.setTree(
+          T.toggleLink(
+            props.context.state,
+            props.context.tree,
+            props.parent,
+            T.thing(props.context.tree, props.node),
+          ),
+        );
+      } else {
+        props.context.setTree(T.toggle(props.context.state, props.context.tree, props.node));
+      }
+    },
+
+    jump() {
+      props.context.setSelectedThing(T.thing(props.context.tree, props.node));
+    },
+
+    isExpanded: T.expanded(props.context.tree, props.node),
+
+    status: itemStatus(props.context, props.node),
+
+    dragInfo: props.context.drag,
+    beginDrag() {
+      props.context.setDrag({current: props.node, target: null, finished: false});
+    },
+  };
+
+  return <ExpandableItem_ {...props} {...derived} />;
 }
 
 function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
@@ -873,16 +903,7 @@ function Subtree(p: {
   });
 
   const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map((child) => {
-    return (
-      <ExpandableItem
-        className="opened-link"
-        key={child.id}
-        node={child}
-        parent={p.parent}
-        context={p.context}
-        isOpenedLink
-      />
-    );
+    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} isOpenedLink />;
   });
 
   return (
