@@ -583,7 +583,7 @@ function ThingOverview(p: {context: Context}) {
 function ParentsOutline(p: {context: Context}) {
   const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map(
     (child: T.NodeRef) => {
-      return <ExpandableItem isOtherParent key={child.id} node={child} context={p.context} />;
+      return <ExpandableItem kind="parent" key={child.id} node={child} context={p.context} />;
     },
   );
 
@@ -604,7 +604,7 @@ function ParentsOutline(p: {context: Context}) {
 function ReferencesOutline(p: {context: Context}) {
   const referenceItems = T.backreferencesChildren(p.context.tree, T.root(p.context.tree)).map(
     (child: T.NodeRef) => {
-      return <ExpandableItem isReference key={child.id} node={child} context={p.context} />;
+      return <ExpandableItem kind="reference" key={child.id} node={child} context={p.context} />;
     },
   );
 
@@ -869,7 +869,7 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
   }
 
   const children = T.backreferencesChildren(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem isReference key={child.id} node={child} context={p.context} />;
+    return <ExpandableItem kind="reference" key={child.id} node={child} context={p.context} />;
   });
 
   return (
@@ -899,11 +899,13 @@ function Subtree(p: {
   omitReferences?: boolean;
 }) {
   const children = T.children(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
+    return <ExpandableItem kind="child" key={child.id} node={child} parent={p.parent} context={p.context} />;
   });
 
   const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} isOpenedLink />;
+    return (
+      <ExpandableItem kind="opened-link" key={child.id} node={child} parent={p.parent} context={p.context} />
+    );
   });
 
   return (
