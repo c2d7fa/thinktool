@@ -680,6 +680,9 @@ function ExpandableItem_(props: {
 
   toggle(): void;
   jump(): void;
+
+  otherParents: React.ReactNode;
+  subtree: React.ReactNode;
 }) {
   const [onBulletClick, onBulletMiddleClick] =
     props.kind === "parent" ? [props.jump, props.toggle] : [props.toggle, props.jump];
@@ -691,13 +694,11 @@ function ExpandableItem_(props: {
     "opened-link": props.kind === "opened-link",
   });
 
-  const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
-
   return (
     <li className="subtree-container">
       {/* data-id is used for drag and drop. */}
       <div className={className} data-id={props.node.id}>
-        <OtherParentsSmall context={props.context} child={props.node} parent={props.parent} />
+        {props.otherParents}
         <Bullet
           specialType={props.kind === "child" ? undefined : props.kind}
           beginDrag={props.beginDrag}
@@ -707,7 +708,7 @@ function ExpandableItem_(props: {
         />
         <Content context={props.context} node={props.node} />
       </div>
-      {props.status === "expanded" && subtree}
+      {props.status === "expanded" && props.subtree}
     </li>
   );
 }
@@ -762,6 +763,10 @@ function ExpandableItem(props: {
     beginDrag() {
       props.context.setDrag({current: props.node, target: null, finished: false});
     },
+
+    otherParents: <OtherParentsSmall context={props.context} child={props.node} parent={props.parent} />,
+
+    subtree: <Subtree context={props.context} parent={props.node} grandparent={props.parent} />,
   };
 
   return <ExpandableItem_ {...props} {...derived} />;
