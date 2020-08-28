@@ -1,17 +1,10 @@
 import * as React from "react";
+import * as Misc from "@johv/miscjs";
 
 export type Shortcut =
   | {mod?: boolean; secondaryMod?: boolean; ctrlLikeMod?: boolean; key: string}
   | {special: string} // Matching is handled elsewhere; just store description.
   | null;
-
-function implies(b: boolean, c: boolean) {
-  return !b || (b && c);
-}
-
-function capitalize(s: string) {
-  return s.substr(0, 1).toUpperCase() + s.substr(1);
-}
 
 function ifMacOS<T>(x: T, y: T): T {
   if (navigator.platform === "MacIntel") {
@@ -31,7 +24,7 @@ export function format(shortcut: Shortcut): string {
     else if (key === "ArrowUp") return "Up";
     else if (key === "Backspace") return ifMacOS("Backspace", "Delete");
     else if (key === "Delete") return ifMacOS("Delete", "Fn+Delete");
-    else return capitalize(key);
+    else return Misc.capitalize(key);
   }
 
   if ("special" in shortcut) {
@@ -50,9 +43,9 @@ export function matches(event: React.KeyboardEvent<{}> | KeyboardEvent, shortcut
   return (
     shortcut !== null &&
     !("special" in shortcut) &&
-    implies(shortcut.mod ?? false, ifMacOS(event.altKey, event.ctrlKey)) &&
-    implies(shortcut.secondaryMod ?? false, ifMacOS(event.ctrlKey, event.altKey)) &&
-    implies(shortcut.ctrlLikeMod ?? false, ifMacOS(event.ctrlKey, event.metaKey)) &&
+    Misc.implies(shortcut.mod ?? false, ifMacOS(event.altKey, event.ctrlKey)) &&
+    Misc.implies(shortcut.secondaryMod ?? false, ifMacOS(event.ctrlKey, event.altKey)) &&
+    Misc.implies(shortcut.ctrlLikeMod ?? false, ifMacOS(event.ctrlKey, event.metaKey)) &&
     shortcut.key === event.key
   );
 }

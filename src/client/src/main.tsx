@@ -27,18 +27,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import undo from "./undo";
-import {classes} from "./util";
 
 // ==
-
-// [TODO] Move this to utility library
-function truncateEllipsis(text: string, maxLength: number) {
-  if (text.length >= maxLength) {
-    return text.substr(0, maxLength - 3) + "...";
-  } else {
-    return text;
-  }
-}
 
 // == Components ==
 
@@ -687,7 +677,7 @@ function ExpandableItem_(props: {
   const [onBulletClick, onBulletMiddleClick] =
     props.kind === "parent" ? [props.jump, props.toggle] : [props.toggle, props.jump];
 
-  const className = classes({
+  const className = Misc.classes({
     item: true,
     "drop-target": props.dragInfo.current !== null && props.dragInfo.target?.id === props.node.id,
     "drag-source": props.dragInfo.current?.id === props.node.id && props.dragInfo.target !== null,
@@ -790,7 +780,7 @@ function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: 
           title={Data.contentText(props.context.state, otherParentThing)}>
           <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
           &nbsp;
-          {truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
+          {Misc.truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
         </span>
       </li>
     );
