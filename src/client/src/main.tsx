@@ -803,8 +803,7 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       }
     }
 
-    // [TODO] Is there a reason for this weird ordering? We can probably clean
-    // this up.
+    // [TODO] Is there a reason for this weird ordering? Surely we can clean this up.
 
     if (tryAction("indent") || tryAction("unindent") || tryAction("down") || tryAction("up")) {
       return true;
@@ -819,25 +818,10 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       return true;
     } else if (tryAction("new-child")) {
       return true;
-    } else if (Sh.matches(ev, {secondaryMod: true, key: "Enter"})) {
-      Actions.execute(p.context, "new");
+    } else if (notes.startOfItem && tryAction("new-before")) {
       return true;
-    } else if (ev.key === "Enter" && !ev.shiftKey) {
-      // [TODO] Couldn't we handle this logic in the action code itself. We
-      // would need to check where in the item we are, which would require
-      // accessing the current selection from the context.
-
-      if (notes.endOfItem) {
-        Actions.execute(p.context, "new");
-        return true;
-      } else if (notes.startOfItem) {
-        const [newState, newTree, _, newId] = T.createSiblingBefore(p.context.state, p.context.tree, p.node);
-        p.context.setState(newState);
-        p.context.setTree(T.focus(newTree, newId));
-        return true;
-      } else {
-        return false;
-      }
+    } else if (tryAction("new")) {
+      return true;
     } else if (
       tryAction("remove") ||
       tryAction("destroy") ||

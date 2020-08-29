@@ -2,7 +2,6 @@ import {Context} from "./context";
 import * as T from "./tree";
 import * as D from "./data";
 import * as Tutorial from "./tutorial";
-import * as E from "./editing";
 import * as S from "./shortcuts";
 
 export type ActionName =
@@ -12,6 +11,7 @@ export type ActionName =
   | "insert-link"
   | "find"
   | "new"
+  | "new-before"
   | "zoom"
   | "indent"
   | "unindent"
@@ -49,6 +49,7 @@ export function enabled(context: Context, action: ActionName): boolean {
     "insert-parent",
     "insert-link",
     "toggle-type",
+    "new-before",
   ];
 
   if (alwaysEnabled.includes(action)) {
@@ -143,6 +144,12 @@ const implementations: {
     }
   },
 
+  "new-before"(context, getFocused) {
+    const [newState, newTree, _, newId] = T.createSiblingBefore(context.state, context.tree, getFocused());
+    context.setState(newState);
+    context.setTree(T.focus(newTree, newId));
+  },
+
   zoom(context, getFocused) {
     context.setSelectedThing(T.thing(context.tree, getFocused()));
   },
@@ -230,9 +237,6 @@ const implementations: {
 };
 
 export function shortcut(action: ActionName): S.Shortcut {
-  // [NOTE] This does not have a shortcut for "new", since this action is
-  // handled specially.
-
   switch (action) {
     case "find":
       return {mod: true, key: "f"};
@@ -263,10 +267,10 @@ export function shortcut(action: ActionName): S.Shortcut {
     case "undo":
       return {ctrlLikeMod: true, key: "z"};
     case "new":
-      return {special: `${S.format({key: "Enter"})}/${S.format({secondaryMod: true, key: "Enter"})}}`};
+    case "new-before":
+      return {key: "Enter"};
     case "zoom":
       return {special: "Middle click bullet"};
-
     default:
       return null;
   }
