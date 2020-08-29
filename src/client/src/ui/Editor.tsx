@@ -126,7 +126,6 @@ function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) 
 function RenderedContent(props: {
   context: Context;
   node: T.NodeRef;
-  className?: string;
   onKeyDown?(ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
 }) {
@@ -160,7 +159,7 @@ function RenderedContent(props: {
           props.context.setTree(T.focus(props.context.tree, props.node));
         }
       }}
-      className={`editor ${props.className}`}>
+      className={`editor content`}>
       {fragments.length === 0 ? <span className="placeholder-empty">(Empty)</span> : <span>{fragments}</span>}
     </div>
   );
@@ -299,7 +298,6 @@ function ContentEditor(props: {
 export default function Editor(props: {
   context: Context;
   node: T.NodeRef;
-  className?: string;
   placeholder?: string;
   onAction(action: Ac.ActionName): void;
 }) {

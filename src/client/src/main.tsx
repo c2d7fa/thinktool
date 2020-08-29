@@ -22,6 +22,7 @@ import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLink, ExternalLinkType} from "./ui/ExternalLink";
 import Bullet from "./ui/Bullet";
+import Item from "./ui/Item";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -544,12 +545,13 @@ function App({
 
 function ThingOverview(p: {context: Context}) {
   const hasReferences = Data.backreferences(p.context.state, p.context.selectedThing).length > 0;
+  const onAction = useOnActionCallback(p.context, T.root(p.context.tree));
 
   return (
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        <Editor context={p.context} node={T.root(p.context.tree)} className="selected-content" />
+        <Editor context={p.context} node={T.root(p.context.tree)} onAction={onAction} />
         <div className="children">
           <Outline context={p.context} />
         </div>
@@ -648,68 +650,42 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   );
 }
 
-// [TODO] We want to remove the direct dependency on Context from ExpandableItem
-// to simplify the flow of state changes and make dependencies more obvious.
-// While this is a WIP, we have ExpandableItem_, which should be merged back
-// into ExpandableItem eventually.
-//
-// ExpandableItem_ still depends on Context, but only to forward it onto its
-// child components Subtree, OtherParentsSmall and Content. We should refactor
-// those too.
-function ExpandableItem_(props: {
-  context: Context;
-
-  node: T.NodeRef;
-  parent?: T.NodeRef;
-
-  dragInfo: DragInfo;
-  beginDrag(): void;
-
-  kind: "child" | "reference" | "opened-link" | "parent";
-  status: "collapsed" | "expanded" | "terminal";
-
-  toggle(): void;
-  jump(): void;
-
-  otherParents: React.ReactNode;
-  subtree: React.ReactNode;
-}) {
-  const [onBulletClick, onBulletMiddleClick] =
-    props.kind === "parent" ? [props.jump, props.toggle] : [props.toggle, props.jump];
-
-  const className = Misc.classes({
-    item: true,
-    "drop-target": props.dragInfo.current !== null && props.dragInfo.target?.id === props.node.id,
-    "drag-source": props.dragInfo.current?.id === props.node.id && props.dragInfo.target !== null,
-    "opened-link": props.kind === "opened-link",
-  });
-
-  return (
-    <li className="subtree-container">
-      {/* data-id is used for drag and drop. */}
-      <div className={className} data-id={props.node.id}>
-        {props.otherParents}
-        <Bullet
-          specialType={props.kind === "child" ? undefined : props.kind}
-          beginDrag={props.beginDrag}
-          status={props.status}
-          toggle={onBulletClick}
-          onMiddleClick={onBulletMiddleClick}
-        />
-        <Content context={props.context} node={props.node} />
-      </div>
-      {props.status === "expanded" && props.subtree}
-    </li>
-  );
-}
-
-function ExpandableItem(props: {
+export default function ExpandableItem(props: {
   context: Context;
   node: T.NodeRef;
   parent?: T.NodeRef;
 
   kind: "child" | "reference" | "opened-link" | "parent";
 }) {
+  const onAction = useOnActionCallback(props.context, props.node);
+
+  function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
+    const otherParents = Data.otherParents(
+      props.context.state,
+      T.thing(props.context.tree, props.child),
+      props.parent && T.thing(props.context.tree, props.parent),
+    );
+
+    const listItems = otherParents.map((otherParentThing) => {
+      return (
+        <li key={otherParentThing}>
+          <span
+            className="other-parent-small"
+            onClick={() => {
+              props.context.setSelectedThing(otherParentThing);
+            }}
+            title={Data.contentText(props.context.state, otherParentThing)}>
+            <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
+            &nbsp;
+            {Misc.truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
+          </span>
+        </li>
+      );
+    });
+
+    return <ul className="other-parents-small">{listItems}</ul>;
+  }
+
   function itemStatus(context: Context, node: T.NodeRef): "collapsed" | "expanded" | "terminal" {
     if (!T.expanded(context.tree, node)) {
       return "collapsed";
@@ -725,86 +701,72 @@ function ExpandableItem(props: {
     }
   }
 
-  const derived = {
-    toggle() {
-      if (props.kind === "opened-link" && props.parent !== undefined) {
-        props.context.setTree(
-          T.toggleLink(
-            props.context.state,
-            props.context.tree,
-            props.parent,
-            T.thing(props.context.tree, props.node),
-          ),
-        );
-      } else {
-        props.context.setTree(T.toggle(props.context.state, props.context.tree, props.node));
-      }
-    },
+  function toggle() {
+    if (props.kind === "opened-link" && props.parent !== undefined) {
+      props.context.setTree(
+        T.toggleLink(
+          props.context.state,
+          props.context.tree,
+          props.parent,
+          T.thing(props.context.tree, props.node),
+        ),
+      );
+    } else {
+      props.context.setTree(T.toggle(props.context.state, props.context.tree, props.node));
+    }
+  }
 
-    jump() {
-      props.context.setSelectedThing(T.thing(props.context.tree, props.node));
-    },
+  function jump() {
+    props.context.setSelectedThing(T.thing(props.context.tree, props.node));
+  }
 
-    isExpanded: T.expanded(props.context.tree, props.node),
+  const status = itemStatus(props.context, props.node);
 
-    status: itemStatus(props.context, props.node),
+  const dragInfo = props.context.drag;
 
-    dragInfo: props.context.drag,
-    beginDrag() {
-      props.context.setDrag({current: props.node, target: null, finished: false});
-    },
+  function beginDrag() {
+    props.context.setDrag({current: props.node, target: null, finished: false});
+  }
 
-    otherParents: <OtherParentsSmall context={props.context} child={props.node} parent={props.parent} />,
+  const otherParents = <OtherParentsSmall context={props.context} child={props.node} parent={props.parent} />;
 
-    subtree: <Subtree context={props.context} parent={props.node} grandparent={props.parent} />,
-  };
+  const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
-  return <ExpandableItem_ {...props} {...derived} />;
-}
+  const content = <Editor context={props.context} node={props.node} onAction={onAction} />;
 
-function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
-  const otherParents = Data.otherParents(
-    props.context.state,
-    T.thing(props.context.tree, props.child),
-    props.parent && T.thing(props.context.tree, props.parent),
+  return (
+    <Item
+      {...{
+        node: props.node,
+        parent: props.parent,
+        dragInfo,
+        beginDrag,
+        kind: props.kind,
+        status,
+        toggle,
+        jump,
+        otherParents,
+        subtree,
+        content,
+      }}
+    />
   );
-
-  const listItems = otherParents.map((otherParentThing) => {
-    return (
-      <li key={otherParentThing}>
-        <span
-          className="other-parent-small"
-          onClick={() => {
-            props.context.setSelectedThing(otherParentThing);
-          }}
-          title={Data.contentText(props.context.state, otherParentThing)}>
-          <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
-          &nbsp;
-          {Misc.truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
-        </span>
-      </li>
-    );
-  });
-
-  return <ul className="other-parents-small">{listItems}</ul>;
 }
 
-function Content(p: {context: Context; node: T.NodeRef}) {
+function useOnActionCallback(context: Context, node: T.NodeRef) {
   // We always want to execute actions on the latest version of the context.
   //
   // [TODO] Is there a smarter or more idiomatic way to accomplish this? This
   // has to run multiple times every single time anythng happens. It would be
   // nicer if we could just pull the current Context from onAction.
-  const latestContext = React.useRef(p.context);
+  const latestContext = React.useRef(context);
   React.useEffect(() => {
-    latestContext.current = p.context;
-  }, [p.context]);
+    latestContext.current = context;
+  }, [context]);
 
-  function onAction(action: Actions.ActionName) {
+  return function onAction(action: Actions.ActionName) {
     Actions.execute(latestContext.current, action);
-  }
-
-  return <Editor context={p.context} node={p.node} className="content" onAction={onAction} />;
+  };
 }
 
 function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
