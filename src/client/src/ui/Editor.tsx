@@ -168,7 +168,6 @@ function RenderedContent(props: {
 function ContentEditor(props: {
   context: Context;
   node: T.NodeRef;
-  className?: string;
   placeholder?: string;
   onAction(action: Ac.ActionName): void;
 }) {
@@ -292,7 +291,7 @@ function ContentEditor(props: {
     [T.focused(props.context.tree)],
   );
 
-  return <div className={`editor-inactive ${props.className}`} ref={ref}></div>;
+  return <div className="editor content" ref={ref}></div>;
 }
 
 export default function Editor(props: {
