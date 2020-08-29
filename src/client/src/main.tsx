@@ -809,33 +809,33 @@ function Content(p: {context: Context; node: T.NodeRef}) {
       }
     }
 
-    // [TODO] Is there a reason for this weird ordering? Surely we can clean this up.
+    const actions: Actions.ActionName[] = [
+      "indent",
+      "unindent",
+      "up",
+      "down",
+      "toggle",
+      "focus-up",
+      "focus-down",
+      "new-child",
+      "new-before",
+      "new",
+      "remove",
+      "destroy",
+      "insert-child",
+      "insert-sibling",
+      "insert-parent",
+      "insert-link",
+      "toggle-type",
+    ];
 
-    if (tryAction("indent") || tryAction("unindent") || tryAction("down") || tryAction("up")) {
-      return true;
-    } else if (tryAction("toggle")) {
-      return true;
-    } else if (tryAction("focus-up") || tryAction("focus-down")) {
-      return true;
-    } else if (tryAction("new-child")) {
-      return true;
-    } else if (tryAction("new-before")) {
-      return true;
-    } else if (tryAction("new")) {
-      return true;
-    } else if (
-      tryAction("remove") ||
-      tryAction("destroy") ||
-      tryAction("insert-child") ||
-      tryAction("insert-sibling") ||
-      tryAction("insert-parent") ||
-      tryAction("insert-link") ||
-      tryAction("toggle-type")
-    ) {
-      return true;
-    } else {
-      return false;
+    for (const action of actions) {
+      if (tryAction(action)) {
+        return true;
+      }
     }
+
+    return false;
   }
 
   return <Editor context={p.context} node={p.node} className="content" onKeyDown={onKeyDown} />;
