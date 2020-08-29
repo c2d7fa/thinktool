@@ -26,6 +26,7 @@ export type ActionName =
   | "changelog"
   | "undo"
   | "toggle-type"
+  | "toggle"
   | "home"
   | "forum";
 
@@ -54,6 +55,7 @@ export function enabled(context: Context, action: ActionName): boolean {
     "new-before",
     "focus-up",
     "focus-down",
+    "toggle",
   ];
 
   if (alwaysEnabled.includes(action)) {
@@ -225,6 +227,10 @@ const implementations: {
     context.setState(newState);
   },
 
+  toggle(context, getFocused) {
+    context.setTree(T.toggle(context.state, context.tree, getFocused()));
+  },
+
   home(context, getFocused) {
     const newTree = T.fromRoot(context.state, "0");
     context.setTree(newTree);
@@ -276,6 +282,8 @@ export function shortcut(action: ActionName): S.Shortcut {
       return {mod: true, key: "l"};
     case "toggle-type":
       return {mod: true, key: "t"};
+    case "toggle":
+      return {key: "Tab"};
     case "undo":
       return {ctrlLikeMod: true, key: "z"};
     case "new":
