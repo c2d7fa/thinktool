@@ -6,6 +6,8 @@ import * as PM from "prosemirror-model";
 import * as D from "../data";
 import * as T from "../tree";
 import * as E from "../editing";
+import * as Sh from "../shortcuts";
+import * as Ac from "../actions";
 import {Context} from "../context";
 
 import {ExternalLink as BaseExternalLink} from "./ExternalLink"; // Silly naming conflict
@@ -168,33 +170,27 @@ function ContentEditor(props: {
   context: Context;
   node: T.NodeRef;
   className?: string;
-  onKeyDown?(ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
+  onAction(action: Ac.ActionName): void;
 }) {
   const schema = new PM.Schema({nodes: {doc: {content: "text*"}, text: {}}});
 
   const ref = React.useRef<HTMLDivElement>(null);
 
-  const onKeyDownRef = React.useRef<
-    ((ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}) => boolean) | undefined
-  >(props.onKeyDown);
-
-  React.useEffect(() => {
-    onKeyDownRef.current = props.onKeyDown;
-  }, [props.onKeyDown]);
-
   const keyPlugin = new PS.Plugin({
     props: {
       handleKeyDown(view, ev) {
-        const notes = {
-          startOfItem: view.endOfTextblock("backward"),
-          endOfItem: view.endOfTextblock("forward"),
-          firstLine: view.endOfTextblock("up"),
-          lastLine: view.endOfTextblock("down"),
-        };
+        let conditions: Sh.Condition[] = [];
+        if (view.endOfTextblock("backward")) conditions.push("first-character");
+        if (view.endOfTextblock("forward")) conditions.push("last-character");
+        if (view.endOfTextblock("up")) conditions.push("first-line");
+        if (view.endOfTextblock("down")) conditions.push("last-line");
 
-        if (onKeyDownRef.current !== undefined) {
-          return onKeyDownRef.current(ev, notes);
+        for (const action of Ac.allActionsWithShortcuts) {
+          if (Sh.matches(ev, Ac.shortcut(action), conditions)) {
+            props.onAction(action);
+            return true;
+          }
         }
 
         // We don't want to handle anything by default.
@@ -304,8 +300,8 @@ export default function Editor(props: {
   context: Context;
   node: T.NodeRef;
   className?: string;
-  onKeyDown?(ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
   placeholder?: string;
+  onAction(action: Ac.ActionName): void;
 }) {
   if (T.hasFocus(props.context.tree, props.node)) {
     return <ContentEditor {...props} />;

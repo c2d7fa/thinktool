@@ -300,3 +300,23 @@ export function shortcut(action: ActionName): S.Shortcut {
       return null;
   }
 }
+
+export const allActionsWithShortcuts: ActionName[] = [
+  "indent",
+  "unindent",
+  "up",
+  "down",
+  "toggle",
+  "focus-up",
+  "focus-down",
+  "new-child",
+  "new-before",
+  "new",
+  "remove",
+  "destroy",
+  "insert-child",
+  "insert-sibling",
+  "insert-parent",
+  "insert-link",
+  "toggle-type",
+];

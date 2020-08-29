@@ -790,55 +790,21 @@ function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: 
 }
 
 function Content(p: {context: Context; node: T.NodeRef}) {
-  function onKeyDown(
-    ev: KeyboardEvent,
-    notes: {startOfItem: boolean; endOfItem: boolean; firstLine: boolean; lastLine: boolean},
-  ): boolean {
-    function tryAction(action: Actions.ActionName): boolean {
-      let activeConditions: Sh.Condition[] = [];
-      if (notes.startOfItem) activeConditions.push("first-character");
-      if (notes.endOfItem) activeConditions.push("last-character");
-      if (notes.firstLine) activeConditions.push("first-line");
-      if (notes.lastLine) activeConditions.push("last-line");
+  // We always want to execute actions on the latest version of the context.
+  //
+  // [TODO] Is there a smarter or more idiomatic way to accomplish this? This
+  // has to run multiple times every single time anythng happens. It would be
+  // nicer if we could just pull the current Context from onAction.
+  const latestContext = React.useRef(p.context);
+  React.useEffect(() => {
+    latestContext.current = p.context;
+  }, [p.context]);
 
-      if (Sh.matches(ev, Actions.shortcut(action), activeConditions)) {
-        Actions.execute(p.context, action);
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    const actions: Actions.ActionName[] = [
-      "indent",
-      "unindent",
-      "up",
-      "down",
-      "toggle",
-      "focus-up",
-      "focus-down",
-      "new-child",
-      "new-before",
-      "new",
-      "remove",
-      "destroy",
-      "insert-child",
-      "insert-sibling",
-      "insert-parent",
-      "insert-link",
-      "toggle-type",
-    ];
-
-    for (const action of actions) {
-      if (tryAction(action)) {
-        return true;
-      }
-    }
-
-    return false;
+  function onAction(action: Actions.ActionName) {
+    Actions.execute(latestContext.current, action);
   }
 
-  return <Editor context={p.context} node={p.node} className="content" onKeyDown={onKeyDown} />;
+  return <Editor context={p.context} node={p.node} className="content" onAction={onAction} />;
 }
 
 function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
