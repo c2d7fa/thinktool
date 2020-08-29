@@ -22,6 +22,7 @@ import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLink, ExternalLinkType} from "./ui/ExternalLink";
 import Bullet from "./ui/Bullet";
+import Item from "./ui/Item";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -29,15 +30,6 @@ import * as ReactDOM from "react-dom";
 import undo from "./undo";
 
 // ==
-
-// [TODO] Move this to utility library
-function truncateEllipsis(text: string, maxLength: number) {
-  if (text.length >= maxLength) {
-    return text.substr(0, maxLength - 3) + "...";
-  } else {
-    return text;
-  }
-}
 
 // == Components ==
 
@@ -553,12 +545,13 @@ function App({
 
 function ThingOverview(p: {context: Context}) {
   const hasReferences = Data.backreferences(p.context.state, p.context.selectedThing).length > 0;
+  const onAction = useOnActionCallback(p.context, T.root(p.context.tree));
 
   return (
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        <Editor context={p.context} node={T.root(p.context.tree)} className="selected-content" />
+        <Editor context={p.context} node={T.root(p.context.tree)} onAction={onAction} />
         <div className="children">
           <Outline context={p.context} />
         </div>
@@ -582,7 +575,7 @@ function ThingOverview(p: {context: Context}) {
 function ParentsOutline(p: {context: Context}) {
   const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map(
     (child: T.NodeRef) => {
-      return <ExpandableItem isOtherParent key={child.id} node={child} context={p.context} />;
+      return <ExpandableItem kind="parent" key={child.id} node={child} context={p.context} />;
     },
   );
 
@@ -603,7 +596,7 @@ function ParentsOutline(p: {context: Context}) {
 function ReferencesOutline(p: {context: Context}) {
   const referenceItems = T.backreferencesChildren(p.context.tree, T.root(p.context.tree)).map(
     (child: T.NodeRef) => {
-      return <ExpandableItem isReference key={child.id} node={child} context={p.context} />;
+      return <ExpandableItem kind="reference" key={child.id} node={child} context={p.context} />;
     },
   );
 
@@ -657,178 +650,123 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   );
 }
 
-function ExpandableItem(p: {
+export default function ExpandableItem(props: {
   context: Context;
   node: T.NodeRef;
   parent?: T.NodeRef;
-  className?: string;
-  isOpenedLink?: boolean;
-  isOtherParent?: boolean;
-  isReference?: boolean;
+
+  kind: "child" | "reference" | "opened-link" | "parent";
 }) {
-  function toggle() {
-    if (p.isOpenedLink && p.parent !== undefined) {
-      p.context.setTree(
-        T.toggleLink(p.context.state, p.context.tree, p.parent, T.thing(p.context.tree, p.node)),
+  const onAction = useOnActionCallback(props.context, props.node);
+
+  function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
+    const otherParents = Data.otherParents(
+      props.context.state,
+      T.thing(props.context.tree, props.child),
+      props.parent && T.thing(props.context.tree, props.parent),
+    );
+
+    const listItems = otherParents.map((otherParentThing) => {
+      return (
+        <li key={otherParentThing}>
+          <span
+            className="other-parent-small"
+            onClick={() => {
+              props.context.setSelectedThing(otherParentThing);
+            }}
+            title={Data.contentText(props.context.state, otherParentThing)}>
+            <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
+            &nbsp;
+            {Misc.truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
+          </span>
+        </li>
       );
-    } else if (p.isOtherParent) {
-      // Behavior of parents is swapped – clicking jumps, middle click expands.
-      p.context.setSelectedThing(T.thing(p.context.tree, p.node));
+    });
+
+    return <ul className="other-parents-small">{listItems}</ul>;
+  }
+
+  function itemStatus(context: Context, node: T.NodeRef): "collapsed" | "expanded" | "terminal" {
+    if (!T.expanded(context.tree, node)) {
+      return "collapsed";
+    } else if (
+      T.children(context.tree, node).length === 0 &&
+      T.otherParentsChildren(context.tree, node).length === 0 &&
+      T.backreferencesChildren(context.tree, node).length === 0 &&
+      T.openedLinksChildren(context.tree, node).length === 0
+    ) {
+      return "terminal";
     } else {
-      p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
+      return "expanded";
+    }
+  }
+
+  function toggle() {
+    if (props.kind === "opened-link" && props.parent !== undefined) {
+      props.context.setTree(
+        T.toggleLink(
+          props.context.state,
+          props.context.tree,
+          props.parent,
+          T.thing(props.context.tree, props.node),
+        ),
+      );
+    } else {
+      props.context.setTree(T.toggle(props.context.state, props.context.tree, props.node));
     }
   }
 
   function jump() {
-    if (p.isOtherParent) {
-      // Behavior of parents is swapped – clicking jumps, middle click expands.
-      p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
-    } else {
-      p.context.setSelectedThing(T.thing(p.context.tree, p.node));
-    }
+    props.context.setSelectedThing(T.thing(props.context.tree, props.node));
   }
 
-  const expanded = T.expanded(p.context.tree, p.node);
-  const terminal =
-    expanded &&
-    T.children(p.context.tree, p.node).length === 0 &&
-    T.otherParentsChildren(p.context.tree, p.node).length === 0 &&
-    T.backreferencesChildren(p.context.tree, p.node).length === 0 &&
-    T.openedLinksChildren(p.context.tree, p.node).length === 0;
+  const status = itemStatus(props.context, props.node);
 
-  const isPage = Data.isPage(p.context.state, T.thing(p.context.tree, p.node));
+  const dragInfo = props.context.drag;
 
   function beginDrag() {
-    p.context.setDrag({current: p.node, target: null, finished: false});
+    props.context.setDrag({current: props.node, target: null, finished: false});
   }
 
-  let className = "item";
-  if (p.className) className += " " + p.className;
-  if (isPage) className += " page";
-  if (p.context.drag.current !== null && p.context.drag.target?.id === p.node.id) className += " drop-target";
-  if (p.context.drag.current?.id === p.node.id && p.context.drag.target !== null) className += " drag-source";
+  const otherParents = <OtherParentsSmall context={props.context} child={props.node} parent={props.parent} />;
 
-  const subtree = <Subtree context={p.context} parent={p.node} grandparent={p.parent} />;
+  const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
-  const bulletAttrs: {specialType?: "parent" | "reference" | "opened-link"} = p.isOtherParent
-    ? {specialType: "parent"}
-    : p.isReference
-    ? {specialType: "reference"}
-    : p.isOpenedLink
-    ? {specialType: "opened-link"}
-    : {};
+  const content = <Editor context={props.context} node={props.node} onAction={onAction} />;
 
   return (
-    <li className="subtree-container">
-      {/* data-id is used for drag and drop. */}
-      <div className={className} data-id={p.node.id}>
-        <OtherParentsSmall context={p.context} child={p.node} parent={p.parent} />
-        <Bullet
-          {...bulletAttrs}
-          beginDrag={beginDrag}
-          status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
-          toggle={toggle}
-          onMiddleClick={jump}
-        />
-        <Content context={p.context} node={p.node} />
-      </div>
-      {expanded && !terminal && subtree}
-    </li>
+    <Item
+      {...{
+        node: props.node,
+        parent: props.parent,
+        dragInfo,
+        beginDrag,
+        kind: props.kind,
+        status,
+        toggle,
+        jump,
+        otherParents,
+        subtree,
+        content,
+      }}
+    />
   );
 }
 
-function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
-  const otherParents = Data.otherParents(
-    props.context.state,
-    T.thing(props.context.tree, props.child),
-    props.parent && T.thing(props.context.tree, props.parent),
-  );
+function useOnActionCallback(context: Context, node: T.NodeRef) {
+  // We always want to execute actions on the latest version of the context.
+  //
+  // [TODO] Is there a smarter or more idiomatic way to accomplish this? This
+  // has to run multiple times every single time anythng happens. It would be
+  // nicer if we could just pull the current Context from onAction.
+  const latestContext = React.useRef(context);
+  React.useEffect(() => {
+    latestContext.current = context;
+  }, [context]);
 
-  const listItems = otherParents.map((otherParentThing) => {
-    return (
-      <li>
-        <span
-          className="other-parent-small"
-          onClick={() => {
-            props.context.setSelectedThing(otherParentThing);
-          }}
-          title={Data.contentText(props.context.state, otherParentThing)}>
-          <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
-          &nbsp;
-          {truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
-        </span>
-      </li>
-    );
-  });
-
-  return <ul className="other-parents-small">{listItems}</ul>;
-}
-
-function Content(p: {context: Context; node: T.NodeRef}) {
-  function onKeyDown(
-    ev: KeyboardEvent,
-    notes: {startOfItem: boolean; endOfItem: boolean; firstLine: boolean; lastLine: boolean},
-  ): boolean {
-    function tryAction(action: Actions.ActionName): boolean {
-      if (Sh.matches(ev, Actions.shortcut(action))) {
-        Actions.execute(p.context, action);
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    // [TODO] Is there a reason for this weird ordering? We can probably clean
-    // this up.
-
-    if (tryAction("indent") || tryAction("unindent") || tryAction("down") || tryAction("up")) {
-      return true;
-    } else if (ev.key === "Tab") {
-      p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
-      return true;
-    } else if (ev.key === "ArrowUp" && !ev.ctrlKey && !ev.altKey && notes.firstLine) {
-      p.context.setTree(T.focusUp(p.context.tree));
-      return true;
-    } else if (ev.key === "ArrowDown" && !ev.ctrlKey && !ev.altKey && notes.lastLine) {
-      p.context.setTree(T.focusDown(p.context.tree));
-      return true;
-    } else if (tryAction("new-child")) {
-      return true;
-    } else if (Sh.matches(ev, {secondaryMod: true, key: "Enter"})) {
-      Actions.execute(p.context, "new");
-      return true;
-    } else if (ev.key === "Enter" && !ev.shiftKey) {
-      // [TODO] Couldn't we handle this logic in the action code itself. We
-      // would need to check where in the item we are, which would require
-      // accessing the current selection from the context.
-
-      if (notes.endOfItem) {
-        Actions.execute(p.context, "new");
-        return true;
-      } else if (notes.startOfItem) {
-        const [newState, newTree, _, newId] = T.createSiblingBefore(p.context.state, p.context.tree, p.node);
-        p.context.setState(newState);
-        p.context.setTree(T.focus(newTree, newId));
-        return true;
-      } else {
-        return false;
-      }
-    } else if (
-      tryAction("remove") ||
-      tryAction("destroy") ||
-      tryAction("insert-child") ||
-      tryAction("insert-sibling") ||
-      tryAction("insert-parent") ||
-      tryAction("insert-link") ||
-      tryAction("toggle-type")
-    ) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  return <Editor context={p.context} node={p.node} className="content" onKeyDown={onKeyDown} />;
+  return function onAction(action: Actions.ActionName) {
+    Actions.execute(latestContext.current, action);
+  };
 }
 
 function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
@@ -839,7 +777,7 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
   }
 
   const children = T.backreferencesChildren(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem isReference key={child.id} node={child} context={p.context} />;
+    return <ExpandableItem kind="reference" key={child.id} node={child} context={p.context} />;
   });
 
   return (
@@ -869,19 +807,12 @@ function Subtree(p: {
   omitReferences?: boolean;
 }) {
   const children = T.children(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
+    return <ExpandableItem kind="child" key={child.id} node={child} parent={p.parent} context={p.context} />;
   });
 
   const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map((child) => {
     return (
-      <ExpandableItem
-        className="opened-link"
-        key={child.id}
-        node={child}
-        parent={p.parent}
-        context={p.context}
-        isOpenedLink
-      />
+      <ExpandableItem kind="opened-link" key={child.id} node={child} parent={p.parent} context={p.context} />
     );
   });
 

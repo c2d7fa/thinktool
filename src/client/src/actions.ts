@@ -2,7 +2,6 @@ import {Context} from "./context";
 import * as T from "./tree";
 import * as D from "./data";
 import * as Tutorial from "./tutorial";
-import * as E from "./editing";
 import * as S from "./shortcuts";
 
 export type ActionName =
@@ -12,6 +11,9 @@ export type ActionName =
   | "insert-link"
   | "find"
   | "new"
+  | "new-before"
+  | "focus-up"
+  | "focus-down"
   | "zoom"
   | "indent"
   | "unindent"
@@ -24,6 +26,7 @@ export type ActionName =
   | "changelog"
   | "undo"
   | "toggle-type"
+  | "toggle"
   | "home"
   | "forum";
 
@@ -49,6 +52,10 @@ export function enabled(context: Context, action: ActionName): boolean {
     "insert-parent",
     "insert-link",
     "toggle-type",
+    "new-before",
+    "focus-up",
+    "focus-down",
+    "toggle",
   ];
 
   if (alwaysEnabled.includes(action)) {
@@ -143,6 +150,20 @@ const implementations: {
     }
   },
 
+  "new-before"(context, getFocused) {
+    const [newState, newTree, _, newId] = T.createSiblingBefore(context.state, context.tree, getFocused());
+    context.setState(newState);
+    context.setTree(T.focus(newTree, newId));
+  },
+
+  "focus-up"(context, getFocused) {
+    context.setTree(T.focusUp(context.tree));
+  },
+
+  "focus-down"(context, getFocused) {
+    context.setTree(T.focusDown(context.tree));
+  },
+
   zoom(context, getFocused) {
     context.setSelectedThing(T.thing(context.tree, getFocused()));
   },
@@ -206,6 +227,10 @@ const implementations: {
     context.setState(newState);
   },
 
+  toggle(context, getFocused) {
+    context.setTree(T.toggle(context.state, context.tree, getFocused()));
+  },
+
   home(context, getFocused) {
     const newTree = T.fromRoot(context.state, "0");
     context.setTree(newTree);
@@ -230,9 +255,6 @@ const implementations: {
 };
 
 export function shortcut(action: ActionName): S.Shortcut {
-  // [NOTE] This does not have a shortcut for "new", since this action is
-  // handled specially.
-
   switch (action) {
     case "find":
       return {mod: true, key: "f"};
@@ -260,14 +282,41 @@ export function shortcut(action: ActionName): S.Shortcut {
       return {mod: true, key: "l"};
     case "toggle-type":
       return {mod: true, key: "t"};
+    case "toggle":
+      return {key: "Tab"};
     case "undo":
       return {ctrlLikeMod: true, key: "z"};
     case "new":
-      return {special: `${S.format({key: "Enter"})}/${S.format({secondaryMod: true, key: "Enter"})}}`};
+      return {key: "Enter"};
+    case "new-before":
+      return {key: "Enter", condition: "first-character"};
+    case "focus-up":
+      return {key: "ArrowUp", condition: "first-line"};
+    case "focus-down":
+      return {key: "ArrowDown", condition: "last-line"};
     case "zoom":
       return {special: "Middle click bullet"};
-
     default:
       return null;
   }
 }
+
+export const allActionsWithShortcuts: ActionName[] = [
+  "indent",
+  "unindent",
+  "up",
+  "down",
+  "toggle",
+  "focus-up",
+  "focus-down",
+  "new-child",
+  "new-before",
+  "new",
+  "remove",
+  "destroy",
+  "insert-child",
+  "insert-sibling",
+  "insert-parent",
+  "insert-link",
+  "toggle-type",
+];

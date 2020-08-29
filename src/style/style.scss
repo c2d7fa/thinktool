@@ -68,15 +68,11 @@ body {
   margin: 1rem 0;
   max-width: $outline-width;
   width: 100%;
-}
 
-.selected-content {
-  font-size: 1.2em;
-  font-weight: bold;
-}
-
-.selected-content textarea {
-  font-weight: bold;
+  & > .content:first-child {
+    font-size: 1.2em;
+    font-weight: bold;
+  }
 }
 
 .children {

@@ -251,6 +251,10 @@
     {
       "date": "2020-08-26",
       "title": "Text cursor is now placed in the correct position after inserting a link."
+    },
+    {
+      "date": "2020-08-29",
+      "title": "Pressing Enter while editing an item now always inserts a new item. Items can no longer contain newlines."
     }
   ]
 }
