@@ -795,7 +795,13 @@ function Content(p: {context: Context; node: T.NodeRef}) {
     notes: {startOfItem: boolean; endOfItem: boolean; firstLine: boolean; lastLine: boolean},
   ): boolean {
     function tryAction(action: Actions.ActionName): boolean {
-      if (Sh.matches(ev, Actions.shortcut(action))) {
+      let activeConditions: Sh.Condition[] = [];
+      if (notes.startOfItem) activeConditions.push("first-character");
+      if (notes.endOfItem) activeConditions.push("last-character");
+      if (notes.firstLine) activeConditions.push("first-line");
+      if (notes.lastLine) activeConditions.push("last-line");
+
+      if (Sh.matches(ev, Actions.shortcut(action), activeConditions)) {
         Actions.execute(p.context, action);
         return true;
       } else {
@@ -807,14 +813,13 @@ function Content(p: {context: Context; node: T.NodeRef}) {
 
     if (tryAction("indent") || tryAction("unindent") || tryAction("down") || tryAction("up")) {
       return true;
-    } else if (ev.key === "Tab") {
-      p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
+    } else if (tryAction("toggle")) {
       return true;
-    } else if ((notes.firstLine && tryAction("focus-up")) || (notes.lastLine && tryAction("focus-down"))) {
+    } else if (tryAction("focus-up") || tryAction("focus-down")) {
       return true;
     } else if (tryAction("new-child")) {
       return true;
-    } else if (notes.startOfItem && tryAction("new-before")) {
+    } else if (tryAction("new-before")) {
       return true;
     } else if (tryAction("new")) {
       return true;

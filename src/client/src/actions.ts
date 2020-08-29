@@ -287,12 +287,13 @@ export function shortcut(action: ActionName): S.Shortcut {
     case "undo":
       return {ctrlLikeMod: true, key: "z"};
     case "new":
-    case "new-before":
       return {key: "Enter"};
+    case "new-before":
+      return {key: "Enter", condition: "first-character"};
     case "focus-up":
-      return {key: "ArrowUp"};
+      return {key: "ArrowUp", condition: "first-line"};
     case "focus-down":
-      return {key: "ArrowDown"};
+      return {key: "ArrowDown", condition: "last-line"};
     case "zoom":
       return {special: "Middle click bullet"};
     default:

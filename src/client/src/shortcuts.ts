@@ -2,9 +2,11 @@ import * as React from "react";
 import * as Misc from "@johv/miscjs";
 
 export type Shortcut =
-  | {mod?: boolean; secondaryMod?: boolean; ctrlLikeMod?: boolean; key: string}
+  | {mod?: boolean; secondaryMod?: boolean; ctrlLikeMod?: boolean; key: string; condition?: Condition}
   | {special: string} // Matching is handled elsewhere; just store description.
   | null;
+
+export type Condition = "first-line" | "last-line" | "first-character" | "last-character";
 
 function ifMacOS<T>(x: T, y: T): T {
   if (navigator.platform === "MacIntel") {
@@ -39,13 +41,18 @@ export function format(shortcut: Shortcut): string {
   );
 }
 
-export function matches(event: React.KeyboardEvent<{}> | KeyboardEvent, shortcut: Shortcut) {
+export function matches(
+  event: React.KeyboardEvent<{}> | KeyboardEvent,
+  shortcut: Shortcut,
+  activeConditions: Condition[] = [],
+) {
   return (
     shortcut !== null &&
     !("special" in shortcut) &&
     Misc.implies(shortcut.mod ?? false, ifMacOS(event.altKey, event.ctrlKey)) &&
     Misc.implies(shortcut.secondaryMod ?? false, ifMacOS(event.ctrlKey, event.altKey)) &&
     Misc.implies(shortcut.ctrlLikeMod ?? false, ifMacOS(event.ctrlKey, event.metaKey)) &&
+    Misc.implies(shortcut.condition !== undefined, activeConditions.includes(shortcut.condition!)) &&
     shortcut.key === event.key
   );
 }
