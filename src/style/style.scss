@@ -275,6 +275,10 @@ a.plain-text-link:hover {
   margin: 0;
 
   line-height: 175%;
+
+  .internal-link-target {
+    @include components.item-id;
+  }
 }
 
 .editor .ProseMirror {

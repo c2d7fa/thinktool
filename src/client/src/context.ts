@@ -14,7 +14,7 @@ export interface DragInfo {
 
 export interface ActiveEditor {
   selection: string;
-  replaceSelection(text: string): void;
+  replaceSelectionWithLink(target: string): void;
 }
 
 export interface Context {
