@@ -810,11 +810,7 @@ function Content(p: {context: Context; node: T.NodeRef}) {
     } else if (ev.key === "Tab") {
       p.context.setTree(T.toggle(p.context.state, p.context.tree, p.node));
       return true;
-    } else if (ev.key === "ArrowUp" && !ev.ctrlKey && !ev.altKey && notes.firstLine) {
-      p.context.setTree(T.focusUp(p.context.tree));
-      return true;
-    } else if (ev.key === "ArrowDown" && !ev.ctrlKey && !ev.altKey && notes.lastLine) {
-      p.context.setTree(T.focusDown(p.context.tree));
+    } else if ((notes.firstLine && tryAction("focus-up")) || (notes.lastLine && tryAction("focus-down"))) {
       return true;
     } else if (tryAction("new-child")) {
       return true;

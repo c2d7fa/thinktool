@@ -12,6 +12,8 @@ export type ActionName =
   | "find"
   | "new"
   | "new-before"
+  | "focus-up"
+  | "focus-down"
   | "zoom"
   | "indent"
   | "unindent"
@@ -50,6 +52,8 @@ export function enabled(context: Context, action: ActionName): boolean {
     "insert-link",
     "toggle-type",
     "new-before",
+    "focus-up",
+    "focus-down",
   ];
 
   if (alwaysEnabled.includes(action)) {
@@ -148,6 +152,14 @@ const implementations: {
     const [newState, newTree, _, newId] = T.createSiblingBefore(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(T.focus(newTree, newId));
+  },
+
+  "focus-up"(context, getFocused) {
+    context.setTree(T.focusUp(context.tree));
+  },
+
+  "focus-down"(context, getFocused) {
+    context.setTree(T.focusDown(context.tree));
   },
 
   zoom(context, getFocused) {
@@ -269,6 +281,10 @@ export function shortcut(action: ActionName): S.Shortcut {
     case "new":
     case "new-before":
       return {key: "Enter"};
+    case "focus-up":
+      return {key: "ArrowUp"};
+    case "focus-down":
+      return {key: "ArrowDown"};
     case "zoom":
       return {special: "Middle click bullet"};
     default:
