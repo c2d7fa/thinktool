@@ -287,7 +287,7 @@ function ContentEditor(props: {
   }, []);
 
   React.useEffect(() => {
-    if (editorViewRef.current!.state !== editorState) {
+    if (editorViewRef.current!.state !== editorState || editorState === initialState) {
       editorViewRef.current!.updateState(editorState);
 
       // The popup that appears e.g. when inserting a link needs to have access
