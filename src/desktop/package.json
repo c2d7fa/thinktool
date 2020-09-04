@@ -17,7 +17,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "@thinktool/client": "^1.7.2",
+    "@thinktool/client": "^1.7.3",
     "react": "^16.13.1",
     "sqlite": "^4.0.9",
     "sqlite3": "^4.2.0"

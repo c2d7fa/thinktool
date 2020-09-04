@@ -12,7 +12,7 @@
     "typescript": "^3.9.6"
   },
   "dependencies": {
-    "@thinktool/client": "^1.7.2",
+    "@thinktool/client": "^1.7.3",
     "@thinktool/shared": "^2.0.0",
     "core-js": "^3.6.5"
   },

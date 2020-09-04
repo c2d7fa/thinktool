@@ -255,6 +255,10 @@
     {
       "date": "2020-08-29",
       "title": "Pressing Enter while editing an item now always inserts a new item. Items can no longer contain newlines."
+    },
+    {
+      "date": "2020-09-04",
+      "title": "Fixed bug where inserting a link as the only text in an empty item wouldn't do anything."
     }
   ]
 }

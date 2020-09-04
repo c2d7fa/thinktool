@@ -250,7 +250,7 @@ function ContentEditor(props: {
   }, []);
 
   React.useEffect(() => {
-    if (editorViewRef.current!.state !== editorState) {
+    if (editorViewRef.current!.state !== editorState || editorState === initialState) {
       editorViewRef.current!.updateState(editorState);
 
       // Other parts of the application want to access the selection.
