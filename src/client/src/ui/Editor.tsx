@@ -172,6 +172,7 @@ const schema = new PM.Schema({
       attrs: {target: {}},
       inline: true,
       atom: true,
+      selectable: false,
       toDOM(node) {
         return ["span", {class: "internal-link-target"}, node.attrs.target];
       },
