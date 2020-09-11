@@ -165,14 +165,59 @@ function RenderedContent(props: {
   );
 }
 
+const schema = new PM.Schema({
+  nodes: {
+    doc: {content: "(text | link)*"},
+    link: {
+      attrs: {target: {}, content: {}},
+      inline: true,
+      atom: true,
+      selectable: false,
+      toDOM(node) {
+        return ["span", {class: "internal-link-editing"}, node.attrs.content];
+      },
+    },
+    text: {},
+  },
+});
+
+function docFromContent(
+  content: D.Content,
+  textContentOf: (thing: string) => string,
+): PM.Node<typeof schema> {
+  const nodes = [];
+
+  for (const contentNode of content) {
+    if (typeof contentNode === "string") {
+      nodes.push(schema.text(contentNode));
+    } else if (contentNode.link !== undefined) {
+      nodes.push(schema.node("link", {target: contentNode.link, content: textContentOf(contentNode.link)}));
+    }
+  }
+
+  return schema.node("doc", {}, nodes);
+}
+
+function contentFromDoc(doc: PM.Node<typeof schema>): D.Content {
+  const content: D.Content = [];
+
+  doc.forEach((node) => {
+    if (node.isText) {
+      content.push(node.textContent);
+    } else if (node.type.name === "link") {
+      content.push({link: node.attrs.target});
+    }
+  });
+
+  return content;
+}
+
 function ContentEditor(props: {
   context: Context;
   node: T.NodeRef;
   placeholder?: string;
   onAction(action: Ac.ActionName): void;
 }) {
-  const schema = new PM.Schema({nodes: {doc: {content: "text*"}, text: {}}});
-
   const ref = React.useRef<HTMLDivElement>(null);
 
   const keyPlugin = new PS.Plugin({
@@ -212,7 +257,7 @@ function ContentEditor(props: {
             const [state_, tree_, thing, lastNode_] = T.createSiblingAfter(state, tree, lastNode);
             [state, tree, lastNode] = [state_, tree_, lastNode_];
 
-            state = D.setContent(state, thing, E.contentFromEditString(paragraph));
+            state = D.setContent(state, thing, [paragraph]);
           }
 
           props.context.setState(state);
@@ -226,13 +271,22 @@ function ContentEditor(props: {
     },
   });
 
-  const stringContent = E.contentToEditString(
-    D.content(props.context.state, T.thing(props.context.tree, props.node)),
-  );
+  // As the name suggests, we initialize `initialState` once, and don't update
+  // it again. But it needs access to the current state. So we use this hack. I
+  // think the difficulty here comes from integrating with ProseMirror, but I
+  // still feel like there should be a better way.
+
+  const stateRef = React.useRef<D.State>(props.context.state);
+  React.useEffect(() => {
+    stateRef.current = props.context.state;
+  }, [props.context.state]);
 
   const initialState = PS.EditorState.create({
     schema,
-    doc: schema.node("doc", {}, stringContent === "" ? [] : [schema.text(stringContent)]),
+    doc: docFromContent(
+      D.content(props.context.state, T.thing(props.context.tree, props.node)),
+      (thing) => D.contentText(stateRef.current, thing),
+    ),
     plugins: [keyPlugin, pastePlugin],
   });
 
@@ -253,30 +307,44 @@ function ContentEditor(props: {
     if (editorViewRef.current!.state !== editorState || editorState === initialState) {
       editorViewRef.current!.updateState(editorState);
 
-      // Other parts of the application want to access the selection.
-      const selection = editorState.selection;
-      props.context.registerActiveEditor({
-        selection: E.contentToEditString(
-          D.content(props.context.state, T.thing(props.context.tree, props.node)),
-        ).substring(selection.from, selection.to),
+      // The popup that appears e.g. when inserting a link needs to have access
+      // to the current selection.
+      const textSelection = (() => {
+        let content: D.Content = [];
+        editorState.selection.content().content.forEach((node) => {
+          if (node.isText) {
+            content.push(node.textContent);
+          } else if (node.type.name === "link") {
+            content.push({link: node.attrs.target});
+          }
+        });
+        return E.contentToEditString(content);
+      })();
 
-        replaceSelection(selection) {
+      props.context.registerActiveEditor({
+        selection: textSelection,
+
+        replaceSelectionWithLink(target: string, textContent: string): void {
           editorViewRef.current!.focus();
 
-          setEditorState((es) => es.apply(es.tr.insertText(selection)));
+          setEditorState((es) => {
+            const tr = es.tr;
+            tr.replaceSelectionWith(schema.node("link", {target, content: textContent}));
+            return es.apply(tr);
+          });
         },
       });
     }
 
     if (
       E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))) !==
-      editorState.doc.textContent
+      E.contentToEditString(contentFromDoc(editorState.doc))
     ) {
       props.context.setState(
         D.setContent(
           props.context.state,
           T.thing(props.context.tree, props.node),
-          E.contentFromEditString(editorState.doc.textContent),
+          contentFromDoc(editorState.doc),
         ),
       );
     }
