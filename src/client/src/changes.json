@@ -263,6 +263,10 @@
     {
       "date": "2020-09-04",
       "title": "Fixed minor bug with the appearance of the search popup."
+    },
+    {
+      "date": "2020-09-11",
+      "title": "Content of links is now shown even in the active editor."
     }
   ]
 }
