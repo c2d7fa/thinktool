@@ -261,6 +261,16 @@ a.plain-text-link:hover {
   color: #c0c0c0;
 }
 
+.internal-link-editing {
+  @extend .internal-link;
+
+  cursor: default;
+
+  border: 1px solid hsla(40, 80%, 80%, 80%);
+  background-color: hsla(40, 80%, 80%, 15%);
+  color: hsla(40, 80%, 20%, 80%);
+}
+
 /* #endregion */
 
 /* #endregion */
@@ -275,10 +285,6 @@ a.plain-text-link:hover {
   margin: 0;
 
   line-height: 175%;
-
-  .internal-link-target {
-    @include components.item-id;
-  }
 }
 
 .editor .ProseMirror {

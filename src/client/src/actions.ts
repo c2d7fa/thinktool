@@ -123,7 +123,7 @@ const implementations: {
     context.setActivePopup((state, tree, target, selection) => {
       if (target !== node) console.error("Unexpected target/node");
       if (context.activeEditor === null) throw "No active editor.";
-      context.activeEditor.replaceSelectionWithLink(selection);
+      context.activeEditor.replaceSelectionWithLink(selection, D.contentText(state, selection));
       return [state, tree];
     });
   },

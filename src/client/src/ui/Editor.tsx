@@ -169,26 +169,29 @@ const schema = new PM.Schema({
   nodes: {
     doc: {content: "(text | link)*"},
     link: {
-      attrs: {target: {}},
+      attrs: {target: {}, content: {}},
       inline: true,
       atom: true,
       selectable: false,
       toDOM(node) {
-        return ["span", {class: "internal-link-target"}, node.attrs.target];
+        return ["span", {class: "internal-link-editing"}, node.attrs.content];
       },
     },
     text: {},
   },
 });
 
-function docFromContent(content: D.Content): PM.Node<typeof schema> {
+function docFromContent(
+  content: D.Content,
+  textContentOf: (thing: string) => string,
+): PM.Node<typeof schema> {
   const nodes = [];
 
   for (const contentNode of content) {
     if (typeof contentNode === "string") {
       nodes.push(schema.text(contentNode));
     } else if (contentNode.link !== undefined) {
-      nodes.push(schema.node("link", {target: contentNode.link}));
+      nodes.push(schema.node("link", {target: contentNode.link, content: textContentOf(contentNode.link)}));
     }
   }
 
@@ -268,9 +271,22 @@ function ContentEditor(props: {
     },
   });
 
+  // As the name suggests, we initialize `initialState` once, and don't update
+  // it again. But it needs access to the current state. So we use this hack. I
+  // think the difficulty here comes from integrating with ProseMirror, but I
+  // still feel like there should be a better way.
+
+  const stateRef = React.useRef<D.State>(props.context.state);
+  React.useEffect(() => {
+    stateRef.current = props.context.state;
+  }, [props.context.state]);
+
   const initialState = PS.EditorState.create({
     schema,
-    doc: docFromContent(D.content(props.context.state, T.thing(props.context.tree, props.node))),
+    doc: docFromContent(
+      D.content(props.context.state, T.thing(props.context.tree, props.node)),
+      (thing) => D.contentText(stateRef.current, thing),
+    ),
     plugins: [keyPlugin, pastePlugin],
   });
 
@@ -308,12 +324,12 @@ function ContentEditor(props: {
       props.context.registerActiveEditor({
         selection: textSelection,
 
-        replaceSelectionWithLink(target: string): void {
+        replaceSelectionWithLink(target: string, textContent: string): void {
           editorViewRef.current!.focus();
 
           setEditorState((es) => {
             const tr = es.tr;
-            tr.replaceSelectionWith(schema.node("link", {target}));
+            tr.replaceSelectionWith(schema.node("link", {target, content: textContent}));
             return es.apply(tr);
           });
         },
