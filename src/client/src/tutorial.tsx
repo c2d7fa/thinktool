@@ -292,12 +292,11 @@ export function StepBidirectionalLinks() {
         button. Type the name of another item and select it.
       </p>
       <p>
-        This will insert some nonsense like "#q3kmmx8" at your cursor – don't worry about it, that's just how
-        links are represented in Thinktool. Unfocus the item you're editing by clicking somewhere else to see
-        the link.
+        This will insert a link at the cursor. Before clicking on the link, you must unfocus the item you're
+        editing: unfocus the item by clicking somewhere else on the page.
       </p>
       <p>
-        <strong>Expand the link.</strong> Just click on the bullet inside the link. You can see the linked
+        <strong>Expand the link.</strong> Just click on the link. You can see the linked
         item, its children and its parents directly in the outline.
       </p>
       <p>
