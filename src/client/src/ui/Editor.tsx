@@ -169,12 +169,17 @@ const schema = new PM.Schema({
   nodes: {
     doc: {content: "(text | link)*"},
     link: {
-      attrs: {target: {}, content: {}},
+      attrs: {target: {}, onclick: {}, content: {}},
       inline: true,
       atom: true,
       selectable: false,
       toDOM(node) {
-        return ["span", {class: "internal-link-editing"}, node.attrs.content];
+        const element = document.createElement("span");
+        element.className = "internal-link-editing";
+        element.onclick = node.attrs.onclick;
+        element.onmousedown = (ev) => ev.preventDefault(); // Don't move text cursor when clicking
+        element.textContent = node.attrs.content;
+        return element;
       },
     },
     text: {},
@@ -184,6 +189,7 @@ const schema = new PM.Schema({
 function docFromContent(
   content: D.Content,
   textContentOf: (thing: string) => string,
+  openLink: (link: string) => void,
 ): PM.Node<typeof schema> {
   const nodes = [];
 
@@ -191,7 +197,17 @@ function docFromContent(
     if (typeof contentNode === "string") {
       nodes.push(schema.text(contentNode));
     } else if (contentNode.link !== undefined) {
-      nodes.push(schema.node("link", {target: contentNode.link, content: textContentOf(contentNode.link)}));
+      // We store the 'onclick' callback on each node. Perhaps it would make
+      // more sense to only pass in the target here, and construct that callback
+      // in the 'toDOM' method. But that would require the schema to have access
+      // to the application state, which also feels weird.
+      nodes.push(
+        schema.node("link", {
+          target: contentNode.link,
+          onclick: () => openLink(contentNode.link),
+          content: textContentOf(contentNode.link),
+        }),
+      );
     }
   }
 
@@ -286,6 +302,10 @@ function ContentEditor(props: {
     doc: docFromContent(
       D.content(props.context.state, T.thing(props.context.tree, props.node)),
       (thing) => D.contentText(stateRef.current, thing),
+      (thing) => {
+        // [TODO]
+        console.warn("Unimplemented: Open link %o", thing);
+      },
     ),
     plugins: [keyPlugin, pastePlugin],
   });
