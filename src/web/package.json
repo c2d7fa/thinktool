@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/web",
-  "version": "202009141859.0.0",
+  "version": "202009141907.0.0",
   "description": "The web client for Thinktool.",
   "license": "UNLICENSED",
   "repository": {
@@ -12,7 +12,7 @@
     "typescript": "^3.9.6"
   },
   "dependencies": {
-    "@thinktool/client": "^1.9.0",
+    "@thinktool/client": "^1.10.0",
     "@thinktool/shared": "^2.0.0",
     "core-js": "^3.6.5"
   },

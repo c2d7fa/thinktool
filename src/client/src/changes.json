@@ -266,11 +266,15 @@
     },
     {
       "date": "2020-09-11",
-      "title": "Content of links is now shown even in the active editor."
+      "title": "Content of links to other items is now shown even in the active editor."
     },
     {
       "date": "2020-09-14",
-      "title": "Links are now clickable in the active editor."
+      "title": "Links to other items are now clickable in the active editor."
+    },
+    {
+      "date": "2020-09-14",
+      "title": "Improved consistency and apparance of links to other items in the active editor."
     }
   ]
 }

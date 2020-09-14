@@ -8,11 +8,11 @@ set -e
 version="$(date +"%Y%m%d%H%M.0.0")"
 
 cd src/web
-npm update @thinktool/client@latest
+npm update @thinktool/client
 npm version "$version"
 
 cd ../desktop
-npm update @thinktool/client@latest
+npm update @thinktool/client
 npm version "$version"
 
 cd ../markup
