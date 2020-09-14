@@ -253,6 +253,7 @@ function ContentEditor(props: {
 }) {
   const ref = React.useRef<HTMLDivElement>(null);
 
+  const onActionRef = usePropRef(props.onAction);
   const keyPlugin = new PS.Plugin({
     props: {
       handleKeyDown(view, ev) {
@@ -264,7 +265,7 @@ function ContentEditor(props: {
 
         for (const action of Ac.allActionsWithShortcuts) {
           if (Sh.matches(ev, Ac.shortcut(action), conditions)) {
-            props.onAction(action);
+            onActionRef.current!(action);
             return true;
           }
         }
