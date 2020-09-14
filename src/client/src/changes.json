@@ -267,6 +267,10 @@
     {
       "date": "2020-09-11",
       "title": "Content of links is now shown even in the active editor."
+    },
+    {
+      "date": "2020-09-14",
+      "title": "Links are now clickable in the active editor."
     }
   ]
 }
