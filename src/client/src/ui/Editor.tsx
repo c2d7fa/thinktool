@@ -251,9 +251,12 @@ function ContentEditor(props: {
   onAction(action: Ac.ActionName): void;
   onOpenLink(target: string): void;
 }) {
+  const stateRef = usePropRef(props.context.state);
+  const onOpenLinkRef = usePropRef(props.onOpenLink);
+  const onActionRef = usePropRef(props.onAction);
+
   const ref = React.useRef<HTMLDivElement>(null);
 
-  const onActionRef = usePropRef(props.onAction);
   const keyPlugin = new PS.Plugin({
     props: {
       handleKeyDown(view, ev) {
@@ -305,23 +308,11 @@ function ContentEditor(props: {
     },
   });
 
-  // As the name suggests, we initialize `initialState` once, and don't update
-  // it again. But it needs access to the current state. So we use this hack. I
-  // think the difficulty here comes from integrating with ProseMirror, but I
-  // still feel like there should be a better way.
-
-  const stateRef = React.useRef<D.State>(props.context.state);
-  React.useEffect(() => {
-    stateRef.current = props.context.state;
-  }, [props.context.state]);
-
-  const onOpenLinkRef = usePropRef(props.onOpenLink);
-
   const initialState = PS.EditorState.create({
     schema,
     doc: docFromContent(
       D.content(props.context.state, T.thing(props.context.tree, props.node)),
-      (thing) => D.contentText(stateRef.current, thing),
+      (thing) => D.contentText(stateRef.current!, thing),
       (thing) => onOpenLinkRef.current!(thing),
     ),
     plugins: [keyPlugin, pastePlugin],
