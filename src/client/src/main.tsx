@@ -547,8 +547,6 @@ function ThingOverview(p: {context: Context}) {
   const hasReferences = Data.backreferences(p.context.state, p.context.selectedThing).length > 0;
   const onAction = useOnActionCallback(p.context, T.root(p.context.tree));
 
-  // [TODO] Editor doesn't react to changes in this property. See the
-  // corresponding TODO in Editor.
   function openLink(target: string): void {
     p.context.setTree(T.toggleLink(p.context.state, p.context.tree, T.root(p.context.tree), target));
   }

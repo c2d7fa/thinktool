@@ -13,6 +13,22 @@ import {Context} from "../context";
 import {ExternalLink as BaseExternalLink} from "./ExternalLink"; // Silly naming conflict
 import Bullet from "./Bullet";
 
+// Sometimes we want to pass a callback to some function that doesn't know about
+// React, but which should still have access to the latest value of a prop
+// passed to a component.
+//
+// This function lets us make the latest value of a prop available as a ref,
+// which we can then dereference from inside such a callback.
+//
+// We use this when integrating with ProseMirror.
+function usePropRef<T>(prop: T): React.RefObject<T> {
+  const ref = React.useRef(prop);
+  React.useEffect(() => {
+    ref.current = prop;
+  }, [prop]);
+  return ref;
+}
+
 function annotate(content: D.Content): (string | {externalLink: string} | {link: string})[] {
   function annotateText(text: string): (string | {externalLink: string})[] {
     let result: (string | {externalLink: string})[] = [];
@@ -298,20 +314,14 @@ function ContentEditor(props: {
     stateRef.current = props.context.state;
   }, [props.context.state]);
 
+  const onOpenLinkRef = usePropRef(props.onOpenLink);
+
   const initialState = PS.EditorState.create({
     schema,
     doc: docFromContent(
       D.content(props.context.state, T.thing(props.context.tree, props.node)),
       (thing) => D.contentText(stateRef.current, thing),
-      (thing) => {
-        // [TODO] This is only initialized once, so we don't react to changes in
-        // 'props.onOpenLink'.
-        //
-        // When we refactor this, we should also take a look at how
-        // 'useOnActionCallback' is used in Main, and whether we can do
-        // something in this module instead.
-        props.onOpenLink(thing);
-      },
+      (thing) => onOpenLinkRef.current!(thing),
     ),
     plugins: [keyPlugin, pastePlugin],
   });
