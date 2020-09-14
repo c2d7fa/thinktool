@@ -1,7 +1,9 @@
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import * as PS from "prosemirror-state";
 import * as PV from "prosemirror-view";
 import * as PM from "prosemirror-model";
+import {classes} from "@johv/miscjs";
 
 import * as D from "../data";
 import * as T from "../tree";
@@ -86,17 +88,49 @@ function ExternalLink(props: {link: string}) {
   );
 }
 
-function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) {
-  const content = D.contentText(props.context.state, props.link);
+function InternalLink_(props: {
+  status: "expanded" | "collapsed" | "terminal";
+  jump(): void;
+  toggle(): void;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={classes({"internal-link": true, "internal-link-open": status === "expanded"})}
+      onMouseDown={(ev) => {
+        ev.preventDefault();
+      }}
+      onAuxClick={(ev) => {
+        const isMiddleClick = ev.button === 1;
+        if (isMiddleClick) {
+          props.jump();
+        }
+      }}
+      onClick={(ev) => {
+        if (ev.shiftKey) props.jump();
+        else props.toggle();
+      }}>
+      <Bullet
+        specialType="link"
+        status={props.status}
+        toggle={props.toggle}
+        beginDrag={(ev) => {
+          // [TODO] This is undefined on mobile. This may or may not cause issues; I haven't tested it.
+          if (ev !== undefined) ev.preventDefault();
+        }}
+      />
+      &nbsp;
+      <span className="link-content">{props.children}</span>
+    </span>
+  );
+}
 
+function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) {
   const expanded = T.isLinkOpen(props.context.tree, props.node, props.link);
   const terminal =
     !D.hasChildren(props.context.state, props.link) &&
     D.otherParents(props.context.state, props.link).length === 0;
-
-  let className = "internal-link";
-  if (T.isLinkOpen(props.context.tree, props.node, props.link)) className += " internal-link-open";
-  if (D.isPage(props.context.state, props.link)) className += " internal-link-page";
+  const status = terminal ? "terminal" : expanded ? "expanded" : "collapsed";
 
   function toggle() {
     props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, props.link));
@@ -106,36 +140,13 @@ function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) 
     props.context.setSelectedThing(props.link);
   }
 
+  const contentText = D.contentText(props.context.state, props.link);
+  const content = contentText === "" ? <span className="empty-content">{props.link}</span> : contentText;
+
   return (
-    <span
-      className={className}
-      onMouseDown={(ev) => {
-        ev.preventDefault();
-      }}
-      onAuxClick={(ev) => {
-        const isMiddleClick = ev.button === 1;
-        if (isMiddleClick) {
-          jump();
-        }
-      }}
-      onClick={(ev) => {
-        if (ev.shiftKey) jump();
-        else toggle();
-      }}>
-      <Bullet
-        specialType="link"
-        status={terminal ? "terminal" : expanded ? "expanded" : "collapsed"}
-        toggle={toggle}
-        beginDrag={(ev) => {
-          // [TODO] This is undefined on mobile. This may or may not cause issues; I haven't tested it.
-          if (ev !== undefined) ev.preventDefault();
-        }}
-      />
-      &nbsp;
-      <span className="link-content">
-        {content === "" ? <span className="empty-content">{props.link}</span> : content}
-      </span>
-    </span>
+    <InternalLink_ status={status} jump={jump} toggle={toggle}>
+      {content}
+    </InternalLink_>
   );
 }
 
@@ -190,12 +201,17 @@ const schema = new PM.Schema({
       atom: true,
       selectable: false,
       toDOM(node) {
-        const element = document.createElement("span");
-        element.className = "internal-link-editing";
-        element.onclick = node.attrs.onclick;
-        element.onmousedown = (ev) => ev.preventDefault(); // Don't move text cursor when clicking
-        element.textContent = node.attrs.content;
-        return element;
+        const container = document.createElement("span");
+        ReactDOM.render(
+          // [TODO] This works, but it has a different behavior to normal
+          // InternalLink, because we don't have enough information to set some
+          // properties here.
+          <InternalLink_ status={"collapsed"} jump={node.attrs.onclick} toggle={node.attrs.onclick}>
+            {node.attrs.content}
+          </InternalLink_>,
+          container,
+        );
+        return container;
       },
     },
     text: {},
