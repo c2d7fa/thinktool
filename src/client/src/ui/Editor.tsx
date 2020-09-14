@@ -365,7 +365,13 @@ function ContentEditor(props: {
 
           setEditorState((es) => {
             const tr = es.tr;
-            tr.replaceSelectionWith(schema.node("link", {target, content: textContent}));
+            tr.replaceSelectionWith(
+              schema.node("link", {
+                target,
+                onclick: () => onOpenLinkRef.current!(target),
+                content: textContent,
+              }),
+            );
             return es.apply(tr);
           });
         },
