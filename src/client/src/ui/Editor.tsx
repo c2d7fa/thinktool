@@ -233,6 +233,7 @@ function ContentEditor(props: {
   node: T.NodeRef;
   placeholder?: string;
   onAction(action: Ac.ActionName): void;
+  onOpenLink(target: string): void;
 }) {
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -303,8 +304,13 @@ function ContentEditor(props: {
       D.content(props.context.state, T.thing(props.context.tree, props.node)),
       (thing) => D.contentText(stateRef.current, thing),
       (thing) => {
-        // [TODO]
-        console.warn("Unimplemented: Open link %o", thing);
+        // [TODO] This is only initialized once, so we don't react to changes in
+        // 'props.onOpenLink'.
+        //
+        // When we refactor this, we should also take a look at how
+        // 'useOnActionCallback' is used in Main, and whether we can do
+        // something in this module instead.
+        props.onOpenLink(thing);
       },
     ),
     plugins: [keyPlugin, pastePlugin],
@@ -387,6 +393,7 @@ export default function Editor(props: {
   node: T.NodeRef;
   placeholder?: string;
   onAction(action: Ac.ActionName): void;
+  onOpenLink(target: string): void;
 }) {
   if (T.hasFocus(props.context.tree, props.node)) {
     return <ContentEditor {...props} />;

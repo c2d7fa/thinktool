@@ -547,11 +547,17 @@ function ThingOverview(p: {context: Context}) {
   const hasReferences = Data.backreferences(p.context.state, p.context.selectedThing).length > 0;
   const onAction = useOnActionCallback(p.context, T.root(p.context.tree));
 
+  // [TODO] Editor doesn't react to changes in this property. See the
+  // corresponding TODO in Editor.
+  function openLink(target: string): void {
+    p.context.setTree(T.toggleLink(p.context.state, p.context.tree, T.root(p.context.tree), target));
+  }
+
   return (
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        <Editor context={p.context} node={T.root(p.context.tree)} onAction={onAction} />
+        <Editor context={p.context} node={T.root(p.context.tree)} onAction={onAction} onOpenLink={openLink} />
         <div className="children">
           <Outline context={p.context} />
         </div>
@@ -659,6 +665,10 @@ export default function ExpandableItem(props: {
 }) {
   const onAction = useOnActionCallback(props.context, props.node);
 
+  function onOpenLink(target: string): void {
+    props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, target));
+  }
+
   function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
     const otherParents = Data.otherParents(
       props.context.state,
@@ -732,7 +742,9 @@ export default function ExpandableItem(props: {
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
-  const content = <Editor context={props.context} node={props.node} onAction={onAction} />;
+  const content = (
+    <Editor context={props.context} node={props.node} onAction={onAction} onOpenLink={onOpenLink} />
+  );
 
   return (
     <Item
