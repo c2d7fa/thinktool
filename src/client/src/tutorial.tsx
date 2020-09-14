@@ -291,13 +291,10 @@ export function StepBidirectionalLinks() {
         </span>
         button. Type the name of another item and select it.
       </p>
+      <p>This will insert a link at the cursor.</p>
       <p>
-        This will insert a link at the cursor. Before clicking on the link, you must unfocus the item you're
-        editing: unfocus the item by clicking somewhere else on the page.
-      </p>
-      <p>
-        <strong>Expand the link.</strong> Just click on the link. You can see the linked
-        item, its children and its parents directly in the outline.
+        <strong>Expand the link.</strong> Just click on the link. You can see the linked item, its children
+        and its parents directly in the outline.
       </p>
       <p>
         <i>

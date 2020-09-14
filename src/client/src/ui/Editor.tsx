@@ -13,6 +13,22 @@ import {Context} from "../context";
 import {ExternalLink as BaseExternalLink} from "./ExternalLink"; // Silly naming conflict
 import Bullet from "./Bullet";
 
+// Sometimes we want to pass a callback to some function that doesn't know about
+// React, but which should still have access to the latest value of a prop
+// passed to a component.
+//
+// This function lets us make the latest value of a prop available as a ref,
+// which we can then dereference from inside such a callback.
+//
+// We use this when integrating with ProseMirror.
+function usePropRef<T>(prop: T): React.RefObject<T> {
+  const ref = React.useRef(prop);
+  React.useEffect(() => {
+    ref.current = prop;
+  }, [prop]);
+  return ref;
+}
+
 function annotate(content: D.Content): (string | {externalLink: string} | {link: string})[] {
   function annotateText(text: string): (string | {externalLink: string})[] {
     let result: (string | {externalLink: string})[] = [];
@@ -169,12 +185,17 @@ const schema = new PM.Schema({
   nodes: {
     doc: {content: "(text | link)*"},
     link: {
-      attrs: {target: {}, content: {}},
+      attrs: {target: {}, onclick: {}, content: {}},
       inline: true,
       atom: true,
       selectable: false,
       toDOM(node) {
-        return ["span", {class: "internal-link-editing"}, node.attrs.content];
+        const element = document.createElement("span");
+        element.className = "internal-link-editing";
+        element.onclick = node.attrs.onclick;
+        element.onmousedown = (ev) => ev.preventDefault(); // Don't move text cursor when clicking
+        element.textContent = node.attrs.content;
+        return element;
       },
     },
     text: {},
@@ -184,6 +205,7 @@ const schema = new PM.Schema({
 function docFromContent(
   content: D.Content,
   textContentOf: (thing: string) => string,
+  openLink: (link: string) => void,
 ): PM.Node<typeof schema> {
   const nodes = [];
 
@@ -191,7 +213,17 @@ function docFromContent(
     if (typeof contentNode === "string") {
       nodes.push(schema.text(contentNode));
     } else if (contentNode.link !== undefined) {
-      nodes.push(schema.node("link", {target: contentNode.link, content: textContentOf(contentNode.link)}));
+      // We store the 'onclick' callback on each node. Perhaps it would make
+      // more sense to only pass in the target here, and construct that callback
+      // in the 'toDOM' method. But that would require the schema to have access
+      // to the application state, which also feels weird.
+      nodes.push(
+        schema.node("link", {
+          target: contentNode.link,
+          onclick: () => openLink(contentNode.link),
+          content: textContentOf(contentNode.link),
+        }),
+      );
     }
   }
 
@@ -217,7 +249,12 @@ function ContentEditor(props: {
   node: T.NodeRef;
   placeholder?: string;
   onAction(action: Ac.ActionName): void;
+  onOpenLink(target: string): void;
 }) {
+  const stateRef = usePropRef(props.context.state);
+  const onOpenLinkRef = usePropRef(props.onOpenLink);
+  const onActionRef = usePropRef(props.onAction);
+
   const ref = React.useRef<HTMLDivElement>(null);
 
   const keyPlugin = new PS.Plugin({
@@ -231,7 +268,7 @@ function ContentEditor(props: {
 
         for (const action of Ac.allActionsWithShortcuts) {
           if (Sh.matches(ev, Ac.shortcut(action), conditions)) {
-            props.onAction(action);
+            onActionRef.current!(action);
             return true;
           }
         }
@@ -271,21 +308,12 @@ function ContentEditor(props: {
     },
   });
 
-  // As the name suggests, we initialize `initialState` once, and don't update
-  // it again. But it needs access to the current state. So we use this hack. I
-  // think the difficulty here comes from integrating with ProseMirror, but I
-  // still feel like there should be a better way.
-
-  const stateRef = React.useRef<D.State>(props.context.state);
-  React.useEffect(() => {
-    stateRef.current = props.context.state;
-  }, [props.context.state]);
-
   const initialState = PS.EditorState.create({
     schema,
     doc: docFromContent(
       D.content(props.context.state, T.thing(props.context.tree, props.node)),
-      (thing) => D.contentText(stateRef.current, thing),
+      (thing) => D.contentText(stateRef.current!, thing),
+      (thing) => onOpenLinkRef.current!(thing),
     ),
     plugins: [keyPlugin, pastePlugin],
   });
@@ -329,7 +357,13 @@ function ContentEditor(props: {
 
           setEditorState((es) => {
             const tr = es.tr;
-            tr.replaceSelectionWith(schema.node("link", {target, content: textContent}));
+            tr.replaceSelectionWith(
+              schema.node("link", {
+                target,
+                onclick: () => onOpenLinkRef.current!(target),
+                content: textContent,
+              }),
+            );
             return es.apply(tr);
           });
         },
@@ -367,6 +401,7 @@ export default function Editor(props: {
   node: T.NodeRef;
   placeholder?: string;
   onAction(action: Ac.ActionName): void;
+  onOpenLink(target: string): void;
 }) {
   if (T.hasFocus(props.context.tree, props.node)) {
     return <ContentEditor {...props} />;

@@ -545,13 +545,21 @@ function App({
 
 function ThingOverview(p: {context: Context}) {
   const hasReferences = Data.backreferences(p.context.state, p.context.selectedThing).length > 0;
-  const onAction = useOnActionCallback(p.context, T.root(p.context.tree));
+
+  function openLink(target: string): void {
+    p.context.setTree(T.toggleLink(p.context.state, p.context.tree, T.root(p.context.tree), target));
+  }
 
   return (
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        <Editor context={p.context} node={T.root(p.context.tree)} onAction={onAction} />
+        <Editor
+          context={p.context}
+          node={T.root(p.context.tree)}
+          onAction={(action) => Actions.execute(p.context, action)}
+          onOpenLink={openLink}
+        />
         <div className="children">
           <Outline context={p.context} />
         </div>
@@ -657,7 +665,9 @@ export default function ExpandableItem(props: {
 
   kind: "child" | "reference" | "opened-link" | "parent";
 }) {
-  const onAction = useOnActionCallback(props.context, props.node);
+  function onOpenLink(target: string): void {
+    props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, target));
+  }
 
   function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
     const otherParents = Data.otherParents(
@@ -732,7 +742,14 @@ export default function ExpandableItem(props: {
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
-  const content = <Editor context={props.context} node={props.node} onAction={onAction} />;
+  const content = (
+    <Editor
+      context={props.context}
+      node={props.node}
+      onAction={(action) => Actions.execute(props.context, action)}
+      onOpenLink={onOpenLink}
+    />
+  );
 
   return (
     <Item
@@ -751,22 +768,6 @@ export default function ExpandableItem(props: {
       }}
     />
   );
-}
-
-function useOnActionCallback(context: Context, node: T.NodeRef) {
-  // We always want to execute actions on the latest version of the context.
-  //
-  // [TODO] Is there a smarter or more idiomatic way to accomplish this? This
-  // has to run multiple times every single time anythng happens. It would be
-  // nicer if we could just pull the current Context from onAction.
-  const latestContext = React.useRef(context);
-  React.useEffect(() => {
-    latestContext.current = context;
-  }, [context]);
-
-  return function onAction(action: Actions.ActionName) {
-    Actions.execute(latestContext.current, action);
-  };
 }
 
 function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
