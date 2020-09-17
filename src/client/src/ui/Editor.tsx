@@ -31,6 +31,28 @@ function usePropRef<T>(prop: T): React.RefObject<T> {
   return ref;
 }
 
+function findExternalLinks(textContent: string): {from: number; to: number}[] {
+  let results: {from: number; to: number}[] = [];
+
+  const linkRegex = /https?:\/\S*/g;
+
+  for (const match of [...textContent.matchAll(linkRegex)]) {
+    if (match.index === undefined) throw "bad programmer error";
+
+    const start = match.index;
+    let end = match.index + match[0].length;
+
+    // Trim punctuation at the end of link:
+    if ([",", ".", ":", ")", "]"].includes(textContent[end - 1])) {
+      end -= 1;
+    }
+
+    results.push({from: start, to: end});
+  }
+
+  return results;
+}
+
 function annotate(content: D.Content): (string | {externalLink: string} | {link: string})[] {
   function annotateText(text: string): (string | {externalLink: string})[] {
     let result: (string | {externalLink: string})[] = [];
@@ -295,6 +317,36 @@ function ContentEditor(props: {
     },
   });
 
+  const externalLinkDecorationPlugin = new PS.Plugin({
+    props: {
+      decorations(state: PS.EditorState<PM.Schema>) {
+        // [FIXME] This breaks the desktop client!! It expects to provide its
+        // own external link element with some special beavior (namely, opening
+        // in a browser), but we just ignore this here.
+        let ranges: {from: number; to: number}[] = [];
+        state.doc.content.forEach((node, offset) => {
+          ranges = ranges.concat(
+            findExternalLinks(node.textContent).map((range) => ({
+              from: offset + range.from,
+              to: offset + range.to,
+            })),
+          );
+        });
+        return PV.DecorationSet.create(
+          state.doc,
+          ranges.map((range) =>
+            PV.Decoration.inline(range.from, range.to, {
+              class: "plain-text-link",
+              nodeName: "a",
+              href: state.doc.textBetween(range.from, range.to),
+              //contentEditable: "false",
+            }),
+          ),
+        );
+      },
+    },
+  });
+
   const pastePlugin = new PS.Plugin({
     props: {
       handlePaste(view, ev, slice) {
@@ -331,7 +383,7 @@ function ContentEditor(props: {
       (thing) => D.contentText(stateRef.current!, thing),
       (thing) => onOpenLinkRef.current!(thing),
     ),
-    plugins: [keyPlugin, pastePlugin],
+    plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
   });
 
   const [editorState, setEditorState] = React.useState(initialState);
