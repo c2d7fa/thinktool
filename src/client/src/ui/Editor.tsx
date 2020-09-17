@@ -332,14 +332,26 @@ function ContentEditor(props: {
             })),
           );
         });
+        // We need custom handlers for some events related to links to get the
+        // behavior we want. Sadly, ProseMirror does not let us bind event
+        // handlers to decorations. Instead, we have to bind strings to these
+        // attributes, and then register global event handlers.
+        (window as any).hackilyHandleExternalLinkMouseDown = (ev: MouseEvent) => {
+          if (!ev.altKey) {
+            const a = ev.target as HTMLAnchorElement;
+            window.open(a.textContent!, "_blank");
+            ev.preventDefault();
+          }
+        };
         return PV.DecorationSet.create(
           state.doc,
           ranges.map((range) =>
             PV.Decoration.inline(range.from, range.to, {
               class: "plain-text-link",
               nodeName: "a",
-              href: state.doc.textBetween(range.from, range.to),
-              //contentEditable: "false",
+              href: "#",
+              style: "cursor: pointer;",
+              onmousedown: "hackilyHandleExternalLinkMouseDown(event)",
             }),
           ),
         );
