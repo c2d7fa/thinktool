@@ -419,8 +419,13 @@ function ContentEditor(props: {
   }, []);
 
   React.useEffect(() => {
-    if (editorViewRef.current!.state !== editorState || editorState === initialState) {
+    // Reflect changes in ProseMirror editor.
+    if (editorViewRef.current!.state !== editorState) {
       editorViewRef.current!.updateState(editorState);
+    }
+
+    if (editorViewRef.current!.hasFocus()) {
+      props.context.setTree(T.focus(props.context.tree, props.node));
 
       // The popup that appears e.g. when inserting a link needs to have access
       // to the current selection.
@@ -456,29 +461,50 @@ function ContentEditor(props: {
         },
       });
     }
+  }, [editorState]);
+
+  // Handle incoming changes to content
+  React.useEffect(() => {
+    // We shouldn't override the user's changes.
+    if (editorViewRef.current!.hasFocus()) return;
+
+    setEditorState(
+      PS.EditorState.create({
+        schema,
+        doc: docFromContent(
+          D.content(props.context.state, T.thing(props.context.tree, props.node)),
+          (thing) => D.contentText(stateRef.current!, thing),
+          (thing) => onOpenLinkRef.current!(thing),
+        ),
+        plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
+      }),
+    );
+  }, [props.context.state]);
+
+  // Handle outgoing changes
+  React.useEffect(() => {
+    if (!editorViewRef.current!.hasFocus()) return; // The user wasn't responsible for the change
 
     if (
-      E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))) !==
+      E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))) ===
       E.contentToEditString(contentFromDoc(editorState.doc))
-    ) {
-      props.context.setState(
-        D.setContent(
-          props.context.state,
-          T.thing(props.context.tree, props.node),
-          contentFromDoc(editorState.doc),
-        ),
-      );
-    }
+    )
+      return;
+
+    props.context.setState(
+      D.setContent(
+        props.context.state,
+        T.thing(props.context.tree, props.node),
+        contentFromDoc(editorState.doc),
+      ),
+    );
   });
 
-  React.useEffect(
-    function acceptFocus() {
-      if (T.hasFocus(props.context.tree, props.node)) {
-        editorViewRef.current?.focus();
-      }
-    },
-    [T.focused(props.context.tree)],
-  );
+  React.useEffect(() => {
+    if (T.hasFocus(props.context.tree, props.node)) {
+      editorViewRef.current!.focus();
+    }
+  }, [T.focused(props.context.tree)]);
 
   return <div className="editor content" ref={ref}></div>;
 }
@@ -490,9 +516,5 @@ export default function Editor(props: {
   onAction(action: Ac.ActionName): void;
   onOpenLink(target: string): void;
 }) {
-  if (T.hasFocus(props.context.tree, props.node)) {
-    return <ContentEditor {...props} />;
-  } else {
-    return <RenderedContent {...props} />;
-  }
+  return <ContentEditor {...props} />;
 }
