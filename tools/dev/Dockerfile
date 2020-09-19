@@ -4,7 +4,7 @@ RUN apt-get update -y
 RUN apt-get install -y curl
 
 # Node.js (https://github.com/nodesource/distributions/blob/master/README.md#deb)
-RUN curl -sSL https://deb.nodesource.com/setup_14.x | bash -
+RUN curl -sSL https://deb.nodesource.com/setup_lts.x | bash -
 RUN apt-get install -y nodejs
 
 # Docker (https://docs.docker.com/engine/install/ubuntu/#install-using-the-convenience-script)
