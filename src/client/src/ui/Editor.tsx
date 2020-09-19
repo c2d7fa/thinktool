@@ -31,6 +31,28 @@ function usePropRef<T>(prop: T): React.RefObject<T> {
   return ref;
 }
 
+function findExternalLinks(textContent: string): {from: number; to: number}[] {
+  let results: {from: number; to: number}[] = [];
+
+  const linkRegex = /https?:\/\S*/g;
+
+  for (const match of [...textContent.matchAll(linkRegex)]) {
+    if (match.index === undefined) throw "bad programmer error";
+
+    const start = match.index;
+    let end = match.index + match[0].length;
+
+    // Trim punctuation at the end of link:
+    if ([",", ".", ":", ")", "]"].includes(textContent[end - 1])) {
+      end -= 1;
+    }
+
+    results.push({from: start, to: end});
+  }
+
+  return results;
+}
+
 function annotate(content: D.Content): (string | {externalLink: string} | {link: string})[] {
   function annotateText(text: string): (string | {externalLink: string})[] {
     let result: (string | {externalLink: string})[] = [];
@@ -295,6 +317,45 @@ function ContentEditor(props: {
     },
   });
 
+  const externalLinkDecorationPlugin = new PS.Plugin({
+    props: {
+      decorations(state: PS.EditorState<PM.Schema>) {
+        let ranges: {from: number; to: number}[] = [];
+        state.doc.content.forEach((node, offset) => {
+          ranges = ranges.concat(
+            findExternalLinks(node.textContent).map((range) => ({
+              from: offset + range.from,
+              to: offset + range.to,
+            })),
+          );
+        });
+        // We need custom handlers for some events related to links to get the
+        // behavior we want. Sadly, ProseMirror does not let us bind event
+        // handlers to decorations. Instead, we have to bind strings to these
+        // attributes, and then register global event handlers.
+        (window as any).hackilyHandleExternalLinkMouseDown = (ev: MouseEvent) => {
+          if (!ev.altKey) {
+            const a = ev.target as HTMLAnchorElement;
+            props.context.openExternalUrl(a.textContent!);
+            ev.preventDefault();
+          }
+        };
+        return PV.DecorationSet.create(
+          state.doc,
+          ranges.map((range) =>
+            PV.Decoration.inline(range.from, range.to, {
+              class: "plain-text-link",
+              nodeName: "a",
+              href: "#",
+              style: "cursor: pointer;",
+              onmousedown: "hackilyHandleExternalLinkMouseDown(event)",
+            }),
+          ),
+        );
+      },
+    },
+  });
+
   const pastePlugin = new PS.Plugin({
     props: {
       handlePaste(view, ev, slice) {
@@ -331,7 +392,7 @@ function ContentEditor(props: {
       (thing) => D.contentText(stateRef.current!, thing),
       (thing) => onOpenLinkRef.current!(thing),
     ),
-    plugins: [keyPlugin, pastePlugin],
+    plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
   });
 
   const [editorState, setEditorState] = React.useState(initialState);

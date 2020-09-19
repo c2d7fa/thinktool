@@ -24,5 +24,9 @@ function ExternalLink(props: {href: string; children: React.ReactNode; [k: strin
   );
 }
 
+function openExternalUrl(url: string) {
+  Electron.shell.openExternal(url);
+}
+
 const storage = Electron.remote.getGlobal("storage") as Client.Storage.Storage;
-Client.startLocalApp({storage, ExternalLink});
+Client.startLocalApp({storage, ExternalLink, openExternalUrl});

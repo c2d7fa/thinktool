@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/desktop",
-  "version": "202009141907.0.0",
+  "version": "202009191623.0.0",
   "description": "The desktop client for Thinktool.",
   "license": "UNLICENSED",
   "repository": {
@@ -17,7 +17,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "@thinktool/client": "^1.10.0",
+    "@thinktool/client": "^2.0.0",
     "react": "^16.13.1",
     "sqlite": "^4.0.9",
     "sqlite3": "^4.2.0"

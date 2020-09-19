@@ -137,11 +137,13 @@ function useContext({
   initialTutorialFinished,
   storage,
   server,
+  openExternalUrl,
 }: {
   initialState: State;
   initialTutorialFinished: boolean;
   storage: Storage.Storage;
   server?: API.Server;
+  openExternalUrl(url: string): void;
 }): Context {
   const [state, setLocalState] = React.useState(initialState);
 
@@ -295,6 +297,7 @@ function useContext({
     changelog: ChangelogData,
     storage,
     server,
+    openExternalUrl,
   };
 }
 
@@ -304,14 +307,16 @@ function App({
   username,
   storage,
   server,
+  openExternalUrl,
 }: {
   initialState: State;
   initialTutorialFinished: boolean;
   username?: string;
   storage: Storage.Storage;
   server?: API.Server;
+  openExternalUrl(url: string): void;
 }) {
-  const context = useContext({initialState, initialTutorialFinished, storage, server});
+  const context = useContext({initialState, initialTutorialFinished, storage, server, openExternalUrl});
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
@@ -933,6 +938,7 @@ export async function thinktoolApp({apiHost}: {apiHost: string}) {
       username={username ?? "<error>"}
       storage={storage}
       server={server}
+      openExternalUrl={(url) => window.open(url, "_blank")}
     />,
     appElement,
   );
@@ -941,9 +947,11 @@ export async function thinktoolApp({apiHost}: {apiHost: string}) {
 export async function startLocalApp({
   storage,
   ExternalLink,
+  openExternalUrl,
 }: {
   storage: Storage.Storage;
   ExternalLink: ExternalLinkType;
+  openExternalUrl: (url: string) => void;
 }) {
   const appElement = document.querySelector("#app")! as HTMLDivElement;
 
@@ -953,6 +961,7 @@ export async function startLocalApp({
         initialState={API.transformFullStateResponseIntoState(await storage.getFullState())}
         initialTutorialFinished={await storage.getTutorialFinished()}
         storage={storage}
+        openExternalUrl={openExternalUrl}
       />
     </ExternalLinkProvider>,
 
@@ -973,6 +982,7 @@ export async function thinktoolDemo({
       initialState={API.transformFullStateResponseIntoState(data)}
       initialTutorialFinished={false}
       storage={Storage.ignore()}
+      openExternalUrl={(url) => window.open(url, "_blank")}
     />,
     appElement,
   );
