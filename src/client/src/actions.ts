@@ -237,20 +237,7 @@ const implementations: {
   },
 
   forum(context, getFocused) {
-    // Because we want the behavior of the subreddit button to follow that of
-    // ExternalLink, which may differ between the web and desktop clients, we
-    // set up a fake link, and then make the button fake-click the link. This is
-    // pretty silly, but it seems to work.
-    //
-    // The link is added in the Toolbar module.
-    const a = document.querySelector("#exceedingly-silly-link-hack:first-child > a");
-    if (a instanceof HTMLAnchorElement) {
-      a.click();
-    } else {
-      console.error(
-        "An error occurred while trying to fake click exceedingly silly link hack. This is probably because this link hack that is exceedingly silly, and someone should change it.",
-      );
-    }
+    context.openExternalUrl("https://old.reddit.com/r/thinktool/");
   },
 };
 

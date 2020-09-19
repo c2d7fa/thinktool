@@ -1,10 +1,8 @@
 import * as React from "react";
-import * as T from "../tree";
 import * as Tutorial from "../tutorial";
 import {Context} from "../context";
 import * as Ac from "../actions";
 import * as Sh from "../shortcuts";
-import {ExternalLink} from "./ExternalLink";
 
 function ToolbarGroup(props: {children: React.ReactNode; title?: string}) {
   if (props.title === undefined) {
@@ -191,15 +189,6 @@ export default function Toolbar(props: {context: Context}) {
         />
       </ToolbarGroup>
       <ToolbarGroup title="Help">
-        {/* Because we want the behavior of the subreddit button to follow that of ExternalLink,
-            which may differ between the web and desktop clients, we set up a fake link, and
-            then make the button fake-click the link. This is pretty silly, but it seems to
-            work.
-            
-            See the Actions module for the implementation. */}
-        <div id="exceedingly-silly-link-hack" style={{display: "none"}}>
-          <ExternalLink href="https://old.reddit.com/r/thinktool/">You should not see this!</ExternalLink>
-        </div>
         <ToolbarButton
           action="forum"
           description="Open the subreddit."
