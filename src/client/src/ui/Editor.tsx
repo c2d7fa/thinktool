@@ -268,6 +268,51 @@ function docFromContent(
   return schema.node("doc", {}, nodes);
 }
 
+function createExternalLinkDecorationPlugin(args: {
+  openExternalUrl(url: string): void;
+}): PS.Plugin<typeof schema> {
+  // We need custom handlers for some events related to links to get the
+  // behavior we want. Sadly, ProseMirror does not let us bind event
+  // handlers to decorations. Instead, we have to bind strings to these
+  // attributes, and then register global event handlers.
+  (window as any).hackilyHandleExternalLinkMouseDown = (ev: MouseEvent) => {
+    if (!ev.altKey) {
+      const a = ev.target as HTMLAnchorElement;
+      args.openExternalUrl(a.textContent!);
+      ev.preventDefault();
+    }
+  };
+
+  return new PS.Plugin({
+    props: {
+      decorations(state: PS.EditorState<PM.Schema>) {
+        let ranges: {from: number; to: number}[] = [];
+        state.doc.content.forEach((node, offset) => {
+          ranges = ranges.concat(
+            findExternalLinks(node.textContent).map((range) => ({
+              from: offset + range.from,
+              to: offset + range.to,
+            })),
+          );
+        });
+
+        return PV.DecorationSet.create(
+          state.doc,
+          ranges.map((range) =>
+            PV.Decoration.inline(range.from, range.to, {
+              class: "plain-text-link",
+              nodeName: "a",
+              href: "#",
+              style: "cursor: pointer;",
+              onmousedown: "hackilyHandleExternalLinkMouseDown(event)",
+            }),
+          ),
+        );
+      },
+    },
+  });
+}
+
 function contentFromDoc(doc: PM.Node<typeof schema>): D.Content {
   const content: D.Content = [];
 
@@ -317,43 +362,8 @@ function ContentEditor(props: {
     },
   });
 
-  const externalLinkDecorationPlugin = new PS.Plugin({
-    props: {
-      decorations(state: PS.EditorState<PM.Schema>) {
-        let ranges: {from: number; to: number}[] = [];
-        state.doc.content.forEach((node, offset) => {
-          ranges = ranges.concat(
-            findExternalLinks(node.textContent).map((range) => ({
-              from: offset + range.from,
-              to: offset + range.to,
-            })),
-          );
-        });
-        // We need custom handlers for some events related to links to get the
-        // behavior we want. Sadly, ProseMirror does not let us bind event
-        // handlers to decorations. Instead, we have to bind strings to these
-        // attributes, and then register global event handlers.
-        (window as any).hackilyHandleExternalLinkMouseDown = (ev: MouseEvent) => {
-          if (!ev.altKey) {
-            const a = ev.target as HTMLAnchorElement;
-            props.context.openExternalUrl(a.textContent!);
-            ev.preventDefault();
-          }
-        };
-        return PV.DecorationSet.create(
-          state.doc,
-          ranges.map((range) =>
-            PV.Decoration.inline(range.from, range.to, {
-              class: "plain-text-link",
-              nodeName: "a",
-              href: "#",
-              style: "cursor: pointer;",
-              onmousedown: "hackilyHandleExternalLinkMouseDown(event)",
-            }),
-          ),
-        );
-      },
-    },
+  const externalLinkDecorationPlugin = createExternalLinkDecorationPlugin({
+    openExternalUrl: props.context.openExternalUrl,
   });
 
   const pastePlugin = new PS.Plugin({
