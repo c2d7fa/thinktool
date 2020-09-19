@@ -57,4 +57,6 @@ export interface Context {
 
   activeEditor: ActiveEditor | null;
   registerActiveEditor(activeEditor: ActiveEditor | null): void;
+
+  openExternalUrl(url: string): void;
 }

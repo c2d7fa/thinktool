@@ -320,9 +320,6 @@ function ContentEditor(props: {
   const externalLinkDecorationPlugin = new PS.Plugin({
     props: {
       decorations(state: PS.EditorState<PM.Schema>) {
-        // [FIXME] This breaks the desktop client!! It expects to provide its
-        // own external link element with some special beavior (namely, opening
-        // in a browser), but we just ignore this here.
         let ranges: {from: number; to: number}[] = [];
         state.doc.content.forEach((node, offset) => {
           ranges = ranges.concat(
@@ -339,7 +336,7 @@ function ContentEditor(props: {
         (window as any).hackilyHandleExternalLinkMouseDown = (ev: MouseEvent) => {
           if (!ev.altKey) {
             const a = ev.target as HTMLAnchorElement;
-            window.open(a.textContent!, "_blank");
+            props.context.openExternalUrl(a.textContent!);
             ev.preventDefault();
           }
         };
