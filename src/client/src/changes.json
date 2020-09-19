@@ -279,6 +279,10 @@
     {
       "date": "2020-09-19",
       "title": "URLs are now clickable in the active editor."
+    },
+    {
+      "date": "2020-09-19",
+      "title": "Overhauled editor component. Now you no longer have to click on an item twice to focus it."
     }
   ]
 }
