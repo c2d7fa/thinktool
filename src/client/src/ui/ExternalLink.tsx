@@ -13,7 +13,7 @@ function DefaultExternalLink(props: {
   children: React.ReactNode;
   [x: string]: any;
 }): JSX.Element {
-  const attrs = {...props};
+  const attrs: any = {...props};
   delete attrs.href;
   return (
     <a {...attrs} href={props.href} target="_blank" rel="nofollow">
