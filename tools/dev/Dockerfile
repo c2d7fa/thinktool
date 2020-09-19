@@ -18,5 +18,6 @@ RUN apt-get install -y tmux tmuxp
 
 # Other development tools
 RUN apt-get install -y git
+RUN apt-get install -y build-essential
 
 WORKDIR /work
