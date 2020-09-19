@@ -240,7 +240,7 @@ p {
 
   padding: 6px 1rem;
   border-radius: 6px;
-  
+
   @include base.ui-font;
   font-weight: bold;
 
@@ -348,8 +348,14 @@ p {
     }
   }
 
+  @media (max-width: 960px) {
+    nav > *:nth-child(1) {
+      display: none !important;
+    }
+  }
+
   @media (max-width: 760px) {
-    nav > *:nth-child(3) {
+    nav > *:nth-child(4) {
       display: none !important;
     }
   }
@@ -359,25 +365,26 @@ p {
   }
 
   @media (max-width: 530px) {
-    nav > *:nth-child(5) {
+    nav > *:nth-child(6) {
       display: none !important;
     }
   }
 
   @media (max-width: 430px) {
-    nav > *:nth-child(2) {
+    nav > *:nth-child(3) {
       display: none !important;
     }
   }
 
   @media (max-width: 360px) {
-    nav > *:nth-child(1) {
+    nav > *:nth-child(2) {
       display: none !important;
     }
   }
 }
 
-a > i.fas, a > i.fab {
+a > i.fas,
+a > i.fab {
   @include components.icon-before;
 }
 
