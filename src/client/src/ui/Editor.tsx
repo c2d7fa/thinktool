@@ -479,7 +479,7 @@ function ContentEditor(props: {
         plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
       }),
     );
-  }, [props.context.state]);
+  }, [props.context.state, props.node]);
 
   // Handle outgoing changes
   React.useEffect(() => {
