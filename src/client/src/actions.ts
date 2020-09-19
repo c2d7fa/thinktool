@@ -72,7 +72,7 @@ export function enabled(context: Context, action: ActionName): boolean {
 
 export function execute(context: Context, action: ActionName): void {
   if (!enabled(context, action)) {
-    console.error("The action %o is not enabled! Ignoring.");
+    console.error("The action %o is not enabled! Ignoring.", action);
     return;
   }
 
