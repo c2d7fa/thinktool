@@ -53,64 +53,7 @@ function findExternalLinks(textContent: string): {from: number; to: number}[] {
   return results;
 }
 
-function annotate(content: D.Content): (string | {externalLink: string} | {link: string})[] {
-  function annotateText(text: string): (string | {externalLink: string})[] {
-    let result: (string | {externalLink: string})[] = [];
-
-    let position = 0;
-
-    function commitText(end: number) {
-      if (position !== end) {
-        result.push(text.substring(position, end));
-        position = end;
-      }
-    }
-
-    // External links
-
-    const linkRegex = /https?:\/\S*/g;
-
-    for (const match of [...text.matchAll(linkRegex)]) {
-      if (match.index === undefined) throw "bad programmer error";
-
-      const start = match.index;
-      let end = match.index + match[0].length;
-
-      // Trim punctuation at the end of link:
-      if ([",", ".", ":", ")", "]"].includes(text[end - 1])) {
-        end -= 1;
-      }
-
-      commitText(start);
-      result = [...result, {externalLink: text.substring(start, end)}];
-      position = end;
-    }
-
-    commitText(text.length);
-
-    return result;
-  }
-
-  let result: (string | {externalLink: string} | {link: string})[] = [];
-  for (const segment of content) {
-    if (typeof segment === "string") {
-      result = [...result, ...annotateText(segment)];
-    } else {
-      result = [...result, segment];
-    }
-  }
-  return result;
-}
-
-function ExternalLink(props: {link: string}) {
-  return (
-    <BaseExternalLink className="plain-text-link" href={props.link}>
-      {props.link}
-    </BaseExternalLink>
-  );
-}
-
-function InternalLink_(props: {
+function InternalLink(props: {
   status: "expanded" | "collapsed" | "terminal";
   jump(): void;
   toggle(): void;
@@ -147,73 +90,6 @@ function InternalLink_(props: {
   );
 }
 
-function InternalLink(props: {context: Context; node: T.NodeRef; link: string}) {
-  const expanded = T.isLinkOpen(props.context.tree, props.node, props.link);
-  const terminal =
-    !D.hasChildren(props.context.state, props.link) &&
-    D.otherParents(props.context.state, props.link).length === 0;
-  const status = terminal ? "terminal" : expanded ? "expanded" : "collapsed";
-
-  function toggle() {
-    props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, props.link));
-  }
-
-  function jump() {
-    props.context.setSelectedThing(props.link);
-  }
-
-  const contentText = D.contentText(props.context.state, props.link);
-  const content = contentText === "" ? <span className="empty-content">{props.link}</span> : contentText;
-
-  return (
-    <InternalLink_ status={status} jump={jump} toggle={toggle}>
-      {content}
-    </InternalLink_>
-  );
-}
-
-function RenderedContent(props: {
-  context: Context;
-  node: T.NodeRef;
-  onKeyDown?(ev: KeyboardEvent, notes: {startOfItem: boolean; endOfItem: boolean}): boolean;
-  placeholder?: string;
-}) {
-  let fragments: React.ReactNode[] = [];
-
-  const content = D.content(props.context.state, T.thing(props.context.tree, props.node));
-
-  let i = 0; // Node key
-  for (const segment of annotate(content)) {
-    if (typeof segment === "string") {
-      fragments.push(segment);
-    } else if ("link" in segment) {
-      fragments.push(
-        <InternalLink key={i++} link={segment.link} node={props.node} context={props.context} />,
-      );
-    } else if ("externalLink" in segment) {
-      fragments.push(<ExternalLink key={i++} link={segment.externalLink} />);
-    }
-  }
-
-  const divRef = React.useRef<HTMLDivElement>(null);
-
-  return (
-    <div
-      ref={divRef}
-      tabIndex={-1}
-      onFocus={(ev) => {
-        // Don't take focus when target of event was a child such as an
-        // external link.
-        if (ev.target === divRef.current) {
-          props.context.setTree(T.focus(props.context.tree, props.node));
-        }
-      }}
-      className={`editor content`}>
-      {fragments.length === 0 ? <span className="placeholder-empty">(Empty)</span> : <span>{fragments}</span>}
-    </div>
-  );
-}
-
 const schema = new PM.Schema({
   nodes: {
     doc: {content: "(text | link)*"},
@@ -225,12 +101,10 @@ const schema = new PM.Schema({
       toDOM(node) {
         const container = document.createElement("span");
         ReactDOM.render(
-          // [TODO] This works, but it has a different behavior to normal
-          // InternalLink, because we don't have enough information to set some
-          // properties here.
-          <InternalLink_ status={"collapsed"} jump={node.attrs.onclick} toggle={node.attrs.onclick}>
+          // [TODO] Using placeholder for status; we should set this to the real value.
+          <InternalLink status={"collapsed"} jump={node.attrs.onclick} toggle={node.attrs.onclick}>
             {node.attrs.content}
-          </InternalLink_>,
+          </InternalLink>,
           container,
         );
         return container;
