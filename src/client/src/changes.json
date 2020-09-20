@@ -283,6 +283,10 @@
     {
       "date": "2020-09-19",
       "title": "Overhauled editor component. Now you no longer have to click on an item twice to focus it."
+    },
+    {
+      "date": "2020-09-20",
+      "title": "Fixed a visual bug with the 'New Item' placeholder item."
     }
   ]
 }

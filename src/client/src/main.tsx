@@ -644,8 +644,8 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   }
 
   return (
-    <li className="item">
-      <span>
+    <li className="subtree-container">
+      <div className="item">
         <Bullet
           beginDrag={() => {
             return;
@@ -655,10 +655,10 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
             return;
           }}
         />
-        <span className="content placeholder-child" onFocus={onFocus} tabIndex={0}>
+        <div className="editor content placeholder-child" onFocus={onFocus} tabIndex={0}>
           New Item
-        </span>
-      </span>
+        </div>
+      </div>
     </li>
   );
 }
