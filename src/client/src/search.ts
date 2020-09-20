@@ -5,15 +5,12 @@ import * as D from "./data";
 export type Result = {thing: string; content: string};
 
 export default class Search {
-  private fuse = new Fuse<{thing: string; content: string}>([], {
-    keys: ["content"],
-    findAllMatches: true,
-    ignoreLocation: true,
-  });
+  private fuse: Fuse<{thing: string; content: string}>;
 
   constructor(state: D.State) {
-    this.fuse.setCollection(
+    this.fuse = new Fuse<{thing: string; content: string}>(
       D.allThings(state).map((thing) => ({thing, content: D.contentText(state, thing)})),
+      {keys: ["content"], findAllMatches: true, ignoreLocation: true},
     );
   }
 
