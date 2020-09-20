@@ -291,6 +291,10 @@
     {
       "date": "2020-09-20",
       "title": "Fixed a bug that would cause newly inserted spaces at the end of an item to disappear when using Firefox."
+    },
+    {
+      "date": "2020-09-20",
+      "title": "Greatly improved search algorithm, which now supports fuzzy matches and relevance ranking."
     }
   ]
 }
