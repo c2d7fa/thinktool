@@ -287,6 +287,10 @@
     {
       "date": "2020-09-20",
       "title": "Fixed a visual bug with the 'New Item' placeholder item."
+    },
+    {
+      "date": "2020-09-20",
+      "title": "Fixed a bug that would cause newly inserted spaces at the end of an item to disappear when using Firefox."
     }
   ]
 }

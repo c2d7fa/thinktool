@@ -279,11 +279,6 @@ a.plain-text-link:hover {
 
 .editor .ProseMirror {
   outline: none;
-}
-
-.editor-inactive {
-  @extend .editor;
-
   white-space: pre-wrap;
 }
 
