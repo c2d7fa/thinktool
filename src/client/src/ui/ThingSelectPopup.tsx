@@ -1,22 +1,15 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import Fuse from "fuse.js";
 
 import * as D from "../data";
-
-const fuse = new Fuse<{content: string; thing: string}>([], {
-  keys: ["content"],
-  findAllMatches: true,
-  ignoreLocation: true,
-});
+import Search from "../search";
 
 function search(state: D.State, text: string, maxResults: number): [string, string][] {
-  // [TODO] Obviously we want some kind of caching for Fuse. At the very least,
-  // we shouldn't regenerate the entire index on each key typed, but we should
-  // be able to do better than that.
-
-  fuse.setCollection(D.allThings(state).map((thing) => ({thing, content: D.contentText(state, thing)})));
-  return fuse.search(text, {limit: maxResults}).map((result) => [result.item.content, result.item.thing]);
+  // [TODO] Obviously we want some kind of caching for search. At the very
+  // least, we shouldn't regenerate the entire index on each key typed, but we
+  // should be able to do better than that.
+  const search = new Search(state);
+  return search.query(text, maxResults).map((result) => [result.content, result.thing]);
 }
 
 export default function ThingSelectPopup(props: {
