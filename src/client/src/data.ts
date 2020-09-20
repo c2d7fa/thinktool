@@ -29,6 +29,10 @@ export const empty: State = {
   connections: {},
 };
 
+export function allThings(state: State): string[] {
+  return Object.keys(state.things);
+}
+
 export function connectionParent(state: State, connection: Connection): string | undefined {
   return state.connections[connection.connectionId]?.parent;
 }
@@ -269,8 +273,6 @@ export function otherParents(state: State, child: string, parent?: string): stri
   return parents(state, child).filter((p) => p !== parent);
 }
 
-// Search
-
 export function contentText(state: State, thing: string): string {
   function contentText_(thing: string, seen: string[]): string {
     if (seen.includes(thing)) return "...";
@@ -285,19 +287,6 @@ export function contentText(state: State, thing: string): string {
   }
 
   return contentText_(thing, []);
-}
-
-// TODO: We should use some kind of streaming data structure for search results,
-// so that we don't have to wait for the entire thing before we can display
-// something to the user.
-export function search(state: State, text: string): string[] {
-  let results: string[] = [];
-  for (const thing in state.things) {
-    if (contentText(state, thing).toLowerCase().includes(text.toLowerCase())) {
-      results = [...results, thing];
-    }
-  }
-  return results;
 }
 
 // In-line references

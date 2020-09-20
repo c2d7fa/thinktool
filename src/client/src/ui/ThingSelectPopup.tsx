@@ -2,12 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import * as D from "../data";
-
-function search(state: D.State, text: string, maxResults: number): [string, string][] {
-  return D.search(state, text)
-    .slice(0, maxResults)
-    .map((thing) => [D.contentText(state, thing), thing]);
-}
+import Search from "../search";
 
 export default function ThingSelectPopup(props: {
   state: D.State;
@@ -17,10 +12,11 @@ export default function ThingSelectPopup(props: {
   seedText?: string;
 }) {
   const [text, setText_] = React.useState("");
-  const [results, setResults] = React.useState<[string, string][]>([]);
+  const [results, setResults] = React.useState<{thing: string; content: string}[]>([]);
   const [maxResults, setMaxResults] = React.useState<number>(50);
   const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
   const [automaticSelection, setAutomaticSelection] = React.useState<false | {from: number}>(false);
+  const search = React.useMemo<Search>(() => new Search(props.state), [props.state]);
   const ref = React.useRef<HTMLInputElement>(null);
 
   // This element should always be focused when it exists. We expect the parent
@@ -36,7 +32,9 @@ export default function ThingSelectPopup(props: {
       setResults([]);
     } else {
       setMaxResults(50);
-      const results = search(props.state, text, 50);
+      // [TODO] This is slow for long text. Consider adding a debounce for long
+      // text as a workaround.
+      const results = search.query(text, 50);
       setResults(results);
 
       if (results.length === 0) {
@@ -60,7 +58,7 @@ export default function ThingSelectPopup(props: {
       if (selectedIndex === -1) {
         props.create(text);
       } else {
-        props.submit(results[selectedIndex][1]);
+        props.submit(results[selectedIndex].thing);
       }
       props.hide();
       ev.preventDefault();
@@ -76,7 +74,7 @@ export default function ThingSelectPopup(props: {
     }
   }
 
-  function Result(props: {result: [string, string]; selected: boolean; submit: () => void}) {
+  function Result(props: {result: {thing: string; content: string}; selected: boolean; submit: () => void}) {
     // Using onPointerDown instead of onClick to circumvent parent getting blur
     // event before we get our events.
     return (
@@ -84,7 +82,7 @@ export default function ThingSelectPopup(props: {
         onPointerDown={props.submit}
         className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}>
         <span className="link-autocomplete-popup-result-content">
-          {props.result[0]} <span className="link-autocomplete-popup-id">{props.result[1]}</span>
+          {props.result.content} <span className="link-autocomplete-popup-id">{props.result.thing}</span>
         </span>
       </li>
     );
@@ -94,7 +92,7 @@ export default function ThingSelectPopup(props: {
     const el = ev.target as HTMLUListElement;
     if (el.scrollTop + el.clientHeight + 500 > el.scrollHeight) {
       setMaxResults((maxResults) => maxResults + 50);
-      setResults(search(props.state, text, maxResults));
+      setResults(search.query(text, maxResults));
     }
   }
 
@@ -115,10 +113,10 @@ export default function ThingSelectPopup(props: {
         <ul className="link-autocomplete-popup-results" onScroll={onScroll}>
           {results.map((result, i) => (
             <Result
-              key={result[1]}
+              key={result.thing}
               selected={i === selectedIndex}
               result={result}
-              submit={() => props.submit(result[1])}
+              submit={() => props.submit(result.thing)}
             />
           ))}
         </ul>
