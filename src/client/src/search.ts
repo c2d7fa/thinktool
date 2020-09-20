@@ -14,6 +14,10 @@ export default class Search {
     );
   }
 
+  // For large queries, the search can be quite slow. When this happens, it
+  // blocks the UI. Unfortunately, just making this method async is not enough
+  // to fix this issue, since all the work still happens at once in that case.
+  // If we wanted to fix this, I think we should look into Web Workers.
   query(text: string, limit: number): Result[] {
     return this.fuse
       .search(text, {limit})

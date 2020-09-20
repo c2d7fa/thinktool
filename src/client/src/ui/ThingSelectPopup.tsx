@@ -32,9 +32,8 @@ export default function ThingSelectPopup(props: {
       setResults([]);
     } else {
       setMaxResults(50);
-      // [TODO] For large queries, the search can be quite slow. When this
-      // happens, it blocks the UI, which is not ideal. We should look into
-      // making this async instead.
+      // [TODO] This is slow for long text. Consider adding a debounce for long
+      // text as a workaround.
       const results = search.query(text, 50);
       setResults(results);
 
