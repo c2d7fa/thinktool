@@ -2,15 +2,15 @@
 
 This repository contains the source code of [Thinktool](https://thinktool.io/), an associative note-taking application inspired by TheBrain and Roam Research.
 
-## This is not open source!
+## Thinktool isn't open source! (Yet...)
 
-Please note that this software is not open source. The omission of a `LICENSE` file is intentional.
+Although it's source code is provided publicly here, this software isn't currently open source.
 
-As such, the instructions in this README are mostly written for myself, and may not be sufficient to compile this project on your own. That being said, you may find some hints in `.github/workflows`.
+As such, the instructions in this README are mostly written for myself, and may not be sufficient to compile this project on your own. That being said, you can find some hints on how to run it in `.github/workflows`.
 
-This project is also not currently accepting issues or pull requests. Please see Thinktool's web page for information about how to contact me with your feedback about Thinktool. Also, I may occationally force push to this repository, since I'm not expecting anyone else to clone it.
+This project is also not currently accepting issues or pull requests. Please see Thinktool's web page for information about how to contact me with your feedback about Thinktool. I may occationally force push to this repository, since I'm not expecting anyone else to be actively working on it.
 
-If I abandon this project in the future, I intend to make it open source. If you can see that I have not touched this repository in several months, feel free to send me an email reminding me of this fact!
+**However,** if I abandon this project in the future (or when I otherwise consider it "finished"), I intend to make it open source, probably under the AGPL. If you can see that I haven't touched this repository in a couple of months, feel free to send me an email reminding me of this fact!
 
 ## Directory Structure
 
