@@ -1,6 +1,15 @@
 # Thinktool
 
-This repository contains the source code of [Thinktool](https://thinktool.io/), an associative note-taking application inspired by TheBrain and Roam Research.
+This repository contains the source code of [**Thinktool**](https://thinktool.io/), an associative note-taking application inspired by TheBrain and Roam Research.
+
+[**Check out the demo in your browser here!**](https://thinktool.io/demo.html)
+
+<blockquote>
+<p align="center">
+<img width="560" src="https://raw.githubusercontent.com/c2d7fa/thinktool/master/screenshot.png"/>
+</p>
+<p align="center">(Screenshot showing links, backreferences and multiple parents.)</p>
+</blockquote>
 
 ## Thinktool isn't open source! (Yet...)
 
