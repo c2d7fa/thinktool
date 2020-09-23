@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/server",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "The API server for Thinktool.",
   "license": "UNLICENSED",
   "repository": {
