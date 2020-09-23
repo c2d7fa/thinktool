@@ -36,7 +36,7 @@ export async function withClient<T>(callback: (client: pg.PoolClient) => Promise
 
 export async function withTransaction<T>(
   client: pg.PoolClient,
-  callback: (client: pg.Client) => Promise<T>,
+  callback: (client: pg.PoolClient) => Promise<T>,
 ): Promise<T> {
   try {
     await client.query("BEGIN");
