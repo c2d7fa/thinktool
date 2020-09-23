@@ -295,6 +295,10 @@
     {
       "date": "2020-09-20",
       "title": "Greatly improved search algorithm, which now supports fuzzy matches and relevance ranking."
+    },
+    {
+      "date": "2020-09-23",
+      "title": "Fixed crash that would happen when viewing some types of empty items."
     }
   ]
 }

@@ -12,7 +12,6 @@ import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
 import {Context} from "../context";
 
-import {ExternalLink as BaseExternalLink} from "./ExternalLink"; // Silly naming conflict
 import Bullet from "./Bullet";
 
 // Sometimes we want to pass a callback to some function that doesn't know about
@@ -123,6 +122,10 @@ function docFromContent(
 
   for (const contentNode of content) {
     if (typeof contentNode === "string") {
+      if (contentNode === "") {
+        // Empty text nodes are not allowed by ProseMirror.
+        continue;
+      }
       nodes.push(schema.text(contentNode));
     } else if (contentNode.link !== undefined) {
       // We store the 'onclick' callback on each node. Perhaps it would make
