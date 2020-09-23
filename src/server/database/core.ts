@@ -4,7 +4,7 @@ export type UserId = {name: string};
 
 // We require the consumer of this module to call initialize() before doing
 // anything else.
-export let pool: pg.Pool = undefined as never;
+let pool: pg.Pool = undefined as never;
 
 export async function initialize(
   host: string,
@@ -25,11 +25,26 @@ export async function initialize(
   });
 }
 
-export async function connect<T>(callback: (client: pg.PoolClient) => T): Promise<T> {
+export async function withClient<T>(callback: (client: pg.PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect();
   try {
-    return callback(client);
+    return await callback(client);
   } finally {
     client.release();
+  }
+}
+
+export async function withTransaction<T>(
+  client: pg.PoolClient,
+  callback: (client: pg.Client) => Promise<T>,
+): Promise<T> {
+  try {
+    await client.query("BEGIN");
+    const result = await callback(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
   }
 }

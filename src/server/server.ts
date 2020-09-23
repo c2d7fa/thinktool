@@ -198,16 +198,6 @@ async function parseThingExists(req: express.Request, res: express.Response, nex
   next();
 }
 
-async function parseThing(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const thing = req.params.thing;
-  if (thing.length === 0) {
-    res.status(400).type("text/plain").send("400 Bad Request");
-    next("router");
-  }
-  res.locals.thing = thing;
-  next();
-}
-
 // #region Updates
 
 async function requireClientId(req: express.Request, res: express.Response, next: express.NextFunction) {
