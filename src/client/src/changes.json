@@ -299,6 +299,10 @@
     {
       "date": "2020-09-23",
       "title": "Fixed crash that would happen when viewing some types of empty items."
+    },
+    {
+      "date": "2020-09-25",
+      "title": "Improved initial load performance for large databases."
     }
   ]
 }
