@@ -10,18 +10,12 @@
 
 set -e
 
-# Build static resources
-
+echo "Buinding shared static resources into dist/static/..."
 ./tools/build-static.sh
 
-# Build scripts
-
-echo "Building configuration file..."
-mkdir -p conf
-echo "{\"apiHost\": \"$DIAFORM_API_HOST\"}" > conf/client.json
-
-echo "Bundling web client..."
+echo "Building web client into dist/static/..."
 cd src/web
 npm ci
-npm run bundle
+npm run build
+cp -r dist/* ../../dist/static
 cd ../..

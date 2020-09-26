@@ -12,6 +12,7 @@ docker run \
   -p 127.0.0.1:8085:8085 \
   -v $(pwd):/work \
   -v /var/run/docker.sock:/var/run/docker.sock \
+  --network host \
   thinktool-dev
 
 # Then, optionally run 'tmuxp load tools/dev/session.tmuxp.yaml' inside the

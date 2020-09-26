@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/web",
-  "version": "202009242252.0.0",
+  "version": "202009261347.0.0",
   "description": "The web client for Thinktool.",
   "license": "UNLICENSED",
   "repository": {
@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "parcel-bundler": "^1.12.4",
+    "posthtml-expressions": "^1.5.0",
     "typescript": "^4.0.3"
   },
   "dependencies": {
@@ -17,8 +18,8 @@
     "core-js": "^3.6.5"
   },
   "scripts": {
-    "bundle": "./node_modules/.bin/parcel build -d ../../dist/static -o bundle.js -t browser main.tsx",
-    "watch": "./node_modules/.bin/parcel watch -d ../../dist/static -o bundle.js -t browser main.tsx",
-    "check": "./node_modules/.bin/tsc --noEmit"
+    "check": "./node_modules/.bin/tsc --noEmit",
+    "serve": "./node_modules/.bin/parcel serve -p 8080 *.html",
+    "build": "./node_modules/.bin/parcel build -d dist -t browser *.html"
   }
 }
