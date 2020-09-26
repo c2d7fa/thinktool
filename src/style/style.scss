@@ -157,7 +157,7 @@ body {
       max-height: 10px !important;
 
       .bullet-hover-rect {
-        opacity: 0%;
+        opacity: 0;
       }
     }
 
@@ -168,7 +168,7 @@ body {
       border-color: hsl(90, 20%, 80%);
 
       .bullet .bullet-hover-rect {
-        opacity: 100%;
+        opacity: 1;
       }
     }
   }
@@ -307,7 +307,7 @@ a.plain-text-link:hover {
 }
 
 .bullet .bullet-hover-rect {
-  opacity: 0%;
+  opacity: 0;
   fill: #e0e0e0;
   transition: opacity base.$quick-transition-time, fill base.$quick-transition-time;
 }
@@ -317,7 +317,7 @@ a.plain-text-link:hover {
 }
 
 .bullet:hover .bullet-hover-rect {
-  opacity: 100%;
+  opacity: 100;
 }
 
 .bullet.expanded .bullet-circle {
@@ -357,7 +357,7 @@ a.plain-text-link:hover {
 }
 
 .bullet.parent-bullet .bullet-hover-rect {
-  opacity: 60%;
+  opacity: 0.6;
   fill: hsl(90, 20%, 80%);
 }
 
@@ -368,11 +368,11 @@ a.plain-text-link:hover {
 }
 
 .bullet.parent-bullet.expanded .bullet-hover-rect {
-  opacity: 30%;
+  opacity: 0.3;
 }
 
 .bullet.parent-bullet:hover .bullet-hover-rect {
-  opacity: 100%;
+  opacity: 1;
 }
 
 /* #endregion */
@@ -390,16 +390,16 @@ a.plain-text-link:hover {
 }
 
 .bullet.reference-bullet .bullet-hover-rect {
-  opacity: 60%;
+  opacity: 0.6;
   fill: hsl(180, 20%, 80%);
 }
 
 .bullet.reference-bullet.expanded .bullet-hover-rect {
-  opacity: 30%;
+  opacity: 0.3;
 }
 
 .bullet.reference-bullet:hover .bullet-hover-rect {
-  opacity: 100%;
+  opacity: 1;
 }
 
 /* #endregion */
@@ -412,7 +412,7 @@ a.plain-text-link:hover {
 }
 
 .bullet.opened-link-bullet .bullet-hover-rect {
-  opacity: 60%;
+  opacity: 0.6;
   fill: hsl(40, 80%, 80%);
 }
 
@@ -423,7 +423,7 @@ a.plain-text-link:hover {
 }
 
 .bullet.opened-link-bullet:hover .bullet-hover-rect {
-  opacity: 100%;
+  opacity: 1;
 }
 
 /* #endregion */
@@ -449,7 +449,7 @@ a.plain-text-link:hover {
 }
 
 .internal-link-open > .bullet.link-bullet .bullet-hover-rect {
-  opacity: 60%;
+  opacity: 0.6;
 }
 
 .bullet.link-bullet path.bullet-circle {
@@ -459,7 +459,7 @@ a.plain-text-link:hover {
 }
 
 .internal-link:hover > .bullet.link-bullet .bullet-hover-rect {
-  opacity: 100%;
+  opacity: 1;
 }
 
 /* Don't break between bullet and first word. */
@@ -500,7 +500,7 @@ a.plain-text-link:hover {
 }
 
 .drag-source {
-  opacity: 50%;
+  opacity: 0.5;
   transition: opacity base.$quick-transition-time;
 }
 
@@ -805,7 +805,7 @@ a.plain-text-link:hover {
 }
 
 .toolbar button.tutorial-not-introduced {
-  opacity: 30%;
+  opacity: 0.3;
 }
 
 .tutorial a {

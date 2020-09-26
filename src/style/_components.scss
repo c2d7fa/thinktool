@@ -38,7 +38,7 @@ $active-weight: 475;
 
   &:disabled {
     cursor: default;
-    opacity: 60%;
+    opacity: 0.6;
     font-weight: $inactive-weight;
   }
 }

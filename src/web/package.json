@@ -18,9 +18,8 @@
     "core-js": "^3.6.5"
   },
   "scripts": {
-    "bundle": "./node_modules/.bin/parcel build -d ../../dist/static -o bundle.js -t browser main.tsx",
-    "watch": "./node_modules/.bin/parcel watch -d ../../dist/static -o bundle.js -t browser main.tsx",
     "check": "./node_modules/.bin/tsc --noEmit",
-    "serve": "./node_modules/.bin/parcel serve -p 8080 *.html"
+    "serve": "./node_modules/.bin/parcel serve -p 8080 *.html",
+    "build": "./node_modules/.bin/parcel build -d dist -t browser *.html"
   }
 }
