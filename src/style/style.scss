@@ -282,6 +282,12 @@ a.plain-text-link:hover {
   white-space: pre-wrap;
 }
 
+.editor .invalid-link-id {
+  @include components.item-id;
+  color: #000000;
+  opacity: 50%;
+}
+
 /* #endregion */
 
 /* #region Bullets */
