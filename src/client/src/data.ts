@@ -279,8 +279,15 @@ export function contentText(state: State, thing: string): string {
 
     let result = "";
     for (const segment of content(state, thing)) {
-      if (typeof segment === "string") result += segment;
-      else if (typeof segment.link === "string") result += contentText_(segment.link, [...seen, thing]);
+      if (typeof segment === "string") {
+        result += segment;
+      } else if (typeof segment.link === "string") {
+        if (exists(state, segment.link)) {
+          result += contentText_(segment.link, [...seen, thing]);
+        } else {
+          result += `[${segment.link}]`;
+        }
+      }
     }
 
     return result;

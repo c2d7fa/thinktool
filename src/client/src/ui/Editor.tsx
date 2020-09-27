@@ -102,7 +102,11 @@ const schema = new PM.Schema({
         ReactDOM.render(
           // [TODO] Using placeholder for status; we should set this to the real value.
           <InternalLink status={"collapsed"} jump={node.attrs.onclick} toggle={node.attrs.onclick}>
-            {node.attrs.content}
+            {node.attrs.content ? (
+              node.attrs.content
+            ) : (
+              <span className="invalid-link-id">{node.attrs.target}</span>
+            )}
           </InternalLink>,
           container,
         );
@@ -115,7 +119,7 @@ const schema = new PM.Schema({
 
 function docFromContent(
   content: D.Content,
-  textContentOf: (thing: string) => string,
+  textContentOf: (thing: string) => string | null,
   openLink: (link: string) => void,
 ): PM.Node<typeof schema> {
   const nodes = [];
@@ -276,7 +280,7 @@ function ContentEditor(props: {
     schema,
     doc: docFromContent(
       D.content(props.context.state, T.thing(props.context.tree, props.node)),
-      (thing) => D.contentText(stateRef.current!, thing),
+      (thing) => (D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null),
       (thing) => onOpenLinkRef.current!(thing),
     ),
     plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
@@ -350,7 +354,7 @@ function ContentEditor(props: {
         schema,
         doc: docFromContent(
           D.content(props.context.state, T.thing(props.context.tree, props.node)),
-          (thing) => D.contentText(stateRef.current!, thing),
+          (thing) => (D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null),
           (thing) => onOpenLinkRef.current!(thing),
         ),
         plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
