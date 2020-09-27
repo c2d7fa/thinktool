@@ -303,6 +303,10 @@
     {
       "date": "2020-09-25",
       "title": "Improved initial load performance for large databases."
+    },
+    {
+      "date": "2020-09-28",
+      "title": "Broken links to items that have been deleted are now shown explicitly."
     }
   ]
 }
