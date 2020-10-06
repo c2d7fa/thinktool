@@ -11,7 +11,7 @@
     "@types/node": "^12.12.62",
     "@types/react": "^16.9.49",
     "@types/sqlite3": "^3.1.6",
-    "electron": "^8.5.1",
+    "electron": "^8.5.2",
     "electron-builder": "^22.8.1",
     "parcel-bundler": "^1.12.4",
     "typescript": "^4.0.3"
