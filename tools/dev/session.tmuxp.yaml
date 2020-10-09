@@ -29,3 +29,7 @@ windows:
       - shell_command:
           - cd src/client
           - npm run test
+  - layout: even-vertical
+    panes:
+      - shell_command:
+          - tmux set-option mouse on
