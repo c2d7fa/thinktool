@@ -7,19 +7,16 @@ windows:
           - cd dist/server
           - node server.js
       - shell_command:
-          - cd dist/static
-          - python3 -m http.server 8080
-      - shell_command:
-          - ./tools/build-static.sh
+          - cd src/web
+          - sleep 5; npm link @thinktool/client
+          - npm run serve
       - shell_command:
           - cd src/server
           - npm run watch
       - shell_command:
           - ./tools/build-client.sh
           - cd src/client
-          - npm run watch
-      - shell_command:
-          - cd src/web
+          - npm link
           - npm run watch
   - layout: even-vertical
     panes:
