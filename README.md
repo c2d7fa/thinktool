@@ -141,9 +141,9 @@ before running the server:
 
 You will need to manually set up the database schema. See `tools/db/_initialize.sql`, though this may be outdated.
 
-For sending emails (used for "Forgot my password" functionality), we use [SendGrid](https://sendgrid.com/). Configure the following environment variables:
+For sending emails (used for "Forgot my password" functionality), we use [Mailgun](https://mailgun.com/). Configure the following environment variables:
 
-- `SENDGRID_API_KEY` &mdash; SendGrid API key; find or create under _Settings_ &rightarrow; _API Keys_
+- `MAILGUN_API_KEY` &mdash; API key
 
 Additionally, the server expects the following environment variables to be set:
 
@@ -160,7 +160,7 @@ Once you have the `thinktool` image, run it with the environment variables given
         -e DIAFORM_POSTGRES_PORT \
         -e DIAFORM_POSTGRES_USERNAME \
         -e DIAFORM_POSTGRES_PASSWORD \
-        -e SENDGRID_API_KEY \
+        -e MAILGUN_API_KEY \
         -e DIAFORM_STATIC_HOST \
         -p 80:80 \
         thinktool

@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/server",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "The API server for Thinktool.",
   "license": "UNLICENSED",
   "repository": {
@@ -12,6 +12,7 @@
     "@types/bcrypt": "^3.0.0",
     "@types/express": "^4.17.8",
     "@types/express-ws": "^3.0.0",
+    "@types/mailgun-js": "^0.22.11",
     "@types/node": "^12.12.62",
     "@types/pg": "^7.14.5",
     "bcrypt": "^5.0.0",
@@ -29,6 +30,6 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@sendgrid/mail": "^7.2.6"
+    "mailgun-js": "^0.22.0"
   }
 }
