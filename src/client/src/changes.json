@@ -315,6 +315,10 @@
     {
       "date": "2020-10-16",
       "title": "Shift-clicking a bullet now also jumps there. (Previously, only middle clicking did this.)"
+    },
+    {
+      "date": "2020-10-16",
+      "title": "Fixed issue where nodes with other parents would indicate that they could be toggled, even if they had no children or references."
     }
   ]
 }
