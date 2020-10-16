@@ -338,7 +338,8 @@ function ContentEditor(props: {
             tr.replaceSelectionWith(
               schema.node("link", {
                 target,
-                onclick: () => onOpenLinkRef.current!(target),
+                toggle: () => onOpenLinkRef.current!(target),
+                jump: () => onJumpLinkRef.current!(target),
                 content: textContent,
               }),
             );
