@@ -28,6 +28,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import undo from "./undo";
+import {nodeStatus} from "./node-status";
 
 // ==
 
@@ -710,21 +711,6 @@ export default function ExpandableItem(props: {
     return <ul className="other-parents-small">{listItems}</ul>;
   }
 
-  function itemStatus(context: Context, node: T.NodeRef): "collapsed" | "expanded" | "terminal" {
-    if (!T.expanded(context.tree, node)) {
-      return "collapsed";
-    } else if (
-      T.children(context.tree, node).length === 0 &&
-      T.otherParentsChildren(context.tree, node).length === 0 &&
-      T.backreferencesChildren(context.tree, node).length === 0 &&
-      T.openedLinksChildren(context.tree, node).length === 0
-    ) {
-      return "terminal";
-    } else {
-      return "expanded";
-    }
-  }
-
   function toggle() {
     if (props.kind === "opened-link" && props.parent !== undefined) {
       props.context.setTree(
@@ -744,7 +730,7 @@ export default function ExpandableItem(props: {
     props.context.setSelectedThing(T.thing(props.context.tree, props.node));
   }
 
-  const status = itemStatus(props.context, props.node);
+  const status = nodeStatus(props.context.tree, props.node);
 
   const dragInfo = props.context.drag;
 

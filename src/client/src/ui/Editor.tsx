@@ -11,6 +11,7 @@ import * as E from "../editing";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
 import {Context} from "../context";
+import {NodeStatus} from "../node-status";
 
 import Bullet from "./Bullet";
 
@@ -52,12 +53,7 @@ function findExternalLinks(textContent: string): {from: number; to: number}[] {
   return results;
 }
 
-function InternalLink(props: {
-  status: "expanded" | "collapsed" | "terminal";
-  jump(): void;
-  toggle(): void;
-  children: React.ReactNode;
-}) {
+function InternalLink(props: {status: NodeStatus; jump(): void; toggle(): void; children: React.ReactNode}) {
   return (
     <span
       className={classes({"internal-link": true, "internal-link-open": status === "expanded"})}

@@ -197,25 +197,13 @@ export function expand(state: D.State, tree: Tree, node: NodeRef): Tree {
   }
 }
 
-function hasOtherParents(state: D.State, tree: Tree, node: NodeRef, wrtParent?: NodeRef): boolean {
-  if (wrtParent === undefined) {
-    const parent_ = parent(tree, node);
-    if (parent_ === undefined) {
-      return D.parents(state, thing(tree, node)).length > 0;
-    } else {
-      return D.otherParents(state, thing(tree, node), thing(tree, parent_)).length > 0;
-    }
-  } else {
-    return D.otherParents(state, thing(tree, node), thing(tree, wrtParent)).length > 0;
-  }
+// Nodes without children (including backreferences and other parents) are always expanded.
+function shouldAlwaysBeExpanded(state: D.State, tree: Tree, node: NodeRef): boolean {
+  return !D.hasChildren(state, thing(tree, node)) && D.backreferences(state, thing(tree, node)).length === 0;
 }
 
 export function toggle(state: D.State, tree: Tree, node: NodeRef): Tree {
-  if (
-    !D.hasChildren(state, thing(tree, node)) &&
-    D.backreferences(state, thing(tree, node)).length === 0 &&
-    !hasOtherParents(state, tree, node)
-  ) {
+  if (shouldAlwaysBeExpanded(state, tree, node)) {
     // Items without children (including backreferences and other parents) are always expanded
     return I.markExpanded(tree, node, true);
   } else {
@@ -253,12 +241,7 @@ export function loadConnection(
 
   let [newNode, newTree] = I.loadThing(tree, childThing, connection);
 
-  // If the child has no children (including backreferences and other parents), it should be expanded by default
-  if (
-    !D.hasChildren(state, childThing) &&
-    D.backreferences(state, childThing).length === 0 &&
-    !hasOtherParents(state, newTree, newNode, parent)
-  ) {
+  if (shouldAlwaysBeExpanded(state, newTree, newNode)) {
     newTree = I.markExpanded(newTree, newNode, true);
   }
 
@@ -269,12 +252,7 @@ export function load(state: D.State, tree: Tree, thing: string, parent?: NodeRef
   const [newNode, newTree_] = I.loadThing(tree, thing);
   let newTree = newTree_;
 
-  // If the child has no children (including backreferences and other parents), it should be expanded by default
-  if (
-    !D.hasChildren(state, thing) &&
-    D.backreferences(state, thing).length === 0 &&
-    !hasOtherParents(state, newTree, newNode, parent)
-  ) {
+  if (shouldAlwaysBeExpanded(state, newTree, newNode)) {
     newTree = I.markExpanded(newTree, newNode, true);
   }
 

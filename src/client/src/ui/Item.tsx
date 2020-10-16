@@ -4,6 +4,8 @@ import * as Misc from "@johv/miscjs";
 import * as T from "../tree";
 import {DragInfo} from "../context";
 
+import {NodeStatus} from "../node-status";
+
 import Bullet from "./Bullet";
 
 // An item in the outline that represents a particular node in the tree. This is
@@ -17,7 +19,7 @@ export default function Item(props: {
   beginDrag(): void;
 
   kind: "child" | "reference" | "opened-link" | "parent";
-  status: "collapsed" | "expanded" | "terminal";
+  status: NodeStatus;
 
   toggle(): void;
   jump(): void;

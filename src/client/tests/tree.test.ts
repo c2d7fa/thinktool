@@ -181,31 +181,3 @@ test("Inserting a parent should not cause all items to be collapsed", () => {
   expect(T.expanded(tree, T.children(tree, T.root(tree))[0])).toBeTruthy();
   expect(T.expanded(tree, T.children(tree, T.root(tree))[1])).toBeTruthy();
 });
-
-test("Expanding an reference with (only) other parent loads that parent", () => {
-  let state = D.empty;
-
-  state = D.create(state, "a")[0];
-  state = D.create(state, "r")[0];
-  state = D.create(state, "p")[0];
-
-  state = D.addChild(state, "p", "r")[0];
-  state = D.setContent(state, "r", ["r references ", {link: "a"}, "."]);
-
-  let tree = T.fromRoot(state, "a");
-
-  const backreferences = T.backreferencesChildren(tree, T.root(tree));
-  expect(backreferences.length).toBe(1);
-
-  const backreference = backreferences[0];
-  expect(T.thing(tree, backreference)).toBe("r");
-
-  const backreferenceParentsBeforeExpansion = T.otherParentsChildren(tree, backreference);
-  expect(backreferenceParentsBeforeExpansion.length).toBe(0);
-
-  tree = T.expand(state, tree, backreference);
-
-  const backreferenceParentsAfterExpansion = T.otherParentsChildren(tree, backreference);
-  expect(backreferenceParentsAfterExpansion.length).toBe(1);
-  expect(T.thing(tree, backreferenceParentsAfterExpansion[0])).toBe("p");
-});
