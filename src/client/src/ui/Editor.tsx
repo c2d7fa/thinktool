@@ -93,7 +93,7 @@ const schema = new PM.Schema({
   nodes: {
     doc: {content: "(text | link)*"},
     link: {
-      attrs: {target: {}, onclick: {}, content: {}},
+      attrs: {target: {}, jump: {}, toggle: {}, content: {}},
       inline: true,
       atom: true,
       selectable: false,
@@ -101,7 +101,7 @@ const schema = new PM.Schema({
         const container = document.createElement("span");
         ReactDOM.render(
           // [TODO] Using placeholder for status; we should set this to the real value.
-          <InternalLink status={"collapsed"} jump={node.attrs.onclick} toggle={node.attrs.onclick}>
+          <InternalLink status={"collapsed"} jump={node.attrs.jump} toggle={node.attrs.toggle}>
             {node.attrs.content ? (
               node.attrs.content
             ) : (
@@ -121,6 +121,7 @@ function docFromContent(
   content: D.Content,
   textContentOf: (thing: string) => string | null,
   openLink: (link: string) => void,
+  jumpLink: (link: string) => void,
 ): PM.Node<typeof schema> {
   const nodes = [];
 
@@ -139,7 +140,8 @@ function docFromContent(
       nodes.push(
         schema.node("link", {
           target: contentNode.link,
-          onclick: () => openLink(contentNode.link),
+          toggle: () => openLink(contentNode.link),
+          jump: () => jumpLink(contentNode.link),
           content: textContentOf(contentNode.link),
         }),
       );
@@ -214,9 +216,11 @@ function ContentEditor(props: {
   placeholder?: string;
   onAction(action: Ac.ActionName): void;
   onOpenLink(target: string): void;
+  onJumpLink(target: string): void;
 }) {
   const stateRef = usePropRef(props.context.state);
   const onOpenLinkRef = usePropRef(props.onOpenLink);
+  const onJumpLinkRef = usePropRef(props.onJumpLink);
   const onActionRef = usePropRef(props.onAction);
 
   const ref = React.useRef<HTMLDivElement>(null);
@@ -282,6 +286,7 @@ function ContentEditor(props: {
       D.content(props.context.state, T.thing(props.context.tree, props.node)),
       (thing) => (D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null),
       (thing) => onOpenLinkRef.current!(thing),
+      (thing) => onJumpLinkRef.current!(thing),
     ),
     plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
   });
@@ -356,6 +361,7 @@ function ContentEditor(props: {
           D.content(props.context.state, T.thing(props.context.tree, props.node)),
           (thing) => (D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null),
           (thing) => onOpenLinkRef.current!(thing),
+          (thing) => onJumpLinkRef.current!(thing),
         ),
         plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
       }),
@@ -396,6 +402,7 @@ export default function Editor(props: {
   placeholder?: string;
   onAction(action: Ac.ActionName): void;
   onOpenLink(target: string): void;
+  onJumpLink(target: string): void;
 }) {
   return <ContentEditor {...props} />;
 }

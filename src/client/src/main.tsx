@@ -555,6 +555,10 @@ function ThingOverview(p: {context: Context}) {
     p.context.setTree(T.toggleLink(p.context.state, p.context.tree, T.root(p.context.tree), target));
   }
 
+  function jumpLink(target: string): void {
+    p.context.setSelectedThing(target);
+  }
+
   return (
     <div className="overview">
       <ParentsOutline context={p.context} />
@@ -564,6 +568,7 @@ function ThingOverview(p: {context: Context}) {
           node={T.root(p.context.tree)}
           onAction={(action) => Actions.execute(p.context, action)}
           onOpenLink={openLink}
+          onJumpLink={jumpLink}
         />
         <div className="children">
           <Outline context={p.context} />
@@ -674,6 +679,10 @@ export default function ExpandableItem(props: {
     props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, target));
   }
 
+  function onJumpLink(target: string): void {
+    props.context.setSelectedThing(target);
+  }
+
   function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
     const otherParents = Data.otherParents(
       props.context.state,
@@ -753,6 +762,7 @@ export default function ExpandableItem(props: {
       node={props.node}
       onAction={(action) => Actions.execute(props.context, action)}
       onOpenLink={onOpenLink}
+      onJumpLink={onJumpLink}
     />
   );
 

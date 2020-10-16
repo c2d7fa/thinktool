@@ -307,6 +307,10 @@
     {
       "date": "2020-09-28",
       "title": "Broken links to items that have been deleted are now shown explicitly."
+    },
+    {
+      "date": "2020-10-16",
+      "title": "It is now possible to middle click or shift-click item links to jump there."
     }
   ]
 }
