@@ -7,6 +7,11 @@ set -e
 
 version="$(date +"%Y%m%d%H%M.0.0")"
 
+# I will usually publish @thinktool/client immediately before running this
+# script, and it seems like it doesn't always catch that unless we clean the
+# cache.
+npm cache clean --force
+
 cd src/web
 npm update @thinktool/client
 npm version "$version"
