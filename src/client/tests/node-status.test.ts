@@ -5,12 +5,25 @@ import {nodeStatus} from "../src/node-status";
 import * as D from "../src/data";
 import * as T from "../src/tree";
 
-test("a node with no connections other than its parent is terminal", () => {
+test("a node with no connections except from its parent is terminal", () => {
   let state = D.addChild(D.empty, "0", "child")[0];
   let tree = T.fromRoot(state, "0");
 
   const node = T.children(tree, T.root(tree))[0];
   expect(T.thing(tree, node)).toBe("child");
+
+  expect(nodeStatus(tree, node)).toBe("terminal");
+});
+
+test("an item that has no connections except from two parents is terminal", () => {
+  let state = D.empty;
+  state = D.addChild(state, "0", "item")[0];
+  state = D.addChild(D.create(state, "parent")[0], "parent", "item")[0];
+
+  let tree = T.fromRoot(state, "0");
+
+  const node = T.children(tree, T.root(tree))[0];
+  expect(T.thing(tree, node)).toBe("item");
 
   expect(nodeStatus(tree, node)).toBe("terminal");
 });
