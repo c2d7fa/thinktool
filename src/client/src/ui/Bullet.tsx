@@ -7,6 +7,15 @@ export default function Bullet(props: {
   onMiddleClick?(): void;
   specialType?: "parent" | "reference" | "opened-link" | "link";
 }) {
+  function onClick(ev: React.MouseEvent<never>): void {
+    // Shift-click acts like middle click.
+    if (ev.shiftKey && props.onMiddleClick !== undefined) {
+      props.onMiddleClick();
+    } else {
+      props.toggle();
+    }
+  }
+
   function onAuxClick(ev: React.MouseEvent<never>): void {
     // ev.button === 1 checks for middle click.
     if (ev.button === 1 && props.onMiddleClick !== undefined) props.onMiddleClick();
@@ -26,7 +35,7 @@ export default function Bullet(props: {
     }`,
     onMouseDown: (ev: React.MouseEvent<never>) => props.beginDrag(ev),
     onTouchStart: (ev: React.TouchEvent<never>) => props.beginDrag(),
-    onClick: props.toggle,
+    onClick: onClick,
     onAuxClick: onAuxClick,
   };
 

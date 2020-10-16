@@ -325,7 +325,7 @@ export function StepStayingFocused() {
         <span className="fake-button">
           <span className="icon fas fa-hand-point-right"></span>Jump,
         </span>{" "}
-        or just middle click on the bullet.
+        or just middle click or shift click on the bullet.
       </p>
       <p>
         <strong>If you get lost,</strong> you can always go back to the default item with{" "}

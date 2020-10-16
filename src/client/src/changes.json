@@ -311,6 +311,10 @@
     {
       "date": "2020-10-16",
       "title": "It is now possible to middle click or shift-click item links to jump there."
+    },
+    {
+      "date": "2020-10-16",
+      "title": "Shift-clicking a bullet now also jumps there. (Previously, only middle clicking did this.)"
     }
   ]
 }
