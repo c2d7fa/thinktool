@@ -53,8 +53,19 @@ function findExternalLinks(textContent: string): {from: number; to: number}[] {
   return results;
 }
 
-function InternalLink(props: {status: NodeStatus; jump(): void; toggle(): void; children: React.ReactNode}) {
-  return (
+function buildInternalLink(args: {
+  status: NodeStatus;
+  jump(): void;
+  toggle(): void;
+  content: {invalid: string} | string;
+}): HTMLElement {
+  const container = document.createElement("span");
+
+  // [TODO] This is an abuse of React. We never clean anything up. We should
+  // probably create this element manually, although that would also require us
+  // to do the same for <Bullet>, which is unfortunate.
+
+  ReactDOM.render(
     <span
       className={classes({"internal-link": true, "internal-link-open": status === "expanded"})}
       onMouseDown={(ev) => {
@@ -63,26 +74,35 @@ function InternalLink(props: {status: NodeStatus; jump(): void; toggle(): void; 
       onAuxClick={(ev) => {
         const isMiddleClick = ev.button === 1;
         if (isMiddleClick) {
-          props.jump();
+          args.jump();
         }
       }}
       onClick={(ev) => {
-        if (ev.shiftKey) props.jump();
-        else props.toggle();
+        if (ev.shiftKey) args.jump();
+        else args.toggle();
       }}>
       <Bullet
         specialType="link"
-        status={props.status}
-        toggle={props.toggle}
+        status={args.status}
+        toggle={args.toggle}
         beginDrag={(ev) => {
           // [TODO] This is undefined on mobile. This may or may not cause issues; I haven't tested it.
           if (ev !== undefined) ev.preventDefault();
         }}
       />
       &nbsp;
-      <span className="link-content">{props.children}</span>
-    </span>
+      <span className="link-content">
+        {typeof args.content === "string" ? (
+          args.content
+        ) : (
+          <span className="invalid-link-id">{args.content.invalid}</span>
+        )}
+      </span>
+    </span>,
+    container,
   );
+
+  return container;
 }
 
 type LinkAttrs = {content: string; jump: () => void; target: string; toggle: () => void};
@@ -97,16 +117,12 @@ const schema = new PM.Schema({
       selectable: false,
       toDOM(node) {
         const attrs = node.attrs as LinkAttrs;
-
-        const container = document.createElement("span");
-        ReactDOM.render(
-          // [TODO] Using placeholder for status; we should set this to the real value.
-          <InternalLink status={"collapsed"} jump={attrs.jump} toggle={attrs.toggle}>
-            {attrs.content ? attrs.content : <span className="invalid-link-id">{attrs.target}</span>}
-          </InternalLink>,
-          container,
-        );
-        return container;
+        return buildInternalLink({
+          status: "collapsed",
+          jump: attrs.jump,
+          toggle: attrs.toggle,
+          content: attrs.content ? attrs.content : {invalid: attrs.target},
+        });
       },
     },
     text: {},
