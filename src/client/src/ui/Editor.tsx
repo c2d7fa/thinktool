@@ -105,20 +105,26 @@ function buildInternalLink(args: {
   return container;
 }
 
-type LinkAttrs = {content: string | null; jump: () => void; target: string; toggle: () => void};
+type LinkAttrs = {
+  status: NodeStatus;
+  content: string | null;
+  jump: () => void;
+  target: string;
+  toggle: () => void;
+};
 
 const schema = new PM.Schema({
   nodes: {
     doc: {content: "(text | link)*"},
     link: {
-      attrs: {target: {}, jump: {}, toggle: {}, content: {}},
+      attrs: {target: {}, status: {}, jump: {}, toggle: {}, content: {}},
       inline: true,
       atom: true,
       selectable: false,
       toDOM(node) {
         const attrs = node.attrs as LinkAttrs;
         return buildInternalLink({
-          status: "collapsed",
+          status: attrs.status,
           jump: attrs.jump,
           toggle: attrs.toggle,
           content: attrs.content ? attrs.content : {invalid: attrs.target},
@@ -129,12 +135,19 @@ const schema = new PM.Schema({
   },
 });
 
-function docFromContent(
-  content: D.Content,
-  textContentOf: (thing: string) => string | null,
-  openLink: (link: string) => void,
-  jumpLink: (link: string) => void,
-): PM.Node<typeof schema> {
+function docFromContent({
+  content,
+  textContentOf,
+  openLink,
+  jumpLink,
+  openLinks,
+}: {
+  content: D.Content;
+  textContentOf: (thing: string) => string | null;
+  openLink: (link: string) => void;
+  jumpLink: (link: string) => void;
+  openLinks: string[];
+}): PM.Node<typeof schema> {
   const nodes = [];
 
   for (const contentNode of content) {
@@ -151,6 +164,7 @@ function docFromContent(
       // to the application state, which also feels weird.
       const attrs: LinkAttrs = {
         target: contentNode.link,
+        status: openLinks.includes(contentNode.link) ? "expanded" : "collapsed",
         toggle: () => openLink(contentNode.link),
         jump: () => jumpLink(contentNode.link),
         content: textContentOf(contentNode.link),
@@ -291,14 +305,30 @@ function ContentEditor(props: {
     },
   });
 
+  const [openLinks, setOpenLinks] = React.useState<string[]>([]);
+  const openLinksRef = usePropRef(openLinks);
+
+  function linkToggled(link: string): void {
+    if (openLinksRef.current!.includes(link)) {
+      setOpenLinks((openLinks) => openLinks.filter((openedLink) => openedLink !== link));
+    } else {
+      setOpenLinks((openLinks) => [...openLinks, link]);
+    }
+  }
+
   const initialState = PS.EditorState.create({
     schema,
-    doc: docFromContent(
-      D.content(props.context.state, T.thing(props.context.tree, props.node)),
-      (thing) => (D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null),
-      (thing) => onOpenLinkRef.current!(thing),
-      (thing) => onJumpLinkRef.current!(thing),
-    ),
+    doc: docFromContent({
+      content: D.content(props.context.state, T.thing(props.context.tree, props.node)),
+      textContentOf: (thing) =>
+        D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null,
+      openLink: (thing) => {
+        onOpenLinkRef.current!(thing);
+        linkToggled(thing);
+      },
+      jumpLink: (thing) => onJumpLinkRef.current!(thing),
+      openLinks: openLinksRef.current!,
+    }),
     plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
   });
 
@@ -348,6 +378,7 @@ function ContentEditor(props: {
             const tr = es.tr;
             const attrs: LinkAttrs = {
               target,
+              status: openLinksRef.current!.includes(target) ? "expanded" : "collapsed",
               toggle: () => onOpenLinkRef.current!(target),
               jump: () => onJumpLinkRef.current!(target),
               content: textContent,
@@ -368,16 +399,21 @@ function ContentEditor(props: {
     setEditorState(
       PS.EditorState.create({
         schema,
-        doc: docFromContent(
-          D.content(props.context.state, T.thing(props.context.tree, props.node)),
-          (thing) => (D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null),
-          (thing) => onOpenLinkRef.current!(thing),
-          (thing) => onJumpLinkRef.current!(thing),
-        ),
+        doc: docFromContent({
+          content: D.content(props.context.state, T.thing(props.context.tree, props.node)),
+          textContentOf: (thing) =>
+            D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null,
+          openLink: (thing) => {
+            onOpenLinkRef.current!(thing);
+            linkToggled(thing);
+          },
+          jumpLink: (thing) => onJumpLinkRef.current!(thing),
+          openLinks: openLinksRef.current!,
+        }),
         plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
       }),
     );
-  }, [props.context.state, props.node]);
+  }, [props.context.state, props.node, openLinks]);
 
   // Handle outgoing changes
   React.useEffect(() => {
