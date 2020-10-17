@@ -85,6 +85,8 @@ function InternalLink(props: {status: NodeStatus; jump(): void; toggle(): void; 
   );
 }
 
+type LinkAttrs = {content: string; jump: () => void; target: string; toggle: () => void};
+
 const schema = new PM.Schema({
   nodes: {
     doc: {content: "(text | link)*"},
@@ -94,15 +96,13 @@ const schema = new PM.Schema({
       atom: true,
       selectable: false,
       toDOM(node) {
+        const attrs = node.attrs as LinkAttrs;
+
         const container = document.createElement("span");
         ReactDOM.render(
           // [TODO] Using placeholder for status; we should set this to the real value.
-          <InternalLink status={"collapsed"} jump={node.attrs.jump} toggle={node.attrs.toggle}>
-            {node.attrs.content ? (
-              node.attrs.content
-            ) : (
-              <span className="invalid-link-id">{node.attrs.target}</span>
-            )}
+          <InternalLink status={"collapsed"} jump={attrs.jump} toggle={attrs.toggle}>
+            {attrs.content ? attrs.content : <span className="invalid-link-id">{attrs.target}</span>}
           </InternalLink>,
           container,
         );
@@ -139,7 +139,7 @@ function docFromContent(
           toggle: () => openLink(contentNode.link),
           jump: () => jumpLink(contentNode.link),
           content: textContentOf(contentNode.link),
-        }),
+        } as LinkAttrs),
       );
     }
   }
@@ -337,7 +337,7 @@ function ContentEditor(props: {
                 toggle: () => onOpenLinkRef.current!(target),
                 jump: () => onJumpLinkRef.current!(target),
                 content: textContent,
-              }),
+              } as LinkAttrs),
             );
             return es.apply(tr);
           });
