@@ -105,7 +105,7 @@ function buildInternalLink(args: {
   return container;
 }
 
-type LinkAttrs = {content: string; jump: () => void; target: string; toggle: () => void};
+type LinkAttrs = {content: string | null; jump: () => void; target: string; toggle: () => void};
 
 const schema = new PM.Schema({
   nodes: {
@@ -149,14 +149,13 @@ function docFromContent(
       // more sense to only pass in the target here, and construct that callback
       // in the 'toDOM' method. But that would require the schema to have access
       // to the application state, which also feels weird.
-      nodes.push(
-        schema.node("link", {
-          target: contentNode.link,
-          toggle: () => openLink(contentNode.link),
-          jump: () => jumpLink(contentNode.link),
-          content: textContentOf(contentNode.link),
-        } as LinkAttrs),
-      );
+      const attrs: LinkAttrs = {
+        target: contentNode.link,
+        toggle: () => openLink(contentNode.link),
+        jump: () => jumpLink(contentNode.link),
+        content: textContentOf(contentNode.link),
+      };
+      nodes.push(schema.node("link", attrs));
     }
   }
 
@@ -347,14 +346,13 @@ function ContentEditor(props: {
 
           setEditorState((es) => {
             const tr = es.tr;
-            tr.replaceSelectionWith(
-              schema.node("link", {
-                target,
-                toggle: () => onOpenLinkRef.current!(target),
-                jump: () => onJumpLinkRef.current!(target),
-                content: textContent,
-              } as LinkAttrs),
-            );
+            const attrs: LinkAttrs = {
+              target,
+              toggle: () => onOpenLinkRef.current!(target),
+              jump: () => onJumpLinkRef.current!(target),
+              content: textContent,
+            };
+            tr.replaceSelectionWith(schema.node("link", attrs));
             return es.apply(tr);
           });
         },
