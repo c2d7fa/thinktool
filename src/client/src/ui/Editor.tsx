@@ -53,8 +53,19 @@ function findExternalLinks(textContent: string): {from: number; to: number}[] {
   return results;
 }
 
-function InternalLink(props: {status: NodeStatus; jump(): void; toggle(): void; children: React.ReactNode}) {
-  return (
+function buildInternalLink(args: {
+  status: NodeStatus;
+  jump(): void;
+  toggle(): void;
+  content: {invalid: string} | string;
+}): HTMLElement {
+  const container = document.createElement("span");
+
+  // [TODO] This is an abuse of React. We never clean anything up. We should
+  // probably create this element manually, although that would also require us
+  // to do the same for <Bullet>, which is unfortunate.
+
+  ReactDOM.render(
     <span
       className={classes({"internal-link": true, "internal-link-open": status === "expanded"})}
       onMouseDown={(ev) => {
@@ -63,62 +74,80 @@ function InternalLink(props: {status: NodeStatus; jump(): void; toggle(): void; 
       onAuxClick={(ev) => {
         const isMiddleClick = ev.button === 1;
         if (isMiddleClick) {
-          props.jump();
+          args.jump();
         }
       }}
       onClick={(ev) => {
-        if (ev.shiftKey) props.jump();
-        else props.toggle();
+        if (ev.shiftKey) args.jump();
+        else args.toggle();
       }}>
       <Bullet
         specialType="link"
-        status={props.status}
-        toggle={props.toggle}
+        status={args.status}
+        toggle={args.toggle}
         beginDrag={(ev) => {
           // [TODO] This is undefined on mobile. This may or may not cause issues; I haven't tested it.
           if (ev !== undefined) ev.preventDefault();
         }}
       />
       &nbsp;
-      <span className="link-content">{props.children}</span>
-    </span>
+      <span className="link-content">
+        {typeof args.content === "string" ? (
+          args.content
+        ) : (
+          <span className="invalid-link-id">{args.content.invalid}</span>
+        )}
+      </span>
+    </span>,
+    container,
   );
+
+  return container;
 }
+
+type LinkAttrs = {
+  status: NodeStatus;
+  content: string | null;
+  jump: () => void;
+  target: string;
+  toggle: () => void;
+};
 
 const schema = new PM.Schema({
   nodes: {
     doc: {content: "(text | link)*"},
     link: {
-      attrs: {target: {}, jump: {}, toggle: {}, content: {}},
+      attrs: {target: {}, status: {}, jump: {}, toggle: {}, content: {}},
       inline: true,
       atom: true,
       selectable: false,
       toDOM(node) {
-        const container = document.createElement("span");
-        ReactDOM.render(
-          // [TODO] Using placeholder for status; we should set this to the real value.
-          <InternalLink status={"collapsed"} jump={node.attrs.jump} toggle={node.attrs.toggle}>
-            {node.attrs.content ? (
-              node.attrs.content
-            ) : (
-              <span className="invalid-link-id">{node.attrs.target}</span>
-            )}
-          </InternalLink>,
-          container,
-        );
-        return container;
+        const attrs = node.attrs as LinkAttrs;
+        return buildInternalLink({
+          status: attrs.status,
+          jump: attrs.jump,
+          toggle: attrs.toggle,
+          content: attrs.content ? attrs.content : {invalid: attrs.target},
+        });
       },
     },
     text: {},
   },
 });
 
-function docFromContent(
-  content: D.Content,
-  textContentOf: (thing: string) => string | null,
-  openLink: (link: string) => void,
-  jumpLink: (link: string) => void,
-): PM.Node<typeof schema> {
+function docFromContent({
+  content,
+  textContentOf,
+  openLink,
+  jumpLink,
+  openLinks,
+}: {
+  content: D.Content;
+  textContentOf: (thing: string) => string | null;
+  openLink: (link: string) => void;
+  jumpLink: (link: string) => void;
+  openLinks: string[];
+}): PM.Node<typeof schema> {
   const nodes = [];
 
   for (const contentNode of content) {
@@ -133,14 +162,14 @@ function docFromContent(
       // more sense to only pass in the target here, and construct that callback
       // in the 'toDOM' method. But that would require the schema to have access
       // to the application state, which also feels weird.
-      nodes.push(
-        schema.node("link", {
-          target: contentNode.link,
-          toggle: () => openLink(contentNode.link),
-          jump: () => jumpLink(contentNode.link),
-          content: textContentOf(contentNode.link),
-        }),
-      );
+      const attrs: LinkAttrs = {
+        target: contentNode.link,
+        status: openLinks.includes(contentNode.link) ? "expanded" : "collapsed",
+        toggle: () => openLink(contentNode.link),
+        jump: () => jumpLink(contentNode.link),
+        content: textContentOf(contentNode.link),
+      };
+      nodes.push(schema.node("link", attrs));
     }
   }
 
@@ -276,14 +305,30 @@ function ContentEditor(props: {
     },
   });
 
+  const [openLinks, setOpenLinks] = React.useState<string[]>([]);
+  const openLinksRef = usePropRef(openLinks);
+
+  function linkToggled(link: string): void {
+    if (openLinksRef.current!.includes(link)) {
+      setOpenLinks((openLinks) => openLinks.filter((openedLink) => openedLink !== link));
+    } else {
+      setOpenLinks((openLinks) => [...openLinks, link]);
+    }
+  }
+
   const initialState = PS.EditorState.create({
     schema,
-    doc: docFromContent(
-      D.content(props.context.state, T.thing(props.context.tree, props.node)),
-      (thing) => (D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null),
-      (thing) => onOpenLinkRef.current!(thing),
-      (thing) => onJumpLinkRef.current!(thing),
-    ),
+    doc: docFromContent({
+      content: D.content(props.context.state, T.thing(props.context.tree, props.node)),
+      textContentOf: (thing) =>
+        D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null,
+      openLink: (thing) => {
+        onOpenLinkRef.current!(thing);
+        linkToggled(thing);
+      },
+      jumpLink: (thing) => onJumpLinkRef.current!(thing),
+      openLinks: openLinksRef.current!,
+    }),
     plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
   });
 
@@ -331,14 +376,14 @@ function ContentEditor(props: {
 
           setEditorState((es) => {
             const tr = es.tr;
-            tr.replaceSelectionWith(
-              schema.node("link", {
-                target,
-                toggle: () => onOpenLinkRef.current!(target),
-                jump: () => onJumpLinkRef.current!(target),
-                content: textContent,
-              }),
-            );
+            const attrs: LinkAttrs = {
+              target,
+              status: openLinksRef.current!.includes(target) ? "expanded" : "collapsed",
+              toggle: () => onOpenLinkRef.current!(target),
+              jump: () => onJumpLinkRef.current!(target),
+              content: textContent,
+            };
+            tr.replaceSelectionWith(schema.node("link", attrs));
             return es.apply(tr);
           });
         },
@@ -354,16 +399,21 @@ function ContentEditor(props: {
     setEditorState(
       PS.EditorState.create({
         schema,
-        doc: docFromContent(
-          D.content(props.context.state, T.thing(props.context.tree, props.node)),
-          (thing) => (D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null),
-          (thing) => onOpenLinkRef.current!(thing),
-          (thing) => onJumpLinkRef.current!(thing),
-        ),
+        doc: docFromContent({
+          content: D.content(props.context.state, T.thing(props.context.tree, props.node)),
+          textContentOf: (thing) =>
+            D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null,
+          openLink: (thing) => {
+            onOpenLinkRef.current!(thing);
+            linkToggled(thing);
+          },
+          jumpLink: (thing) => onJumpLinkRef.current!(thing),
+          openLinks: openLinksRef.current!,
+        }),
         plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
       }),
     );
-  }, [props.context.state, props.node]);
+  }, [props.context.state, props.node, openLinks]);
 
   // Handle outgoing changes
   React.useEffect(() => {
