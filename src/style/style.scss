@@ -353,8 +353,8 @@ a.plain-text-link:hover {
 /* #region Other parents bullets */
 
 .bullet.parent-bullet.collapsed .bullet-circle {
-  fill: hsl(90, 30%, 30%);
-  stroke: hsl(90, 30%, 30%);
+  fill: hsl(90, 30%, 40%);
+  stroke: hsl(90, 30%, 40%);
 }
 
 .bullet.parent-bullet.expanded .bullet-circle {
@@ -363,7 +363,6 @@ a.plain-text-link:hover {
 }
 
 .bullet.parent-bullet .bullet-hover-rect {
-  opacity: 0.35;
   fill: hsl(90, 20%, 80%);
 }
 
@@ -371,10 +370,6 @@ a.plain-text-link:hover {
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.bullet.parent-bullet.expanded .bullet-hover-rect {
-  opacity: 0.3;
 }
 
 .bullet.parent-bullet:hover .bullet-hover-rect {
@@ -401,12 +396,7 @@ a.plain-text-link:hover {
 }
 
 .bullet.reference-bullet .bullet-hover-rect {
-  opacity: 0.35;
   fill: hsl(180, 20%, 80%);
-}
-
-.bullet.reference-bullet.expanded .bullet-hover-rect {
-  opacity: 0.3;
 }
 
 .bullet.reference-bullet:hover .bullet-hover-rect {
@@ -423,7 +413,7 @@ a.plain-text-link:hover {
 }
 
 .bullet.opened-link-bullet .bullet-hover-rect {
-  opacity: 0.35;
+  opacity: 0.5;
   fill: hsl(40, 80%, 80%);
 }
 
@@ -457,6 +447,10 @@ a.plain-text-link:hover {
 
 .bullet.link-bullet .bullet-hover-rect {
   fill: hsl(40, 80%, 85%);
+}
+
+.bullet.link-bullet.expanded .bullet-hover-rect {
+  opacity: 0.5;
 }
 
 .bullet.link-bullet path.bullet-circle {
