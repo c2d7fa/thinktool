@@ -236,7 +236,7 @@ export function loadConnection(
   const childThing = D.connectionChild(state, connection);
 
   if (childThing === undefined) {
-    throw "Unable to load connection because item did not exist.";
+    throw "Unable to load connection because connection did not reference a child.";
   }
 
   let [newNode, newTree] = I.loadThing(tree, childThing, connection);

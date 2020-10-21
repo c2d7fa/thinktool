@@ -323,6 +323,10 @@
     {
       "date": "2020-10-17",
       "title": "Bullets of opened links inside items are now highlighted."
+    },
+    {
+      "date": "2020-10-21",
+      "title": "Fixed bug where it was impossible to remove a child that was its own parent."
     }
   ]
 }

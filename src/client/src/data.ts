@@ -126,7 +126,25 @@ export function removeChild(state: State, parent: string, index: number): State 
 
   let result = state;
 
+  // Remove connection from parent.
   const removedConnection = parentData.children[index]; // Connection to remove
+  result = {
+    ...result,
+    things: {
+      ...result.things,
+      [parent]: {
+        ...parentData,
+        children: Misc.removeBy(
+          parentData.children,
+          removedConnection,
+          (x, y) => x.connectionId === y.connectionId,
+        ),
+      },
+    },
+  };
+
+  // Remove connection from child. We can handle the case where the parent and
+  // the child are the same item straight-forwardly.
   const child = connectionChild(state, removedConnection);
   if (child === undefined) {
     console.error(
@@ -147,22 +165,6 @@ export function removeChild(state: State, parent: string, index: number): State 
     );
     return state;
   }
-
-  result = {
-    ...result,
-    things: {
-      ...result.things,
-      [parent]: {
-        ...parentData,
-        children: Misc.removeBy(
-          parentData.children,
-          removedConnection,
-          (x, y) => x.connectionId === y.connectionId,
-        ),
-      },
-    },
-  };
-
   result = {
     ...result,
     things: {
@@ -178,6 +180,7 @@ export function removeChild(state: State, parent: string, index: number): State 
     },
   };
 
+  // Remove the connection itself.
   result = {...result, connections: Misc.removeKey(result.connections, removedConnection.connectionId)};
 
   return result;
