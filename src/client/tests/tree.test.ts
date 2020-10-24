@@ -205,3 +205,63 @@ test("Adding parent to focused item immediately updates list of other parents", 
 
   expectOtherParentItemsToHaveExactly(["parent1", "parent2"]);
 });
+
+test("Adding focused item as child of other item immediately updates list of parents", () => {
+  let state = D.empty;
+
+  state = D.create(state, "item")[0];
+  state = D.create(state, "parent1")[0];
+  state = D.create(state, "childparent")[0];
+  state = D.addChild(state, "parent1", "item")[0];
+  state = D.addChild(state, "item", "childparent")[0];
+
+  let tree = T.fromRoot(state, "item");
+
+  function expectOtherParentItemsToHaveExactly(items: string[]) {
+    expect(T.otherParentsExpanded(tree, T.root(tree))).toBeTruthy();
+    const otherParentsItems = T.otherParentsChildren(tree, T.root(tree)).map((node) => T.thing(tree, node));
+    expect(T.otherParentsChildren(tree, T.root(tree)).length).toBe(items.length);
+    for (const item of items) expect(otherParentsItems).toContainEqual(item);
+  }
+
+  expectOtherParentItemsToHaveExactly(["parent1"]);
+
+  const childparentNode = T.children(tree, T.root(tree))[0];
+  expect(T.thing(tree, childparentNode)).toBe("childparent");
+
+  [state, tree] = T.insertChild(state, tree, childparentNode, "item", 0);
+
+  expectOtherParentItemsToHaveExactly(["parent1", "childparent"]);
+});
+
+test("Removing focused item as child of other item immediately updates list of parents", () => {
+  let state = D.empty;
+
+  state = D.create(state, "item")[0];
+  state = D.create(state, "parent1")[0];
+  state = D.create(state, "childparent")[0];
+  state = D.addChild(state, "parent1", "item")[0];
+  state = D.addChild(state, "item", "childparent")[0];
+  state = D.addChild(state, "childparent", "item")[0];
+
+  let tree = T.fromRoot(state, "item");
+
+  function expectOtherParentItemsToHaveExactly(items: string[]) {
+    expect(T.otherParentsExpanded(tree, T.root(tree))).toBeTruthy();
+    const otherParentsItems = T.otherParentsChildren(tree, T.root(tree)).map((node) => T.thing(tree, node));
+    expect(T.otherParentsChildren(tree, T.root(tree)).length).toBe(items.length);
+    for (const item of items) expect(otherParentsItems).toContainEqual(item);
+  }
+
+  expectOtherParentItemsToHaveExactly(["parent1", "childparent"]);
+
+  const childparentNode = T.children(tree, T.root(tree))[0];
+  expect(T.thing(tree, childparentNode)).toBe("childparent");
+  tree = T.expand(state, tree, childparentNode);
+  const itemInChildparentNode = T.children(tree, childparentNode)[0];
+  expect(T.thing(tree, itemInChildparentNode)).toBe("item");
+
+  [state, tree] = T.remove(state, tree, itemInChildparentNode);
+
+  expectOtherParentItemsToHaveExactly(["parent1"]);
+});
