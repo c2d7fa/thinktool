@@ -327,6 +327,10 @@
     {
       "date": "2020-10-21",
       "title": "Fixed bug where it was impossible to remove a child that was its own parent."
+    },
+    {
+      "date": "2020-10-25",
+      "title": "Fixed a bug where the list of parents for the currently focused item would sometimes not be updated when inserting or removing it as a child of another item."
     }
   ]
 }
