@@ -500,6 +500,13 @@ export function remove(state: D.State, tree: Tree, node: NodeRef): [D.State, Tre
     }
   }
 
+  // Refresh list of other parents for all nodes representing the removed item
+  for (const n of I.allNodes(newTree)) {
+    if (thing(newTree, n) === thing(newTree, node)) {
+      newTree = refreshOtherParentsChildren(newState, newTree, n);
+    }
+  }
+
   return [newState, newTree];
 }
 
@@ -520,12 +527,19 @@ export function insertChild(
   newTree = I.updateChildren(newTree, node, (children) => Misc.splice(children, position, 0, childNode));
   newTree = focus(newTree, childNode);
 
-  // Also refresh other parents
+  // Also refresh parents of this item elsewhere
   for (const n of I.allNodes(newTree)) {
     if (thing(newTree, n) === thing(tree, node) && !refEq(n, node)) {
       const [otherChildNode, newTree_] = loadConnection(newState, newTree, newConnection, n);
       newTree = newTree_;
       newTree = I.updateChildren(newTree, n, (children) => [...children, otherChildNode]);
+    }
+  }
+
+  // Refresh list of other parents for all child items
+  for (const n of I.allNodes(newTree)) {
+    if (thing(newTree, n) === thing(newTree, childNode)) {
+      newTree = refreshOtherParentsChildren(newState, newTree, n);
     }
   }
 
