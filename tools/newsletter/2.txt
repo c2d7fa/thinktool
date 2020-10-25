@@ -1,69 +1,41 @@
 THINKTOOL NEWSLETTER FOR OCTOBER 2020
 
-Hey everyone, and welcome to the newsletter for Thinktool. In case you've
-forgotten, Thinktool is an associative note-taking app. It uses bidirectional
-links and multiple parents to represent a graph of notes as a seamless outline.
+Hey everyone, and welcome to the newsletter for Thinktool. In case you've forgotten, Thinktool is an associative note-taking app. It uses bidirectional links and multiple parents to represent a graph of notes as a seamless outline.
 
-I've been trying to send these newsletters out roughly once a month. The last
-one was in July. Oops. But hey, I've actually made some good progress on
-Thinktool -- I just haven't really been writing about it.
+I've been trying to send these newsletters out roughly once a month. The last one was in July. Oops. But hey, I've actually made some good progress on Thinktool -- I just haven't really been writing about it.
 
 THINKING SHOULD BE FUN
 
-In the last newsletter, I wrote that I wanted to focus on making Thinktool
-easier to learn and more pleasant to use. I want to make thinking fun: It should
-feel good to write your ideas down in Thinktool and use its features to connect
-them with each other.
+In the last newsletter, I wrote that I wanted to focus on making Thinktool easier to learn and more pleasant to use. I want to make thinking fun: It should feel good to write your ideas down in Thinktool and use its features to connect them with each other.
 
-To achieve this, I've been focusing hard on reducing friction in the user
-interface. This comes down to making lots of tiny improvements that add up to a
-more polished experience overall. Here are a some of the improvements I've made
-since last time:
+To achieve this, I've been focusing hard on reducing friction in the user interface. This comes down to making lots of tiny improvements that add up to a more polished experience overall. Here are a some of the improvements I've made since last time:
 
-- When you wanted to edit an item, you previously had to click twice; now you
-  can just click on an item and start typing -- as you would expect.
+- When you wanted to edit an item, you previously had to click twice; now you can just click on an item and start typing -- as you would expect.
 
-- There was a bug where inserting a link with would unfocus the item so you had
-  to click it again. Inserting links now also works as expected.
+- There was a bug where inserting a link with would unfocus the item so you had to click it again. Inserting links now also works as expected.
 
-- Links to other items would be displayed as special codes (like '#q9nsqefl')
-  when editing an item; now they're displayed nicely in-line.
+- Links to other items would be displayed as special codes (like '#q9nsqefl') when editing an item; now they're displayed nicely in-line.
 
-- I added basic fuzzy search, so you don't have to remember the exact title of
-  an item that you want to link or add as a child.
+- I added basic fuzzy search, so you don't have to remember the exact title of an item that you want to link or add as a child.
 
-- The layout of parents and references in the outline have been changed, so
-  they're hopefully more intuitive. For example, other parents are now displayed
-  in a little box above the item, and the different connection types (like
-  parents and references) have unique bullet graphics.
+- The layout of parents and references in the outline have been changed, so they're hopefully more intuitive. For example, other parents are now displayed in a little box above the item, and the different connection types (like parents and references) have unique bullet graphics.
 
 - Overhauled the typography and added icons.
 
-I also mentioned in the last newsletter that I wanted to focus on the tutorial
-and documentation. This is something that I still haven't gotten around to, but
-it's among the things I'm working on now. Thanks to the people who've sent their
-feedback about the current tutorial!
+I also mentioned in the last newsletter that I wanted to focus on the tutorial and documentation. This is something that I still haven't gotten around to, but it's among the things I'm working on now. Thanks to the people who've sent their feedback about the current tutorial!
 
 NOW ON REDDIT AND GITHUB
 
-Thinktool now has its own subreddit: https://reddit.com/r/thinktool. It's pretty
-sparse for now, but if you post a question there I'll do my best to respond.
+Thinktool now has its own subreddit: https://reddit.com/r/thinktool. It's pretty sparse for now, but if you post a question there I'll do my best to respond.
 
-I've also decided to make the source code for Thinktool available on GitHub:
-https://github.com/c2d7fa/thinktool. To be clear, Thinktool isn't actually open
-source yet. However, I plan to make Thinktool properly open source in the
-future, so you can run your own instance or even develop it yourself if I
-stopped working on it.
+I've also decided to make the source code for Thinktool available on GitHub: https://github.com/c2d7fa/thinktool. To be clear, Thinktool isn't actually open source yet. However, I plan to make Thinktool properly open source in the future, so you can run your own instance or even develop it yourself if I stopped working on it.
 
 THANKS!
 
-Lastly, thanks again to all the people who've been sending feedback! Even though
-I've only had time to implement a small fraction of it, it's really useful to
-know what sort of stuff people care about.
+Lastly, thanks again to all the people who've been sending feedback! Even though I've only had time to implement a small fraction of it, it's really useful to know what sort of stuff people care about.
 
 And thanks for reading!
 
-If you want to unsubscribe from these newsletters, just follow this link:
-https://api.thinktool.io/unsubscribe?key={unsubscribe}
+If you want to unsubscribe from these newsletters, just follow this link: https://api.thinktool.io/unsubscribe?key={unsubscribe}
 
 — Jonas
