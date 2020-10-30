@@ -12,7 +12,7 @@ For both the HTML and plain text versions, the string `{unsubscribe}` will be re
 
 Once these files have been created, set the following environment variables:
 
-* `SENDGRID_API_KEY` — SendGrid API key.
+* `MAILGUN_API_KEY` — Mailgun API key.
 * `DIAFORM_POSTGRES_HOST` — Host of PostgreSQL database; see also main README.
 * `DIAFORM_POSTGRES_PORT` — Port of PostgreSQL database; see also main README.
 * `DIAFORM_POSTGRES_USERNAME` — Username for PostgreSQL database; see also main README.

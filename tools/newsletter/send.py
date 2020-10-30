@@ -7,10 +7,9 @@ import argparse
 
 import psycopg2
 
-import sendgrid
-import sendgrid.helpers.mail as mail
+import requests
 
-sendgrid_client = sendgrid.SendGridAPIClient(api_key=os.environ.get("SENDGRID_API_KEY"))
+api_key = os.environ.get("MAILGUN_API_KEY")
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument("newsletter_id")
@@ -34,21 +33,21 @@ def send_newsletter(email, unsubscribe_token):
   text = text_template.format(unsubscribe=unsubscribe_token, email=email)
   html = html_template.format(unsubscribe=unsubscribe_token, email=email)
 
-  message = mail.Mail()
-  message.to = mail.To(email)
-  message.subject = mail.Subject(subject)
-  message.header = mail.Header("List-Unsubscribe", "<mailto:newsletter@thinktool.io?subject=unsubscribe>")
-  message.from_email = mail.From("newsletter@thinktool.io", "Thinktool Newsletter")
-  message.reply_to = mail.ReplyTo("jonas@thinktool.io", "Jonas Hvid (Thinktool)")
-  message.content = [
-    mail.Content("text/plain", text),
-    mail.Content("text/html", html),
-  ]
+  requests.post(
+    "https://api.eu.mailgun.net/v3/thinktool.io/messages",
+    auth=("api", api_key),
+    data={
+      "to": email,
+      "subject": subject,
+      "from": "Thinktool Newsletter <newsletter@thinktool.io>",
+      "h:Reply-To": "Jonas Hvid (Thinktool) <jonas@thinktool.io>",
+      "text": text,
+      "html": html
+    }
+  )
 
   spit("last_sent.txt", text)
   spit("last_sent.html", html)
-
-  sendgrid_client.send(message)
 
 postgres_conn = psycopg2.connect(
   host=os.getenv("DIAFORM_POSTGRES_HOST"),
