@@ -331,6 +331,10 @@
     {
       "date": "2020-10-25",
       "title": "Fixed a bug where the list of parents for the currently focused item would sometimes not be updated when inserting or removing it as a child of another item."
+    },
+    {
+      "date": "2020-11-02",
+      "title": "Fixed a bug where typing too fast (!) would cause a crash."
     }
   ]
 }

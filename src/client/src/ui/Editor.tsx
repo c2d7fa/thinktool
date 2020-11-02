@@ -244,6 +244,7 @@ function ContentEditor(props: {
   onJumpLink(target: string): void;
 }) {
   const stateRef = usePropRef(props.context.state);
+  const treeRef = usePropRef(props.context.tree);
   const onOpenLinkRef = usePropRef(props.onOpenLink);
   const onJumpLinkRef = usePropRef(props.onJumpLink);
   const onActionRef = usePropRef(props.onAction);
@@ -305,6 +306,18 @@ function ContentEditor(props: {
     },
   });
 
+  // When the user clicks on this editor to focus it, we want to communicate
+  // that back to the state managed by React. This plugin handles that.
+  const focusPlugin = new PS.Plugin({
+    props: {
+      handleClick(view, pos, ev) {
+        props.context.setTree(T.focus(treeRef.current!, props.node));
+
+        return false;
+      },
+    },
+  });
+
   const [openLinks, setOpenLinks] = React.useState<string[]>([]);
   const openLinksRef = usePropRef(openLinks);
 
@@ -329,74 +342,50 @@ function ContentEditor(props: {
       jumpLink: (thing) => onJumpLinkRef.current!(thing),
       openLinks: openLinksRef.current!,
     }),
-    plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
+    plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
   });
-
-  const [editorState, setEditorState] = React.useState(initialState);
 
   const editorViewRef = React.useRef<PV.EditorView<typeof schema> | null>(null);
 
+  const setStateRef = usePropRef(props.context.setState);
+
   // Initialize editor
   React.useEffect(() => {
-    function dispatchTransaction(transaction: PS.Transaction<typeof schema>) {
-      setEditorState((previousState) => previousState.apply(transaction));
+    function dispatchTransaction(
+      this: PV.EditorView<typeof schema>,
+      transaction: PS.Transaction<typeof schema>,
+    ) {
+      this.updateState(this.state.apply(transaction));
+
+      // This is where we communicate changes made by the user back into the
+      // state managed by React.
+
+      const editorDoc = this.state.doc;
+
+      // We don't need to update anything if the transaction didn't actually
+      // change any of the content.
+      if (
+        E.contentToEditString(D.content(stateRef.current!, T.thing(treeRef.current!, props.node))) ===
+        E.contentToEditString(contentFromDoc(editorDoc))
+      )
+        return;
+
+      setStateRef.current!(
+        D.setContent(stateRef.current!, T.thing(treeRef.current!, props.node), contentFromDoc(editorDoc)),
+      );
     }
 
     editorViewRef.current = new PV.EditorView(ref.current!, {state: initialState, dispatchTransaction});
   }, []);
 
+  // When the state managed by React gets updated from elsewhere, we want to
+  // reflect those updates in the editor state.
   React.useEffect(() => {
-    // Reflect changes in ProseMirror editor.
-    if (editorViewRef.current!.state !== editorState) {
-      editorViewRef.current!.updateState(editorState);
-    }
-
-    if (editorViewRef.current!.hasFocus()) {
-      props.context.setTree(T.focus(props.context.tree, props.node));
-
-      // The popup that appears e.g. when inserting a link needs to have access
-      // to the current selection.
-      const textSelection = (() => {
-        let content: D.Content = [];
-        editorState.selection.content().content.forEach((node) => {
-          if (node.isText) {
-            content.push(node.textContent);
-          } else if (node.type.name === "link") {
-            content.push({link: node.attrs.target});
-          }
-        });
-        return E.contentToEditString(content);
-      })();
-
-      props.context.registerActiveEditor({
-        selection: textSelection,
-
-        replaceSelectionWithLink(target: string, textContent: string): void {
-          editorViewRef.current!.focus();
-
-          setEditorState((es) => {
-            const tr = es.tr;
-            const attrs: LinkAttrs = {
-              target,
-              status: openLinksRef.current!.includes(target) ? "expanded" : "collapsed",
-              toggle: () => onOpenLinkRef.current!(target),
-              jump: () => onJumpLinkRef.current!(target),
-              content: textContent,
-            };
-            tr.replaceSelectionWith(schema.node("link", attrs));
-            return es.apply(tr);
-          });
-        },
-      });
-    }
-  }, [editorState]);
-
-  // Handle incoming changes to content
-  React.useEffect(() => {
-    // We shouldn't override the user's changes.
+    // If this editor has focus, then the changes were probably made via the
+    // editor itself. In that case, we wouldn't want to update the editor again.
     if (editorViewRef.current!.hasFocus()) return;
 
-    setEditorState(
+    editorViewRef.current!.updateState(
       PS.EditorState.create({
         schema,
         doc: docFromContent({
@@ -410,34 +399,52 @@ function ContentEditor(props: {
           jumpLink: (thing) => onJumpLinkRef.current!(thing),
           openLinks: openLinksRef.current!,
         }),
-        plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
+        plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
       }),
     );
   }, [props.context.state, props.node, openLinks]);
 
-  // Handle outgoing changes
   React.useEffect(() => {
-    if (!editorViewRef.current!.hasFocus()) return; // The user wasn't responsible for the change
+    if (!T.hasFocus(props.context.tree, props.node)) return;
 
-    if (
-      E.contentToEditString(D.content(props.context.state, T.thing(props.context.tree, props.node))) ===
-      E.contentToEditString(contentFromDoc(editorState.doc))
-    )
-      return;
+    editorViewRef.current!.focus();
 
-    props.context.setState(
-      D.setContent(
-        props.context.state,
-        T.thing(props.context.tree, props.node),
-        contentFromDoc(editorState.doc),
-      ),
-    );
-  });
+    // The popup that appears e.g. when inserting a link needs to have access
+    // to the current selection.
+    const textSelection = (() => {
+      let content: D.Content = [];
+      editorViewRef.current!.state.selection.content().content.forEach((node) => {
+        if (node.isText) {
+          content.push(node.textContent);
+        } else if (node.type.name === "link") {
+          content.push({link: node.attrs.target});
+        }
+      });
+      return E.contentToEditString(content);
+    })();
 
-  React.useEffect(() => {
-    if (T.hasFocus(props.context.tree, props.node)) {
-      editorViewRef.current!.focus();
-    }
+    // [TODO] Technically, we should react to changes in
+    // registerActiveEditor, although I don't think we actually update this
+    // anywhere currently.
+    props.context.registerActiveEditor({
+      selection: textSelection,
+
+      replaceSelectionWithLink(target: string, textContent: string): void {
+        editorViewRef.current!.focus();
+
+        const tr = editorViewRef.current!.state.tr;
+        const attrs: LinkAttrs = {
+          target,
+          status: openLinksRef.current!.includes(target) ? "expanded" : "collapsed",
+          toggle: () => onOpenLinkRef.current!(target),
+          jump: () => onJumpLinkRef.current!(target),
+          content: textContent,
+        };
+        tr.replaceSelectionWith(schema.node("link", attrs));
+
+        editorViewRef.current!.dispatch(tr);
+      },
+    });
   }, [T.focused(props.context.tree)]);
 
   return <div className="editor content" ref={ref}></div>;
