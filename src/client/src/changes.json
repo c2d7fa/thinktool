@@ -335,6 +335,10 @@
     {
       "date": "2020-11-02",
       "title": "Fixed a bug where typing too fast (!) would cause a crash."
+    },
+    {
+      "date": "2020-11-03",
+      "title": "Fixed an issue where the icon would not be displayed inside the application itself."
     }
   ]
 }
