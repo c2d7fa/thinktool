@@ -51,11 +51,10 @@ main {
 .box {
   padding: 2rem;
   border-radius: 6px;
-  background-color: #f8f8f8;
 
   flex: 1 1 100%;
 
-  border: 1px solid #f0f0f0;
+  border: 3px solid #f0f0f0;
 }
 
 .centered {
@@ -76,18 +75,25 @@ main {
   margin-right: -2rem;
 }
 
+h1.bullet::before {
+  display: inline-block;
+  content: " ";
+  background-color: #d0d0d0;
+  width: 13px;
+  height: 13px;
+  margin-right: 1ex;
+  margin-bottom: 1px;
+  border-radius: 50%;
+}
+
 .feature {
   display: flex;
   flex-direction: column;
 
   border-radius: 6px;
-  // background: radial-gradient(circle at top, #f4f4f4 0%, #fcfcfc 150%);
-  background-color: #f8f8f8;
+  border: 3px solid #f0f0f0;
 
   line-height: 175%;
-
-  // box-shadow: 0 3px 6px -3px #c0c0c0;
-  border: 1px solid #f0f0f0;
 
   .description {
     padding: 1rem;
@@ -108,7 +114,6 @@ main {
     border-radius: 0 0 6px 6px;
     height: 240px;
     background-color: #ffffff;
-    border-top: 1px solid #f0f0f0;
 
     display: flex;
     justify-content: center;
@@ -140,7 +145,6 @@ main {
     min-width: 426px;
     border-radius: 0 6px 6px 0;
     border-top: none;
-    border-left: 1px solid #f0f0f0;
   }
 }
 
@@ -157,14 +161,11 @@ main {
     width: auto;
     border-radius: 0 0 6px 6px;
     border-left: none;
-    border-top: 1px solid #f0f0f0;
   }
 }
 
 @media (min-width: 900px) and (max-width: 1380px) {
   .feature {
-    text-align: right;
-
     /* For Safari 13.0.5 */
     max-height: 271px;
   }
@@ -312,6 +313,16 @@ p {
     margin-right: auto; // Left align
 
     color: #404040;
+
+    &::before {
+      content: " ";
+      display: inline-block;
+      background-image: url("/icon.svg");
+      height: 1em;
+      width: 1em;
+      margin-bottom: -5px;
+      margin-right: 0.25em;
+    }
   }
 
   nav {
@@ -389,8 +400,9 @@ a > i.fab {
 }
 
 .newsletter-outer {
-  background-color: hsl(49, 90%, 93%);
-  border: 1px solid hsl(49, 75%, 85%);
+  background-color: hsl(51, 90%, 93%);
+  border-top: 3px solid hsl(51, 50%, 88%);
+  border-bottom: 3px solid hsl(51, 50%, 88%);
   padding: 2rem;
 
   font-size: 0.9em;
