@@ -313,16 +313,6 @@ p {
     margin-right: auto; // Left align
 
     color: #404040;
-
-    &::before {
-      content: " ";
-      display: inline-block;
-      background-image: url("/icon.svg");
-      height: 1em;
-      width: 1em;
-      margin-bottom: -5px;
-      margin-right: 0.25em;
-    }
   }
 
   nav {
