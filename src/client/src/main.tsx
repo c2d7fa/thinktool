@@ -924,7 +924,7 @@ export function LocalApp(props: {
   ExternalLink: ExternalLinkType;
   openExternalUrl: (url: string) => void;
 }) {
-  const [app, setApp] = React.useState<React.ReactNode>(<div>Loading...</div>);
+  const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
 
   React.useEffect(() => {
     (async () => {
