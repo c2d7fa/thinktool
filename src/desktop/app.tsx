@@ -1,7 +1,7 @@
 import * as Electron from "electron";
-
-import * as Client from "@thinktool/client";
+import * as ReactDOM from "react-dom";
 import * as React from "react";
+import * as Thinktool from "@thinktool/client";
 
 function ExternalLink(props: {href: string; children: React.ReactNode; [k: string]: any}) {
   const attrs: object = {...props};
@@ -28,5 +28,9 @@ function openExternalUrl(url: string) {
   Electron.shell.openExternal(url);
 }
 
-const storage = Electron.remote.getGlobal("storage") as Client.Storage.Storage;
-Client.startLocalApp({storage, ExternalLink, openExternalUrl});
+const storage = Electron.remote.getGlobal("storage") as Thinktool.Storage.Storage;
+
+ReactDOM.render(
+  <Thinktool.LocalApp storage={storage} ExternalLink={ExternalLink} openExternalUrl={openExternalUrl} />,
+  document.getElementById("app"),
+);
