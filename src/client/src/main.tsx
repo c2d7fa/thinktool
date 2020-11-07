@@ -947,7 +947,7 @@ export function LocalApp(props: {
 export function App({apiHost}: {apiHost: string}) {
   const server = API.initialize(apiHost);
 
-  const [app, setApp] = React.useState<React.ReactNode>(<div>Loading...</div>);
+  const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
 
   React.useEffect(() => {
     (async () => {
