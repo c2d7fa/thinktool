@@ -302,7 +302,7 @@ function useContext({
   };
 }
 
-function App({
+function App_({
   initialState,
   initialTutorialFinished,
   username,
@@ -469,6 +469,8 @@ function App({
   return (
     <div
       ref={appRef}
+      id="app"
+      spellCheck={false}
       onFocus={(ev) => {
         if (ev.target === appRef.current) {
           console.log("Unfocusing item due to click on background");
@@ -830,18 +832,20 @@ function Subtree(p: {
 
 // User Page
 
-function UserPage(props: {server: API.Server; username: string}) {
+function UserPage(props: {server: API.Server}) {
+  const [username, setUsername] = React.useState<string | null>(null);
   const [emailField, setEmailField] = React.useState<string>("(Loading...)");
   const [passwordField, setPasswordField] = React.useState<string>("");
 
   React.useEffect(() => {
+    props.server.getUsername().then((username) => setUsername(username));
     props.server.getEmail().then((email) => setEmailField(email));
   }, []);
 
   return (
-    <div>
+    <div id="user">
       <div>
-        You are <strong>{props.username}</strong>.
+        You are <strong>{username}</strong>.
       </div>
       <hr />
       <div>
@@ -868,8 +872,10 @@ function UserPage(props: {server: API.Server; username: string}) {
       <button
         onClick={async () => {
           if (confirm("Are you sure you want to PERMANENTLY DELETE YOUR ACCOUNT AND ALL YOUR DATA?")) {
-            await props.server.deleteAccount(props.username);
-            window.location.href = "/";
+            if (username) {
+              await props.server.deleteAccount(username);
+              window.location.href = "/";
+            }
           }
         }}>
         Delete account and all data
@@ -913,86 +919,75 @@ function UserPage(props: {server: API.Server; username: string}) {
 
 // ==
 
-// Web app that synchronizes with the server over API.
-export async function thinktoolApp({apiHost}: {apiHost: string}) {
-  const appElement = document.querySelector("#app")! as HTMLDivElement;
-
-  const server = API.initialize(apiHost);
-
-  const username = await server.getUsername();
-  if (username === null) {
-    console.log("Not logged in. Redirecting to login page.");
-    window.location.href = "/login.html";
-  }
-
-  const storage = Storage.server(server);
-
-  ReactDOM.render(
-    <App
-      initialState={API.transformFullStateResponseIntoState(await storage.getFullState())}
-      initialTutorialFinished={await storage.getTutorialFinished()}
-      username={username ?? "<error>"}
-      storage={storage}
-      server={server}
-      openExternalUrl={(url) => window.open(url, "_blank")}
-    />,
-    appElement,
-  );
-}
-
-export async function startLocalApp({
-  storage,
-  ExternalLink,
-  openExternalUrl,
-}: {
+export function LocalApp(props: {
   storage: Storage.Storage;
   ExternalLink: ExternalLinkType;
   openExternalUrl: (url: string) => void;
 }) {
-  const appElement = document.querySelector("#app")! as HTMLDivElement;
+  const [app, setApp] = React.useState<React.ReactNode>(<div>Loading...</div>);
 
-  ReactDOM.render(
-    <ExternalLinkProvider value={ExternalLink}>
-      <App
-        initialState={API.transformFullStateResponseIntoState(await storage.getFullState())}
-        initialTutorialFinished={await storage.getTutorialFinished()}
-        storage={storage}
-        openExternalUrl={openExternalUrl}
-      />
-    </ExternalLinkProvider>,
+  React.useEffect(() => {
+    (async () => {
+      setApp(
+        <ExternalLinkProvider value={props.ExternalLink}>
+          <App_
+            initialState={API.transformFullStateResponseIntoState(await props.storage.getFullState())}
+            initialTutorialFinished={await props.storage.getTutorialFinished()}
+            storage={props.storage}
+            openExternalUrl={props.openExternalUrl}
+          />
+        </ExternalLinkProvider>,
+      );
+    })();
+  }, []);
 
-    appElement,
-  );
+  return app;
 }
 
-export async function thinktoolDemo({
-  apiHost,
-  data,
-}: {
-  apiHost: string;
-  data: Communication.FullStateResponse;
-}) {
-  const appElement = document.querySelector("#app")! as HTMLDivElement;
-  ReactDOM.render(
-    <App
-      initialState={API.transformFullStateResponseIntoState(data)}
+export function App({apiHost}: {apiHost: string}) {
+  const server = API.initialize(apiHost);
+
+  const [app, setApp] = React.useState<React.ReactNode>(<div>Loading...</div>);
+
+  React.useEffect(() => {
+    (async () => {
+      const username = await server.getUsername();
+      if (username === null) {
+        console.log("Not logged in. Redirecting to login page.");
+        window.location.href = "/login.html";
+      }
+
+      const storage = Storage.server(server);
+
+      setApp(
+        <App_
+          initialState={API.transformFullStateResponseIntoState(await storage.getFullState())}
+          initialTutorialFinished={await storage.getTutorialFinished()}
+          username={username ?? "<error>"}
+          storage={storage}
+          server={server}
+          openExternalUrl={(url) => window.open(url, "_blank")}
+        />,
+      );
+    })();
+  }, []);
+
+  return app;
+}
+
+export function Demo(props: {data: Communication.FullStateResponse}) {
+  return (
+    <App_
+      initialState={API.transformFullStateResponseIntoState(props.data)}
       initialTutorialFinished={false}
       storage={Storage.ignore()}
       openExternalUrl={(url) => window.open(url, "_blank")}
-    />,
-    appElement,
+    />
   );
 }
 
-export async function thinktoolUser({apiHost}: {apiHost: string}) {
-  const userElement = document.querySelector("#user")! as HTMLDivElement;
-  ReactDOM.render(
-    <UserPage
-      server={API.initialize(apiHost)}
-      username={(await API.initialize(apiHost).getUsername()) ?? "error!!"}
-    />,
-    userElement,
-  );
+export function User(props: {apiHost: string}) {
+  return <UserPage server={API.initialize(props.apiHost)} />;
 }
 
 export * as Storage from "./storage";
