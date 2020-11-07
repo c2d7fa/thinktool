@@ -3,6 +3,6 @@
   "private": true,
   "devDependencies": {
     "handlebars": "latest",
-    "sass": "latest"
+    "sass": "^1.29.0"
   }
 }
