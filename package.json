@@ -2,6 +2,7 @@
   "name": "thinktool",
   "private": true,
   "devDependencies": {
+    "cssnano": "^4.1.10",
     "handlebars": "latest",
     "sass": "^1.29.0"
   }
