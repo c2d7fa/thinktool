@@ -1,14 +1,8 @@
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import "core-js/stable";
 
-import * as Client from "@thinktool/client";
-
-// Provided by Parcel
-declare let process: {env: {[k: string]: string | undefined}};
-
+import * as Thinktool from "@thinktool/client";
 import * as DemoData from "./demo-data.json";
-import {Communication} from "@thinktool/shared";
 
-Client.thinktoolDemo({
-  apiHost: process.env.DIAFORM_API_HOST!,
-  data: DemoData as Communication.FullStateResponse,
-});
+ReactDOM.render(<Thinktool.Demo data={DemoData} />, document.getElementById("root"));
