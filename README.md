@@ -87,6 +87,21 @@ There is also a script that does this for you:
 
     $ tools/dev/start-docker.sh
 
+#### Developing `@thinktool/client` package
+
+When working on the client package, it may be useful to test your changes via
+the web package. The typical way to do this is by linking the client package
+into the web package with `npm link ../client` from `src/web/`.
+
+One problem with this is that installing the client package's `devDependencies`
+installs React, even though this is supposed to be a peer dependency. For this
+reason, you'll have to manually remove `client/node_modules/react{,-dom}/`.
+
+Always clear `.cache` before running `npm serve` from the web package.
+
+I'm sure that this is not how you're supposed to do this, but I haven't found
+any better approach.
+
 ### Static Resources
 
 Set the following environment variables:
