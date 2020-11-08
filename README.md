@@ -111,8 +111,7 @@ Set the following environment variables:
 
 Then build the web client and other static resources with:
 
-    $ ./tools/build-client.sh
-    $ ./tools/build-static.sh
+    $ ./tools/build-web.sh
 
 Then, set `AZURE_STORAGE_ACCOUNT` and `AZURE_STORAGE_KEY` and run
 `./tools/deploy-static.sh` to deploy static files to Microsoft Azure Storage.
