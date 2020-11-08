@@ -14,7 +14,7 @@ cp src/static/*.svg src/desktop/build
 cp src/static/*.png src/desktop/build
 
 echo "Building stylesheets..."
-node_modules/.bin/sass src/style:src/desktop/build
+cp node_modules/@thinktool/client/dist/app.css src/desktop/build
 
 cd src/desktop
 
