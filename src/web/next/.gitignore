@@ -1,4 +1,8 @@
 /public/icon.png
+/public/index.css
+/public/index.css.map
+/public/feature-*.png
+/public/tutorial*.png
 
 # dependencies
 /node_modules
