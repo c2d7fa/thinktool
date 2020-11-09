@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "build-static": "cp ../../static/icon.png public && cp node_modules/@thinktool/client/dist/app.css public",
+    "build-static": "cp ../../static/icon.png public",
     "dev": "npm run build-static && next dev",
     "build": "npm run build-static && next build && next export"
   },
