@@ -24,7 +24,7 @@
   "scripts": {
     "check": "./node_modules/.bin/tsc --noEmit",
     "serve": "./node_modules/.bin/parcel serve -p 8080 *.html",
-    "build": "./node_modules/.bin/parcel build -d dist -t browser *.html && npm run build-static",
-    "build-static": "cp sitemap.txt robots.txt blog.rss dist/"
+    "build": "./node_modules/.bin/parcel build -d dist -t browser *.html && npm run build-next",
+    "build-next": "cd next && npm run build && cp -r out/* ../dist && cd .."
   }
 }
