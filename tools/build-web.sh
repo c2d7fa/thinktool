@@ -10,9 +10,6 @@
 
 set -eux -o pipefail
 
-echo "Installing dependencies..."
-npm ci
-
 echo "Building images..."
 mkdir -p dist/static
 cp -r src/static/*.svg dist/static
@@ -27,8 +24,8 @@ cp src/static/sitemap.txt dist/static
 echo "Building robots.txt..."
 cp src/static/robots.txt dist/staticp
 
-echo "Building blog..."
-./tools/build-blog.sh
+echo "Building RSS feed..."
+cp -r src/static/blog.rss dist/static
 
 echo "Building web client into dist/static/..."
 cd src/web
