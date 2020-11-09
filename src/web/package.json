@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/web",
-  "version": "202011072338.0.0",
+  "version": "202011091835.0.0",
   "description": "The web client for Thinktool.",
   "license": "UNLICENSED",
   "repository": {
@@ -11,10 +11,11 @@
     "@types/react-dom": "^16.9.9",
     "parcel-bundler": "^1.12.4",
     "posthtml-expressions": "^1.5.0",
+    "sass": "^1.29.0",
     "typescript": "^4.0.3"
   },
   "dependencies": {
-    "@thinktool/client": "^3.0.0-alpha.3",
+    "@thinktool/client": "^3.0.0",
     "@thinktool/shared": "^2.0.0",
     "core-js": "^3.6.5",
     "react": "^17.0.1",
@@ -23,6 +24,7 @@
   "scripts": {
     "check": "./node_modules/.bin/tsc --noEmit",
     "serve": "./node_modules/.bin/parcel serve -p 8080 *.html",
-    "build": "./node_modules/.bin/parcel build -d dist -t browser *.html"
+    "build": "./node_modules/.bin/parcel build -d dist -t browser *.html && npm run build-static",
+    "build-static": "cp sitemap.txt robots.txt blog.rss dist/"
   }
 }

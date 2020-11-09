@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-
-set -e
+set -eux -o pipefail
 
 mkdir -p dist/static
 
