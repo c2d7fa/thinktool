@@ -35,9 +35,9 @@ function LogInForm(props: {apiHost: string; forgotPassword(): void}) {
       <a className="forgot-password" href="#" onClick={props.forgotPassword}>
         Forgot your password?
       </a>
-      <div className="submit">
-        <i className="fas fa-sign-in-alt" /> <input type="submit" value="Log in" />
-      </div>
+      <button className="submit" type="submit">
+        <i className="fas fa-sign-in-alt" /> Log in
+      </button>
     </form>
   );
 }
@@ -57,9 +57,9 @@ function ForgotPasswordForm(props: {apiHost: string}) {
         <label htmlFor="email">Email</label>
         <input id="email" type="email" placeholder="e.g. 'user@example.com'" name="email" required />
       </div>
-      <div className="submit">
-        <i className="fas fa-unlock" /> <input type="submit" value="Recover account" />
-      </div>
+      <button className="submit" type="submit">
+        <i className="fas fa-unlock" /> Recover account
+      </button>
     </form>
   );
 }
@@ -137,9 +137,9 @@ export default function Login(props: {apiHost: string}) {
                   <input id="signup-newsletter" type="checkbox" name="newsletter" />
                   <label htmlFor="signup-newsletter">Also sign up for newsletter</label>
                 </div>
-                <div className="submit">
-                  <i className="fas fa-user-check" /> <input type="submit" value="Sign up" />
-                </div>
+                <button className="submit" type="submit">
+                  <i className="fas fa-user-check" /> Sign up
+                </button>
               </form>
             </div>
           </div>

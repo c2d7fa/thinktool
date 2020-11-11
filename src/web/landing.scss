@@ -523,7 +523,7 @@ form input[type="checkbox"] {
   margin-right: 1em;
 }
 
-.login .submit {
+.login button.submit {
   margin-top: auto;
 
   @include base.ui-font;
@@ -549,15 +549,8 @@ form input[type="checkbox"] {
     background-color: #f8f8f8;
   }
 
-  input[type="submit"] {
-    font: inherit;
-    cursor: inherit;
-    color: inherit;
-
-    border: none;
-    background-color: transparent;
-    outline: none;
-  }
+  background-color: transparent;
+  outline: none;
 }
 
 .login .invalid-username {
