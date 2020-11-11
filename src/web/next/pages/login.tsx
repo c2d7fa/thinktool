@@ -7,7 +7,66 @@ export async function getStaticProps() {
   return {props: {apiHost: process.env.DIAFORM_API_HOST}};
 }
 
+function LogInForm(props: {apiHost: string; forgotPassword(): void}) {
+  return (
+    <form action={`${props.apiHost}/login`} method="POST">
+      <div className="entry">
+        <label htmlFor="login-user">Username</label>
+        <input
+          type="text"
+          id="login-user"
+          placeholder="e.g. 'username123'"
+          name="user"
+          maxLength={32}
+          required
+        />
+      </div>
+      <div className="entry">
+        <label htmlFor="login-password">Password</label>
+        <input
+          id="login-password"
+          type="password"
+          placeholder="e.g. 'correct horse battery staple'"
+          name="password"
+          maxLength={256}
+          required
+        />
+      </div>
+      <a className="forgot-password" href="#" onClick={props.forgotPassword}>
+        Forgot your password?
+      </a>
+      <div className="submit">
+        <i className="fas fa-sign-in-alt" /> <input type="submit" value="Log in" />
+      </div>
+    </form>
+  );
+}
+
+function ForgotPasswordForm(props: {apiHost: string}) {
+  return (
+    <form action={`${props.apiHost}/forgot-password`}>
+      <p>
+        Enter your username and email below. Then you'll be sent an email with instructions on how to recover
+        your account.
+      </p>
+      <div className="entry">
+        <label htmlFor="user">Username</label>
+        <input type="text" id="user" placeholder="e.g. 'username123'" name="user" maxLength={32} required />
+      </div>
+      <div className="entry">
+        <label htmlFor="email">Email</label>
+        <input id="email" type="email" placeholder="e.g. 'user@example.com'" name="email" required />
+      </div>
+      <div className="submit">
+        <i className="fas fa-unlock" /> <input type="submit" value="Recover account" />
+      </div>
+    </form>
+  );
+}
+
 export default function Login(props: {apiHost: string}) {
+  const [forgotPassword, setForgotPassword] = React.useState(false);
+
   React.useEffect(() => {
     if (process.browser) {
       fetch(`${props.apiHost}/username`, {credentials: "include"}).then((response) => {
@@ -28,38 +87,12 @@ export default function Login(props: {apiHost: string}) {
         <div className="block wide centered">
           <div className="horizontal">
             <div className="box">
-              <form action={`${props.apiHost}/login`} method="POST">
-                <div className="entry">
-                  <label htmlFor="login-user">Username</label>
-                  <input
-                    type="text"
-                    id="login-user"
-                    placeholder="e.g. 'username123'"
-                    name="user"
-                    maxLength={32}
-                    required
-                  />
-                </div>
-                <div className="entry">
-                  <label htmlFor="login-password">Password</label>
-                  <input
-                    id="login-password"
-                    type="password"
-                    placeholder="e.g. 'correct horse battery staple'"
-                    name="password"
-                    maxLength={256}
-                    required
-                  />
-                </div>
-                <a className="forgot-password" href="forgot-password.html">
-                  Forgot your password?
-                </a>
-                <div className="submit">
-                  <i className="fas fa-sign-in-alt" /> <input type="submit" value="Log in" />
-                </div>
-              </form>
+              {forgotPassword ? (
+                <ForgotPasswordForm apiHost={props.apiHost} />
+              ) : (
+                <LogInForm apiHost={props.apiHost} forgotPassword={() => setForgotPassword(true)} />
+              )}
             </div>
-
             <div className="box">
               <form action={`${props.apiHost}/signup`} method="POST">
                 <div className="entry">
