@@ -1,6 +1,8 @@
 import Head from "next/head";
 import * as React from "react";
 
+import StaticPage from "../lib/StaticPage";
+
 export async function getStaticProps() {
   return {props: {apiHost: process.env.DIAFORM_API_HOST}};
 }
@@ -18,18 +20,10 @@ export default function Login(props: {apiHost: string}) {
   }, []);
 
   return (
-    <>
+    <StaticPage>
       <Head>
-        <meta charSet="utf-8" />
         <title>Thinktool &ndash; Log In</title>
-        <link rel="stylesheet" href="/index.css" />
-        <link rel="icon" href="/icon.png" type="image/png" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-
-      <header id="top-bar">
-        <span id="logo">Thinktool</span>
-      </header>
       <main className="login">
         <div>
           <h1>Log in.</h1>
@@ -114,11 +108,6 @@ export default function Login(props: {apiHost: string}) {
           </p>
         </aside>
       </main>
-
-      <script
-        data-goatcounter="https://thinktool.goatcounter.com/count"
-        async
-        src="//gc.zgo.at/count.js"></script>
-    </>
+    </StaticPage>
   );
 }
