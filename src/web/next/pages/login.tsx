@@ -25,88 +25,92 @@ export default function Login(props: {apiHost: string}) {
         <title>Thinktool &ndash; Log In</title>
       </Head>
       <main className="login">
-        <div>
-          <h1>Log in.</h1>
-          <form action={`${props.apiHost}/login`} method="POST">
-            <div className="form-table">
-              <div className="entry">
-                <label htmlFor="login-user">Username</label>
-                <input id="login-user" name="user" maxLength={32} required />
-              </div>
-              <div className="entry">
-                <label htmlFor="login-password">Password</label>
-                <input id="login-password" type="password" name="password" maxLength={256} required />
-              </div>
-            </div>
-            <input type="submit" value="Log in" />
-          </form>
-          <a className="forgot-password" href="forgot-password.html">
-            Forgot your password?
-          </a>
-        </div>
-
-        <div>
-          <h1>Sign up.</h1>
-          <form action={`${props.apiHost}/signup`} method="POST">
-            <div className="form-table">
-              <div className="entry">
-                <label htmlFor="signup-user">Username</label>
-                <input
-                  id="signup-user"
-                  placeholder="e.g. 'username123'"
-                  name="user"
-                  maxLength={32}
-                  pattern="[a-z][a-z0-9]*"
-                  required
-                />
-                <div className="invalid-username">
-                  Username may only contain lowercase letters and numbers. The first character must be a
-                  letter.
+        <div className="block wide centered">
+          <div className="horizontal">
+            <div className="box">
+              <form action={`${props.apiHost}/login`} method="POST">
+                <div className="entry">
+                  <label htmlFor="login-user">Username</label>
+                  <input
+                    type="text"
+                    id="login-user"
+                    placeholder="e.g. 'username123'"
+                    name="user"
+                    maxLength={32}
+                    required
+                  />
                 </div>
-              </div>
-              <div className="entry">
-                <label htmlFor="signup-password">Password</label>
-                <input
-                  id="signup-password"
-                  placeholder="e.g. 'correct horse battery staple'"
-                  type="password"
-                  name="password"
-                  maxLength={256}
-                  required
-                />
-              </div>
-              <div className="entry">
-                <label htmlFor="signup-email">Email</label>
-                <input
-                  id="signup-email"
-                  placeholder="e.g. 'user@example.com'"
-                  type="email"
-                  name="email"
-                  maxLength={1024}
-                  required
-                />
-              </div>
+                <div className="entry">
+                  <label htmlFor="login-password">Password</label>
+                  <input
+                    id="login-password"
+                    type="password"
+                    placeholder="e.g. 'correct horse battery staple'"
+                    name="password"
+                    maxLength={256}
+                    required
+                  />
+                </div>
+                <a className="forgot-password" href="forgot-password.html">
+                  Forgot your password?
+                </a>
+                <div className="submit">
+                  <i className="fas fa-sign-in-alt" /> <input type="submit" value="Log in" />
+                </div>
+              </form>
             </div>
-            <div className="newsletter-signup">
-              <input id="signup-newsletter" type="checkbox" name="newsletter" />
-              <label htmlFor="signup-newsletter">Also sign up for newsletter</label>
-            </div>
-            <input type="submit" value="Sign up" />
-          </form>
-        </div>
 
-        <aside className="disclaimer">
-          <h1>Thank you for trying Thinktool!</h1>
-          <p>
-            I'm working on Thinktool in my free time, and I use it every day. However, it's currently
-            preview-quality software. If you decide to try it out anyway, I would love to hear from you. Send
-            me feedback, bug reports, questions, or anything else at
-            <a className="email" href="mailto:jonas@thinktool.io">
-              <span>jonas@thinktool.io</span>
-            </a>
-            . Also feel free to message me if you need help with anything.
-          </p>
-        </aside>
+            <div className="box">
+              <form action={`${props.apiHost}/signup`} method="POST">
+                <div className="entry">
+                  <label htmlFor="signup-user">Username</label>
+                  <input
+                    type="text"
+                    id="signup-user"
+                    placeholder="e.g. 'username123'"
+                    name="user"
+                    maxLength={32}
+                    pattern="[a-z][a-z0-9]*"
+                    required
+                  />
+                  <div className="invalid-username">
+                    Username may only contain lowercase letters and numbers. The first character must be a
+                    letter.
+                  </div>
+                </div>
+                <div className="entry">
+                  <label htmlFor="signup-password">Password</label>
+                  <input
+                    id="signup-password"
+                    placeholder="e.g. 'correct horse battery staple'"
+                    type="password"
+                    name="password"
+                    maxLength={256}
+                    required
+                  />
+                </div>
+                <div className="entry">
+                  <label htmlFor="signup-email">Email</label>
+                  <input
+                    id="signup-email"
+                    placeholder="e.g. 'user@example.com'"
+                    type="email"
+                    name="email"
+                    maxLength={1024}
+                    required
+                  />
+                </div>
+                <div>
+                  <input id="signup-newsletter" type="checkbox" name="newsletter" />
+                  <label htmlFor="signup-newsletter">Also sign up for newsletter</label>
+                </div>
+                <div className="submit">
+                  <i className="fas fa-user-check" /> <input type="submit" value="Sign up" />
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       </main>
     </StaticPage>
   );
