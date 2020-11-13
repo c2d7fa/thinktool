@@ -28,7 +28,7 @@ export default function StaticPage(props: {children: React.ReactNode}) {
           <a href="https://reddit.com/r/thinktool">
             <i className="fab fa-reddit-alien"></i>Forum
           </a>
-          <a href="/blog/index.html">
+          <a href="/blog/">
             <i className="fas fa-newspaper"></i>Blog
           </a>
           <a href="/download.html">
