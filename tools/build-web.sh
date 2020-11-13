@@ -5,6 +5,8 @@
 
 set -eux -o pipefail
 
+mkdir -p dist/static
+
 echo "Building web client into dist/static/..."
 cd src/web
 npm ci
