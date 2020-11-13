@@ -1,5 +1,11 @@
 {
-  "private": true,
+  "name": "@thinktool/web",
+  "description": "The web client for Thinktool.",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/c2d7fa/thinktool.git"
+  },
   "scripts": {
     "build-static": "cp ../../static/icon.png public && sass index.scss public/index.css",
     "dev": "npm run build-static && next dev",
