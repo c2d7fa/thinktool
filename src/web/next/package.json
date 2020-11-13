@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "build-static": "cp ../../static/icon.png public && sass ../landing.scss public/index.css && cp ../assets/* public",
+    "build-static": "cp ../../static/icon.png public && sass index.scss public/index.css",
     "dev": "npm run build-static && next dev",
     "build": "npm run build-static && next build && next export"
   },
