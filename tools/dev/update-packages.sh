@@ -21,11 +21,11 @@ npm update @thinktool/client
 npm version "$version"
 
 # Replace links and dates on download page
-cd ../web
-sed -i -e 's/[0-9]\+\.[0-9]\+\.[0-9]\+/'"$version"'/g' download.html
-sed -i -e 's/"[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}T[0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}"/'"$(date +"%Y-%m-%dT%H:%M:%S")"'/g' download.html
-sed -i -e 's/>[A-Za-z]\+ [1-9][0-9]\?, [0-9]\{4\}/>'"$(date +"%B %-d, %Y")"'/g' download.html
+cd ../web/pages
+sed -i -e 's/[0-9]\+\.[0-9]\+\.[0-9]\+/'"$version"'/g' download.tsx
+sed -i -e 's/"[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}T[0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}"/'"$(date +"%Y-%m-%dT%H:%M:%S")"'/g' download.tsx
+sed -i -e 's/>[A-Za-z]\+ [1-9][0-9]\?, [0-9]\{4\}/>'"$(date +"%B %-d, %Y")"'/g' download.tsx
 
-cd ../..
+cd ../../..
 
 bash tools/dev/link-packages.sh
