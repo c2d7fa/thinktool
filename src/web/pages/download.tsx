@@ -3,7 +3,11 @@ import * as React from "react";
 
 import StaticPage from "../lib/StaticPage";
 
-export default function Dowload() {
+export async function getStaticProps() {
+  return {props: {apiHost: process.env.DIAFORM_API_HOST}};
+}
+
+export default function Download(props: {apiHost: string}) {
   return (
     <StaticPage>
       <Head>
@@ -29,7 +33,7 @@ export default function Dowload() {
                 subscribing to the newsletter.
               </p>
             </div>
-            <form action="{{apiUrl}}/newsletter/subscribe" method="POST">
+            <form action={`${props.apiHost}/newsletter/subscribe`} method="POST">
               <input type="email" name="email" required placeholder="you@example.com" />
               <input type="submit" value="Subscribe" />
             </form>

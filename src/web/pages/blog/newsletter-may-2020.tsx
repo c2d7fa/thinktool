@@ -1,9 +1,13 @@
 import Head from "next/head";
 import BlogPage from "../../lib/BlogPage";
 
-export default function BlogPostZettelkastenPrinciples() {
+export async function getStaticProps() {
+  return {props: {apiHost: process.env.DIAFORM_API_HOST}};
+}
+
+export default function BlogPostNewsletterMay2020(props: {apiHost: string}) {
   return (
-    <BlogPage>
+    <BlogPage apiHost={props.apiHost}>
       <Head>
         <title>Thinktool Newsletter for May 2020</title>
       </Head>

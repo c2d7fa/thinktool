@@ -1,7 +1,7 @@
 import Head from "next/head";
 import * as React from "react";
 
-export default function BlogPage(props: {children: React.ReactNode}) {
+export default function BlogPage(props: {apiHost: string; children: React.ReactNode}) {
   return (
     <>
       <Head>
@@ -33,7 +33,7 @@ export default function BlogPage(props: {children: React.ReactNode}) {
               get a look behind the scenes.
             </p>
           </div>
-          <form action="{{apiUrl}}/newsletter/subscribe" method="POST">
+          <form action={`${props.apiHost}/newsletter/subscribe`} method="POST">
             <input type="email" name="email" required placeholder="you@example.com" />
             <input type="submit" value="Subscribe" />
           </form>

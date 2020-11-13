@@ -3,7 +3,11 @@ import * as React from "react";
 
 import StaticPage from "../lib/StaticPage";
 
-export default function RecoverAccount() {
+export async function getStaticProps() {
+  return {props: {apiHost: process.env.DIAFORM_API_HOST}};
+}
+
+export default function RecoverAccount(props: {apiHost: string}) {
   return (
     <StaticPage>
       <Head>
@@ -12,7 +16,7 @@ export default function RecoverAccount() {
 
       <main className="login">
         <div className="box small centered">
-          <form action="{{apiUrl}}/recover-account" method="POST">
+          <form action={`${props.apiHost}/recover-account`} method="POST">
             <p>
               You should have gotten an email with a link to this page. Enter your username, the password you
               want to use, and the code you got from the email.

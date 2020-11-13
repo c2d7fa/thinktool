@@ -1,9 +1,13 @@
 import Head from "next/head";
 import BlogPage from "../lib/BlogPage";
 
-export default function BlogPostZettelkastenPrinciples() {
+export async function getStaticProps() {
+  return {props: {apiHost: process.env.DIAFORM_API_HOST}};
+}
+
+export default function BlogPostZettelkastenPrinciples(props: {apiHost: string}) {
   return (
-    <BlogPage>
+    <BlogPage apiHost={props.apiHost}>
       <Head>
         <title>Tutorial: How to take notes with Thinktool</title>
       </Head>
