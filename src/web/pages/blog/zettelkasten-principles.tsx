@@ -1,0 +1,146 @@
+import Head from "next/head";
+import BlogPage from "../../lib/BlogPage";
+
+export async function getStaticProps() {
+  return {props: {apiHost: process.env.DIAFORM_API_HOST}};
+}
+
+export default function BlogPostZettelkastenPrinciples(props: {apiHost: string}) {
+  return (
+    <BlogPage apiHost={props.apiHost}>
+      <Head>
+        <title>How to take better notes with Zettelkasten principles</title>
+        <meta
+          name="description"
+          content="Here are 3 principles from the Zettelkasten method that helped Nilkas Luhmann take more useful notes. You can apply these to modern note-taking applications like Roam Research or Obsidian."></meta>
+      </Head>
+      <article>
+        <h1>How to take better notes with Zettelkasten principles</h1>
+        <div className="last-updated">
+          Published <time dateTime="2020-06-08">June 8th, 2020</time>.
+        </div>
+        <p>
+          The German sociologist Niklas Luhmann published over 70 books in his lifetime. He was highly
+          influential, not only in sociology, but also in philosophy and systems theory.
+        </p>
+        <p>How was he so productive?</p>
+        <p>
+          Luhmann took an absurdly large number of small notes. Thoughout almost his entire life, he would
+          constantly be writing down ideas on index cards, and organizing them in his <i>Zettelkasten</i>{" "}
+          &ndash; "slip box". By 1998, he had written some 90,000 such notes.
+        </p>
+        <p>Organizing a massive catalouge like this is no easy feat, yet Luhmann managed to do it.</p>
+        <p>
+          In this article, I'll introduce three principles inspired by Luhmann's Zettelkasten that you can use
+          to build your own note-taking system.
+        </p>
+        <h2>1 &ndash; Each note should fit on an index card.</h2>
+        <p>
+          You don't actually have to <em>use</em> index cards, of course, but even if you're using a modern
+          note-taking app, make your notes as small as possible.
+        </p>
+        <p>
+          Each note should contain exactly one idea. Keep in mind that the purpose of note-taking isn't to
+          store every single piece of information out there; rather, note-taking is a system for improving
+          your understanding of complex topics. By splitting your notes into pieces that are as small as
+          psosible, you force yourself to boil each idea down to its core.
+        </p>
+        <p>For example, here's a screenshot of some of my notes about this topic:</p>
+        <img src="atomic.png" width="764" height="380" />
+        <p>
+          Each note is a few sentences at most. It took a while getting my notes this concise, but in the
+          process I gained a better understanding of the topic.
+        </p>
+
+        <h2>2 &ndash; Your notes should be tightly connected.</h2>
+        <p>
+          Zettelkasten isn't just a storage system. Luhmann wrote about his Zettelkasten that he considered it
+          a kind of conversation partner. It's an interactive system. It has the ability to surprise or
+          challenge you, as though it has ideas of its own.
+        </p>
+        <p>
+          The magic is <em>linking</em>. Each note should be linked to as many related notes and concepts as
+          you can think of. Then, you can look up any note, and your Zettelkasten will tell you about other
+          notes that you may have totally forgotten. By exploring your notes like this, you can stumble across
+          connections that you had never even made yourself.
+        </p>
+        <p>
+          Luhmann would painstakingly add references to all his index cards, but if you're using a modern
+          note-taking app with support for bidirectional links &ndash; such as{" "}
+          <a href="https://roamresearch.com/" rel="nofollow">
+            <span>Roam Research</span>
+          </a>
+          ,{" "}
+          <a href="https://obsidian.md/" rel="nofollow">
+            <span>Obsidian</span>
+          </a>{" "}
+          or{" "}
+          <a href="/">
+            <span>Thinktool</span>
+          </a>{" "}
+          &ndash; adding links is effortless.
+        </p>
+        <p>
+          For example, I have a note about how to add structure to your Zettelkasten (more about that in a
+          bit, by the way). I can see that this note is linked to a bunch of concepts, and I can open up those
+          concepts to see where else they are mentioned:
+        </p>
+        <img src="interconnected.png" width="757" height="735" />
+        <p>
+          (For simplicity, I'm showing an example where there's only two references, but imagine how you may
+          stumble across dozens of related notes in this way.)
+        </p>
+        <p>
+          All I had to do was add a link to a particular concept. Then, any other notes that links to the same
+          concept can be opened in a single click. Since our notes are so concise, I can quickly read through
+          these notes to see if there are any new connections here that I hadn't thought of before.
+        </p>
+
+        <h2>3 &ndash; Let your notes organize themselves.</h2>
+        <p>
+          With 90,000 notes, all written out by hand on paper, surely Luhmann must have had an extremely
+          complex system for indexing his notes, right? Well, not exactly. At no point did Luhmann ever sit
+          down to devise a system for his notes. He just wrote.
+        </p>
+        <p>
+          If you're tempted to come up with a system for organizing all your notes, stop! The entire point of
+          linking your notes together with bidirectional links is that you <em>don't need</em> tags,
+          hierarchies, or whatever other system you were going to come up with.
+        </p>
+        <p>
+          That isn't to say that Luhmann <em>didn't</em> have some kind of structure for his notes. But he let
+          that structure grow with the notes themselves. Let me explain how.
+        </p>
+        <p>
+          As you're exploring your notes, you will stumble across new connections that you didn't know about
+          before. When that happens, <em>just add another note</em>. If the connection isn't obvious, you
+          should explain it in your new note, and add links to existing notes.
+        </p>
+        <p>
+          Sometimes you may want to organize a bunch of notes in a single place, so you can easily find all
+          notes related to that topic.
+        </p>
+        <p>
+          One problem that traditional outliners and note-taking apps have is that each note must be in one
+          place. However, apps like{" "}
+          <a href="/">
+            <span>Thinktool</span>
+          </a>{" "}
+          and{" "}
+          <a href="https://www.thebrain.com/" rel="nofollow">
+            <span>TheBrain</span>
+          </a>{" "}
+          solve this problem by simply letting you put each note in multiple places. For example, one of the
+          notes below is both related to Zettelkasten specifically and note-taking in general:
+        </p>
+        <img src="structure.png" width="812" height="377" />
+        <p>
+          But really, the main takeaway is this: Just don't worry about it. Your note-taking system doesn't
+          need to be perfect from day one. As long as you take brief notes and add enough links, I can almost
+          guarantee that those notes will end up being useful to you. Far more useful than if you had tried to
+          come up with some complex organization system from the start.
+        </p>
+      </article>
+    </BlogPage>
+  );
+}

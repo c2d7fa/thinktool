@@ -5,13 +5,11 @@
 
 set -eux -o pipefail
 
-echo "Building icons..."
 mkdir -p dist/static
-cp -r src/static/icon.{svg,png} dist/static
 
 echo "Building web client into dist/static/..."
 cd src/web
 npm ci
 npm run build
-cp -r dist/* ../../dist/static
+cp -r out/* ../../dist/static
 cd ../..

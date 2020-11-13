@@ -1,8 +1,6 @@
 @use "../style/components";
 @use "../style/base";
 
-@import url("https://fonts.googleapis.com/css?family=Titillium+Web:400,400i&display=swap");
-
 body {
   margin: 0;
 
@@ -463,132 +461,96 @@ footer {
 
 /* #region Login page */
 
-.login {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 2em;
-}
-
-.login > * {
-  box-sizing: border-box;
-  max-width: 65ex;
-  width: 100%;
-  margin-top: 2em;
-  padding: 2em;
-  border-radius: 6px;
-  background: radial-gradient(circle at bottom, #f4f4f4 0%, #fcfcfc 150%);
-}
-
-.disclaimer {
-  background: radial-gradient(circle at bottom, hsl(45, 80%, 90%), hsl(55, 75%, 95%));
-  color: hsl(50, 20%, 20%);
+.login h1 {
+  font-size: 1.25rem;
+  margin: 0;
+  margin-bottom: 1rem;
 }
 
 form {
-  margin-top: 2em;
   padding: 0;
-}
 
-form .form-table {
-  display: table;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  height: 100%;
+
+  width: 40ex;
 }
 
 form .entry {
-  display: table-row;
+  display: flex;
+  flex-direction: column;
 }
 
-form .entry > * {
-  display: table-cell;
+form > *:not(:last-child) {
+  margin-bottom: 2em;
 }
 
-form .entry > label {
-  width: 8em;
+form {
+  color: #808080;
+
+  input {
+    color: #404040;
+  }
+}
+
+form .entry label {
+  cursor: text;
+  font-size: 0.9em;
+  line-height: 125%;
+}
+
+form input[type="text"],
+input[type="password"],
+input[type="email"] {
+  background: none;
+  border: none;
+  outline: none;
+
+  padding: 0;
+  margin: 0;
+
+  font-size: 1em;
+  font-family: "Inter";
 }
 
 form .entry > input {
   width: 100%;
 }
 
-@media (max-width: 480px) {
-  form .form-table {
-    display: flex;
-    flex-direction: column;
-  }
-
-  form .entry {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 1em;
-  }
-
-  form .entry > * {
-    margin: 0;
-    padding: 0;
-    display: block;
-  }
-
-  form .entry input {
-    padding: 6px;
-  }
-}
-
-form label {
-  font-size: 0.8em;
-  font-family: "Titillium Web";
-  text-transform: uppercase;
-
-  padding-bottom: 2em;
-  padding-right: 1em;
-}
-
-form input {
-  padding: 6px;
-  background-color: #f0f0f0;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  outline: none;
-
-  font-size: 1em;
-  font-family: "Roboto", sans-serif;
-  color: #202020;
-
-  transition: border-color 0.3s ease;
-}
-
-.login input[type="submit"] {
-  font-size: 0.8em;
-  font-family: "Titillium Web";
-  text-transform: uppercase;
-
+form input[type="checkbox"] {
   margin-right: 1em;
-  padding: 1ex 1em;
+}
 
-  border: none;
-  border-radius: 6px;
+.login button.submit {
+  margin-top: auto;
 
-  background-color: #f0f0f0;
-  border: 1px solid #e0e0e0;
-
-  color: #404040;
-
+  @include base.ui-font;
+  font-size: 0.9em;
+  font-weight: bold;
   cursor: pointer;
 
-  transition: color 0.3s ease, background-color 0.3s ease;
-}
+  border-radius: 6px;
+  padding: 1em;
 
-.login input[type="submit"]:hover {
-  color: #202020;
-  background-color: #d8d8d8;
-}
+  color: #484848;
+  border: 3px solid #f0f0f0;
 
-.login input[type="submit"]:active {
-  color: #606060;
-}
+  transition: border-color 150ms, background-color 150ms;
 
-.login .newsletter-signup {
-  margin-bottom: 1.5rem;
+  text-align: center;
+
+  &:hover {
+    border-color: #e0e0e0;
+  }
+
+  &:active {
+    background-color: #f8f8f8;
+  }
+
+  background-color: transparent;
+  outline: none;
 }
 
 .login .invalid-username {
@@ -600,7 +562,7 @@ form input {
 }
 
 .login input::placeholder {
-  color: #a0a0a0;
+  color: #c0c0c0;
 }
 
 .login input:invalid:not(:placeholder-shown) + .invalid-username {
@@ -608,10 +570,7 @@ form input {
 }
 
 .login .forgot-password {
-  color: #c0c0c0;
   font-size: 0.9em;
-  text-align: right;
-  margin-top: 1rem;
   display: inline-block;
 }
 
