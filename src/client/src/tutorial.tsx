@@ -3,13 +3,19 @@ import * as React from "react";
 import {ActionName} from "./actions";
 import {ExternalLink} from "./ui/ExternalLink";
 
-export type State = {step: string; finished: boolean};
+import * as G from "./goal";
 
-const initialState = {step: "Getting started", finished: false};
+export type State = {step: string; finished: boolean; goal: G.State};
+
+const initialState = {step: "Getting started", finished: false, goal: G.initialState};
 
 export function initialize(finished: boolean) {
   if (!finished) return initialState;
-  return {step: "Getting started", finished: true};
+  return {step: "Getting started", finished: true, goal: G.initialState};
+}
+
+export function action(state: State, event: G.ActionEvent) {
+  return {...state, goal: G.action(state.goal, event)};
 }
 
 const steps: {name: string; introduces: ActionName[]}[] = [
@@ -101,6 +107,15 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
 
   return (
     <div className="tutorial">
+      Goals:
+      <ul>
+        <li>
+          <G.EmbeddedGoal state={props.state.goal} id="add-parent" />
+        </li>
+        <li>
+          <G.EmbeddedGoal state={props.state.goal} id="create-item" />
+        </li>
+      </ul>
       <h1>
         {props.state.step}{" "}
         <span className="step">

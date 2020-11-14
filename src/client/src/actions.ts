@@ -83,6 +83,18 @@ export function execute(context: Context, action: ActionName): void {
     return node;
   }
 
+  // [TODO] In cases where we show a popup, it makes more sense to trigger this
+  // only after the popup has been completed. And the goal system probably also
+  // want to know about the selection from that popup.
+  context.setTutorialState(
+    Tutorial.action(context.tutorialState, {
+      action,
+      state: context.state,
+      tree: context.tree,
+      target: T.focused(context.tree),
+    }),
+  );
+
   const implementation = implementations[action];
   if (typeof implementation !== "function")
     throw `Bug in 'execute'. Action '${action}' did not have an implementation.`;
