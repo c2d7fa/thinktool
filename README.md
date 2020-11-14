@@ -95,12 +95,7 @@ into the web package with `npm link ../client` from `src/web/`.
 
 One problem with this is that installing the client package's `devDependencies`
 installs React, even though this is supposed to be a peer dependency. For this
-reason, you'll have to manually remove `client/node_modules/react{,-dom}/`.
-
-Always clear `.cache` before running `npm serve` from the web package.
-
-I'm sure that this is not how you're supposed to do this, but I haven't found
-any better approach.
+reason, you'll have to also run `npm link node_modules/@thinktool/client/node_modules/react{,-dom}`.
 
 ### Static Resources
 
