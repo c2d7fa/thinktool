@@ -14,7 +14,6 @@ npm cache clean --force
 
 cd src/web
 npm update @thinktool/client
-npm version "$version"
 
 cd ../desktop
 npm update @thinktool/client
