@@ -581,9 +581,9 @@ export function insertParent(state: D.State, tree: Tree, node: NodeRef, parent: 
 
 export function removeThing(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {
   const newState = D.remove(state, thing(tree, node));
+  let newTree = focus(tree, previousVisibleItem(tree, node));
 
   // Remove nodes from tree to match state
-  let newTree = tree;
   for (const n of I.allNodes(tree)) {
     if (thing(newTree, n) === thing(tree, node)) {
       const p = parent(tree, n);

@@ -343,6 +343,10 @@
     {
       "date": "2020-11-18",
       "title": "When backspacing over an empty item, that item is now automatically destroyed."
+    },
+    {
+      "date": "2020-11-18",
+      "title": "Destroying an item (e.g. with Alt-Delete) now places the cursor in the previous item."
     }
   ]
 }
