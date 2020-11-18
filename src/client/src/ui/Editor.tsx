@@ -267,6 +267,11 @@ function ContentEditor(props: {
           }
         }
 
+        if (ev.key === "Backspace" && view.state.doc.childCount === 0) {
+          console.log("Destroying item due to backspace on empty item.");
+          onActionRef.current!("destroy");
+        }
+
         // We don't want to handle anything by default.
         return false;
       },

@@ -339,6 +339,10 @@
     {
       "date": "2020-11-03",
       "title": "Fixed an issue where the icon would not be displayed inside the application itself."
+    },
+    {
+      "date": "2020-11-18",
+      "title": "When backspacing over an empty item, that item is now automatically destroyed."
     }
   ]
 }
