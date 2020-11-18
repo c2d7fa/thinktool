@@ -5,6 +5,7 @@ import * as Tutorial from "./tutorial";
 import {Communication} from "@thinktool/shared";
 import {Server} from "./server-api";
 import {Storage} from "./storage";
+import {ActionEvent} from "./goal";
 
 export interface DragInfo {
   current: T.NodeRef | null;

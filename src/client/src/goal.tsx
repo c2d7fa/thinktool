@@ -4,7 +4,14 @@ import * as D from "./data";
 import * as T from "./tree";
 import * as A from "./actions";
 
-export type ActionEvent = {action: A.ActionName; state: D.State; tree: T.Tree; target: T.NodeRef | null};
+export type ActionEvent =
+  | {action: "created-item"}
+  | {
+      action: "inserted-parent";
+      newState: D.State;
+      newTree: T.Tree;
+      childNode: T.NodeRef;
+    };
 
 export type GoalId = "create-item" | "add-parent";
 
@@ -25,11 +32,20 @@ function data(id: GoalId): GoalData {
 
 export const initialState: State = {finished: new Set()};
 
+function finishGoal(state: State, goal: GoalId): State {
+  const finished = new Set(state.finished);
+  finished.add(goal);
+  return {...state, finished};
+}
+
 export function action(state: State, event: ActionEvent): State {
-  if (event.action === "insert-parent") {
-    const finished = new Set(state.finished);
-    finished.add("add-parent");
-    return {...state, finished};
+  if (
+    event.action === "inserted-parent" &&
+    D.parents(event.newState, T.thing(event.newTree, event.childNode)).length > 1
+  ) {
+    return finishGoal(state, "add-parent");
+  } else if (event.action === "created-item") {
+    return finishGoal(state, "create-item");
   } else {
     return state;
   }

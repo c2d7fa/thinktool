@@ -3,6 +3,7 @@ import * as T from "./tree";
 import * as D from "./data";
 import * as Tutorial from "./tutorial";
 import * as S from "./shortcuts";
+import * as Goal from "./goal";
 
 export type ActionName =
   | "insert-sibling"
@@ -70,6 +71,10 @@ export function enabled(context: Context, action: ActionName): boolean {
   }
 }
 
+function tutorialAction(context: Context, event: Goal.ActionEvent) {
+  context.setTutorialState(Tutorial.action(context.tutorialState, event));
+}
+
 export function execute(context: Context, action: ActionName): void {
   if (!enabled(context, action)) {
     console.error("The action %o is not enabled! Ignoring.", action);
@@ -78,22 +83,9 @@ export function execute(context: Context, action: ActionName): void {
 
   function node(): T.NodeRef {
     const node = T.focused(context.tree);
-    if (node === null)
-      throw `Bug in 'enabled'. Ran action '${action}', even though there was no node selected.`;
+    if (node === null) throw `Bug in 'enabled'. Ran action '${action}', even though there was no node selected.`;
     return node;
   }
-
-  // [TODO] In cases where we show a popup, it makes more sense to trigger this
-  // only after the popup has been completed. And the goal system probably also
-  // want to know about the selection from that popup.
-  context.setTutorialState(
-    Tutorial.action(context.tutorialState, {
-      action,
-      state: context.state,
-      tree: context.tree,
-      target: T.focused(context.tree),
-    }),
-  );
 
   const implementation = implementations[action];
   if (typeof implementation !== "function")
@@ -124,6 +116,7 @@ const implementations: {
     context.setPopupTarget(getFocused());
     context.setActivePopup((state, tree, target, selection) => {
       const [newState, newTree] = T.insertParent(state, tree, target, selection);
+      tutorialAction(context, {action: "inserted-parent", childNode: target, newState, newTree});
       return [newState, newTree];
     });
   },
@@ -160,12 +153,14 @@ const implementations: {
       context.setState(newState);
       context.setTree(T.focus(newTree, newId));
     }
+    tutorialAction(context, {action: "created-item"});
   },
 
   "new-before"(context, getFocused) {
     const [newState, newTree, _, newId] = T.createSiblingBefore(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(T.focus(newTree, newId));
+    tutorialAction(context, {action: "created-item"});
   },
 
   "focus-up"(context, getFocused) {
