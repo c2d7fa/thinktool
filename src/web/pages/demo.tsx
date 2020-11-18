@@ -4,14 +4,13 @@ import * as React from "react";
 import * as Thinktool from "@thinktool/client";
 import DemoData from "../lib/demo-data.json";
 
-import "@thinktool/client/dist/app.css";
-
 export default function Demo() {
   return (
     <>
       <Head>
         <meta charSet="utf-8" />
         <title>Thinktool</title>
+        <link rel="stylesheet" href="/app.css" />
         <link rel="icon" href="/icon.png" type="image/png" />
         <link rel="prefetch" href="https://thinktool.io/splash-welcome.png" />
         <link rel="prefetch" href="https://thinktool.io/splash-bidirectional-links.svg" />

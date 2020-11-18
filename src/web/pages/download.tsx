@@ -48,14 +48,14 @@ export default function Download(props: {apiHost: string}) {
           </p>
           <p>
             Get it for <strong>Linux</strong> here:{" "}
-            <a href="https://thinktool.io/Thinktool Desktop Prototype-202011132249.0.0.AppImage" download>
+            <a href="https://thinktool.io/Thinktool Desktop Prototype-202011181750.0.0.AppImage" download>
               <span>Thinktool Desktop Prototype.AppImage</span>
             </a>
             . Just make it executable with <code>chmod +x &lt;FILENAME&gt;</code> and then run it.
           </p>
           <p>
             Get it for <strong>Windows</strong> here:{" "}
-            <a href="https://thinktool.io/Thinktool Desktop Prototype 202011132249.0.0.exe" download>
+            <a href="https://thinktool.io/Thinktool Desktop Prototype 202011181750.0.0.exe" download>
               <span>Thinktool Desktop Prototype .exe</span>
             </a>
             . This is a so-called portable executable, so you don't need to install anything &ndash; just run
@@ -63,7 +63,7 @@ export default function Download(props: {apiHost: string}) {
           </p>
           <p>
             <i>
-              Last updated <time dateTime="2020-11-13T22:49:27">November 13, 2020</time>.
+              Last updated <time dateTime="2020-11-18T17:51:11">November 18, 2020</time>.
             </i>
           </p>
         </div>

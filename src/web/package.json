@@ -1,5 +1,6 @@
 {
   "name": "@thinktool/web",
+  "private": true,
   "description": "The web client for Thinktool.",
   "license": "UNLICENSED",
   "repository": {
@@ -7,12 +8,12 @@
     "url": "https://github.com/c2d7fa/thinktool.git"
   },
   "scripts": {
-    "build-static": "cp ../static/icon.png public && sass index.scss public/index.css",
+    "build-static": "cp ../static/icon.png public && sass index.scss public/index.css && cp node_modules/@thinktool/client/dist/app.css public",
     "dev": "npm run build-static && next dev",
     "build": "npm run build-static && next build && next export"
   },
   "dependencies": {
-    "@thinktool/client": "^3.0.0",
+    "@thinktool/client": "^3.2.0",
     "next": "^10.0.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
@@ -22,6 +23,5 @@
     "@types/node": "^14.14.6",
     "@types/react": "^16.9.56",
     "typescript": "^4.0.5"
-  },
-  "version": "202011132357.0.0"
+  }
 }

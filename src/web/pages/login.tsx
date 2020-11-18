@@ -44,7 +44,7 @@ function LogInForm(props: {apiHost: string; forgotPassword(): void}) {
 
 function ForgotPasswordForm(props: {apiHost: string}) {
   return (
-    <form action={`${props.apiHost}/forgot-password`}>
+    <form action={`${props.apiHost}/forgot-password`} method="POST">
       <p>
         Enter your username and email below. Then you'll be sent an email with instructions on how to recover
         your account.
