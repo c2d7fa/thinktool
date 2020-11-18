@@ -13,6 +13,7 @@ version="$(date +"%Y%m%d%H%M.0.0")"
 npm cache clean --force
 
 cd src/web
+npm ci
 npm update @thinktool/client
 
 cd ../desktop
