@@ -724,7 +724,11 @@ export default function ExpandableItem(props: {
         ),
       );
     } else {
-      props.context.setTree(T.toggle(props.context.state, props.context.tree, props.node));
+      const newTree = T.toggle(props.context.state, props.context.tree, props.node);
+      props.context.setTutorialState(
+        Tutorial.action(props.context.tutorialState, {action: "toggled-item", newTree, node: props.node}),
+      );
+      props.context.setTree(newTree);
     }
   }
 

@@ -11,9 +11,10 @@ export type ActionEvent =
       newState: D.State;
       newTree: T.Tree;
       childNode: T.NodeRef;
-    };
+    }
+  | {action: "toggled-item", newTree: T.Tree, node: T.NodeRef};
 
-export type GoalId = "create-item" | "add-parent";
+export type GoalId = "create-item" | "add-parent" | "expand-item";
 
 type GoalData = {title: string};
 
@@ -24,6 +25,7 @@ function data(id: GoalId): GoalData {
 
   data.set("create-item", {title: "Create a new item."});
   data.set("add-parent", {title: "Add a second parent to an item."});
+  data.set("expand-item", {title: "Expand an item to see its children."});
 
   const result = data.get(id);
   if (result === undefined) throw "oops";
@@ -46,6 +48,12 @@ export function action(state: State, event: ActionEvent): State {
     return finishGoal(state, "add-parent");
   } else if (event.action === "created-item") {
     return finishGoal(state, "create-item");
+  } else if (
+    event.action === "toggled-item" &&
+    T.expanded(event.newTree, event.node) &&
+    T.children(event.newTree, event.node).length >= 1
+  ) {
+    return finishGoal(state, "expand-item");
   } else {
     return state;
   }

@@ -147,11 +147,7 @@ export function StepGettingStarted(props: {goalState: G.State}) {
         <i>Let's start with the basics.</i>
       </p>
       <p>
-        The outline contains <em>items</em>. Click on an item to focus it, and then try editing its content.
-      </p>
-      <p>
-        <strong>Create some items.</strong> Focus an existing item by clicking on it, and then play around
-        with
+        The outline contains <em>items</em>. You can press
         <span className="fake-button">
           <span className="icon fas fa-plus-square"></span>New
         </span>
@@ -159,15 +155,22 @@ export function StepGettingStarted(props: {goalState: G.State}) {
         <span className="fake-button">
           <span className="icon fas fa-caret-square-down"></span>New Child
         </span>
-        in the toolbar to create a tree of items.
-      </p>
-      <p><G.EmbeddedGoal id={"create-item"} state={props.goalState}/></p>
-      <p>
-        <i>Most buttons also have keyboard shortcuts. Hover over a button to see its shortcuts.</i>
+        on the toolbar to create a some items.
       </p>
       <p>
-        <strong>Collapse and expand</strong> items by clicking the bullet next to them. Items with hidden
-        children will have a darker bullet.
+        <G.EmbeddedGoal id="create-item" state={props.goalState} />
+      </p>
+      <p>
+        Items that have a filled bullet next to them have hidden children. You can expand an item by clicking on
+        its bullet.
+      </p>
+      <p>
+        <G.EmbeddedGoal id="expand-item" state={props.goalState} />
+      </p>
+      <p>
+        <i>
+          Tip: Most buttons on the toolbar also have keyboard shortcuts. Hover over a button to see its shortcuts.
+        </i>
       </p>
     </>
   );
@@ -244,7 +247,7 @@ export function StepFlexibleHierarchy(props: {goalState: G.State}) {
         <i>Tip: Where you would use a tag in another note-taking app, you can add a parent in Thinktool insead.</i>
       </p>
       <p>
-        <strong>You can also</strong> add an existing item as a sibling of the focused item with
+        You can also add an existing item as a sibling of the focused item with
         <span className="fake-button">
           <span className="icon fas fa-plus-circle"></span>Sibling
         </span>

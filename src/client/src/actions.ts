@@ -236,7 +236,9 @@ const implementations: {
   },
 
   toggle(context, getFocused) {
-    context.setTree(T.toggle(context.state, context.tree, getFocused()));
+    const newTree = T.toggle(context.state, context.tree, getFocused());
+    context.setTree(newTree);
+    tutorialAction(context, {action: "toggled-item", newTree, node: getFocused()})
   },
 
   home(context, getFocused) {
