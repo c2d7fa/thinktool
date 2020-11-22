@@ -149,32 +149,6 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
   );
 }
 
-export function StepHowToUseThinktool() {
-  return (
-    <>
-      <p>
-        <i>Welcome to Thinktool!</i>
-      </p>
-      <p>
-        For a more thorough introduction, you can also check out this guide:{" "}
-        <ExternalLink className="important-link" href="/tutorial.html">
-          How to use Thinktool
-        </ExternalLink>
-      </p>
-      <p>
-        <i>
-          This tutorial is a work-in-progress. I'd like to hear your feedback about it. If there's anything
-          you found unclear, please{" "}
-          <a className="email" href="mailto:jonas@thinktool.io">
-            let me know
-          </a>
-          .
-        </i>
-      </p>
-    </>
-  );
-}
-
 export function StepGettingStarted() {
   return (
     <>
