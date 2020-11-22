@@ -203,6 +203,7 @@ const implementations: {
     const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(T.focus(newTree, newId));
+    tutorialAction(context, {action: "created-item"});
   },
 
   remove(context, getFocused) {
