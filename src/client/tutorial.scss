@@ -136,3 +136,17 @@
   margin-left: 0.5em;
   color: #00000040;
 }
+
+.goal {
+  font-weight: bold;
+  margin-left: 1em;
+
+  i {
+    margin-right: 1ex;
+  }
+
+  &.goal-finished {
+    text-decoration: line-through 2px;
+    opacity: 60%;
+  }
+}

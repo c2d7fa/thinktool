@@ -1,8 +1,8 @@
+import {classes} from "@johv/miscjs";
 import * as React from "react";
 
 import * as D from "./data";
 import * as T from "./tree";
-import * as A from "./actions";
 
 export type ActionEvent =
   | {action: "created-item"}
@@ -15,15 +15,15 @@ export type ActionEvent =
 
 export type GoalId = "create-item" | "add-parent";
 
-type GoalData = {title: string; help: JSX.Element};
+type GoalData = {title: string};
 
 export type State = {finished: Set<GoalId>};
 
 function data(id: GoalId): GoalData {
   const data = new Map<GoalId, GoalData>();
 
-  data.set("create-item", {title: "Create a new item", help: <span>TODO 1</span>});
-  data.set("add-parent", {title: "Add multiple parents to a single item", help: <span>TODO 2</span>});
+  data.set("create-item", {title: "Create a new item."});
+  data.set("add-parent", {title: "Add a second parent to an item."});
 
   const result = data.get(id);
   if (result === undefined) throw "oops";
@@ -52,17 +52,11 @@ export function action(state: State, event: ActionEvent): State {
 }
 
 export function EmbeddedGoal(props: {id: GoalId; state: State}) {
-  if (props.state.finished.has(props.id)) {
-    return (
-      <strong>
-        Goal: <s>{data(props.id).title}</s>
-      </strong>
-    );
-  } else {
-    return (
-      <strong>
-        Goal: <i>{data(props.id).title}</i>
-      </strong>
-    );
-  }
+  const finished = props.state.finished.has(props.id);
+  return (
+    <span className={classes({goal: true, "goal-finished": finished})}>
+      <i className="fas fa-pen" />
+      <span>{data(props.id).title}</span>
+    </span>
+  );
 }

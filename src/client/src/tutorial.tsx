@@ -227,19 +227,21 @@ export function StepFlexibleHierarchy(props: {goalState: G.State}) {
         </i>
       </p>
       <p>
-        <strong>Add a second parent to an existing item.</strong> To do this, click
-        on an item to focus it, then click{" "}
+        To add a second parent to an existing item, first click on an item to focus it. Then click{" "}
         <span className="fake-button">
           <span className="icon fas fa-chevron-circle-up"></span>Parent,
         </span>
-        and type search for an item to add as a parent.
+        and search for another item that you want to add as a parent.
       </p>
-      <p><G.EmbeddedGoal id="add-parent" state={props.goalState}/></p>
-      <p>Notice how a little green box showed up above the item? You can click on it to go to the other parent. Just use the back button in your browser to go back.</p>
       <p>
-        <i>
-          Tip: Where you would use a tag in another note-taking app, you can add a parent in Thinktool insead.
-        </i>
+        <G.EmbeddedGoal id="add-parent" state={props.goalState} />
+      </p>
+      <p>
+        Notice how a little green box showed up above the item? You can click on it to go to the other parent. Just
+        use the back button in your browser to go back.
+      </p>
+      <p>
+        <i>Tip: Where you would use a tag in another note-taking app, you can add a parent in Thinktool insead.</i>
       </p>
       <p>
         <strong>You can also</strong> add an existing item as a sibling of the focused item with
