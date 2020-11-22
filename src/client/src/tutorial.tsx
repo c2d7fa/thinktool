@@ -107,15 +107,6 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
 
   return (
     <div className="tutorial">
-      Goals:
-      <ul>
-        <li>
-          <G.EmbeddedGoal state={props.state.goal} id="add-parent" />
-        </li>
-        <li>
-          <G.EmbeddedGoal state={props.state.goal} id="create-item" />
-        </li>
-      </ul>
       <h1>
         {props.state.step}{" "}
         <span className="step">
@@ -123,11 +114,11 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
         </span>
       </h1>
       {props.state.step === "Getting started" ? (
-        <StepGettingStarted />
+        <StepGettingStarted goalState={props.state.goal} />
       ) : props.state.step === "Reorganizing" ? (
         <StepReorganizing />
       ) : props.state.step === "Multiple parents" ? (
-        <StepFlexibleHierarchy />
+        <StepFlexibleHierarchy goalState={props.state.goal} />
       ) : props.state.step === "Bidirectional linking" ? (
         <StepBidirectionalLinks />
       ) : props.state.step === "Navigation" ? (
@@ -149,7 +140,7 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
   );
 }
 
-export function StepGettingStarted() {
+export function StepGettingStarted(props: {goalState: G.State}) {
   return (
     <>
       <p>
@@ -170,6 +161,7 @@ export function StepGettingStarted() {
         </span>
         in the toolbar to create a tree of items.
       </p>
+      <p><G.EmbeddedGoal id={"create-item"} state={props.goalState}/></p>
       <p>
         <i>Most buttons also have keyboard shortcuts. Hover over a button to see its shortcuts.</i>
       </p>
@@ -225,7 +217,7 @@ export function StepReorganizing() {
   );
 }
 
-export function StepFlexibleHierarchy() {
+export function StepFlexibleHierarchy(props: {goalState: G.State}) {
   return (
     <>
       <p>
@@ -235,18 +227,18 @@ export function StepFlexibleHierarchy() {
         </i>
       </p>
       <p>
-        <strong>Connect an existing item as a parent of the currently focused item.</strong> To do this, click
-        on an item to focus it, click{" "}
+        <strong>Add a second parent to an existing item.</strong> To do this, click
+        on an item to focus it, then click{" "}
         <span className="fake-button">
           <span className="icon fas fa-chevron-circle-up"></span>Parent,
         </span>
-        and then type some of the content of the existing item that you want to add as a parent.
+        and type search for an item to add as a parent.
       </p>
-      <p>Now you can find the original item under both its parents!</p>
+      <p><G.EmbeddedGoal id="add-parent" state={props.goalState}/></p>
+      <p>Notice how a little green box showed up above the item? You can click on it to go to the other parent. Just use the back button in your browser to go back.</p>
       <p>
         <i>
-          In Thinktool, you can use parents like tags, keywords or categories in other note-taking
-          applications.
+          Tip: Where you would use a tag in another note-taking app, you can add a parent in Thinktool insead.
         </i>
       </p>
       <p>
@@ -258,10 +250,6 @@ export function StepFlexibleHierarchy() {
         <span className="fake-button">
           <span className="icon fas fa-chevron-circle-down"></span>Child.
         </span>
-      </p>
-      <p>
-        By the way, notice how Thinktool automatically shows you each item's other parents. You can click on
-        these to jump there.
       </p>
     </>
   );
