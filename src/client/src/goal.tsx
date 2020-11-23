@@ -14,7 +14,7 @@ export type ActionEvent =
     }
   | {action: "toggled-item", newTree: T.Tree, node: T.NodeRef};
 
-export type GoalId = "create-item" | "add-parent" | "expand-item";
+export type GoalId = "create-item" | "add-parent" | "expand-item" | "remove-item" | "delete-item" | "move-item" | "insert-link" | "expand-link" | "jump-item" | "jump-home" | "find-item";
 
 type GoalData = {title: string};
 
@@ -26,6 +26,14 @@ function data(id: GoalId): GoalData {
   data.set("create-item", {title: "Create a new item."});
   data.set("add-parent", {title: "Add a second parent to an item."});
   data.set("expand-item", {title: "Expand an item to see its children."});
+  data.set("remove-item", {title: "Remove an item from its parent."}); // [TODO] Not implemented
+  data.set("delete-item", {title: "Destroy an item you don't need."}); // [TODO]
+  data.set("move-item", {title: "Move an item to somewhere else."}); // [TODO]
+  data.set("insert-link", {title: "Insert a link inside an item."}); // [TODO]
+  data.set("expand-link", {title: "Click on the link to expand it."}); // [TODO]
+  data.set("jump-item", {title: "Jump to another item."}); // [TODO]
+  data.set("jump-home", {title: "Go to the home view."}); // [TODO]
+  data.set("find-item", {title: "Find an item and jump to it."}); // [TODO]
 
   const result = data.get(id);
   if (result === undefined) throw "oops";
