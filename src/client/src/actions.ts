@@ -135,9 +135,11 @@ const implementations: {
 
   find(context) {
     // This is a hack on how setActivePopup is supposed to be used.
+    const previouslyFocused = T.thing(context.tree, T.root(context.tree));
     context.setPopupTarget({id: 0});
     context.setActivePopup((state, tree, target, selection) => {
       context.setSelectedThing(selection);
+      tutorialAction(context, {action: "found", previouslyFocused, thing: selection});
       return [state, tree];
     });
   },
@@ -243,6 +245,7 @@ const implementations: {
 
   home(context, getFocused) {
     const newTree = T.fromRoot(context.state, "0");
+    tutorialAction(context, {action: "home"});
     context.setTree(newTree);
   },
 

@@ -12,7 +12,9 @@ export type ActionEvent =
       newTree: T.Tree;
       childNode: T.NodeRef;
     }
-  | {action: "toggled-item"; newTree: T.Tree; node: T.NodeRef};
+  | {action: "toggled-item"; newTree: T.Tree; node: T.NodeRef}
+  | {action: "found"; previouslyFocused: string; thing: string}
+  | {action: "home"};
 
 export type GoalId =
   | "create-item"
@@ -73,8 +75,20 @@ const goals = (() => {
   goals.set("insert-link", {title: "Insert a link inside an item.", doesComplete: notYetImplemented});
   goals.set("expand-link", {title: "Click on the link to expand it.", doesComplete: notYetImplemented});
   goals.set("jump-item", {title: "Jump to another item.", doesComplete: notYetImplemented});
-  goals.set("jump-home", {title: "Go to the home view.", doesComplete: notYetImplemented});
-  goals.set("find-item", {title: "Find an item and jump to it.", doesComplete: notYetImplemented});
+
+  goals.set("jump-home", {
+    title: "Go to the home view.",
+    doesComplete(event) {
+      return event.action === "home";
+    },
+  });
+
+  goals.set("find-item", {
+    title: "Find an item and jump to it.",
+    doesComplete(event) {
+      return event.action === "found" && event.previouslyFocused !== event.thing;
+    },
+  });
 
   return goals;
 })();
