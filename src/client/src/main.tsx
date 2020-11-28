@@ -686,6 +686,7 @@ function ExpandableItem(props: {
   kind: "child" | "reference" | "opened-link" | "parent";
 }) {
   function onOpenLink(target: string): void {
+    props.context.setTutorialState(Tutorial.action(props.context.tutorialState, {action: "link-toggled", expanded: !T.isLinkOpen(props.context.tree, props.node, target)}))
     props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, target));
   }
 

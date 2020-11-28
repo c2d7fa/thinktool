@@ -17,7 +17,9 @@ export type ActionEvent =
   | {action: "home"}
   | {action: "removed"}
   | {action: "destroy"}
-  | {action: "jump"; previouslyFocused: string; thing: string};
+  | {action: "jump"; previouslyFocused: string; thing: string}
+  | {action: "link-toggled"; expanded: boolean}
+  | {action: "link-inserted"};
 
 export type GoalId =
   | "create-item"
@@ -87,8 +89,20 @@ const goals = (() => {
   });
 
   goals.set("move-item", {title: "Move an item to somewhere else.", doesComplete: notYetImplemented});
-  goals.set("insert-link", {title: "Insert a link inside an item.", doesComplete: notYetImplemented});
-  goals.set("expand-link", {title: "Click on the link to expand it.", doesComplete: notYetImplemented});
+
+  goals.set("insert-link", {
+    title: "Insert a link inside an item.",
+    doesComplete(event) {
+      return event.action === "link-inserted";
+    },
+  });
+
+  goals.set("expand-link", {
+    title: "Click on the link to expand it.",
+    doesComplete(event) {
+      return event.action === "link-toggled" && event.expanded;
+    },
+  });
 
   goals.set("jump-item", {
     title: "Jump to another item.",

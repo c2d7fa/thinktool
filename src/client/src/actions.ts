@@ -128,6 +128,7 @@ const implementations: {
     context.setActivePopup((state, tree, target, selection) => {
       if (target !== node) console.error("Unexpected target/node");
       if (context.activeEditor === null) throw "No active editor.";
+      tutorialAction(context, {action: "link-inserted"});
       context.activeEditor.replaceSelectionWithLink(selection, D.contentText(state, selection));
       return [state, tree];
     });
