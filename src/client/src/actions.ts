@@ -3,6 +3,7 @@ import * as T from "./tree";
 import * as D from "./data";
 import * as Tutorial from "./tutorial";
 import * as S from "./shortcuts";
+import * as Goal from "./goal";
 
 export type ActionName =
   | "insert-sibling"
@@ -70,6 +71,10 @@ export function enabled(context: Context, action: ActionName): boolean {
   }
 }
 
+function tutorialAction(context: Context, event: Goal.ActionEvent) {
+  context.setTutorialState(Tutorial.action(context.tutorialState, event));
+}
+
 export function execute(context: Context, action: ActionName): void {
   if (!enabled(context, action)) {
     console.error("The action %o is not enabled! Ignoring.", action);
@@ -78,8 +83,7 @@ export function execute(context: Context, action: ActionName): void {
 
   function node(): T.NodeRef {
     const node = T.focused(context.tree);
-    if (node === null)
-      throw `Bug in 'enabled'. Ran action '${action}', even though there was no node selected.`;
+    if (node === null) throw `Bug in 'enabled'. Ran action '${action}', even though there was no node selected.`;
     return node;
   }
 
@@ -112,6 +116,7 @@ const implementations: {
     context.setPopupTarget(getFocused());
     context.setActivePopup((state, tree, target, selection) => {
       const [newState, newTree] = T.insertParent(state, tree, target, selection);
+      tutorialAction(context, {action: "inserted-parent", childNode: target, newState, newTree});
       return [newState, newTree];
     });
   },
@@ -123,6 +128,7 @@ const implementations: {
     context.setActivePopup((state, tree, target, selection) => {
       if (target !== node) console.error("Unexpected target/node");
       if (context.activeEditor === null) throw "No active editor.";
+      tutorialAction(context, {action: "link-inserted"});
       context.activeEditor.replaceSelectionWithLink(selection, D.contentText(state, selection));
       return [state, tree];
     });
@@ -130,9 +136,11 @@ const implementations: {
 
   find(context) {
     // This is a hack on how setActivePopup is supposed to be used.
+    const previouslyFocused = T.thing(context.tree, T.root(context.tree));
     context.setPopupTarget({id: 0});
     context.setActivePopup((state, tree, target, selection) => {
       context.setSelectedThing(selection);
+      tutorialAction(context, {action: "found", previouslyFocused, thing: selection});
       return [state, tree];
     });
   },
@@ -148,12 +156,14 @@ const implementations: {
       context.setState(newState);
       context.setTree(T.focus(newTree, newId));
     }
+    tutorialAction(context, {action: "created-item"});
   },
 
   "new-before"(context, getFocused) {
     const [newState, newTree, _, newId] = T.createSiblingBefore(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(T.focus(newTree, newId));
+    tutorialAction(context, {action: "created-item"});
   },
 
   "focus-up"(context, getFocused) {
@@ -165,49 +175,58 @@ const implementations: {
   },
 
   zoom(context, getFocused) {
+    const previouslyFocused = T.thing(context.tree, T.root(context.tree));
     context.setSelectedThing(T.thing(context.tree, getFocused()));
+    tutorialAction(context, {action: "jump", previouslyFocused, thing: T.thing(context.tree, getFocused())});
   },
 
   indent(context, getFocused) {
     const [newState, newTree] = T.indent(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(newTree);
+    tutorialAction(context, {action: "moved"});
   },
 
   unindent(context, getFocused) {
     const [newState, newTree] = T.unindent(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(newTree);
+    tutorialAction(context, {action: "moved"});
   },
 
   down(context, getFocused) {
     const [newState, newTree] = T.moveDown(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(newTree);
+    tutorialAction(context, {action: "moved"});
   },
 
   up(context, getFocused) {
     const [newState, newTree] = T.moveUp(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(newTree);
+    tutorialAction(context, {action: "moved"});
   },
 
   "new-child"(context, getFocused) {
     const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(T.focus(newTree, newId));
+    tutorialAction(context, {action: "created-item"});
   },
 
   remove(context, getFocused) {
     const [newState, newTree] = T.remove(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(newTree);
+    tutorialAction(context, {action: "removed"});
   },
 
   destroy(context, getFocused) {
     const [newState, newTree] = T.removeThing(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(newTree);
+    tutorialAction(context, {action: "destroy"});
   },
 
   tutorial(context, getFocused) {
@@ -228,11 +247,14 @@ const implementations: {
   },
 
   toggle(context, getFocused) {
-    context.setTree(T.toggle(context.state, context.tree, getFocused()));
+    const newTree = T.toggle(context.state, context.tree, getFocused());
+    context.setTree(newTree);
+    tutorialAction(context, {action: "toggled-item", newTree, node: getFocused()});
   },
 
   home(context, getFocused) {
     const newTree = T.fromRoot(context.state, "0");
+    tutorialAction(context, {action: "home"});
     context.setTree(newTree);
   },
 

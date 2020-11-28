@@ -3,20 +3,26 @@ import * as React from "react";
 import {ActionName} from "./actions";
 import {ExternalLink} from "./ui/ExternalLink";
 
-export type State = {step: string; finished: boolean};
+import * as G from "./goal";
 
-const initialState = {step: "Getting started", finished: false};
+export type State = {step: string; finished: boolean; goal: G.State};
+
+const initialState = {step: "Getting started", finished: false, goal: G.initialState};
 
 export function initialize(finished: boolean) {
   if (!finished) return initialState;
-  return {step: "Getting started", finished: true};
+  return {step: "Getting started", finished: true, goal: G.initialState};
+}
+
+export function action(state: State, event: G.ActionEvent) {
+  return {...state, goal: G.action(state.goal, event)};
 }
 
 const steps: {name: string; introduces: ActionName[]}[] = [
   {name: "Getting started", introduces: ["new", "new-child"]},
   {name: "Multiple parents", introduces: ["insert-child", "insert-sibling", "insert-parent"]},
-  {name: "Reorganizing", introduces: ["remove", "destroy", "indent", "unindent", "up", "down"]},
   {name: "Bidirectional linking", introduces: ["insert-link"]},
+  {name: "Reorganizing", introduces: ["remove", "destroy", "indent", "unindent", "up", "down"]},
   {name: "Navigation", introduces: ["find", "zoom", "home"]},
   {name: "The end", introduces: ["tutorial", "forum"]},
 ];
@@ -108,15 +114,15 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
         </span>
       </h1>
       {props.state.step === "Getting started" ? (
-        <StepGettingStarted />
+        <StepGettingStarted goalState={props.state.goal} />
       ) : props.state.step === "Reorganizing" ? (
-        <StepReorganizing />
+        <StepReorganizing goalState={props.state.goal} />
       ) : props.state.step === "Multiple parents" ? (
-        <StepFlexibleHierarchy />
+        <StepFlexibleHierarchy goalState={props.state.goal} />
       ) : props.state.step === "Bidirectional linking" ? (
-        <StepBidirectionalLinks />
+        <StepBidirectionalLinks goalState={props.state.goal} />
       ) : props.state.step === "Navigation" ? (
-        <StepStayingFocused />
+        <StepStayingFocused goalState={props.state.goal} />
       ) : props.state.step === "The end" ? (
         <StepHaveFun />
       ) : (
@@ -134,109 +140,104 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
   );
 }
 
-export function StepHowToUseThinktool() {
-  return (
-    <>
-      <p>
-        <i>Welcome to Thinktool!</i>
-      </p>
-      <p>
-        For a more thorough introduction, you can also check out this guide:{" "}
-        <ExternalLink className="important-link" href="/tutorial.html">
-          How to use Thinktool
-        </ExternalLink>
-      </p>
-      <p>
-        <i>
-          This tutorial is a work-in-progress. I'd like to hear your feedback about it. If there's anything
-          you found unclear, please{" "}
-          <a className="email" href="mailto:jonas@thinktool.io">
-            let me know
-          </a>
-          .
-        </i>
-      </p>
-    </>
-  );
-}
-
-export function StepGettingStarted() {
+export function StepGettingStarted(props: {goalState: G.State}) {
   return (
     <>
       <p>
         <i>Let's start with the basics.</i>
       </p>
       <p>
-        The outline contains <em>items</em>. Click on an item to focus it, and then try editing its content.
-      </p>
-      <p>
-        <strong>Create some items.</strong> Focus an existing item by clicking on it, and then play around
-        with
+        The outline contains <em>items</em>. You can press{" "}
         <span className="fake-button">
           <span className="icon fas fa-plus-square"></span>New
-        </span>
-        and
+        </span>{" "}
+        and{" "}
         <span className="fake-button">
           <span className="icon fas fa-caret-square-down"></span>New Child
-        </span>
-        in the toolbar to create a tree of items.
+        </span>{" "}
+        on the toolbar to create a some items.
       </p>
       <p>
-        <i>Most buttons also have keyboard shortcuts. Hover over a button to see its shortcuts.</i>
+        <G.EmbeddedGoal id="create-item" state={props.goalState} />
       </p>
       <p>
-        <strong>Collapse and expand</strong> items by clicking the bullet next to them. Items with hidden
-        children will have a darker bullet.
+        Items that have a filled bullet next to them have hidden children. You can expand an item by clicking on
+        its bullet.
+      </p>
+      <p>
+        <G.EmbeddedGoal id="expand-item" state={props.goalState} />
+      </p>
+      <p>
+        <i>
+          Tip: Most buttons on the toolbar also have keyboard shortcuts. Hover over a button to see its shortcuts.
+        </i>
       </p>
     </>
   );
 }
 
-export function StepReorganizing() {
+export function StepReorganizing(props: {goalState: G.State}) {
   return (
     <>
       <p>
-        <i>Now that you have some items, try reorganizing them.</i>
+        <i>
+          Curation is the key to a useful library of notes. Delete notes you don't use, and move old notes to where
+          they belong.
+        </i>
       </p>
       <p>
-        <strong>Remove an item from its parent</strong> with
-        <span className="fake-button">
-          <span className="icon fas fa-minus-square"></span>Remove.
-        </span>
-        This does <em>not</em> remove that item from the database, so if it has any other parents, you can
-        still find it there.
-      </p>
-      <p>
-        <strong>To completely delete an item,</strong> use{" "}
+        To delete an item you no longer care about from the database, use{" "}
         <span className="fake-button">
           <span className="icon fas fa-trash"></span>Destroy
         </span>
-        instead. This removes the item from all its parents, and permanently deletes it from the database.
+        . This deletes the item permanently.
       </p>
       <p>
-        <strong>Reorder items</strong> with
+        <G.EmbeddedGoal id="delete-item" state={props.goalState} />
+      </p>
+      <p>
+        You can also remove an item from its parent <em>without</em> deleting it from the database with{" "}
+        <span className="fake-button">
+          <span className="icon fas fa-minus-square"></span>Remove
+        </span>
+        . If the item has any other parents, you can still find it there.
+      </p>
+      <p>
+        <G.EmbeddedGoal id="remove-item" state={props.goalState} />
+      </p>
+      <p>
+        You can use{" "}
         <span className="fake-button">
           <span className="icon fas fa-chevron-up"></span>Up
         </span>
-        and
-        <span className="fake-button">
+        ,
+        <span className="fake-button">{" "}
           <span className="icon fas fa-chevron-right"></span>Down
         </span>
-        , or use
-        <span className="fake-button">
+        ,
+        <span className="fake-button">{" "}
           <span className="icon fas fa-chevron-left"></span>Unindent
-        </span>
-        and
+        </span>{" "}
+        and{" "}
         <span className="fake-button">
           <span className="icon fas fa-chevron-right"></span>Indent
-        </span>
+        </span>{" "}
         to reorganize items among their neighbours.
+      </p>
+      <p>
+        <G.EmbeddedGoal id="move-item" state={props.goalState} />
+      </p>
+      <p>
+        <i>
+          Tip: Don't forget that you can have the same item in multiple places. Sometimes it makes more sense to
+          add a parent instead of moving a item.
+        </i>
       </p>
     </>
   );
 }
 
-export function StepFlexibleHierarchy() {
+export function StepFlexibleHierarchy(props: {goalState: G.State}) {
   return (
     <>
       <p>
@@ -246,99 +247,125 @@ export function StepFlexibleHierarchy() {
         </i>
       </p>
       <p>
-        <strong>Connect an existing item as a parent of the currently focused item.</strong> To do this, click
-        on an item to focus it, click{" "}
+        To add a second parent to an existing item, first click on an item to focus it. Then click{" "}
         <span className="fake-button">
           <span className="icon fas fa-chevron-circle-up"></span>Parent,
-        </span>
-        and then type some of the content of the existing item that you want to add as a parent.
-      </p>
-      <p>Now you can find the original item under both its parents!</p>
-      <p>
-        <i>
-          In Thinktool, you can use parents like tags, keywords or categories in other note-taking
-          applications.
-        </i>
+        </span>{" "}
+        and search for another item that you want to add as a parent.
       </p>
       <p>
-        <strong>You can also</strong> add an existing item as a sibling of the focused item with
+        <G.EmbeddedGoal id="add-parent" state={props.goalState} />
+      </p>
+      <p>
+        Notice how a little green box showed up above the item? You can click on it to go to the other parent. Just
+        use the back button in your browser to go back.
+      </p>
+      <p>
+        <i>Tip: Where you would use a tag in another note-taking app, you can add a parent in Thinktool insead.</i>
+      </p>
+      <p>
+        You can also add an existing item as a sibling of the focused item with{" "}
         <span className="fake-button">
           <span className="icon fas fa-plus-circle"></span>Sibling
-        </span>
-        or as a child with
+        </span>{" "}
+        or as a child with{" "}
         <span className="fake-button">
-          <span className="icon fas fa-chevron-circle-down"></span>Child.
+          <span className="icon fas fa-chevron-circle-down"></span>Child
         </span>
-      </p>
-      <p>
-        By the way, notice how Thinktool automatically shows you each item's other parents. You can click on
-        these to jump there.
+        .
       </p>
     </>
   );
 }
 
-export function StepBidirectionalLinks() {
+export function StepBidirectionalLinks(props: {goalState: G.State}) {
   return (
     <>
       <p>
-        <i>Thinktool has bidirectional links like Roam Research or Obsidian.</i>
+        <i>Use links to connect concepts that don't fit in a hierarchy.</i>
       </p>
       <p>
-        <strong>Try adding a link</strong> by first placing your cursor inside an item, and then pressing the
+        To insert a link, first edit an item by clicking on it. Then press{" "}
         <span className="fake-button">
           <span className="icon fas fa-link"></span>Link
         </span>
-        button. Type the name of another item and select it.
+        , and select the item that you want to link to.
       </p>
-      <p>This will insert a link at the cursor.</p>
       <p>
-        <strong>Expand the link.</strong> Just click on the link. You can see the linked item, its children
-        and its parents directly in the outline.
+        <G.EmbeddedGoal id="insert-link" state={props.goalState} />
+      </p>
+      <p>
+        After you've inserted a link, you can expand the link by clicking on it. This shows you the linked item
+        directly in the outline.
+      </p>
+      <p>
+        <G.EmbeddedGoal id="expand-link" state={props.goalState} />
       </p>
       <p>
         <i>
-          Thinktool automatically shows you all the places where a given item is linked, called its
-          "references". Links in Thinktool are bidirectional, because you can follow them in both directions.
+          Tip: You can also middle click on a link to jump there. Use the back button in your browser to go back.
         </i>
+      </p>
+      <p>
+        Whenever you insert a link, Thinktool will automatically add a reference in the opposite direction.
+        References are shown with a blue dash next to them.
       </p>
     </>
   );
 }
 
-export function StepStayingFocused() {
+export function StepStayingFocused(props: {goalState: G.State}) {
   return (
     <>
       <p>
         <i>
-          Your workspace can quickly get cluttered when following links or looking at parents. You can jump to
-          items to show them in an expanded view.
+          Thinktool shows you everything you need right in the outline. But you can still jump to specific items
+          when you need to focus on just the thing you're working on.
         </i>
       </p>
       <p>
-        <strong>To jump to a link,</strong> simply middle click or shift click the link. The linked item will
-        then open in an expanded view, showing just that item.
-      </p>
-      <p>
-        <strong>In fact, you can jump to any item.</strong> First focus the item by clicking on it, and then
-        press
+        To narrow your view, click on an item and then press{" "}
         <span className="fake-button">
-          <span className="icon fas fa-hand-point-right"></span>Jump,
-        </span>{" "}
-        or just middle click or shift click on the bullet.
-      </p>
-      <p>
-        <strong>If you get lost,</strong> you can always go back to the default item with{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-home"></span>Home.
+          <span className="icon fas fa-hand-point-right"></span>Jump
         </span>
+        . This will show you just that item and all its parents, children and references.
       </p>
       <p>
-        <strong>You can also find a specific item</strong> using the
+        <p>
+          <G.EmbeddedGoal id="jump-item" state={props.goalState} />
+        </p>
+      </p>
+      <p>You can use the back button in your browser to go back.</p>
+      <p>
+        <i>
+          Tip: If you have a mouse with three buttons, you can also just middle click on the bullet next to an item
+          to jump there directly.
+        </i>
+      </p>
+      <p>
+        If you get lost, you can always go back to the default item with
+        <span className="fake-button">
+          <span className="icon fas fa-home"></span>Home
+        </span>
+        .
+      </p>
+      <p>
+        <G.EmbeddedGoal id="jump-home" state={props.goalState} />
+      </p>
+      <p>
+        <i>
+          Tip: Try to organize your items so you can find them again from the home view.
+        </i>
+      </p>
+      <p>
+        You can also find a specific item with the{" "}
         <span className="fake-button">
           <span className="icon fas fa-search"></span>Find
-        </span>
-        button. Just search for an item by its content, and then select it to jump there.
+        </span>{" "}
+        button. Just search for an item by its content and select it to jump there.
+      </p>
+      <p>
+        <G.EmbeddedGoal id="find-item" state={props.goalState} />
       </p>
     </>
   );
@@ -351,7 +378,7 @@ export function StepHaveFun() {
         <i>That's it! I hope you find Thinktool useful.</i>
       </p>
       <p>
-        <strong>If you want to do the tutorial again,</strong> just press the
+        If you ever want to do the tutorial again, just press the{" "}
         <span className="fake-button">
           <span className="icon fas fa-info"></span>Tutorial
         </span>{" "}

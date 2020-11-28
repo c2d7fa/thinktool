@@ -1,0 +1,152 @@
+@use "../style/components";
+@use "../style/base";
+
+.toolbar button.tutorial-relevant {
+  text-shadow: 0 0 8px hsl(45, 100%, 50%);
+}
+
+.toolbar button:disabled.tutorial-relevant {
+  text-shadow: 0 0 8px hsla(45, 100%, 50%, 40%);
+}
+
+.toolbar button.tutorial-not-introduced {
+  opacity: 0.3;
+}
+
+.tutorial a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 2px solid #00000028;
+  transition: border-color base.$quick-transition-time;
+
+  &:hover {
+    border-color: #00000080;
+  }
+}
+
+.tutorial ~ .overview {
+  padding-right: 30rem;
+}
+
+.tutorial {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+
+  width: 24rem;
+  padding: 1rem;
+  background-color: hsl(45, 100%, 85%);
+  border: base.$overlay-border;
+  border-radius: base.$overlay-border-radius;
+
+  max-height: 90vh;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+
+  z-index: 600;
+}
+
+@media (max-width: 1000px) {
+  .tutorial {
+    position: static;
+    width: auto;
+    border-radius: 0;
+
+    z-index: 500;
+  }
+
+  .tutorial ~ .overview {
+    padding-right: 2rem;
+  }
+}
+
+.tutorial h1 {
+  @include components.heading;
+  font-size: 1.25em;
+  margin: 0;
+}
+
+.tutorial p {
+  margin: 0;
+  margin-top: 1rem;
+}
+
+.tutorial strong {
+  font-weight: 650;
+}
+
+.tutorial .fake-button {
+  white-space: nowrap;
+
+  font-size: base.$ui-small-font-size;
+  @include base.ui-font;
+
+  vertical-align: bottom;
+  margin: 0 0.25em;
+
+  .icon {
+    margin-right: 0.25em;
+    margin-top: 2px;
+  }
+}
+
+.tutorial .tutorial-navigation {
+  margin-top: 1rem;
+
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tutorial-navigation button {
+  background: none;
+  margin: none;
+  border: none;
+  outline: none;
+
+  background-color: #00000010;
+  color: #000000a0;
+  padding: 0.25em 0.5em;
+  border-radius: 3px;
+
+  font-size: inherit;
+  font-size: 0.9em;
+
+  color: #000000a0;
+
+  transition: background-color base.$quick-transition-time;
+}
+
+.tutorial-navigation button:not(:disabled):hover {
+  cursor: pointer;
+  background-color: #00000028;
+}
+
+.tutorial-navigation button + button {
+  margin-left: 1em;
+}
+
+.tutorial-navigation button:disabled {
+  background-color: #00000004;
+  color: #00000040;
+}
+
+.tutorial .step {
+  cursor: default;
+  font-size: 1.1rem;
+  margin-left: 0.5em;
+  color: #00000040;
+}
+
+.goal {
+  font-weight: bold;
+  margin-left: 1em;
+
+  i {
+    margin-right: 1ex;
+  }
+
+  &.goal-finished {
+    text-decoration: line-through 2px;
+    opacity: 60%;
+  }
+}
