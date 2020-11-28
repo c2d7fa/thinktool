@@ -184,24 +184,28 @@ const implementations: {
     const [newState, newTree] = T.indent(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(newTree);
+    tutorialAction(context, {action: "moved"});
   },
 
   unindent(context, getFocused) {
     const [newState, newTree] = T.unindent(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(newTree);
+    tutorialAction(context, {action: "moved"});
   },
 
   down(context, getFocused) {
     const [newState, newTree] = T.moveDown(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(newTree);
+    tutorialAction(context, {action: "moved"});
   },
 
   up(context, getFocused) {
     const [newState, newTree] = T.moveUp(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(newTree);
+    tutorialAction(context, {action: "moved"});
   },
 
   "new-child"(context, getFocused) {
