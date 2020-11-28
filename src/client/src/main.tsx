@@ -559,6 +559,13 @@ function ThingOverview(p: {context: Context}) {
   }
 
   function jumpLink(target: string): void {
+    p.context.setTutorialState(
+      Tutorial.action(p.context.tutorialState, {
+        action: "jump",
+        previouslyFocused: T.thing(p.context.tree, T.root(p.context.tree)),
+        thing: target,
+      }),
+    );
     p.context.setSelectedThing(target);
   }
 
@@ -671,7 +678,7 @@ function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   );
 }
 
-export default function ExpandableItem(props: {
+function ExpandableItem(props: {
   context: Context;
   node: T.NodeRef;
   parent?: T.NodeRef;
@@ -683,6 +690,13 @@ export default function ExpandableItem(props: {
   }
 
   function onJumpLink(target: string): void {
+    props.context.setTutorialState(
+      Tutorial.action(props.context.tutorialState, {
+        action: "jump",
+        previouslyFocused: T.thing(props.context.tree, T.root(props.context.tree)),
+        thing: target,
+      }),
+    );
     props.context.setSelectedThing(target);
   }
 
@@ -733,6 +747,13 @@ export default function ExpandableItem(props: {
   }
 
   function jump() {
+    props.context.setTutorialState(
+      Tutorial.action(props.context.tutorialState, {
+        action: "jump",
+        previouslyFocused: T.thing(props.context.tree, T.root(props.context.tree)),
+        thing: T.thing(props.context.tree, props.node),
+      }),
+    );
     props.context.setSelectedThing(T.thing(props.context.tree, props.node));
   }
 

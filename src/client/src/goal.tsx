@@ -14,7 +14,10 @@ export type ActionEvent =
     }
   | {action: "toggled-item"; newTree: T.Tree; node: T.NodeRef}
   | {action: "found"; previouslyFocused: string; thing: string}
-  | {action: "home"};
+  | {action: "home"}
+  | {action: "removed"}
+  | {action: "destroy"}
+  | {action: "jump"; previouslyFocused: string; thing: string};
 
 export type GoalId =
   | "create-item"
@@ -69,12 +72,30 @@ const goals = (() => {
     },
   });
 
-  goals.set("remove-item", {title: "Remove an item from its parent.", doesComplete: notYetImplemented});
-  goals.set("delete-item", {title: "Destroy an item you don't need.", doesComplete: notYetImplemented});
+  goals.set("remove-item", {
+    title: "Remove an item from its parent.",
+    doesComplete(event) {
+      return event.action === "removed";
+    },
+  });
+
+  goals.set("delete-item", {
+    title: "Destroy an item you don't need.",
+    doesComplete(event) {
+      return event.action === "destroy";
+    },
+  });
+
   goals.set("move-item", {title: "Move an item to somewhere else.", doesComplete: notYetImplemented});
   goals.set("insert-link", {title: "Insert a link inside an item.", doesComplete: notYetImplemented});
   goals.set("expand-link", {title: "Click on the link to expand it.", doesComplete: notYetImplemented});
-  goals.set("jump-item", {title: "Jump to another item.", doesComplete: notYetImplemented});
+
+  goals.set("jump-item", {
+    title: "Jump to another item.",
+    doesComplete(event) {
+      return event.action === "jump" && event.previouslyFocused !== event.thing;
+    },
+  });
 
   goals.set("jump-home", {
     title: "Go to the home view.",
@@ -84,7 +105,7 @@ const goals = (() => {
   });
 
   goals.set("find-item", {
-    title: "Find an item and jump to it.",
+    title: "Find an item by its content.",
     doesComplete(event) {
       return event.action === "found" && event.previouslyFocused !== event.thing;
     },

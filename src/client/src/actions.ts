@@ -174,7 +174,9 @@ const implementations: {
   },
 
   zoom(context, getFocused) {
+    const previouslyFocused = T.thing(context.tree, T.root(context.tree));
     context.setSelectedThing(T.thing(context.tree, getFocused()));
+    tutorialAction(context, {action: "jump", previouslyFocused, thing: T.thing(context.tree, getFocused())});
   },
 
   indent(context, getFocused) {
@@ -212,12 +214,14 @@ const implementations: {
     const [newState, newTree] = T.remove(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(newTree);
+    tutorialAction(context, {action: "removed"});
   },
 
   destroy(context, getFocused) {
     const [newState, newTree] = T.removeThing(context.state, context.tree, getFocused());
     context.setState(newState);
     context.setTree(newTree);
+    tutorialAction(context, {action: "destroy"});
   },
 
   tutorial(context, getFocused) {
@@ -240,7 +244,7 @@ const implementations: {
   toggle(context, getFocused) {
     const newTree = T.toggle(context.state, context.tree, getFocused());
     context.setTree(newTree);
-    tutorialAction(context, {action: "toggled-item", newTree, node: getFocused()})
+    tutorialAction(context, {action: "toggled-item", newTree, node: getFocused()});
   },
 
   home(context, getFocused) {
