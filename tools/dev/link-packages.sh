@@ -10,6 +10,4 @@ cd src/client
 npm ci
 
 cd ../web
-npm link ../client
-npm link node_modules/@thinktool/client/node_modules/react
-npm link node_modules/@thinktool/client/node_modules/react-dom
+npm run link-client
