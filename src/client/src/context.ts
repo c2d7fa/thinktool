@@ -5,7 +5,8 @@ import * as Tutorial from "./tutorial";
 import {Communication} from "@thinktool/shared";
 import {Server} from "./server-api";
 import {Storage} from "./storage";
-import {ActionEvent} from "./goal";
+import type {Receiver} from "./receiver";
+import type {Message} from "./messages";
 
 export interface DragInfo {
   current: T.NodeRef | null;
@@ -60,4 +61,6 @@ export interface Context {
   registerActiveEditor(activeEditor: ActiveEditor | null): void;
 
   openExternalUrl(url: string): void;
+
+  send: Receiver<Message>["send"];
 }

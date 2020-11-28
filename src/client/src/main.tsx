@@ -31,6 +31,8 @@ import * as ReactDOM from "react-dom";
 
 import undo from "./undo";
 import {nodeStatus} from "./node-status";
+import {Receiver, receiver as createReceiver} from "./receiver";
+import {Message} from "./messages";
 
 function useContext({
   initialState,
@@ -38,12 +40,14 @@ function useContext({
   storage,
   server,
   openExternalUrl,
+  receiver,
 }: {
   initialState: State;
   initialTutorialFinished: boolean;
   storage: Storage.Storage;
   server?: API.Server;
   openExternalUrl(url: string): void;
+  receiver: Receiver<Message>,
 }): Context {
   const [state, setLocalState] = React.useState(initialState);
 
@@ -198,6 +202,7 @@ function useContext({
     storage,
     server,
     openExternalUrl,
+    send: receiver.send,
   };
 }
 
@@ -216,7 +221,9 @@ function App_({
   server?: API.Server;
   openExternalUrl(url: string): void;
 }) {
-  const context = useContext({initialState, initialTutorialFinished, storage, server, openExternalUrl});
+  const receiver = createReceiver<Message>();
+
+  const context = useContext({initialState, initialTutorialFinished, storage, server, openExternalUrl, receiver});
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
