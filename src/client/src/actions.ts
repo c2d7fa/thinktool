@@ -110,27 +110,33 @@ const implementations: {
   [k: string]: ((context: Context, focused: T.NodeRef | null) => void) | undefined;
 } = {
   "insert-sibling"(context, focused) {
-    context.setPopupTarget(focused);
-    context.setActivePopup((state, tree, target, selection) => {
-      const [newState, newTree] = T.insertSiblingAfter(state, tree, target, selection);
-      return [newState, newTree];
+    context.send("start-popup", {
+      target: focused,
+      complete(state, tree, target, selection) {
+        const [newState, newTree] = T.insertSiblingAfter(state, tree, target, selection);
+        return [newState, newTree];
+      },
     });
   },
 
   "insert-child"(context, focused) {
-    context.setPopupTarget(focused);
-    context.setActivePopup((state, tree, target, selection) => {
-      const [newState, newTree] = T.insertChild(state, tree, target, selection, 0);
-      return [newState, newTree];
+    context.send("start-popup", {
+      target: focused,
+      complete(state, tree, target, selection) {
+        const [newState, newTree] = T.insertChild(state, tree, target, selection, 0);
+        return [newState, newTree];
+      },
     });
   },
 
   "insert-parent"(context, focused) {
-    context.setPopupTarget(focused);
-    context.setActivePopup((state, tree, target, selection) => {
-      const [newState, newTree] = T.insertParent(state, tree, target, selection);
-      tutorialAction(context, {action: "inserted-parent", childNode: target, newState, newTree});
-      return [newState, newTree];
+    context.send("start-popup", {
+      target: focused,
+      complete(state, tree, target, selection) {
+        const [newState, newTree] = T.insertParent(state, tree, target, selection);
+        tutorialAction(context, {action: "inserted-parent", childNode: target, newState, newTree});
+        return [newState, newTree];
+      },
     });
   },
 

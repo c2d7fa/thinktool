@@ -221,13 +221,22 @@ function App_({
   server?: API.Server;
   openExternalUrl(url: string): void;
 }) {
-  const receiver = createReceiver<Message>();
+  const receiver = React.useRef(createReceiver<Message>());
 
-  receiver.subscribe("toolbar", (ev) => {
-    Actions.executeOn(context, ev.button, ev.target);
-  });
+  React.useEffect(() => {
+    receiver.current.subscribe("toolbar", (ev) => {
+      Actions.executeOn(context, ev.button, ev.target);
+    });
 
-  const context = useContext({initialState, initialTutorialFinished, storage, server, openExternalUrl, receiver});
+    receiver.current.subscribe("start-popup", (ev) => {
+      context.setPopupTarget(ev.target);
+      context.setActivePopup(ev.complete);
+    });
+  }, [])
+
+  const send = receiver.current.send;
+
+  const context = useContext({initialState, initialTutorialFinished, storage, server, openExternalUrl, receiver: receiver.current});
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
@@ -448,7 +457,7 @@ function App_({
       </div>
       {toolbarShown ? (
         <Toolbar
-          executeAction={(action) => receiver.send("toolbar", {button: action, target: T.focused(context.tree)})}
+          executeAction={(action) => send("toolbar", {button: action, target: T.focused(context.tree)})}
           isEnabled={(action) => Actions.enabled(context, action)}
           isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
           isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
