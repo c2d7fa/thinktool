@@ -26,7 +26,10 @@ function ToolbarButton(props: {
   description: string;
   icon: string;
   label: string;
-  context: Context;
+  execute(): void;
+  isRelevant: boolean;
+  isNotIntroduced: boolean;
+  isEnabled: boolean;
 }) {
   const shortcut = Sh.format(Ac.shortcut(props.action));
 
@@ -34,13 +37,7 @@ function ToolbarButton(props: {
 
   return (
     <button
-      className={
-        Tutorial.isRelevant(props.context.tutorialState, props.action)
-          ? "tutorial-relevant"
-          : Tutorial.isNotIntroduced(props.context.tutorialState, props.action)
-          ? "tutorial-not-introduced"
-          : ""
-      }
+      className={props.isRelevant ? "tutorial-relevant" : props.isNotIntroduced ? "tutorial-not-introduced" : ""}
       tabIndex={0}
       onFocus={(ev) => {
         console.log("Attempted focusing button %o", props.action);
@@ -56,160 +53,92 @@ function ToolbarButton(props: {
       }}
       onAuxClick={(ev) => {
         console.log("Clicked button %o (aux)", props.action);
-        Ac.execute(props.context, props.action);
+        props.execute();
         ev.preventDefault();
       }}
       onClick={(ev) => {
         console.log("Clicked button %o", props.action);
-        Ac.execute(props.context, props.action);
+        props.execute();
         ev.preventDefault();
       }}
       title={props.description + (shortcut === "" ? "" : ` [${shortcut}]`)}
-      disabled={!Ac.enabled(props.context, props.action)}>
+      disabled={!props.isEnabled}
+    >
       <span className={`icon ${iconClasses}`}></span>
       {props.label}
     </button>
   );
 }
 
-export default function Toolbar(props: {context: Context}) {
+
+
+export default function Toolbar(props: {
+  executeAction(action: Ac.ActionName): void,
+  isEnabled(action: Ac.ActionName): boolean,
+  isRelevant(action: Ac.ActionName): boolean,
+  isNotIntroduced(action: Ac.ActionName): boolean,
+}) {
+  const knownActions = {
+    "home": {description: "Jump back to the default item.", icon: "home", label: "Home"},
+    "find": {description: "Search for a specific item by its content.", icon: "search", label: "Find"},
+    "zoom": {description: "Jump to the currently selected item. To select an item, just click somewhere inside that item's text.", icon: "hand-point-right", label: "Jump"},
+    "new": {description: "Create a new item as a sibling of the currently selected item", icon: "plus-square", label: "New"},
+    "new-child": {description: "Create a new child of the selected item", icon: "caret-square-down", label: "New Child"},
+    "remove": {description: "Remove the selected item from its parent. This does not delete the item.", icon: "minus-square", label: "Remove"},
+    "destroy": {description: "Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents.", icon: "trash", label: "Destroy"},
+    "unindent": {description: "Unindent the selected item", icon: "chevron-left", label: "Unindent"},
+    "indent": {description: "Indent the selected item", icon: "chevron-right", label: "Indent"},
+    "up": {description: "Move the selected item up", icon: "chevron-up", label: "Up"},
+    "down": {description: "Move the selected item down", icon: "chevron-down", label: "Down"},
+    "insert-sibling": {description: "Insert an existing item as a sibling after the currently selected item.", icon: "plus-circle", label: "Sibling"},
+    "insert-child": {description: "Insert an existing item as a child of the currently selected item.", icon: "chevron-circle-down", label: "Child"},
+    "insert-parent": {description: "Insert an existing item as a parent of the currently selected item.", icon: "chevron-circle-up", label: "Parent"},
+    "insert-link": {description: "Insert a reference to an existing item at the position of the text.", icon: "link", label: "Link"},
+    "forum": {description: "Open the subreddit.", icon: "reddit", label: "Forum"},
+    "tutorial": {description: "Go through the tutorial again.", icon: "info", label: "Tutorial"},
+    "changelog": {description: "Show list of updates to Thinktool.", icon: "list", label: "Updates"},
+  }
+
+  function lookup(action: keyof typeof knownActions) {
+    return {
+      ...knownActions[action],
+      action,
+      isEnabled: props.isEnabled(action),
+      execute: () => props.executeAction(action),
+      isRelevant: props.isRelevant(action),
+      isNotIntroduced: props.isNotIntroduced(action),
+    };
+  }
+
   return (
     <div className="toolbar">
       <ToolbarGroup title="Navigate">
-        <ToolbarButton
-          action="home"
-          description="Jump back to the default item."
-          icon="home"
-          label="Home"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="find"
-          description="Search for a specific item by its content."
-          icon="search"
-          label="Find"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="zoom"
-          description="Jump to the currently selected item. To select an item, just click somewhere inside that item's text."
-          icon="hand-point-right"
-          label="Jump"
-          context={props.context}
-        />
+          <ToolbarButton {...lookup("home")}/>
+          <ToolbarButton {...lookup("find")}/>
+          <ToolbarButton {...lookup("zoom")}/>
       </ToolbarGroup>
       <ToolbarGroup title="Item">
-        <ToolbarButton
-          action="new"
-          description="Create a new item as a sibling of the currently selected item"
-          icon="plus-square"
-          label="New"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="new-child"
-          description="Create a new child of the selected item"
-          icon="caret-square-down"
-          label="New Child"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="remove"
-          description="Remove the selected item from its parent. This does not delete the item."
-          icon="minus-square"
-          label="Remove"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="destroy"
-          description="Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents."
-          icon="trash"
-          label="Destroy"
-          context={props.context}
-        />
+          <ToolbarButton {...lookup("new")}/>
+          <ToolbarButton {...lookup("new-child")}/>
+          <ToolbarButton {...lookup("remove")}/>
+          <ToolbarButton {...lookup("destroy")}/>
       </ToolbarGroup>
       <ToolbarGroup title="Move">
-        <ToolbarButton
-          action="unindent"
-          description="Unindent the selected item"
-          icon="chevron-left"
-          label="Unindent"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="indent"
-          description="Indent the selected item"
-          icon="chevron-right"
-          label="Indent"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="up"
-          description="Move the selected item up"
-          icon="chevron-up"
-          label="Up"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="down"
-          description="Move the selected item down"
-          icon="chevron-down"
-          label="Down"
-          context={props.context}
-        />
+          <ToolbarButton {...lookup("unindent")}/>
+          <ToolbarButton {...lookup("indent")}/>
+          <ToolbarButton {...lookup("up")}/>
+          <ToolbarButton {...lookup("down")}/>
       </ToolbarGroup>
       <ToolbarGroup title="Connect">
-        <ToolbarButton
-          action="insert-sibling"
-          description="Insert an existing item as a sibling after the currently selected item."
-          icon="plus-circle"
-          label="Sibling"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="insert-child"
-          description="Insert an existing item as a child of the currently selected item."
-          icon="chevron-circle-down"
-          label="Child"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="insert-parent"
-          description="Insert an existing item as a parent of the currently selected item."
-          icon="chevron-circle-up"
-          label="Parent"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="insert-link"
-          description="Insert a reference to an existing item at the position of the text."
-          icon="link"
-          label="Link"
-          context={props.context}
-        />
+          <ToolbarButton {...lookup("insert-sibling")}/>
+          <ToolbarButton {...lookup("insert-child")}/>
+          <ToolbarButton {...lookup("insert-parent")}/>
+          <ToolbarButton {...lookup("insert-link")}/>
       </ToolbarGroup>
       <ToolbarGroup title="Help">
-        <ToolbarButton
-          action="forum"
-          description="Open the subreddit."
-          icon="reddit"
-          label="Forum"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="tutorial"
-          description="Go through the tutorial again."
-          icon="info"
-          label="Tutorial"
-          context={props.context}
-        />
-        <ToolbarButton
-          action="changelog"
-          description="Show list of updates to Thinktool."
-          icon="list"
-          label="Updates"
-          context={props.context}
-        />
+          <ToolbarButton {...lookup("forum")}/>
+          <ToolbarButton {...lookup("tutorial")}/>
+          <ToolbarButton {...lookup("changelog")}/>
       </ToolbarGroup>
     </div>
   );

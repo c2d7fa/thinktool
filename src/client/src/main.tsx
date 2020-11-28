@@ -223,6 +223,10 @@ function App_({
 }) {
   const receiver = createReceiver<Message>();
 
+  receiver.subscribe("toolbar", (ev) => {
+    Actions.executeOn(context, ev.button, ev.target);
+  });
+
   const context = useContext({initialState, initialTutorialFinished, storage, server, openExternalUrl, receiver});
 
   // If the same user is connected through multiple clients, we want to be able
@@ -384,7 +388,8 @@ function App_({
         }
       }}
       tabIndex={-1}
-      className="app">
+      className="app"
+    >
       {context.activePopup === null ? null : (
         <ThingSelectPopup
           hide={() => context.setActivePopup(null)}
@@ -441,18 +446,22 @@ function App_({
           )}
         </div>
       </div>
-      {toolbarShown ? <Toolbar context={context} /> : null}
-      {!showSplash && (
-        <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />
-      )}
+      {toolbarShown ? (
+        <Toolbar
+          executeAction={(action) => receiver.send("toolbar", {button: action, target: T.focused(context.tree)})}
+          isEnabled={(action) => Actions.enabled(context, action)}
+          isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
+          isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
+        />
+      ) : null}
+      {!showSplash && <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />}
       <Changelog
         changelog={context.changelog}
         visible={context.changelogShown}
         hide={() => context.setChangelogShown(false)}
       />
       <ThingOverview context={context} />
-      {showSplash &&
-        ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
+      {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );
 }

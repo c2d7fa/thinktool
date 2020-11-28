@@ -4,6 +4,7 @@ import * as D from "./data";
 import * as Tutorial from "./tutorial";
 import * as S from "./shortcuts";
 import * as Goal from "./goal";
+import {NodeRef} from "./tree-internal";
 
 export type ActionName =
   | "insert-sibling"
@@ -81,39 +82,51 @@ export function execute(context: Context, action: ActionName): void {
     return;
   }
 
-  function node(): T.NodeRef {
-    const node = T.focused(context.tree);
-    if (node === null) throw `Bug in 'enabled'. Ran action '${action}', even though there was no node selected.`;
-    return node;
+  const focused = T.focused(context.tree);
+  if (focused === null) throw `Bug in 'enabled'. Ran action '${action}', even though there was no node selected.`;
+
+  executeOn(context, action, focused);
+}
+
+export function executeOn(context: Context, action: ActionName, target: NodeRef | null): void {
+  if (!enabled(context, action)) {
+    console.warn("The action %o appears not to be enabled.", action)
   }
 
   const implementation = implementations[action];
   if (typeof implementation !== "function")
     throw `Bug in 'execute'. Action '${action}' did not have an implementation.`;
-  implementation(context, node);
+  implementation(context, target);
+}
+
+function require<T>(x: T | null): T {
+  if (x === null) {
+    throw "A value was unexpectedly null."
+  }
+  return x;
 }
 
 const implementations: {
-  [k: string]: ((context: Context, getFocused: () => T.NodeRef) => void) | undefined;
+  [k: string]: ((context: Context, focused: T.NodeRef | null) => void) | undefined;
 } = {
-  "insert-sibling"(context, getFocused) {
-    context.setPopupTarget(getFocused());
+  "insert-sibling"(context, focused) {
+    context.setPopupTarget(focused);
     context.setActivePopup((state, tree, target, selection) => {
       const [newState, newTree] = T.insertSiblingAfter(state, tree, target, selection);
       return [newState, newTree];
     });
   },
 
-  "insert-child"(context, getFocused) {
-    context.setPopupTarget(getFocused());
+  "insert-child"(context, focused) {
+    context.setPopupTarget(focused);
     context.setActivePopup((state, tree, target, selection) => {
       const [newState, newTree] = T.insertChild(state, tree, target, selection, 0);
       return [newState, newTree];
     });
   },
 
-  "insert-parent"(context, getFocused) {
-    context.setPopupTarget(getFocused());
+  "insert-parent"(context, focused) {
+    context.setPopupTarget(focused);
     context.setActivePopup((state, tree, target, selection) => {
       const [newState, newTree] = T.insertParent(state, tree, target, selection);
       tutorialAction(context, {action: "inserted-parent", childNode: target, newState, newTree});
@@ -121,8 +134,8 @@ const implementations: {
     });
   },
 
-  "insert-link"(context, getFocused) {
-    const node = getFocused();
+  "insert-link"(context, focused) {
+    const node = focused;
 
     context.setPopupTarget(node);
     context.setActivePopup((state, tree, target, selection) => {
@@ -145,7 +158,7 @@ const implementations: {
     });
   },
 
-  new(context, getFocused) {
+  new(context, focused) {
     const node = T.focused(context.tree);
     if (node === null) {
       const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, T.root(context.tree));
@@ -159,106 +172,106 @@ const implementations: {
     tutorialAction(context, {action: "created-item"});
   },
 
-  "new-before"(context, getFocused) {
-    const [newState, newTree, _, newId] = T.createSiblingBefore(context.state, context.tree, getFocused());
+  "new-before"(context, focused) {
+    const [newState, newTree, _, newId] = T.createSiblingBefore(context.state, context.tree, require(focused));
     context.setState(newState);
     context.setTree(T.focus(newTree, newId));
     tutorialAction(context, {action: "created-item"});
   },
 
-  "focus-up"(context, getFocused) {
+  "focus-up"(context, focused) {
     context.setTree(T.focusUp(context.tree));
   },
 
-  "focus-down"(context, getFocused) {
+  "focus-down"(context, focused) {
     context.setTree(T.focusDown(context.tree));
   },
 
-  zoom(context, getFocused) {
+  zoom(context, focused) {
     const previouslyFocused = T.thing(context.tree, T.root(context.tree));
-    context.setSelectedThing(T.thing(context.tree, getFocused()));
-    tutorialAction(context, {action: "jump", previouslyFocused, thing: T.thing(context.tree, getFocused())});
+    context.setSelectedThing(T.thing(context.tree, require(focused)));
+    tutorialAction(context, {action: "jump", previouslyFocused, thing: T.thing(context.tree, require(focused))});
   },
 
-  indent(context, getFocused) {
-    const [newState, newTree] = T.indent(context.state, context.tree, getFocused());
+  indent(context, focused) {
+    const [newState, newTree] = T.indent(context.state, context.tree, require(focused));
     context.setState(newState);
     context.setTree(newTree);
     tutorialAction(context, {action: "moved"});
   },
 
-  unindent(context, getFocused) {
-    const [newState, newTree] = T.unindent(context.state, context.tree, getFocused());
+  unindent(context, focused) {
+    const [newState, newTree] = T.unindent(context.state, context.tree, require(focused));
     context.setState(newState);
     context.setTree(newTree);
     tutorialAction(context, {action: "moved"});
   },
 
-  down(context, getFocused) {
-    const [newState, newTree] = T.moveDown(context.state, context.tree, getFocused());
+  down(context, focused) {
+    const [newState, newTree] = T.moveDown(context.state, context.tree, require(focused));
     context.setState(newState);
     context.setTree(newTree);
     tutorialAction(context, {action: "moved"});
   },
 
-  up(context, getFocused) {
-    const [newState, newTree] = T.moveUp(context.state, context.tree, getFocused());
+  up(context, focused) {
+    const [newState, newTree] = T.moveUp(context.state, context.tree, require(focused));
     context.setState(newState);
     context.setTree(newTree);
     tutorialAction(context, {action: "moved"});
   },
 
-  "new-child"(context, getFocused) {
-    const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, getFocused());
+  "new-child"(context, focused) {
+    const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, require(focused));
     context.setState(newState);
     context.setTree(T.focus(newTree, newId));
     tutorialAction(context, {action: "created-item"});
   },
 
-  remove(context, getFocused) {
-    const [newState, newTree] = T.remove(context.state, context.tree, getFocused());
+  remove(context, focused) {
+    const [newState, newTree] = T.remove(context.state, context.tree, require(focused));
     context.setState(newState);
     context.setTree(newTree);
     tutorialAction(context, {action: "removed"});
   },
 
-  destroy(context, getFocused) {
-    const [newState, newTree] = T.removeThing(context.state, context.tree, getFocused());
+  destroy(context, focused) {
+    const [newState, newTree] = T.removeThing(context.state, context.tree, require(focused));
     context.setState(newState);
     context.setTree(newTree);
     tutorialAction(context, {action: "destroy"});
   },
 
-  tutorial(context, getFocused) {
+  tutorial(context, focused) {
     context.setTutorialState(Tutorial.reset(context.tutorialState));
   },
 
-  changelog(context, getFocused) {
+  changelog(context, focused) {
     context.setChangelogShown(!context.changelogShown);
   },
 
-  undo(context, getFocused) {
+  undo(context, focused) {
     context.undo();
   },
 
-  "toggle-type"(context, getFocused) {
-    const newState = D.togglePage(context.state, T.thing(context.tree, getFocused()));
+  "toggle-type"(context, focused) {
+    const newState = D.togglePage(context.state, T.thing(context.tree, require(focused)));
     context.setState(newState);
   },
 
-  toggle(context, getFocused) {
-    const newTree = T.toggle(context.state, context.tree, getFocused());
+  toggle(context, focused) {
+    const newTree = T.toggle(context.state, context.tree, require(focused));
     context.setTree(newTree);
-    tutorialAction(context, {action: "toggled-item", newTree, node: getFocused()});
+    tutorialAction(context, {action: "toggled-item", newTree, node: require(focused)});
   },
 
-  home(context, getFocused) {
+  home(context, focused) {
     const newTree = T.fromRoot(context.state, "0");
     tutorialAction(context, {action: "home"});
     context.setTree(newTree);
   },
 
-  forum(context, getFocused) {
+  forum(context, focused) {
     context.openExternalUrl("https://old.reddit.com/r/thinktool/");
   },
 };
