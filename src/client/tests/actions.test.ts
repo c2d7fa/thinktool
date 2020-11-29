@@ -7,12 +7,14 @@ import * as T from "../src/tree";
 
 import * as A from "../src/actions";
 
+import {GoalId} from "../src/goal";
+
 function appState(data: D.State, tree: T.Tree): C.AppState {
   return {
     state: data,
     tree: tree,
     selectedThing: T.thing(tree, T.root(tree)),
-    tutorialState: Tu.initialize(true),
+    tutorialState: Tu.initialize(false),
     changelogShown: false,
     changelog: "loading",
     drag: {current: null, target: null, finished: false},
@@ -105,5 +107,21 @@ describe("new", () => {
       expect(D.children(result.state, "0")[1]).not.toBe("2");
       expect(D.children(result.state, "0")[2]).toBe("2");
     });
+  });
+
+  it("completes the 'create-item' goal", () => {
+    function completed(app: C.AppState, goal: GoalId): boolean {
+      return Tu.isGoalFinished(app.tutorialState, goal);
+    }
+
+    let data = D.empty;
+    data = D.addChild(data, "0", "1")[0];
+    let tree = T.fromRoot(data, "0");
+
+    const app = appState(data, tree);
+    expect(completed(app, "create-item")).toBe(false);
+
+    const result = A.update(app, "new");
+    expect(completed(result, "create-item")).toBe(true);
   });
 });

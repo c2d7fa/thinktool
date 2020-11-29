@@ -123,6 +123,10 @@ function require<T>(x: T | null): T {
   return x;
 }
 
+function applyActionEvent(app: AppState, event: Goal.ActionEvent): AppState {
+  return A.merge(app, {tutorialState: Tutorial.action(app.tutorialState, {action: "created-item"})})
+}
+
 const updates = {
   new(app: AppState, target: NodeRef | null): AppState {
     let result = app;
@@ -135,7 +139,7 @@ const updates = {
       newTree = T.focus(newTree, newId);
       result = A.merge(result, {state: newState, tree: newTree});
     }
-    result = A.merge(result, {tutorialState: Tutorial.action(result.tutorialState, {action: "created-item"})});
+    result = applyActionEvent(result, {"action": "created-item"});
     return result;
   },
 };
