@@ -1,4 +1,4 @@
-import {Context} from "./context";
+import {AppState, Context} from "./context";
 import * as T from "./tree";
 import * as D from "./data";
 import * as Tutorial from "./tutorial";
@@ -38,7 +38,7 @@ export type ActionName =
 // If enabled(context, action) returns false, then the toolbar button for the
 // given action should be disabled, and pressing the shortcut should not execute
 // the action.
-export function enabled(context: Context, action: ActionName): boolean {
+export function enabled(state: AppState, action: ActionName): boolean {
   const alwaysEnabled: ActionName[] = ["find", "new", "changelog", "undo", "home", "forum"];
   const requireTarget: ActionName[] = [
     "zoom",
@@ -63,9 +63,9 @@ export function enabled(context: Context, action: ActionName): boolean {
   if (alwaysEnabled.includes(action)) {
     return true;
   } else if (requireTarget.includes(action)) {
-    return T.focused(context.tree) !== null;
+    return T.focused(state.tree) !== null;
   } else if (action === "tutorial") {
-    return !Tutorial.isActive(context.tutorialState);
+    return !Tutorial.isActive(state.tutorialState);
   } else {
     console.warn("enabled(..., %o): Did not know about action.", action);
     return true;

@@ -19,7 +19,17 @@ export interface ActiveEditor {
   replaceSelectionWithLink(target: string, textContent: string): void;
 }
 
-export interface Context {
+export interface AppState {
+  state: State;
+  tutorialState: Tutorial.State;
+  changelogShown: boolean;
+  changelog: Communication.Changelog | "loading";
+  tree: Tree;
+  drag: DragInfo;
+  selectedThing: string;
+}
+
+export interface Context extends AppState {
   storage: Storage;
   server?: Server;
 
@@ -46,13 +56,9 @@ export interface Context {
   selectedThing: string;
   setSelectedThing(value: string): void;
 
-  activePopup:
-    | ((state: State, tree: Tree, target: T.NodeRef, selection: string) => [State, Tree] | void)
-    | null;
+  activePopup: ((state: State, tree: Tree, target: T.NodeRef, selection: string) => [State, Tree] | void) | null;
   setActivePopup(
-    callback:
-      | ((state: State, tree: Tree, target: T.NodeRef, selection: string) => [State, Tree] | void)
-      | null,
+    callback: ((state: State, tree: Tree, target: T.NodeRef, selection: string) => [State, Tree] | void) | null,
   ): void;
   popupTarget: T.NodeRef | null;
   setPopupTarget(popupTarget: T.NodeRef | null): void;
