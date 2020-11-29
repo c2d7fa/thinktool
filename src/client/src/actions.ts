@@ -91,14 +91,16 @@ export function execute(context: Context, action: ActionName): void {
 
 export function executeOn(context: Context, action: ActionName, target: NodeRef | null): void {
   if (!enabled(context, action)) {
-    console.warn("The action %o appears not to be enabled.", action)
+    console.warn("The action %o appears not to be enabled.", action);
   }
 
-  if (action === "new") {
-    const newAppState = updateOn(context, action, target)
-    context.setState(newAppState.state)
-    context.setTree(newAppState.tree)
-    context.setTutorialState(newAppState.tutorialState)
+  if (action in updates) {
+    const updatableAction = action as keyof typeof updates;
+
+    const newAppState = updateOn(context, updatableAction, target);
+    context.setState(newAppState.state);
+    context.setTree(newAppState.tree);
+    context.setTutorialState(newAppState.tutorialState);
     return;
   }
 
@@ -118,13 +120,13 @@ export function updateOn(app: AppState, action: "new", target: NodeRef | null): 
 
 function require<T>(x: T | null): T {
   if (x === null) {
-    throw "A value was unexpectedly null."
+    throw "A value was unexpectedly null.";
   }
   return x;
 }
 
 function applyActionEvent(app: AppState, event: Goal.ActionEvent): AppState {
-  return A.merge(app, {tutorialState: Tutorial.action(app.tutorialState, {action: "created-item"})})
+  return A.merge(app, {tutorialState: Tutorial.action(app.tutorialState, event)});
 }
 
 const updates = {
@@ -139,8 +141,21 @@ const updates = {
       newTree = T.focus(newTree, newId);
       result = A.merge(result, {state: newState, tree: newTree});
     }
-    result = applyActionEvent(result, {"action": "created-item"});
+    result = applyActionEvent(result, {action: "created-item"});
     return result;
+  },
+
+  "new-before"(app: AppState, target: NodeRef | null) {
+    const [newState, newTree, _, newId] = T.createSiblingBefore(app.state, app.tree, require(target));
+    return applyActionEvent(A.merge(app, {state: newState, tree: newTree}), {action: "created-item"});
+  },
+
+  "focus-up"(app: AppState) {
+    return A.merge(app, {tree: T.focusUp(app.tree)});
+  },
+
+  "focus-down"(app: AppState) {
+    return A.merge(app, {tree: T.focusDown(app.tree)});
   },
 };
 
@@ -200,21 +215,6 @@ const implementations: {
       tutorialAction(context, {action: "found", previouslyFocused, thing: selection});
       return [state, tree];
     });
-  },
-
-  "new-before"(context, focused) {
-    const [newState, newTree, _, newId] = T.createSiblingBefore(context.state, context.tree, require(focused));
-    context.setState(newState);
-    context.setTree(T.focus(newTree, newId));
-    tutorialAction(context, {action: "created-item"});
-  },
-
-  "focus-up"(context, focused) {
-    context.setTree(T.focusUp(context.tree));
-  },
-
-  "focus-down"(context, focused) {
-    context.setTree(T.focusDown(context.tree));
   },
 
   zoom(context, focused) {
