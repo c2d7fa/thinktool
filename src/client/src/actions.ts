@@ -1,4 +1,5 @@
 import {AppState, Context} from "./context";
+import * as A from "./context";
 import * as T from "./tree";
 import * as D from "./data";
 import * as Tutorial from "./tutorial";
@@ -93,10 +94,26 @@ export function executeOn(context: Context, action: ActionName, target: NodeRef 
     console.warn("The action %o appears not to be enabled.", action)
   }
 
+  if (action === "new") {
+    const newAppState = updateOn(context, action, target)
+    context.setState(newAppState.state)
+    context.setTree(newAppState.tree)
+    context.setTutorialState(newAppState.tutorialState)
+    return;
+  }
+
   const implementation = implementations[action];
   if (typeof implementation !== "function")
     throw `Bug in 'execute'. Action '${action}' did not have an implementation.`;
   implementation(context, target);
+}
+
+export function update(app: AppState, action: "new"): AppState {
+  return updateOn(app, action, T.focused(app.tree));
+}
+
+export function updateOn(app: AppState, action: "new", target: NodeRef | null): AppState {
+  return updates[action](app, target);
 }
 
 function require<T>(x: T | null): T {
@@ -105,6 +122,23 @@ function require<T>(x: T | null): T {
   }
   return x;
 }
+
+const updates = {
+  new(app: AppState, target: NodeRef | null): AppState {
+    let result = app;
+    if (target === null) {
+      let [newState, newTree, _, newId] = T.createChild(app.state, app.tree, T.root(app.tree));
+      newTree = T.focus(newTree, newId);
+      result = A.merge(result, {state: newState, tree: newTree});
+    } else {
+      let [newState, newTree, _, newId] = T.createSiblingAfter(app.state, app.tree, target);
+      newTree = T.focus(newTree, newId);
+      result = A.merge(result, {state: newState, tree: newTree});
+    }
+    result = A.merge(result, {tutorialState: Tutorial.action(result.tutorialState, {action: "created-item"})});
+    return result;
+  },
+};
 
 const implementations: {
   [k: string]: ((context: Context, focused: T.NodeRef | null) => void) | undefined;
@@ -162,20 +196,6 @@ const implementations: {
       tutorialAction(context, {action: "found", previouslyFocused, thing: selection});
       return [state, tree];
     });
-  },
-
-  new(context, focused) {
-    const node = T.focused(context.tree);
-    if (node === null) {
-      const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, T.root(context.tree));
-      context.setState(newState);
-      context.setTree(T.focus(newTree, newId));
-    } else {
-      const [newState, newTree, _, newId] = T.createSiblingAfter(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(T.focus(newTree, newId));
-    }
-    tutorialAction(context, {action: "created-item"});
   },
 
   "new-before"(context, focused) {

@@ -51,3 +51,59 @@ describe.each(["insert-sibling", "zoom", "indent", "new-child", "remove"] as A.A
     });
   },
 );
+
+describe("new", () => {
+  describe("when nothing is focused", () => {
+    let data = D.empty;
+    data = D.addChild(data, "0", "1")[0];
+    let tree = T.fromRoot(data, "0");
+
+    it("creates a new child of the root thing in the state", () => {
+      const app = appState(data, tree);
+      expect(D.children(app.state, "0").length).toBe(1);
+
+      const result = A.update(appState(data, tree), "new");
+      expect(D.children(result.state, "0").length).toBe(2);
+    });
+
+    it("creates a new child of the root node in the tree", () => {
+      const app = appState(data, tree);
+      expect(T.children(app.tree, T.root(app.tree)).length).toBe(1);
+
+      const result = A.update(appState(data, tree), "new");
+      expect(T.children(result.tree, T.root(result.tree)).length).toBe(2);
+    });
+
+    it("inserts the new item as the first child", () => {
+      const app = appState(data, tree);
+      const old = D.children(app.state, "0")[0];
+
+      const result = A.update(app, "new");
+      expect(D.children(result.state, "0")[0]).not.toBe(old);
+      expect(D.children(result.state, "0")[1]).toBe(old);
+    });
+  });
+
+  describe("when a node has focus", () => {
+    let data = D.empty;
+    data = D.addChild(data, "0", "1")[0];
+    data = D.addChild(data, "0", "2")[0];
+
+    let tree = T.fromRoot(data, "0");
+    tree = T.focus(tree, T.children(tree, T.root(tree))[0]);
+
+    const app = appState(data, tree);
+
+    it("inserts the new item after the focused item", () => {
+      expect(D.children(app.state, "0")[0]).toBe("1");
+      expect(D.children(app.state, "0")[1]).toBe("2");
+
+      const result = A.update(app, "new");
+
+      expect(D.children(result.state, "0")[0]).toBe("1");
+      expect(D.children(result.state, "0")[1]).not.toBe("1");
+      expect(D.children(result.state, "0")[1]).not.toBe("2");
+      expect(D.children(result.state, "0")[2]).toBe("2");
+    });
+  });
+});
