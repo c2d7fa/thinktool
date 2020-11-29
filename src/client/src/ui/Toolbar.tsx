@@ -1,6 +1,4 @@
 import * as React from "react";
-import * as Tutorial from "../tutorial";
-import {Context} from "../context";
 import * as Ac from "../actions";
 import * as Sh from "../shortcuts";
 

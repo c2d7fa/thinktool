@@ -225,18 +225,23 @@ function App_({
 
   React.useEffect(() => {
     receiver.current.subscribe("toolbar", (ev) => {
-      Actions.executeOn(context, ev.button, ev.target);
+      Actions.executeOn(contextRef.current, ev.button, ev.target);
     });
 
     receiver.current.subscribe("start-popup", (ev) => {
-      context.setPopupTarget(ev.target);
-      context.setActivePopup(ev.complete);
+      contextRef.current.setPopupTarget(ev.target);
+      contextRef.current.setActivePopup(ev.complete);
     });
   }, [])
 
   const send = receiver.current.send;
 
   const context = useContext({initialState, initialTutorialFinished, storage, server, openExternalUrl, receiver: receiver.current});
+
+  const contextRef = React.useRef(context);
+  React.useEffect(() => {
+    contextRef.current = context;
+  }, [context])
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
