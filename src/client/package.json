@@ -46,7 +46,8 @@
     "check": "node_modules/.bin/tsc",
     "build": "npm run build-style && node_modules/.bin/babel src/ -D --extensions .ts,.tsx --out-dir dist && tsc",
     "watch": "npm run build && node_modules/.bin/babel -w --verbose src/ -D --extensions .ts,.tsx --out-dir dist",
-    "test": "node_modules/.bin/jest --verbose"
+    "test": "node_modules/.bin/jest --verbose",
+    "test-watch": "jest --watchAll --verbose"
   },
   "files": [
     "dist/"
