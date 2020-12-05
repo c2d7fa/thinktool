@@ -28,7 +28,7 @@ export type ActionName =
   | "tutorial"
   | "changelog"
   | "undo"
-  | "toggle-type"
+  | "toggle-type" // [TODO] We no longer need this
   | "toggle"
   | "home"
   | "forum";
@@ -157,6 +157,107 @@ const updates = {
   "focus-down"(app: AppState) {
     return A.merge(app, {tree: T.focusDown(app.tree)});
   },
+
+  zoom(app: AppState, target: NodeRef | null) {
+    let result = app;
+    const previouslyFocused = T.thing(result.tree, T.root(result.tree));
+    result = A.merge(result, {selectedThing: T.thing(result.tree, require(target))});
+    result = applyActionEvent(result, {
+      action: "jump",
+      previouslyFocused,
+      thing: T.thing(result.tree, require(target)),
+    });
+    return result;
+  },
+
+  indent(app: AppState, target: NodeRef | null) {
+    let result = app;
+    const [newState, newTree] = T.indent(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "moved"});
+    return result;
+  },
+
+  unindent(app: AppState, target: NodeRef | null) {
+    let result = app;
+    const [newState, newTree] = T.unindent(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "moved"});
+    return result;
+  },
+
+  down(app: AppState, target: NodeRef | null) {
+    let result = app;
+    const [newState, newTree] = T.moveDown(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "moved"});
+    return result;
+  },
+
+  up(app: AppState, target: NodeRef | null) {
+    let result = app;
+    const [newState, newTree] = T.moveUp(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "moved"});
+    return result;
+  },
+
+  "new-child"(app: AppState, target: NodeRef | null) {
+    let result = app;
+    const [newState, newTree, _, newId] = T.createChild(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: T.focus(newTree, newId)});
+    result = applyActionEvent(result, {action: "created-item"});
+    return result;
+  },
+
+  remove(app: AppState, target: NodeRef | null) {
+    let result = app;
+    const [newState, newTree] = T.remove(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "removed"});
+    return result;
+  },
+
+  destroy(app: AppState, target: NodeRef | null) {
+    let result = app;
+    const [newState, newTree] = T.removeThing(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "destroy"});
+    return result;
+  },
+
+  tutorial(app: AppState) {
+    let result = app;
+    result = A.merge(result, {tutorialState: Tutorial.reset(result.tutorialState)});
+    return result;
+  },
+
+  changelog(app: AppState) {
+    return A.merge(app, {changelogShown: !app.changelogShown});
+  },
+
+  "toggle-type"(app: AppState, target: NodeRef | null) {
+    let result = app;
+    const newState = D.togglePage(result.state, T.thing(result.tree, require(target)));
+    result = A.merge(result, {state: newState});
+    return result;
+  },
+
+  toggle(app: AppState, target: NodeRef | null) {
+    let result = app;
+    const newTree = T.toggle(result.state, result.tree, require(target));
+    result = A.merge(result, {tree: newTree});
+    result = applyActionEvent(result, {action: "toggled-item", newTree, node: require(target)});
+    return result;
+  },
+
+  home(app: AppState) {
+    let result = app;
+    const newTree = T.fromRoot(result.state, "0");
+    result = applyActionEvent(result, {action: "home"});
+    result = A.merge(result, {tree: newTree});
+    return result;
+  },
 };
 
 const implementations: {
@@ -217,88 +318,8 @@ const implementations: {
     });
   },
 
-  zoom(context, focused) {
-    const previouslyFocused = T.thing(context.tree, T.root(context.tree));
-    context.setSelectedThing(T.thing(context.tree, require(focused)));
-    tutorialAction(context, {action: "jump", previouslyFocused, thing: T.thing(context.tree, require(focused))});
-  },
-
-  indent(context, focused) {
-    const [newState, newTree] = T.indent(context.state, context.tree, require(focused));
-    context.setState(newState);
-    context.setTree(newTree);
-    tutorialAction(context, {action: "moved"});
-  },
-
-  unindent(context, focused) {
-    const [newState, newTree] = T.unindent(context.state, context.tree, require(focused));
-    context.setState(newState);
-    context.setTree(newTree);
-    tutorialAction(context, {action: "moved"});
-  },
-
-  down(context, focused) {
-    const [newState, newTree] = T.moveDown(context.state, context.tree, require(focused));
-    context.setState(newState);
-    context.setTree(newTree);
-    tutorialAction(context, {action: "moved"});
-  },
-
-  up(context, focused) {
-    const [newState, newTree] = T.moveUp(context.state, context.tree, require(focused));
-    context.setState(newState);
-    context.setTree(newTree);
-    tutorialAction(context, {action: "moved"});
-  },
-
-  "new-child"(context, focused) {
-    const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, require(focused));
-    context.setState(newState);
-    context.setTree(T.focus(newTree, newId));
-    tutorialAction(context, {action: "created-item"});
-  },
-
-  remove(context, focused) {
-    const [newState, newTree] = T.remove(context.state, context.tree, require(focused));
-    context.setState(newState);
-    context.setTree(newTree);
-    tutorialAction(context, {action: "removed"});
-  },
-
-  destroy(context, focused) {
-    const [newState, newTree] = T.removeThing(context.state, context.tree, require(focused));
-    context.setState(newState);
-    context.setTree(newTree);
-    tutorialAction(context, {action: "destroy"});
-  },
-
-  tutorial(context, focused) {
-    context.setTutorialState(Tutorial.reset(context.tutorialState));
-  },
-
-  changelog(context, focused) {
-    context.setChangelogShown(!context.changelogShown);
-  },
-
   undo(context, focused) {
     context.undo();
-  },
-
-  "toggle-type"(context, focused) {
-    const newState = D.togglePage(context.state, T.thing(context.tree, require(focused)));
-    context.setState(newState);
-  },
-
-  toggle(context, focused) {
-    const newTree = T.toggle(context.state, context.tree, require(focused));
-    context.setTree(newTree);
-    tutorialAction(context, {action: "toggled-item", newTree, node: require(focused)});
-  },
-
-  home(context, focused) {
-    const newTree = T.fromRoot(context.state, "0");
-    tutorialAction(context, {action: "home"});
-    context.setTree(newTree);
   },
 
   forum(context, focused) {
