@@ -110,11 +110,11 @@ export function executeOn(context: Context, action: ActionName, target: NodeRef 
   implementation(context, target);
 }
 
-export function update(app: AppState, action: "new"): AppState {
+export function update(app: AppState, action: keyof typeof updates): AppState {
   return updateOn(app, action, T.focused(app.tree));
 }
 
-export function updateOn(app: AppState, action: "new", target: NodeRef | null): AppState {
+export function updateOn(app: AppState, action: keyof typeof updates, target: NodeRef | null): AppState {
   return updates[action](app, target);
 }
 
