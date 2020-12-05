@@ -60,27 +60,27 @@ describe("new", () => {
     data = D.addChild(data, "0", "1")[0];
     let tree = T.fromRoot(data, "0");
 
-    it("creates a new child of the root thing in the state", () => {
+    it("creates a new child of the root thing in the state", async () => {
       const app = appState(data, tree);
       expect(D.children(app.state, "0").length).toBe(1);
 
-      const result = A.update(appState(data, tree), "new");
+      const result = await A.update(appState(data, tree), "new");
       expect(D.children(result.state, "0").length).toBe(2);
     });
 
-    it("creates a new child of the root node in the tree", () => {
+    it("creates a new child of the root node in the tree", async () => {
       const app = appState(data, tree);
       expect(T.children(app.tree, T.root(app.tree)).length).toBe(1);
 
-      const result = A.update(appState(data, tree), "new");
+      const result = await A.update(appState(data, tree), "new");
       expect(T.children(result.tree, T.root(result.tree)).length).toBe(2);
     });
 
-    it("inserts the new item as the first child", () => {
+    it("inserts the new item as the first child", async () => {
       const app = appState(data, tree);
       const old = D.children(app.state, "0")[0];
 
-      const result = A.update(app, "new");
+      const result = await A.update(app, "new");
       expect(D.children(result.state, "0")[0]).not.toBe(old);
       expect(D.children(result.state, "0")[1]).toBe(old);
     });
@@ -96,11 +96,11 @@ describe("new", () => {
 
     const app = appState(data, tree);
 
-    it("inserts the new item after the focused item", () => {
+    it("inserts the new item after the focused item", async () => {
       expect(D.children(app.state, "0")[0]).toBe("1");
       expect(D.children(app.state, "0")[1]).toBe("2");
 
-      const result = A.update(app, "new");
+      const result = await A.update(app, "new");
 
       expect(D.children(result.state, "0")[0]).toBe("1");
       expect(D.children(result.state, "0")[1]).not.toBe("1");
@@ -109,7 +109,7 @@ describe("new", () => {
     });
   });
 
-  it("completes the 'create-item' goal", () => {
+  it("completes the 'create-item' goal", async () => {
     function completed(app: C.AppState, goal: GoalId): boolean {
       return Tu.isGoalFinished(app.tutorialState, goal);
     }
@@ -121,7 +121,7 @@ describe("new", () => {
     const app = appState(data, tree);
     expect(completed(app, "create-item")).toBe(false);
 
-    const result = A.update(app, "new");
+    const result = await A.update(app, "new");
     expect(completed(result, "create-item")).toBe(true);
   });
 });

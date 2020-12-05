@@ -97,10 +97,13 @@ export function executeOn(context: Context, action: ActionName, target: NodeRef 
   if (action in updates) {
     const updatableAction = action as keyof typeof updates;
 
-    const newAppState = updateOn(context, updatableAction, target);
-    context.setState(newAppState.state);
-    context.setTree(newAppState.tree);
-    context.setTutorialState(newAppState.tutorialState);
+    (async () => {
+      const newAppState = await updateOn(context, updatableAction, target);
+      context.setState(newAppState.state);
+      context.setTree(newAppState.tree);
+      context.setTutorialState(newAppState.tutorialState);
+    })();
+
     return;
   }
 
@@ -110,12 +113,12 @@ export function executeOn(context: Context, action: ActionName, target: NodeRef 
   implementation(context, target);
 }
 
-export function update(app: AppState, action: keyof typeof updates): AppState {
-  return updateOn(app, action, T.focused(app.tree));
+export async function update(app: AppState, action: keyof typeof updates): Promise<AppState> {
+  return await updateOn(app, action, T.focused(app.tree));
 }
 
-export function updateOn(app: AppState, action: keyof typeof updates, target: NodeRef | null): AppState {
-  return updates[action](app, target);
+async function updateOn(app: AppState, action: keyof typeof updates, target: NodeRef | null): Promise<AppState> {
+  return updates[action]({app, target});
 }
 
 function require<T>(x: T | null): T {
@@ -129,8 +132,13 @@ function applyActionEvent(app: AppState, event: Goal.ActionEvent): AppState {
   return A.merge(app, {tutorialState: Tutorial.action(app.tutorialState, event)});
 }
 
+type UpdateArgs = {
+  app: AppState;
+  target: NodeRef | null;
+};
+
 const updates = {
-  new(app: AppState, target: NodeRef | null): AppState {
+  async new({app, target}: UpdateArgs) {
     let result = app;
     if (target === null) {
       let [newState, newTree, _, newId] = T.createChild(app.state, app.tree, T.root(app.tree));
@@ -145,20 +153,20 @@ const updates = {
     return result;
   },
 
-  "new-before"(app: AppState, target: NodeRef | null) {
+  async "new-before"({app, target}: UpdateArgs) {
     const [newState, newTree, _, newId] = T.createSiblingBefore(app.state, app.tree, require(target));
     return applyActionEvent(A.merge(app, {state: newState, tree: newTree}), {action: "created-item"});
   },
 
-  "focus-up"(app: AppState) {
+  async "focus-up"({app}: UpdateArgs) {
     return A.merge(app, {tree: T.focusUp(app.tree)});
   },
 
-  "focus-down"(app: AppState) {
+  async "focus-down"({app}: UpdateArgs) {
     return A.merge(app, {tree: T.focusDown(app.tree)});
   },
 
-  zoom(app: AppState, target: NodeRef | null) {
+  async zoom({app, target}: UpdateArgs) {
     let result = app;
     const previouslyFocused = T.thing(result.tree, T.root(result.tree));
     result = A.merge(result, {selectedThing: T.thing(result.tree, require(target))});
@@ -170,7 +178,7 @@ const updates = {
     return result;
   },
 
-  indent(app: AppState, target: NodeRef | null) {
+  async indent({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.indent(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
@@ -178,7 +186,7 @@ const updates = {
     return result;
   },
 
-  unindent(app: AppState, target: NodeRef | null) {
+  async unindent({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.unindent(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
@@ -186,7 +194,7 @@ const updates = {
     return result;
   },
 
-  down(app: AppState, target: NodeRef | null) {
+  async down({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.moveDown(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
@@ -194,7 +202,7 @@ const updates = {
     return result;
   },
 
-  up(app: AppState, target: NodeRef | null) {
+  async up({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.moveUp(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
@@ -202,7 +210,7 @@ const updates = {
     return result;
   },
 
-  "new-child"(app: AppState, target: NodeRef | null) {
+  async "new-child"({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree, _, newId] = T.createChild(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: T.focus(newTree, newId)});
@@ -210,7 +218,7 @@ const updates = {
     return result;
   },
 
-  remove(app: AppState, target: NodeRef | null) {
+  async remove({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.remove(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
@@ -218,7 +226,7 @@ const updates = {
     return result;
   },
 
-  destroy(app: AppState, target: NodeRef | null) {
+  async destroy({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.removeThing(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
@@ -226,24 +234,24 @@ const updates = {
     return result;
   },
 
-  tutorial(app: AppState) {
+  async tutorial({app}: UpdateArgs) {
     let result = app;
     result = A.merge(result, {tutorialState: Tutorial.reset(result.tutorialState)});
     return result;
   },
 
-  changelog(app: AppState) {
+  async changelog({app}: UpdateArgs) {
     return A.merge(app, {changelogShown: !app.changelogShown});
   },
 
-  "toggle-type"(app: AppState, target: NodeRef | null) {
+  async "toggle-type"({app, target}: UpdateArgs) {
     let result = app;
     const newState = D.togglePage(result.state, T.thing(result.tree, require(target)));
     result = A.merge(result, {state: newState});
     return result;
   },
 
-  toggle(app: AppState, target: NodeRef | null) {
+  async toggle({app, target}: UpdateArgs) {
     let result = app;
     const newTree = T.toggle(result.state, result.tree, require(target));
     result = A.merge(result, {tree: newTree});
@@ -251,7 +259,7 @@ const updates = {
     return result;
   },
 
-  home(app: AppState) {
+  async home({app}: UpdateArgs) {
     let result = app;
     const newTree = T.fromRoot(result.state, "0");
     result = applyActionEvent(result, {action: "home"});
