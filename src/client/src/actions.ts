@@ -98,7 +98,24 @@ export function executeOn(context: Context, action: ActionName, target: NodeRef 
     const updatableAction = action as keyof typeof updates;
 
     (async () => {
-      const newAppState = await updateOn(context, updatableAction, target);
+      // [TODO] This is implemented in a hacky way due to the fact that the
+      // popup system was originally designed to be used in a different way. We
+      // should refactor this so that we don't need to create this weird wrapper
+      // for creating popups.
+      async function input(): Promise<[AppState, string]> {
+        return new Promise((resolve, reject) => {
+          context.send("start-popup", {
+            target,
+            complete(state, tree, target, selection) {
+              resolve([A.merge(context, {state, tree}), selection]);
+              // [TODO] Hack
+              return [D.empty, T.fromRoot(D.empty, "0")];
+            },
+          });
+        });
+      }
+
+      const newAppState = await updateOn(context, updatableAction, target, input);
       context.setState(newAppState.state);
       context.setTree(newAppState.tree);
       context.setTutorialState(newAppState.tutorialState);
@@ -113,12 +130,21 @@ export function executeOn(context: Context, action: ActionName, target: NodeRef 
   implementation(context, target);
 }
 
-export async function update(app: AppState, action: keyof typeof updates): Promise<AppState> {
-  return await updateOn(app, action, T.focused(app.tree));
+export async function update(
+  app: AppState,
+  action: keyof typeof updates,
+  input: () => Promise<[AppState, string]>,
+): Promise<AppState> {
+  return await updateOn(app, action, T.focused(app.tree), input);
 }
 
-async function updateOn(app: AppState, action: keyof typeof updates, target: NodeRef | null): Promise<AppState> {
-  return updates[action]({app, target});
+async function updateOn(
+  app: AppState,
+  action: keyof typeof updates,
+  target: NodeRef | null,
+  input: () => Promise<[AppState, string]>,
+): Promise<AppState> {
+  return updates[action]({app, target, input});
 }
 
 function require<T>(x: T | null): T {
@@ -135,9 +161,16 @@ function applyActionEvent(app: AppState, event: Goal.ActionEvent): AppState {
 type UpdateArgs = {
   app: AppState;
   target: NodeRef | null;
+  input(): Promise<[AppState, string]>;
 };
 
 const updates = {
+  async "insert-sibling"({target, input}: UpdateArgs) {
+    let [result, selection] = await input();
+    const [newState, newTree] = T.insertSiblingAfter(result.state, result.tree, require(target), selection);
+    return A.merge(result, {state: newState, tree: newTree});
+  },
+
   async new({app, target}: UpdateArgs) {
     let result = app;
     if (target === null) {
@@ -271,16 +304,6 @@ const updates = {
 const implementations: {
   [k: string]: ((context: Context, focused: T.NodeRef | null) => void) | undefined;
 } = {
-  "insert-sibling"(context, focused) {
-    context.send("start-popup", {
-      target: focused,
-      complete(state, tree, target, selection) {
-        const [newState, newTree] = T.insertSiblingAfter(state, tree, target, selection);
-        return [newState, newTree];
-      },
-    });
-  },
-
   "insert-child"(context, focused) {
     context.send("start-popup", {
       target: focused,
