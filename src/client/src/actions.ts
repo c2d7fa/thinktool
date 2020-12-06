@@ -171,6 +171,20 @@ const updates = {
     return A.merge(result, {state: newState, tree: newTree});
   },
 
+  async "insert-child"({target, input}: UpdateArgs) {
+    let [result, selection] = await input();
+    const [newState, newTree] = T.insertChild(result.state, result.tree, require(target), selection, 0);
+    return A.merge(result, {state: newState, tree: newTree});
+  },
+
+  async "insert-parent"({target, input}: UpdateArgs) {
+    let [result, selection] = await input();
+    const [newState, newTree] = T.insertParent(result.state, result.tree, require(target), selection);
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "inserted-parent", childNode: require(target), newState, newTree});
+    return result;
+  },
+
   async new({app, target}: UpdateArgs) {
     let result = app;
     if (target === null) {
@@ -304,27 +318,6 @@ const updates = {
 const implementations: {
   [k: string]: ((context: Context, focused: T.NodeRef | null) => void) | undefined;
 } = {
-  "insert-child"(context, focused) {
-    context.send("start-popup", {
-      target: focused,
-      complete(state, tree, target, selection) {
-        const [newState, newTree] = T.insertChild(state, tree, target, selection, 0);
-        return [newState, newTree];
-      },
-    });
-  },
-
-  "insert-parent"(context, focused) {
-    context.send("start-popup", {
-      target: focused,
-      complete(state, tree, target, selection) {
-        const [newState, newTree] = T.insertParent(state, tree, target, selection);
-        tutorialAction(context, {action: "inserted-parent", childNode: target, newState, newTree});
-        return [newState, newTree];
-      },
-    });
-  },
-
   "insert-link"(context, focused) {
     const node = focused;
 
