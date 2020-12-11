@@ -224,6 +224,10 @@ function App_({
   const receiver = React.useRef(createReceiver<Message>());
 
   React.useEffect(() => {
+    receiver.current.subscribe("action", (ev) => {
+      Actions.execute(contextRef.current, ev.action);
+    });
+
     receiver.current.subscribe("toolbar", (ev) => {
       Actions.executeOn(contextRef.current, ev.button, ev.target);
     });
@@ -296,11 +300,10 @@ function App_({
 
   document.onkeydown = (ev) => {
     if (Sh.matches(ev, Actions.shortcut("undo"))) {
-      console.log("Undoing");
-      Actions.execute(context, "undo");
+      context.send("action", {action: "undo"});
       ev.preventDefault();
     } else if (Sh.matches(ev, Actions.shortcut("find"))) {
-      Actions.execute(context, "find");
+      context.send("action", {action: "find"});
       ev.preventDefault();
     }
   };
@@ -505,7 +508,7 @@ function ThingOverview(p: {context: Context}) {
         <Editor
           context={p.context}
           node={T.root(p.context.tree)}
-          onAction={(action) => Actions.execute(p.context, action)}
+          onAction={(action) => p.context.send("action", {action})}
           onOpenLink={openLink}
           onJumpLink={jumpLink}
         />
@@ -703,7 +706,7 @@ function ExpandableItem(props: {
     <Editor
       context={props.context}
       node={props.node}
-      onAction={(action) => Actions.execute(props.context, action)}
+      onAction={(action) => props.context.send("action", {action})}
       onOpenLink={onOpenLink}
       onJumpLink={onJumpLink}
     />
