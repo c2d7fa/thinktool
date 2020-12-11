@@ -115,7 +115,7 @@ export function executeOn(context: Context, action: ActionName, target: NodeRef 
         });
       }
 
-      const newAppState = await updateOn(context, updatableAction, target, input);
+      const newAppState = await updateOn(context, updatableAction, target, {input});
       context.setState(newAppState.state);
       context.setTree(newAppState.tree);
       context.setTutorialState(newAppState.tutorialState);
@@ -133,18 +133,26 @@ export function executeOn(context: Context, action: ActionName, target: NodeRef 
 export async function update(
   app: AppState,
   action: keyof typeof updates,
-  input: () => Promise<[AppState, string]>,
+  config: UpdateConfig,
 ): Promise<AppState> {
-  return await updateOn(app, action, T.focused(app.tree), input);
+  if (!enabled(app, action)) {
+    console.error("The action %o should not be enabled! Continuing anyway...", action);
+  }
+
+  return await updateOn(app, action, T.focused(app.tree), config);
 }
 
 async function updateOn(
   app: AppState,
   action: keyof typeof updates,
   target: NodeRef | null,
-  input: () => Promise<[AppState, string]>,
+  config: UpdateConfig,
 ): Promise<AppState> {
-  return updates[action]({app, target, input});
+  if (!enabled(app, action)) {
+    console.warn("The action %o appears not to be enabled.", action);
+  }
+
+  return updates[action]({app, target, input: config.input});
 }
 
 function require<T>(x: T | null): T {
@@ -158,10 +166,13 @@ function applyActionEvent(app: AppState, event: Goal.ActionEvent): AppState {
   return A.merge(app, {tutorialState: Tutorial.action(app.tutorialState, event)});
 }
 
-type UpdateArgs = {
+export type UpdateConfig = {
+  input: () => Promise<[AppState, string]>;
+};
+
+type UpdateArgs = UpdateConfig & {
   app: AppState;
   target: NodeRef | null;
-  input(): Promise<[AppState, string]>;
 };
 
 const updates = {
