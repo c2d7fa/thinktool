@@ -108,8 +108,6 @@ export function executeOn(context: Context, action: ActionName, target: NodeRef 
             target,
             complete(state, tree, target, selection) {
               resolve([A.merge(context, {state, tree}), selection]);
-              // [TODO] Hack
-              return [D.empty, T.fromRoot(D.empty, "0")];
             },
           });
         });
@@ -119,6 +117,7 @@ export function executeOn(context: Context, action: ActionName, target: NodeRef 
       context.setState(newAppState.state);
       context.setTree(newAppState.tree);
       context.setTutorialState(newAppState.tutorialState);
+      context.setSelectedThing(newAppState.selectedThing);
     })();
 
     return;
@@ -324,6 +323,14 @@ const updates = {
     result = A.merge(result, {tree: newTree});
     return result;
   },
+
+  async find({app, input}: UpdateArgs) {
+    const previouslyFocused = T.thing(app.tree, T.root(app.tree));
+    let [result, selection] = await input();
+    result = A.merge(result, {selectedThing: selection});
+    result = applyActionEvent(result, {action: "found", previouslyFocused, thing: selection});
+    return result;
+  },
 };
 
 const implementations: {
@@ -338,17 +345,6 @@ const implementations: {
       if (context.activeEditor === null) throw "No active editor.";
       tutorialAction(context, {action: "link-inserted"});
       context.activeEditor.replaceSelectionWithLink(selection, D.contentText(state, selection));
-      return [state, tree];
-    });
-  },
-
-  find(context) {
-    // This is a hack on how setActivePopup is supposed to be used.
-    const previouslyFocused = T.thing(context.tree, T.root(context.tree));
-    context.setPopupTarget({id: 0});
-    context.setActivePopup((state, tree, target, selection) => {
-      context.setSelectedThing(selection);
-      tutorialAction(context, {action: "found", previouslyFocused, thing: selection});
       return [state, tree];
     });
   },
