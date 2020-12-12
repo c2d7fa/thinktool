@@ -136,63 +136,39 @@ function Popup(props: {
   );
 }
 
-export function usePopup(context: C.Context) {
+export function usePopup(app: C.AppState) {
   const [isPopupVisible, setIsPopupVisible] = React.useState(false);
 
-  const contextRef = React.useRef(context);
+  const appRef = React.useRef(app);
   React.useEffect(() => {
-    contextRef.current = context;
-  }, [context]);
+    appRef.current = app;
+  }, [app]);
 
   const [onCreate, setOnCreate] = React.useState(() => (content: string) => {
     console.error("onCreate callback not set!");
   });
 
-  const [onSubmit, setOnSubmit] = React.useState(() => (selection: string) => {
-    console.error("onSubmit callback not set!");
+  const [onSelect, setOnSelect] = React.useState(() => (selection: string) => {
+    console.error("onSelect callback not set!");
   });
 
   function input(): Promise<[C.AppState, string]> {
     return new Promise((resolve, reject) => {
       setOnCreate(() => (content: string) => {
-        let [state, selection] = D.create(contextRef.current!.state);
+        let [state, selection] = D.create(appRef.current!.state);
         state = D.setContent(state, selection, [content]);
-        resolve([C.merge(contextRef.current!, {state}), selection]);
+        resolve([C.merge(appRef.current!, {state}), selection]);
       });
-      setOnSubmit(() => (selection: string) => {
-        resolve([contextRef.current!, selection]);
+      setOnSelect(() => (selection: string) => {
+        resolve([appRef.current!, selection]);
       });
       setIsPopupVisible(true);
     });
   }
 
-  const component = (() => {
-    if (!isPopupVisible) return null;
-
-    return (
-      <ThingSelectPopup
-        hide={() => setIsPopupVisible(false)}
-        state={context.state}
-        create={onCreate}
-        submit={onSubmit}
-        seedText={context.activeEditor?.selection}
-      />
-    );
-  })();
-
-  return {component, input};
-}
-
-export default function ThingSelectPopup(props: {
-  state: D.State;
-  hide(): void;
-  submit(thing: string): void;
-  create(content: string): void;
-  seedText?: string;
-}) {
   const [query, setQuery] = React.useState("");
   const [results, setResults] = React.useState<{thing: string; content: string}[]>([]);
-  const search = React.useMemo<Search>(() => new Search(props.state), [props.state]);
+  const search = React.useMemo<Search>(() => new Search(app.state), [app.state]);
 
   function onSearch(query: string, maxResults: number) {
     setQuery(query);
@@ -207,23 +183,31 @@ export default function ThingSelectPopup(props: {
   }
 
   React.useEffect(() => {
-    if (props.seedText !== undefined) onSearch(props.seedText, 50);
-  }, []);
+    if (!isPopupVisible) {
+      onSearch("", 50);
+    }
+  }, [isPopupVisible]);
 
-  return (
-    <Popup
-      query={query}
-      onAbort={() => setTimeout(() => props.hide())} // [TODO] I don't remember why we setTimeout. Do we need it?
-      onSelect={(thing) => {
-        props.submit(thing);
-        props.hide();
-      }}
-      onCreate={() => {
-        props.create(query);
-        props.hide();
-      }}
-      results={results}
-      onSearch={onSearch}
-    />
-  );
+  const component = (() => {
+    if (!isPopupVisible) return null;
+
+    return (
+      <Popup
+        query={query}
+        onAbort={() => setTimeout(() => setIsPopupVisible(false))} // [TODO] I don't remember why we setTimeout. Do we need it?
+        onSelect={(thing) => {
+          onSelect(thing);
+          setIsPopupVisible(false);
+        }}
+        onCreate={() => {
+          onCreate(query);
+          setIsPopupVisible(false);
+        }}
+        results={results}
+        onSearch={onSearch}
+      />
+    );
+  })();
+
+  return {component, input};
 }
