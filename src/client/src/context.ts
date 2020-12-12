@@ -66,13 +66,6 @@ export interface Context extends AppState {
   selectedThing: string;
   setSelectedThing(value: string): void;
 
-  activePopup: ((state: State, tree: Tree, target: T.NodeRef, selection: string) => [State, Tree] | void) | null;
-  setActivePopup(
-    callback: ((state: State, tree: Tree, target: T.NodeRef, selection: string) => [State, Tree] | void) | null,
-  ): void;
-  popupTarget: T.NodeRef | null;
-  setPopupTarget(popupTarget: T.NodeRef | null): void;
-
   activeEditor: ActiveEditor | null;
   registerActiveEditor(activeEditor: ActiveEditor | null): void;
 

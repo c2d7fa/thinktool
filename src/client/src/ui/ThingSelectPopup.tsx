@@ -5,6 +5,7 @@ import {choose} from "@johv/miscjs";
 import type {Result} from "../search";
 
 import * as D from "../data";
+import * as C from "../context";
 import Search from "../search";
 
 function useFocusInputRef(): React.RefObject<HTMLInputElement> {
@@ -133,6 +134,53 @@ function Popup(props: {
     </div>,
     document.body,
   );
+}
+
+export function usePopup(context: C.Context) {
+  const [isPopupVisible, setIsPopupVisible] = React.useState(false);
+
+  const contextRef = React.useRef(context);
+  React.useEffect(() => {
+    contextRef.current = context;
+  }, [context]);
+
+  const [onCreate, setOnCreate] = React.useState(() => (content: string) => {
+    console.error("onCreate callback not set!");
+  });
+
+  const [onSubmit, setOnSubmit] = React.useState(() => (selection: string) => {
+    console.error("onSubmit callback not set!");
+  });
+
+  function input(): Promise<[C.AppState, string]> {
+    return new Promise((resolve, reject) => {
+      setOnCreate(() => (content: string) => {
+        let [state, selection] = D.create(contextRef.current!.state);
+        state = D.setContent(state, selection, [content]);
+        resolve([C.merge(contextRef.current!, {state}), selection]);
+      });
+      setOnSubmit(() => (selection: string) => {
+        resolve([contextRef.current!, selection]);
+      });
+      setIsPopupVisible(true);
+    });
+  }
+
+  const component = (() => {
+    if (!isPopupVisible) return null;
+
+    return (
+      <ThingSelectPopup
+        hide={() => setIsPopupVisible(false)}
+        state={context.state}
+        create={onCreate}
+        submit={onSubmit}
+        seedText={context.activeEditor?.selection}
+      />
+    );
+  })();
+
+  return {component, input};
 }
 
 export default function ThingSelectPopup(props: {

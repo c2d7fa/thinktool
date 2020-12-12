@@ -18,7 +18,7 @@ import * as ExportRoam from "./export-roam";
 import * as Sh from "./shortcuts";
 
 import Editor from "./ui/Editor";
-import ThingSelectPopup from "./ui/ThingSelectPopup";
+import {usePopup} from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
@@ -183,15 +183,6 @@ function useContext({
     setTree,
     drag,
     setDrag,
-    activePopup,
-    // Work around problem with setting state to callback:
-    setActivePopup(
-      arg: ((state: State, tree: T.Tree, target: T.NodeRef, selection: string) => [State, T.Tree]) | null,
-    ) {
-      return setActivePopup(() => arg);
-    },
-    popupTarget,
-    setPopupTarget,
     activeEditor,
     registerActiveEditor,
     tutorialState,
@@ -225,22 +216,19 @@ function App_({
 
   React.useEffect(() => {
     receiver.current.subscribe("action", (ev) => {
-      Actions.execute(contextRef.current, ev.action);
+      Actions.execute(contextRef.current, ev.action, {input: popup.input});
     });
 
     receiver.current.subscribe("toolbar", (ev) => {
-      Actions.executeOn(contextRef.current, ev.button, ev.target);
-    });
-
-    receiver.current.subscribe("start-popup", (ev) => {
-      contextRef.current.setPopupTarget(ev.target);
-      contextRef.current.setActivePopup(ev.complete);
+      Actions.executeOn(contextRef.current, ev.button, ev.target, {input: popup.input});
     });
   }, [])
 
   const send = receiver.current.send;
 
   const context = useContext({initialState, initialTutorialFinished, storage, server, openExternalUrl, receiver: receiver.current});
+
+  const popup = usePopup(context);
 
   const contextRef = React.useRef(context);
   React.useEffect(() => {
@@ -407,41 +395,7 @@ function App_({
       tabIndex={-1}
       className="app"
     >
-      {context.activePopup === null ? null : (
-        <ThingSelectPopup
-          hide={() => context.setActivePopup(null)}
-          state={context.state}
-          create={(content: string) => {
-            const target = context.popupTarget;
-            if (target === null) {
-              console.warn("Aborting popup action because nothing is focused.");
-              return;
-            }
-            const [state2, selection] = Data.create(context.state);
-            const state3 = Data.setContent(state2, selection, [content]);
-            const result = context.activePopup!(state3, context.tree, target, selection);
-            if (typeof result === "object") {
-              const [newState, newTree] = result;
-              context.setState(newState);
-              context.setTree(newTree);
-            }
-          }}
-          submit={(selection: string) => {
-            const target = context.popupTarget;
-            if (target === null) {
-              console.warn("Aborting popup action because nothing is focused.");
-              return;
-            }
-            const result = context.activePopup!(context.state, context.tree, target, selection);
-            if (typeof result === "object") {
-              const [newState, newTree] = result;
-              context.setState(newState);
-              context.setTree(newTree);
-            }
-          }}
-          seedText={context.activeEditor?.selection}
-        />
-      )}
+      {popup.component}
       <div className="top-bar">
         <ExternalLink className="logo" href="/">
           Thinktool

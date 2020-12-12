@@ -73,7 +73,7 @@ export function enabled(state: AppState, action: ActionName): boolean {
   }
 }
 
-export function execute(context: Context, action: ActionName): void {
+export function execute(context: Context, action: ActionName, config: UpdateConfig): void {
   if (!enabled(context, action)) {
     console.error("The action %o is not enabled! Ignoring.", action);
     return;
@@ -82,31 +82,21 @@ export function execute(context: Context, action: ActionName): void {
   const focused = T.focused(context.tree);
   if (focused === null) throw `Bug in 'enabled'. Ran action '${action}', even though there was no node selected.`;
 
-  executeOn(context, action, focused);
+  executeOn(context, action, focused, config);
 }
 
-export function executeOn(context: Context, action: ActionName, target: NodeRef | null): void {
+export function executeOn(
+  context: Context,
+  action: ActionName,
+  target: NodeRef | null,
+  config: UpdateConfig,
+): void {
   if (!enabled(context, action)) {
     console.warn("The action %o appears not to be enabled.", action);
   }
 
   (async () => {
-    // [TODO] This is implemented in a hacky way due to the fact that the
-    // popup system was originally designed to be used in a different way. We
-    // should refactor this so that we don't need to create this weird wrapper
-    // for creating popups.
-    async function input(): Promise<[AppState, string]> {
-      return new Promise((resolve, reject) => {
-        context.send("start-popup", {
-          target,
-          complete(state, tree, target, selection) {
-            resolve([A.merge(context, {state, tree}), selection]);
-          },
-        });
-      });
-    }
-
-    const result = await updateOn(context, action, target, {input});
+    const result = await updateOn(context, action, target, config);
 
     if (result.app) {
       console.log("setting state %o", result.app.state);
