@@ -135,12 +135,22 @@ export function executeOn(context: Context, action: ActionName, target: NodeRef 
       const textContent = D.contentText(result.app!.state, target);
       context.activeEditor.replaceSelectionWithLink(target, textContent);
     }
+
+    if (result.undo) {
+      context.undo();
+    }
+
+    if (result.openUrl) {
+      context.openExternalUrl(result.openUrl);
+    }
   })();
 }
 
 interface UpdateResult {
   app?: AppState;
   insertLinkInActiveEditor?: string;
+  openUrl?: string;
+  undo?: boolean;
 }
 
 export async function update(
@@ -346,22 +356,18 @@ const updates = {
     return {app: result};
   },
 
-  async "insert-link"({app, input}: UpdateArgs) {
+  async "insert-link"({input}: UpdateArgs) {
     let [result, selection] = await input();
     result = applyActionEvent(result, {action: "link-inserted"});
     return {app: result, insertLinkInActiveEditor: selection};
   },
 
   undo({}: UpdateArgs) {
-    // [TODO]
-    //context.undo();
-    return {};
+    return {undo: true};
   },
 
   forum({}: UpdateArgs) {
-    // [TODO]
-    //context.openExternalUrl("https://old.reddit.com/r/thinktool/");
-    return {};
+    return {openUrl: "https://old.reddit.com/r/thinktool/"};
   },
 };
 
