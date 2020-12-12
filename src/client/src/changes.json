@@ -347,6 +347,10 @@
     {
       "date": "2020-11-18",
       "title": "Destroying an item (e.g. with Alt-Delete) now places the cursor in the previous item."
+    },
+    {
+      "date": "2020-12-12",
+      "title": "Added system to tutorial that gives you goals to accomplish."
     }
   ]
 }
