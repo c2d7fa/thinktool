@@ -70,7 +70,7 @@ describe("new", () => {
       const app = appState(data, tree);
       expect(D.children(app.state, "0").length).toBe(1);
 
-      const result = await A.update(appState(data, tree), "new", stubConfig);
+      const result = (await A.update(appState(data, tree), "new", stubConfig)).app!;
       expect(D.children(result.state, "0").length).toBe(2);
     });
 
@@ -78,7 +78,7 @@ describe("new", () => {
       const app = appState(data, tree);
       expect(T.children(app.tree, T.root(app.tree)).length).toBe(1);
 
-      const result = await A.update(appState(data, tree), "new", stubConfig);
+      const result = (await A.update(appState(data, tree), "new", stubConfig)).app!;
       expect(T.children(result.tree, T.root(result.tree)).length).toBe(2);
     });
 
@@ -86,7 +86,7 @@ describe("new", () => {
       const app = appState(data, tree);
       const old = D.children(app.state, "0")[0];
 
-      const result = await A.update(app, "new", stubConfig);
+      const result = (await A.update(app, "new", stubConfig)).app!;
       expect(D.children(result.state, "0")[0]).not.toBe(old);
       expect(D.children(result.state, "0")[1]).toBe(old);
     });
@@ -106,7 +106,7 @@ describe("new", () => {
       expect(D.children(app.state, "0")[0]).toBe("1");
       expect(D.children(app.state, "0")[1]).toBe("2");
 
-      const result = await A.update(app, "new", stubConfig);
+      const result = (await A.update(app, "new", stubConfig)).app!;
 
       expect(D.children(result.state, "0")[0]).toBe("1");
       expect(D.children(result.state, "0")[1]).not.toBe("1");
@@ -127,7 +127,7 @@ describe("new", () => {
     const app = appState(data, tree);
     expect(completed(app, "create-item")).toBe(false);
 
-    const result = await A.update(app, "new", stubConfig);
+    const result = (await A.update(app, "new", stubConfig)).app!;
     expect(completed(result, "create-item")).toBe(true);
   });
 });

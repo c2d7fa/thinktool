@@ -73,10 +73,6 @@ export function enabled(state: AppState, action: ActionName): boolean {
   }
 }
 
-function tutorialAction(context: Context, event: Goal.ActionEvent) {
-  context.setTutorialState(Tutorial.action(context.tutorialState, event));
-}
-
 export function execute(context: Context, action: ActionName): void {
   if (!enabled(context, action)) {
     console.error("The action %o is not enabled! Ignoring.", action);
@@ -94,46 +90,64 @@ export function executeOn(context: Context, action: ActionName, target: NodeRef 
     console.warn("The action %o appears not to be enabled.", action);
   }
 
-  if (action in updates) {
-    const updatableAction = action as keyof typeof updates;
-
-    (async () => {
-      // [TODO] This is implemented in a hacky way due to the fact that the
-      // popup system was originally designed to be used in a different way. We
-      // should refactor this so that we don't need to create this weird wrapper
-      // for creating popups.
-      async function input(): Promise<[AppState, string]> {
-        return new Promise((resolve, reject) => {
-          context.send("start-popup", {
-            target,
-            complete(state, tree, target, selection) {
-              resolve([A.merge(context, {state, tree}), selection]);
-            },
-          });
+  (async () => {
+    // [TODO] This is implemented in a hacky way due to the fact that the
+    // popup system was originally designed to be used in a different way. We
+    // should refactor this so that we don't need to create this weird wrapper
+    // for creating popups.
+    async function input(): Promise<[AppState, string]> {
+      return new Promise((resolve, reject) => {
+        context.send("start-popup", {
+          target,
+          complete(state, tree, target, selection) {
+            resolve([A.merge(context, {state, tree}), selection]);
+          },
         });
-      }
+      });
+    }
 
-      const newAppState = await updateOn(context, updatableAction, target, {input});
-      context.setState(newAppState.state);
-      context.setTree(newAppState.tree);
-      context.setTutorialState(newAppState.tutorialState);
-      context.setSelectedThing(newAppState.selectedThing);
-    })();
+    const result = await updateOn(context, action, target, {input});
 
-    return;
-  }
+    if (result.app) {
+      console.log("setting state %o", result.app.state);
+      context.setState(result.app.state);
+      context.setTree(result.app.tree);
+      context.setTutorialState(result.app.tutorialState);
+      context.setSelectedThing(result.app.selectedThing);
+    }
 
-  const implementation = implementations[action];
-  if (typeof implementation !== "function")
-    throw `Bug in 'execute'. Action '${action}' did not have an implementation.`;
-  implementation(context, target);
+    // [HACK] The mechanism for inserting a link in the editor is really
+    // awkward. This is ultimately due to the fact that we don't really want to
+    // manage the entire editor state in React. But it could probably be
+    // improved.
+    //
+    // We intentionally do this last, because if we do it first, then the editor
+    // will update the global state from the *old* state, and then afterwards we
+    // would override with the new state (which might have a new item from the
+    // popup for example), and then we would not get the link that the editor
+    // inserted.
+    //
+    // (Disclaimer: That explanation may not only be confusing but also wrong. I
+    // don't really understand why this code works; in fact, it might not.)
+    if (result.insertLinkInActiveEditor) {
+      if (context.activeEditor === null) throw "No active editor.";
+      const target = result.insertLinkInActiveEditor;
+      const textContent = D.contentText(result.app!.state, target);
+      context.activeEditor.replaceSelectionWithLink(target, textContent);
+    }
+  })();
+}
+
+interface UpdateResult {
+  app?: AppState;
+  insertLinkInActiveEditor?: string;
 }
 
 export async function update(
   app: AppState,
   action: keyof typeof updates,
   config: UpdateConfig,
-): Promise<AppState> {
+): Promise<UpdateResult> {
   if (!enabled(app, action)) {
     console.error("The action %o should not be enabled! Continuing anyway...", action);
   }
@@ -146,12 +160,12 @@ async function updateOn(
   action: keyof typeof updates,
   target: NodeRef | null,
   config: UpdateConfig,
-): Promise<AppState> {
+): Promise<UpdateResult> {
   if (!enabled(app, action)) {
     console.warn("The action %o appears not to be enabled.", action);
   }
 
-  return updates[action]({app, target, input: config.input});
+  return updates[action]({app, target, ...config});
 }
 
 function require<T>(x: T | null): T {
@@ -166,7 +180,7 @@ function applyActionEvent(app: AppState, event: Goal.ActionEvent): AppState {
 }
 
 export type UpdateConfig = {
-  input: () => Promise<[AppState, string]>;
+  input(): Promise<[AppState, string]>;
 };
 
 type UpdateArgs = UpdateConfig & {
@@ -178,13 +192,13 @@ const updates = {
   async "insert-sibling"({target, input}: UpdateArgs) {
     let [result, selection] = await input();
     const [newState, newTree] = T.insertSiblingAfter(result.state, result.tree, require(target), selection);
-    return A.merge(result, {state: newState, tree: newTree});
+    return {app: A.merge(result, {state: newState, tree: newTree})};
   },
 
   async "insert-child"({target, input}: UpdateArgs) {
     let [result, selection] = await input();
     const [newState, newTree] = T.insertChild(result.state, result.tree, require(target), selection, 0);
-    return A.merge(result, {state: newState, tree: newTree});
+    return {app: A.merge(result, {state: newState, tree: newTree})};
   },
 
   async "insert-parent"({target, input}: UpdateArgs) {
@@ -192,7 +206,7 @@ const updates = {
     const [newState, newTree] = T.insertParent(result.state, result.tree, require(target), selection);
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "inserted-parent", childNode: require(target), newState, newTree});
-    return result;
+    return {app: result};
   },
 
   async new({app, target}: UpdateArgs) {
@@ -207,20 +221,20 @@ const updates = {
       result = A.merge(result, {state: newState, tree: newTree});
     }
     result = applyActionEvent(result, {action: "created-item"});
-    return result;
+    return {app: result};
   },
 
   async "new-before"({app, target}: UpdateArgs) {
     const [newState, newTree, _, newId] = T.createSiblingBefore(app.state, app.tree, require(target));
-    return applyActionEvent(A.merge(app, {state: newState, tree: newTree}), {action: "created-item"});
+    return {app: applyActionEvent(A.merge(app, {state: newState, tree: newTree}), {action: "created-item"})};
   },
 
   async "focus-up"({app}: UpdateArgs) {
-    return A.merge(app, {tree: T.focusUp(app.tree)});
+    return {app: A.merge(app, {tree: T.focusUp(app.tree)})};
   },
 
   async "focus-down"({app}: UpdateArgs) {
-    return A.merge(app, {tree: T.focusDown(app.tree)});
+    return {app: A.merge(app, {tree: T.focusDown(app.tree)})};
   },
 
   async zoom({app, target}: UpdateArgs) {
@@ -232,7 +246,7 @@ const updates = {
       previouslyFocused,
       thing: T.thing(result.tree, require(target)),
     });
-    return result;
+    return {app: result};
   },
 
   async indent({app, target}: UpdateArgs) {
@@ -240,7 +254,7 @@ const updates = {
     const [newState, newTree] = T.indent(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "moved"});
-    return result;
+    return {app: result};
   },
 
   async unindent({app, target}: UpdateArgs) {
@@ -248,7 +262,7 @@ const updates = {
     const [newState, newTree] = T.unindent(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "moved"});
-    return result;
+    return {app: result};
   },
 
   async down({app, target}: UpdateArgs) {
@@ -256,7 +270,7 @@ const updates = {
     const [newState, newTree] = T.moveDown(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "moved"});
-    return result;
+    return {app: result};
   },
 
   async up({app, target}: UpdateArgs) {
@@ -264,7 +278,7 @@ const updates = {
     const [newState, newTree] = T.moveUp(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "moved"});
-    return result;
+    return {app: result};
   },
 
   async "new-child"({app, target}: UpdateArgs) {
@@ -272,7 +286,7 @@ const updates = {
     const [newState, newTree, _, newId] = T.createChild(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: T.focus(newTree, newId)});
     result = applyActionEvent(result, {action: "created-item"});
-    return result;
+    return {app: result};
   },
 
   async remove({app, target}: UpdateArgs) {
@@ -280,7 +294,7 @@ const updates = {
     const [newState, newTree] = T.remove(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "removed"});
-    return result;
+    return {app: result};
   },
 
   async destroy({app, target}: UpdateArgs) {
@@ -288,24 +302,24 @@ const updates = {
     const [newState, newTree] = T.removeThing(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "destroy"});
-    return result;
+    return {app: result};
   },
 
   async tutorial({app}: UpdateArgs) {
     let result = app;
     result = A.merge(result, {tutorialState: Tutorial.reset(result.tutorialState)});
-    return result;
+    return {app: result};
   },
 
   async changelog({app}: UpdateArgs) {
-    return A.merge(app, {changelogShown: !app.changelogShown});
+    return {app: A.merge(app, {changelogShown: !app.changelogShown})};
   },
 
   async "toggle-type"({app, target}: UpdateArgs) {
     let result = app;
     const newState = D.togglePage(result.state, T.thing(result.tree, require(target)));
     result = A.merge(result, {state: newState});
-    return result;
+    return {app: result};
   },
 
   async toggle({app, target}: UpdateArgs) {
@@ -313,7 +327,7 @@ const updates = {
     const newTree = T.toggle(result.state, result.tree, require(target));
     result = A.merge(result, {tree: newTree});
     result = applyActionEvent(result, {action: "toggled-item", newTree, node: require(target)});
-    return result;
+    return {app: result};
   },
 
   async home({app}: UpdateArgs) {
@@ -321,7 +335,7 @@ const updates = {
     const newTree = T.fromRoot(result.state, "0");
     result = applyActionEvent(result, {action: "home"});
     result = A.merge(result, {tree: newTree});
-    return result;
+    return {app: result};
   },
 
   async find({app, input}: UpdateArgs) {
@@ -329,32 +343,25 @@ const updates = {
     let [result, selection] = await input();
     result = A.merge(result, {selectedThing: selection});
     result = applyActionEvent(result, {action: "found", previouslyFocused, thing: selection});
-    return result;
-  },
-};
-
-const implementations: {
-  [k: string]: ((context: Context, focused: T.NodeRef | null) => void) | undefined;
-} = {
-  "insert-link"(context, focused) {
-    const node = focused;
-
-    context.setPopupTarget(node);
-    context.setActivePopup((state, tree, target, selection) => {
-      if (target !== node) console.error("Unexpected target/node");
-      if (context.activeEditor === null) throw "No active editor.";
-      tutorialAction(context, {action: "link-inserted"});
-      context.activeEditor.replaceSelectionWithLink(selection, D.contentText(state, selection));
-      return [state, tree];
-    });
+    return {app: result};
   },
 
-  undo(context, focused) {
-    context.undo();
+  async "insert-link"({app, input}: UpdateArgs) {
+    let [result, selection] = await input();
+    result = applyActionEvent(result, {action: "link-inserted"});
+    return {app: result, insertLinkInActiveEditor: selection};
   },
 
-  forum(context, focused) {
-    context.openExternalUrl("https://old.reddit.com/r/thinktool/");
+  undo({}: UpdateArgs) {
+    // [TODO]
+    //context.undo();
+    return {};
+  },
+
+  forum({}: UpdateArgs) {
+    // [TODO]
+    //context.openExternalUrl("https://old.reddit.com/r/thinktool/");
+    return {};
   },
 };
 
