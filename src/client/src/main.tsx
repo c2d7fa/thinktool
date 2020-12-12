@@ -3,8 +3,10 @@ import * as Misc from "@johv/miscjs";
 
 import * as ChangelogData from "./changes.json";
 
-import {State} from "./data";
+import {State, diffState} from "./data";
 import {Context, DragInfo, ActiveEditor} from "./context";
+import {extractThingFromURL} from "./url";
+import {useBatched} from "./batched";
 
 import * as Data from "./data";
 import * as T from "./tree";
@@ -16,7 +18,7 @@ import * as ExportRoam from "./export-roam";
 import * as Sh from "./shortcuts";
 
 import Editor from "./ui/Editor";
-import ThingSelectPopup from "./ui/ThingSelectPopup";
+import {usePopup} from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
@@ -29,109 +31,8 @@ import * as ReactDOM from "react-dom";
 
 import undo from "./undo";
 import {nodeStatus} from "./node-status";
-
-// ==
-
-// == Components ==
-
-function extractThingFromURL(): string {
-  if (window.location.hash.length > 0) {
-    const thing = window.location.hash.slice(1);
-    return thing;
-  } else {
-    // By default, use thing #0. We should probably do something smarter here,
-    // like allow the user to set a deafult thing.
-    return "0";
-  }
-}
-
-// If we notified the server every time the user took an action, we would
-// overload the server with a huge number of requests. Instead we "batch"
-// changes, and only send the data when it makes sense to do so.
-//
-// We only want to batch related actions. For example if the user creates a new
-// item and then starts editing its title, the creation of the new item should
-// be sent immediately, but the editing should be batched such that we don't
-// send a request for each keystroke.
-
-function useBatched(cooldown: number): {update(key: string, callback: () => void): void} {
-  const timeouts: React.MutableRefObject<{[key: string]: number}> = React.useRef({});
-  const callbacks: React.MutableRefObject<{[key: string]: () => void}> = React.useRef({});
-
-  function update(key: string, callback: () => void): void {
-    if (timeouts.current[key] !== undefined) {
-      clearTimeout(timeouts.current[key]);
-      delete timeouts.current[key];
-    }
-    callbacks.current[key] = callback;
-    timeouts.current[key] = window.setTimeout(() => {
-      callback();
-      delete callbacks.current[key];
-    }, cooldown);
-  }
-
-  window.onbeforeunload = () => {
-    for (const key in callbacks.current) {
-      callbacks.current[key]();
-    }
-  };
-
-  return {update};
-}
-
-// When the user does something, we need to update both the local state and the
-// state on the server. We can't just send over the entire state to the server
-// each time; instead we use a REST API to make small changes.
-//
-// However, when we use library functions like Tree.moveToAbove (for example),
-// we just get back the new state, not each of the steps needed to bring the old
-// state to the new state. In this case, we have to go through and
-// retrospectively calculate the changes that we need to send to the server.
-//
-// In theory, we would prefer to write our code such that we always know exactly
-// what to send to the server. In practice, we use diffState quite frequently.
-
-function diffState(
-  oldState: State,
-  newState: State,
-): {added: string[]; deleted: string[]; changed: string[]; changedContent: string[]} {
-  const added: string[] = [];
-  const deleted: string[] = [];
-  const changed: string[] = [];
-  const changedContent: string[] = [];
-
-  for (const thing in oldState.things) {
-    if (oldState.things[thing] !== newState.things[thing]) {
-      if (newState.things[thing] === undefined) {
-        deleted.push(thing);
-      } else if (JSON.stringify(oldState.things[thing]) !== JSON.stringify(newState.things[thing])) {
-        if (
-          // [TODO] Can we get better typechecking here?
-          JSON.stringify(Misc.removeKey(oldState.things[thing] as any, "content")) ===
-          JSON.stringify(Misc.removeKey(newState.things[thing] as any, "content"))
-        ) {
-          changedContent.push(thing);
-        } else {
-          changed.push(thing);
-        }
-      }
-    } else {
-      for (const connection of Data.childConnections(oldState, thing)) {
-        if (oldState.connections[connection.connectionId] !== newState.connections[connection.connectionId]) {
-          changed.push(thing);
-        }
-      }
-    }
-  }
-
-  for (const thing in newState.things) {
-    if (oldState.things[thing] === undefined) {
-      added.push(thing);
-    }
-  }
-
-  return {added, deleted, changed, changedContent};
-}
+import {Receiver, receiver as createReceiver} from "./receiver";
+import {Message} from "./messages";
 
 function useContext({
   initialState,
@@ -139,12 +40,14 @@ function useContext({
   storage,
   server,
   openExternalUrl,
+  receiver,
 }: {
   initialState: State;
   initialTutorialFinished: boolean;
   storage: Storage.Storage;
   server?: API.Server;
   openExternalUrl(url: string): void;
+  receiver: Receiver<Message>;
 }): Context {
   const [state, setLocalState] = React.useState(initialState);
 
@@ -280,15 +183,6 @@ function useContext({
     setTree,
     drag,
     setDrag,
-    activePopup,
-    // Work around problem with setting state to callback:
-    setActivePopup(
-      arg: ((state: State, tree: T.Tree, target: T.NodeRef, selection: string) => [State, T.Tree]) | null,
-    ) {
-      return setActivePopup(() => arg);
-    },
-    popupTarget,
-    setPopupTarget,
     activeEditor,
     registerActiveEditor,
     tutorialState,
@@ -299,6 +193,7 @@ function useContext({
     storage,
     server,
     openExternalUrl,
+    send: receiver.send,
   };
 }
 
@@ -317,7 +212,35 @@ function App_({
   server?: API.Server;
   openExternalUrl(url: string): void;
 }) {
-  const context = useContext({initialState, initialTutorialFinished, storage, server, openExternalUrl});
+  const receiver = React.useRef(createReceiver<Message>());
+
+  React.useEffect(() => {
+    receiver.current.subscribe("action", (ev) => {
+      Actions.execute(contextRef.current, ev.action, {input: popup.input});
+    });
+
+    receiver.current.subscribe("toolbar", (ev) => {
+      Actions.executeOn(contextRef.current, ev.button, ev.target, {input: popup.input});
+    });
+  }, []);
+
+  const send = receiver.current.send;
+
+  const context = useContext({
+    initialState,
+    initialTutorialFinished,
+    storage,
+    server,
+    openExternalUrl,
+    receiver: receiver.current,
+  });
+
+  const popup = usePopup(context);
+
+  const contextRef = React.useRef(context);
+  React.useEffect(() => {
+    contextRef.current = context;
+  }, [context]);
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
@@ -372,11 +295,10 @@ function App_({
 
   document.onkeydown = (ev) => {
     if (Sh.matches(ev, Actions.shortcut("undo"))) {
-      console.log("Undoing");
-      Actions.execute(context, "undo");
+      context.send("action", {action: "undo"});
       ev.preventDefault();
     } else if (Sh.matches(ev, Actions.shortcut("find"))) {
-      Actions.execute(context, "find");
+      context.send("action", {action: "find"});
       ev.preventDefault();
     }
   };
@@ -478,42 +400,9 @@ function App_({
         }
       }}
       tabIndex={-1}
-      className="app">
-      {context.activePopup === null ? null : (
-        <ThingSelectPopup
-          hide={() => context.setActivePopup(null)}
-          state={context.state}
-          create={(content: string) => {
-            const target = context.popupTarget;
-            if (target === null) {
-              console.warn("Aborting popup action because nothing is focused.");
-              return;
-            }
-            const [state2, selection] = Data.create(context.state);
-            const state3 = Data.setContent(state2, selection, [content]);
-            const result = context.activePopup!(state3, context.tree, target, selection);
-            if (typeof result === "object") {
-              const [newState, newTree] = result;
-              context.setState(newState);
-              context.setTree(newTree);
-            }
-          }}
-          submit={(selection: string) => {
-            const target = context.popupTarget;
-            if (target === null) {
-              console.warn("Aborting popup action because nothing is focused.");
-              return;
-            }
-            const result = context.activePopup!(context.state, context.tree, target, selection);
-            if (typeof result === "object") {
-              const [newState, newTree] = result;
-              context.setState(newState);
-              context.setTree(newTree);
-            }
-          }}
-          seedText={context.activeEditor?.selection}
-        />
-      )}
+      className="app"
+    >
+      {popup.component}
       <div className="top-bar">
         <ExternalLink className="logo" href="/">
           Thinktool
@@ -535,18 +424,22 @@ function App_({
           )}
         </div>
       </div>
-      {toolbarShown ? <Toolbar context={context} /> : null}
-      {!showSplash && (
-        <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />
-      )}
+      {toolbarShown ? (
+        <Toolbar
+          executeAction={(action) => send("toolbar", {button: action, target: T.focused(context.tree)})}
+          isEnabled={(action) => Actions.enabled(context, action)}
+          isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
+          isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
+        />
+      ) : null}
+      {!showSplash && <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />}
       <Changelog
         changelog={context.changelog}
         visible={context.changelogShown}
         hide={() => context.setChangelogShown(false)}
       />
       <ThingOverview context={context} />
-      {showSplash &&
-        ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
+      {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );
 }
@@ -576,7 +469,7 @@ function ThingOverview(p: {context: Context}) {
         <Editor
           context={p.context}
           node={T.root(p.context.tree)}
-          onAction={(action) => Actions.execute(p.context, action)}
+          onAction={(action) => p.context.send("action", {action})}
           onOpenLink={openLink}
           onJumpLink={jumpLink}
         />
@@ -601,11 +494,9 @@ function ThingOverview(p: {context: Context}) {
 // ParentsOutline should remove parent from child).
 
 function ParentsOutline(p: {context: Context}) {
-  const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map(
-    (child: T.NodeRef) => {
-      return <ExpandableItem kind="parent" key={child.id} node={child} context={p.context} />;
-    },
-  );
+  const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map((child: T.NodeRef) => {
+    return <ExpandableItem kind="parent" key={child.id} node={child} context={p.context} />;
+  });
 
   const subtree = <ul className="subtree">{parentItems}</ul>;
 
@@ -647,11 +538,7 @@ function Outline(p: {context: Context}) {
 
 function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   function onFocus(ev: React.FocusEvent<HTMLDivElement>): void {
-    const [newState, newTree, _, newId] = T.createChild(
-      p.context.state,
-      p.context.tree,
-      T.root(p.context.tree),
-    );
+    const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, T.root(p.context.tree));
     p.context.setState(newState);
     p.context.setTree(T.focus(newTree, newId));
     ev.stopPropagation();
@@ -686,7 +573,12 @@ function ExpandableItem(props: {
   kind: "child" | "reference" | "opened-link" | "parent";
 }) {
   function onOpenLink(target: string): void {
-    props.context.setTutorialState(Tutorial.action(props.context.tutorialState, {action: "link-toggled", expanded: !T.isLinkOpen(props.context.tree, props.node, target)}))
+    props.context.setTutorialState(
+      Tutorial.action(props.context.tutorialState, {
+        action: "link-toggled",
+        expanded: !T.isLinkOpen(props.context.tree, props.node, target),
+      }),
+    );
     props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, target));
   }
 
@@ -716,7 +608,8 @@ function ExpandableItem(props: {
             onClick={() => {
               props.context.setSelectedThing(otherParentThing);
             }}
-            title={Data.contentText(props.context.state, otherParentThing)}>
+            title={Data.contentText(props.context.state, otherParentThing)}
+          >
             <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
             &nbsp;
             {Misc.truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
@@ -774,7 +667,7 @@ function ExpandableItem(props: {
     <Editor
       context={props.context}
       node={props.node}
-      onAction={(action) => Actions.execute(props.context, action)}
+      onAction={(action) => props.context.send("action", {action})}
       onOpenLink={onOpenLink}
       onJumpLink={onJumpLink}
     />
@@ -815,10 +708,9 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
       <li className="item">
         <div>
           <button
-            onClick={() =>
-              p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))
-            }
-            className="backreferences-text">
+            onClick={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
+            className="backreferences-text"
+          >
             {backreferences.length} References
             {!T.backreferencesExpanded(p.context.tree, p.parent) && "..."}
           </button>
@@ -841,9 +733,7 @@ function Subtree(p: {
   });
 
   const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map((child) => {
-    return (
-      <ExpandableItem kind="opened-link" key={child.id} node={child} parent={p.parent} context={p.context} />
-    );
+    return <ExpandableItem kind="opened-link" key={child.id} node={child} parent={p.parent} context={p.context} />;
   });
 
   return (
@@ -880,7 +770,8 @@ function UserPage(props: {server: API.Server}) {
           onClick={async () => {
             await props.server.setEmail(emailField);
             window.location.reload();
-          }}>
+          }}
+        >
           Change email
         </button>
       </div>
@@ -890,7 +781,8 @@ function UserPage(props: {server: API.Server}) {
           onClick={async () => {
             await props.server.setPassword(passwordField);
             window.location.reload();
-          }}>
+          }}
+        >
           Change password
         </button>
       </div>
@@ -903,7 +795,8 @@ function UserPage(props: {server: API.Server}) {
               window.location.href = "/";
             }
           }
-        }}>
+        }}
+      >
         Delete account and all data
       </button>
       <hr />
@@ -915,10 +808,10 @@ function UserPage(props: {server: API.Server}) {
           <b>Import Files</b> in the top-right menu inside Roam.
         </p>
         <p>
-          All your notes will be imported to a single page, because Roam does not let you have multiple pages
-          with the same name. (So some documents that are valid in Thinktool would not be in Roam.)
-          Additionally, items with multiple parents will turn into "embedded" content inside Roam. This is
-          because Roam cannot represent an item with multiple parents, unlike Thinktool.
+          All your notes will be imported to a single page, because Roam does not let you have multiple pages with
+          the same name. (So some documents that are valid in Thinktool would not be in Roam.) Additionally, items
+          with multiple parents will turn into "embedded" content inside Roam. This is because Roam cannot
+          represent an item with multiple parents, unlike Thinktool.
         </p>
         <button
           onClick={async () => {
@@ -935,7 +828,8 @@ function UserPage(props: {server: API.Server}) {
 
             const state = API.transformFullStateResponseIntoState(await props.server.getFullState());
             download("thinktool-export-for-roam.json", ExportRoam.exportString(state));
-          }}>
+          }}
+        >
           Download data for importing into Roam
         </button>
       </div>

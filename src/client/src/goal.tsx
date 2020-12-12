@@ -136,11 +136,15 @@ const goals = (() => {
 
 export const initialState: State = {finished: new Set()};
 
+export function isFinished(state: State, id: GoalId): boolean {
+  return state.finished.has(id);
+}
+
 export function action(state: State, event: ActionEvent): State {
   const finished = new Set(state.finished);
 
   for (const id of goals.keys()) {
-    if (!state.finished.has(id) && goals.get(id)!.doesComplete(event)) {
+    if (!isFinished(state, id) && goals.get(id)!.doesComplete(event)) {
       finished.add(id);
     }
   }

@@ -1,9 +1,11 @@
-import {Context} from "./context";
+import {AppState, Context} from "./context";
+import * as A from "./context";
 import * as T from "./tree";
 import * as D from "./data";
 import * as Tutorial from "./tutorial";
 import * as S from "./shortcuts";
 import * as Goal from "./goal";
+import {NodeRef} from "./tree-internal";
 
 export type ActionName =
   | "insert-sibling"
@@ -26,7 +28,7 @@ export type ActionName =
   | "tutorial"
   | "changelog"
   | "undo"
-  | "toggle-type"
+  | "toggle-type" // [TODO] We no longer need this
   | "toggle"
   | "home"
   | "forum";
@@ -37,7 +39,7 @@ export type ActionName =
 // If enabled(context, action) returns false, then the toolbar button for the
 // given action should be disabled, and pressing the shortcut should not execute
 // the action.
-export function enabled(context: Context, action: ActionName): boolean {
+export function enabled(state: AppState, action: ActionName): boolean {
   const alwaysEnabled: ActionName[] = ["find", "new", "changelog", "undo", "home", "forum"];
   const requireTarget: ActionName[] = [
     "zoom",
@@ -62,204 +64,300 @@ export function enabled(context: Context, action: ActionName): boolean {
   if (alwaysEnabled.includes(action)) {
     return true;
   } else if (requireTarget.includes(action)) {
-    return T.focused(context.tree) !== null;
+    return T.focused(state.tree) !== null;
   } else if (action === "tutorial") {
-    return !Tutorial.isActive(context.tutorialState);
+    return !Tutorial.isActive(state.tutorialState);
   } else {
     console.warn("enabled(..., %o): Did not know about action.", action);
     return true;
   }
 }
 
-function tutorialAction(context: Context, event: Goal.ActionEvent) {
-  context.setTutorialState(Tutorial.action(context.tutorialState, event));
-}
-
-export function execute(context: Context, action: ActionName): void {
+export function execute(context: Context, action: ActionName, config: UpdateConfig): void {
   if (!enabled(context, action)) {
     console.error("The action %o is not enabled! Ignoring.", action);
     return;
   }
 
-  function node(): T.NodeRef {
-    const node = T.focused(context.tree);
-    if (node === null) throw `Bug in 'enabled'. Ran action '${action}', even though there was no node selected.`;
-    return node;
-  }
+  const focused = T.focused(context.tree);
+  if (focused === null) throw `Bug in 'enabled'. Ran action '${action}', even though there was no node selected.`;
 
-  const implementation = implementations[action];
-  if (typeof implementation !== "function")
-    throw `Bug in 'execute'. Action '${action}' did not have an implementation.`;
-  implementation(context, node);
+  executeOn(context, action, focused, config);
 }
 
-const implementations: {
-  [k: string]: ((context: Context, getFocused: () => T.NodeRef) => void) | undefined;
-} = {
-  "insert-sibling"(context, getFocused) {
-    context.setPopupTarget(getFocused());
-    context.setActivePopup((state, tree, target, selection) => {
-      const [newState, newTree] = T.insertSiblingAfter(state, tree, target, selection);
-      return [newState, newTree];
-    });
-  },
+export function executeOn(
+  context: Context,
+  action: ActionName,
+  target: NodeRef | null,
+  config: UpdateConfig,
+): void {
+  if (!enabled(context, action)) {
+    console.warn("The action %o appears not to be enabled.", action);
+  }
 
-  "insert-child"(context, getFocused) {
-    context.setPopupTarget(getFocused());
-    context.setActivePopup((state, tree, target, selection) => {
-      const [newState, newTree] = T.insertChild(state, tree, target, selection, 0);
-      return [newState, newTree];
-    });
-  },
+  (async () => {
+    const result = await updateOn(context, action, target, config);
 
-  "insert-parent"(context, getFocused) {
-    context.setPopupTarget(getFocused());
-    context.setActivePopup((state, tree, target, selection) => {
-      const [newState, newTree] = T.insertParent(state, tree, target, selection);
-      tutorialAction(context, {action: "inserted-parent", childNode: target, newState, newTree});
-      return [newState, newTree];
-    });
-  },
-
-  "insert-link"(context, getFocused) {
-    const node = getFocused();
-
-    context.setPopupTarget(node);
-    context.setActivePopup((state, tree, target, selection) => {
-      if (target !== node) console.error("Unexpected target/node");
-      if (context.activeEditor === null) throw "No active editor.";
-      tutorialAction(context, {action: "link-inserted"});
-      context.activeEditor.replaceSelectionWithLink(selection, D.contentText(state, selection));
-      return [state, tree];
-    });
-  },
-
-  find(context) {
-    // This is a hack on how setActivePopup is supposed to be used.
-    const previouslyFocused = T.thing(context.tree, T.root(context.tree));
-    context.setPopupTarget({id: 0});
-    context.setActivePopup((state, tree, target, selection) => {
-      context.setSelectedThing(selection);
-      tutorialAction(context, {action: "found", previouslyFocused, thing: selection});
-      return [state, tree];
-    });
-  },
-
-  new(context, getFocused) {
-    const node = T.focused(context.tree);
-    if (node === null) {
-      const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, T.root(context.tree));
-      context.setState(newState);
-      context.setTree(T.focus(newTree, newId));
-    } else {
-      const [newState, newTree, _, newId] = T.createSiblingAfter(context.state, context.tree, node);
-      context.setState(newState);
-      context.setTree(T.focus(newTree, newId));
+    if (result.app) {
+      console.log("setting state %o", result.app.state);
+      context.setState(result.app.state);
+      context.setTree(result.app.tree);
+      context.setTutorialState(result.app.tutorialState);
+      context.setSelectedThing(result.app.selectedThing);
     }
-    tutorialAction(context, {action: "created-item"});
+
+    // [HACK] The mechanism for inserting a link in the editor is really
+    // awkward. This is ultimately due to the fact that we don't really want to
+    // manage the entire editor state in React. But it could probably be
+    // improved.
+    //
+    // We intentionally do this last, because if we do it first, then the editor
+    // will update the global state from the *old* state, and then afterwards we
+    // would override with the new state (which might have a new item from the
+    // popup for example), and then we would not get the link that the editor
+    // inserted.
+    //
+    // (Disclaimer: That explanation may not only be confusing but also wrong. I
+    // don't really understand why this code works; in fact, it might not.)
+    if (result.insertLinkInActiveEditor) {
+      if (context.activeEditor === null) throw "No active editor.";
+      const target = result.insertLinkInActiveEditor;
+      const textContent = D.contentText(result.app!.state, target);
+      context.activeEditor.replaceSelectionWithLink(target, textContent);
+    }
+
+    if (result.undo) {
+      context.undo();
+    }
+
+    if (result.openUrl) {
+      context.openExternalUrl(result.openUrl);
+    }
+  })();
+}
+
+interface UpdateResult {
+  app?: AppState;
+  insertLinkInActiveEditor?: string;
+  openUrl?: string;
+  undo?: boolean;
+}
+
+export async function update(
+  app: AppState,
+  action: keyof typeof updates,
+  config: UpdateConfig,
+): Promise<UpdateResult> {
+  if (!enabled(app, action)) {
+    console.error("The action %o should not be enabled! Continuing anyway...", action);
+  }
+
+  return await updateOn(app, action, T.focused(app.tree), config);
+}
+
+async function updateOn(
+  app: AppState,
+  action: keyof typeof updates,
+  target: NodeRef | null,
+  config: UpdateConfig,
+): Promise<UpdateResult> {
+  if (!enabled(app, action)) {
+    console.warn("The action %o appears not to be enabled.", action);
+  }
+
+  return updates[action]({app, target, ...config});
+}
+
+function require<T>(x: T | null): T {
+  if (x === null) {
+    throw "A value was unexpectedly null.";
+  }
+  return x;
+}
+
+function applyActionEvent(app: AppState, event: Goal.ActionEvent): AppState {
+  return A.merge(app, {tutorialState: Tutorial.action(app.tutorialState, event)});
+}
+
+export type UpdateConfig = {
+  input(): Promise<[AppState, string]>;
+};
+
+type UpdateArgs = UpdateConfig & {
+  app: AppState;
+  target: NodeRef | null;
+};
+
+const updates = {
+  async "insert-sibling"({target, input}: UpdateArgs) {
+    let [result, selection] = await input();
+    const [newState, newTree] = T.insertSiblingAfter(result.state, result.tree, require(target), selection);
+    return {app: A.merge(result, {state: newState, tree: newTree})};
   },
 
-  "new-before"(context, getFocused) {
-    const [newState, newTree, _, newId] = T.createSiblingBefore(context.state, context.tree, getFocused());
-    context.setState(newState);
-    context.setTree(T.focus(newTree, newId));
-    tutorialAction(context, {action: "created-item"});
+  async "insert-child"({target, input}: UpdateArgs) {
+    let [result, selection] = await input();
+    const [newState, newTree] = T.insertChild(result.state, result.tree, require(target), selection, 0);
+    return {app: A.merge(result, {state: newState, tree: newTree})};
   },
 
-  "focus-up"(context, getFocused) {
-    context.setTree(T.focusUp(context.tree));
+  async "insert-parent"({target, input}: UpdateArgs) {
+    let [result, selection] = await input();
+    const [newState, newTree] = T.insertParent(result.state, result.tree, require(target), selection);
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "inserted-parent", childNode: require(target), newState, newTree});
+    return {app: result};
   },
 
-  "focus-down"(context, getFocused) {
-    context.setTree(T.focusDown(context.tree));
+  async "new"({app, target}: UpdateArgs) {
+    let result = app;
+    if (target === null) {
+      let [newState, newTree, _, newId] = T.createChild(app.state, app.tree, T.root(app.tree));
+      newTree = T.focus(newTree, newId);
+      result = A.merge(result, {state: newState, tree: newTree});
+    } else {
+      let [newState, newTree, _, newId] = T.createSiblingAfter(app.state, app.tree, target);
+      newTree = T.focus(newTree, newId);
+      result = A.merge(result, {state: newState, tree: newTree});
+    }
+    result = applyActionEvent(result, {action: "created-item"});
+    return {app: result};
   },
 
-  zoom(context, getFocused) {
-    const previouslyFocused = T.thing(context.tree, T.root(context.tree));
-    context.setSelectedThing(T.thing(context.tree, getFocused()));
-    tutorialAction(context, {action: "jump", previouslyFocused, thing: T.thing(context.tree, getFocused())});
+  async "new-before"({app, target}: UpdateArgs) {
+    const [newState, newTree, _, newId] = T.createSiblingBefore(app.state, app.tree, require(target));
+    return {app: applyActionEvent(A.merge(app, {state: newState, tree: newTree}), {action: "created-item"})};
   },
 
-  indent(context, getFocused) {
-    const [newState, newTree] = T.indent(context.state, context.tree, getFocused());
-    context.setState(newState);
-    context.setTree(newTree);
-    tutorialAction(context, {action: "moved"});
+  async "focus-up"({app}: UpdateArgs) {
+    return {app: A.merge(app, {tree: T.focusUp(app.tree)})};
   },
 
-  unindent(context, getFocused) {
-    const [newState, newTree] = T.unindent(context.state, context.tree, getFocused());
-    context.setState(newState);
-    context.setTree(newTree);
-    tutorialAction(context, {action: "moved"});
+  async "focus-down"({app}: UpdateArgs) {
+    return {app: A.merge(app, {tree: T.focusDown(app.tree)})};
   },
 
-  down(context, getFocused) {
-    const [newState, newTree] = T.moveDown(context.state, context.tree, getFocused());
-    context.setState(newState);
-    context.setTree(newTree);
-    tutorialAction(context, {action: "moved"});
+  async "zoom"({app, target}: UpdateArgs) {
+    let result = app;
+    const previouslyFocused = T.thing(result.tree, T.root(result.tree));
+    result = A.merge(result, {selectedThing: T.thing(result.tree, require(target))});
+    result = applyActionEvent(result, {
+      action: "jump",
+      previouslyFocused,
+      thing: T.thing(result.tree, require(target)),
+    });
+    return {app: result};
   },
 
-  up(context, getFocused) {
-    const [newState, newTree] = T.moveUp(context.state, context.tree, getFocused());
-    context.setState(newState);
-    context.setTree(newTree);
-    tutorialAction(context, {action: "moved"});
+  async "indent"({app, target}: UpdateArgs) {
+    let result = app;
+    const [newState, newTree] = T.indent(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "moved"});
+    return {app: result};
   },
 
-  "new-child"(context, getFocused) {
-    const [newState, newTree, _, newId] = T.createChild(context.state, context.tree, getFocused());
-    context.setState(newState);
-    context.setTree(T.focus(newTree, newId));
-    tutorialAction(context, {action: "created-item"});
+  async "unindent"({app, target}: UpdateArgs) {
+    let result = app;
+    const [newState, newTree] = T.unindent(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "moved"});
+    return {app: result};
   },
 
-  remove(context, getFocused) {
-    const [newState, newTree] = T.remove(context.state, context.tree, getFocused());
-    context.setState(newState);
-    context.setTree(newTree);
-    tutorialAction(context, {action: "removed"});
+  async "down"({app, target}: UpdateArgs) {
+    let result = app;
+    const [newState, newTree] = T.moveDown(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "moved"});
+    return {app: result};
   },
 
-  destroy(context, getFocused) {
-    const [newState, newTree] = T.removeThing(context.state, context.tree, getFocused());
-    context.setState(newState);
-    context.setTree(newTree);
-    tutorialAction(context, {action: "destroy"});
+  async "up"({app, target}: UpdateArgs) {
+    let result = app;
+    const [newState, newTree] = T.moveUp(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "moved"});
+    return {app: result};
   },
 
-  tutorial(context, getFocused) {
-    context.setTutorialState(Tutorial.reset(context.tutorialState));
+  async "new-child"({app, target}: UpdateArgs) {
+    let result = app;
+    const [newState, newTree, _, newId] = T.createChild(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: T.focus(newTree, newId)});
+    result = applyActionEvent(result, {action: "created-item"});
+    return {app: result};
   },
 
-  changelog(context, getFocused) {
-    context.setChangelogShown(!context.changelogShown);
+  async "remove"({app, target}: UpdateArgs) {
+    let result = app;
+    const [newState, newTree] = T.remove(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "removed"});
+    return {app: result};
   },
 
-  undo(context, getFocused) {
-    context.undo();
+  async "destroy"({app, target}: UpdateArgs) {
+    let result = app;
+    const [newState, newTree] = T.removeThing(result.state, result.tree, require(target));
+    result = A.merge(result, {state: newState, tree: newTree});
+    result = applyActionEvent(result, {action: "destroy"});
+    return {app: result};
   },
 
-  "toggle-type"(context, getFocused) {
-    const newState = D.togglePage(context.state, T.thing(context.tree, getFocused()));
-    context.setState(newState);
+  async "tutorial"({app}: UpdateArgs) {
+    let result = app;
+    result = A.merge(result, {tutorialState: Tutorial.reset(result.tutorialState)});
+    return {app: result};
   },
 
-  toggle(context, getFocused) {
-    const newTree = T.toggle(context.state, context.tree, getFocused());
-    context.setTree(newTree);
-    tutorialAction(context, {action: "toggled-item", newTree, node: getFocused()});
+  async "changelog"({app}: UpdateArgs) {
+    return {app: A.merge(app, {changelogShown: !app.changelogShown})};
   },
 
-  home(context, getFocused) {
-    const newTree = T.fromRoot(context.state, "0");
-    tutorialAction(context, {action: "home"});
-    context.setTree(newTree);
+  async "toggle-type"({app, target}: UpdateArgs) {
+    let result = app;
+    const newState = D.togglePage(result.state, T.thing(result.tree, require(target)));
+    result = A.merge(result, {state: newState});
+    return {app: result};
   },
 
-  forum(context, getFocused) {
-    context.openExternalUrl("https://old.reddit.com/r/thinktool/");
+  async "toggle"({app, target}: UpdateArgs) {
+    let result = app;
+    const newTree = T.toggle(result.state, result.tree, require(target));
+    result = A.merge(result, {tree: newTree});
+    result = applyActionEvent(result, {action: "toggled-item", newTree, node: require(target)});
+    return {app: result};
+  },
+
+  async "home"({app}: UpdateArgs) {
+    let result = app;
+    const newTree = T.fromRoot(result.state, "0");
+    result = applyActionEvent(result, {action: "home"});
+    result = A.merge(result, {tree: newTree});
+    return {app: result};
+  },
+
+  async "find"({app, input}: UpdateArgs) {
+    const previouslyFocused = T.thing(app.tree, T.root(app.tree));
+    let [result, selection] = await input();
+    result = A.merge(result, {selectedThing: selection});
+    result = applyActionEvent(result, {action: "found", previouslyFocused, thing: selection});
+    return {app: result};
+  },
+
+  async "insert-link"({input}: UpdateArgs) {
+    let [result, selection] = await input();
+    result = applyActionEvent(result, {action: "link-inserted"});
+    return {app: result, insertLinkInActiveEditor: selection};
+  },
+
+  "undo"({}: UpdateArgs) {
+    return {undo: true};
+  },
+
+  "forum"({}: UpdateArgs) {
+    return {openUrl: "https://old.reddit.com/r/thinktool/"};
   },
 };
 

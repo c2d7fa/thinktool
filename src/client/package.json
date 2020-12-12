@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/client",
-  "version": "3.3.1",
+  "version": "3.3.2",
   "description": "Client code for Thinktool, shared between web and desktop client.",
   "license": "UNLICENSED",
   "repository": {
@@ -30,7 +30,7 @@
     "typescript": "^4.0.3"
   },
   "dependencies": {
-    "@johv/miscjs": "^1.5.0",
+    "@johv/miscjs": "^1.6.0",
     "@thinktool/shared": "^2.0.0",
     "fuse.js": "^6.4.1",
     "prosemirror-model": "^1.11.2",
@@ -46,7 +46,8 @@
     "check": "node_modules/.bin/tsc",
     "build": "npm run build-style && node_modules/.bin/babel src/ -D --extensions .ts,.tsx --out-dir dist && tsc",
     "watch": "npm run build && node_modules/.bin/babel -w --verbose src/ -D --extensions .ts,.tsx --out-dir dist",
-    "test": "node_modules/.bin/jest --verbose"
+    "test": "node_modules/.bin/jest --verbose",
+    "test-watch": "jest --watchAll --verbose"
   },
   "files": [
     "dist/"

@@ -80,7 +80,8 @@ function buildInternalLink(args: {
       onClick={(ev) => {
         if (ev.shiftKey) args.jump();
         else args.toggle();
-      }}>
+      }}
+    >
       <Bullet
         specialType="link"
         status={args.status}
@@ -176,9 +177,7 @@ function docFromContent({
   return schema.node("doc", {}, nodes);
 }
 
-function createExternalLinkDecorationPlugin(args: {
-  openExternalUrl(url: string): void;
-}): PS.Plugin<typeof schema> {
+function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string): void}): PS.Plugin<typeof schema> {
   // We need custom handlers for some events related to links to get the
   // behavior we want. Sadly, ProseMirror does not let us bind event
   // handlers to decorations. Instead, we have to bind strings to these
@@ -356,10 +355,7 @@ function ContentEditor(props: {
 
   // Initialize editor
   React.useEffect(() => {
-    function dispatchTransaction(
-      this: PV.EditorView<typeof schema>,
-      transaction: PS.Transaction<typeof schema>,
-    ) {
+    function dispatchTransaction(this: PV.EditorView<typeof schema>, transaction: PS.Transaction<typeof schema>) {
       this.updateState(this.state.apply(transaction));
 
       // This is where we communicate changes made by the user back into the
@@ -386,6 +382,14 @@ function ContentEditor(props: {
   // When the state managed by React gets updated from elsewhere, we want to
   // reflect those updates in the editor state.
   React.useEffect(() => {
+    // It should have focus but doesn't for some reason. I don't know why this
+    // happens, but it does. Probably related to popup. When we insert a link,
+    // we need this, I think.
+    if (T.focused(treeRef.current!) === props.node) {
+      console.log("Forced focus");
+      editorViewRef.current!.focus();
+    }
+
     // If this editor has focus, then the changes were probably made via the
     // editor itself. In that case, we wouldn't want to update the editor again.
     if (editorViewRef.current!.hasFocus()) return;

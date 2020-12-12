@@ -351,6 +351,10 @@
     {
       "date": "2020-12-12",
       "title": "Added system to tutorial that gives you goals to accomplish."
+    },
+    {
+      "date": "2020-12-12",
+      "title": "Major code overhaul of integration of search popup, editor and toolbar integration."
     }
   ]
 }

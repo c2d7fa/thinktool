@@ -18,6 +18,10 @@ export function action(state: State, event: G.ActionEvent) {
   return {...state, goal: G.action(state.goal, event)};
 }
 
+export function isGoalFinished(state: State, goal: G.GoalId) {
+  return G.isFinished(state.goal, goal);
+}
+
 const steps: {name: string; introduces: ActionName[]}[] = [
   {name: "Getting started", introduces: ["new", "new-child"]},
   {name: "Multiple parents", introduces: ["insert-child", "insert-sibling", "insert-parent"]},
