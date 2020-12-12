@@ -209,7 +209,7 @@ const updates = {
     return {app: result};
   },
 
-  async new({app, target}: UpdateArgs) {
+  async "new"({app, target}: UpdateArgs) {
     let result = app;
     if (target === null) {
       let [newState, newTree, _, newId] = T.createChild(app.state, app.tree, T.root(app.tree));
@@ -237,7 +237,7 @@ const updates = {
     return {app: A.merge(app, {tree: T.focusDown(app.tree)})};
   },
 
-  async zoom({app, target}: UpdateArgs) {
+  async "zoom"({app, target}: UpdateArgs) {
     let result = app;
     const previouslyFocused = T.thing(result.tree, T.root(result.tree));
     result = A.merge(result, {selectedThing: T.thing(result.tree, require(target))});
@@ -249,7 +249,7 @@ const updates = {
     return {app: result};
   },
 
-  async indent({app, target}: UpdateArgs) {
+  async "indent"({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.indent(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
@@ -257,7 +257,7 @@ const updates = {
     return {app: result};
   },
 
-  async unindent({app, target}: UpdateArgs) {
+  async "unindent"({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.unindent(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
@@ -265,7 +265,7 @@ const updates = {
     return {app: result};
   },
 
-  async down({app, target}: UpdateArgs) {
+  async "down"({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.moveDown(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
@@ -273,7 +273,7 @@ const updates = {
     return {app: result};
   },
 
-  async up({app, target}: UpdateArgs) {
+  async "up"({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.moveUp(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
@@ -289,7 +289,7 @@ const updates = {
     return {app: result};
   },
 
-  async remove({app, target}: UpdateArgs) {
+  async "remove"({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.remove(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
@@ -297,7 +297,7 @@ const updates = {
     return {app: result};
   },
 
-  async destroy({app, target}: UpdateArgs) {
+  async "destroy"({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.removeThing(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
@@ -305,13 +305,13 @@ const updates = {
     return {app: result};
   },
 
-  async tutorial({app}: UpdateArgs) {
+  async "tutorial"({app}: UpdateArgs) {
     let result = app;
     result = A.merge(result, {tutorialState: Tutorial.reset(result.tutorialState)});
     return {app: result};
   },
 
-  async changelog({app}: UpdateArgs) {
+  async "changelog"({app}: UpdateArgs) {
     return {app: A.merge(app, {changelogShown: !app.changelogShown})};
   },
 
@@ -322,7 +322,7 @@ const updates = {
     return {app: result};
   },
 
-  async toggle({app, target}: UpdateArgs) {
+  async "toggle"({app, target}: UpdateArgs) {
     let result = app;
     const newTree = T.toggle(result.state, result.tree, require(target));
     result = A.merge(result, {tree: newTree});
@@ -330,7 +330,7 @@ const updates = {
     return {app: result};
   },
 
-  async home({app}: UpdateArgs) {
+  async "home"({app}: UpdateArgs) {
     let result = app;
     const newTree = T.fromRoot(result.state, "0");
     result = applyActionEvent(result, {action: "home"});
@@ -338,7 +338,7 @@ const updates = {
     return {app: result};
   },
 
-  async find({app, input}: UpdateArgs) {
+  async "find"({app, input}: UpdateArgs) {
     const previouslyFocused = T.thing(app.tree, T.root(app.tree));
     let [result, selection] = await input();
     result = A.merge(result, {selectedThing: selection});
@@ -352,11 +352,11 @@ const updates = {
     return {app: result, insertLinkInActiveEditor: selection};
   },
 
-  undo({}: UpdateArgs) {
+  "undo"({}: UpdateArgs) {
     return {undo: true};
   },
 
-  forum({}: UpdateArgs) {
+  "forum"({}: UpdateArgs) {
     return {openUrl: "https://old.reddit.com/r/thinktool/"};
   },
 };

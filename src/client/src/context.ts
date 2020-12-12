@@ -30,13 +30,13 @@ export interface AppState {
 }
 
 export function merge(app: AppState, values: {[K in keyof AppState]?: AppState[K]}): AppState {
-  const result = {...app}
+  const result = {...app};
   for (const k in values) {
     // I'm sure there's a smarter way to do this, but it doesn't really
     // matter. Our function signature is fine.
     (result[k as keyof AppState] as any) = values[k as keyof AppState]!;
   }
-  return result
+  return result;
 }
 
 export interface Context extends AppState {

@@ -47,7 +47,7 @@ function useContext({
   storage: Storage.Storage;
   server?: API.Server;
   openExternalUrl(url: string): void;
-  receiver: Receiver<Message>,
+  receiver: Receiver<Message>;
 }): Context {
   const [state, setLocalState] = React.useState(initialState);
 
@@ -222,18 +222,25 @@ function App_({
     receiver.current.subscribe("toolbar", (ev) => {
       Actions.executeOn(contextRef.current, ev.button, ev.target, {input: popup.input});
     });
-  }, [])
+  }, []);
 
   const send = receiver.current.send;
 
-  const context = useContext({initialState, initialTutorialFinished, storage, server, openExternalUrl, receiver: receiver.current});
+  const context = useContext({
+    initialState,
+    initialTutorialFinished,
+    storage,
+    server,
+    openExternalUrl,
+    receiver: receiver.current,
+  });
 
   const popup = usePopup(context);
 
   const contextRef = React.useRef(context);
   React.useEffect(() => {
     contextRef.current = context;
-  }, [context])
+  }, [context]);
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
@@ -487,11 +494,9 @@ function ThingOverview(p: {context: Context}) {
 // ParentsOutline should remove parent from child).
 
 function ParentsOutline(p: {context: Context}) {
-  const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map(
-    (child: T.NodeRef) => {
-      return <ExpandableItem kind="parent" key={child.id} node={child} context={p.context} />;
-    },
-  );
+  const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map((child: T.NodeRef) => {
+    return <ExpandableItem kind="parent" key={child.id} node={child} context={p.context} />;
+  });
 
   const subtree = <ul className="subtree">{parentItems}</ul>;
 
@@ -533,11 +538,7 @@ function Outline(p: {context: Context}) {
 
 function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
   function onFocus(ev: React.FocusEvent<HTMLDivElement>): void {
-    const [newState, newTree, _, newId] = T.createChild(
-      p.context.state,
-      p.context.tree,
-      T.root(p.context.tree),
-    );
+    const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, T.root(p.context.tree));
     p.context.setState(newState);
     p.context.setTree(T.focus(newTree, newId));
     ev.stopPropagation();
@@ -572,7 +573,12 @@ function ExpandableItem(props: {
   kind: "child" | "reference" | "opened-link" | "parent";
 }) {
   function onOpenLink(target: string): void {
-    props.context.setTutorialState(Tutorial.action(props.context.tutorialState, {action: "link-toggled", expanded: !T.isLinkOpen(props.context.tree, props.node, target)}))
+    props.context.setTutorialState(
+      Tutorial.action(props.context.tutorialState, {
+        action: "link-toggled",
+        expanded: !T.isLinkOpen(props.context.tree, props.node, target),
+      }),
+    );
     props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, target));
   }
 
@@ -602,7 +608,8 @@ function ExpandableItem(props: {
             onClick={() => {
               props.context.setSelectedThing(otherParentThing);
             }}
-            title={Data.contentText(props.context.state, otherParentThing)}>
+            title={Data.contentText(props.context.state, otherParentThing)}
+          >
             <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
             &nbsp;
             {Misc.truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
@@ -701,10 +708,9 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
       <li className="item">
         <div>
           <button
-            onClick={() =>
-              p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))
-            }
-            className="backreferences-text">
+            onClick={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
+            className="backreferences-text"
+          >
             {backreferences.length} References
             {!T.backreferencesExpanded(p.context.tree, p.parent) && "..."}
           </button>
@@ -727,9 +733,7 @@ function Subtree(p: {
   });
 
   const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map((child) => {
-    return (
-      <ExpandableItem kind="opened-link" key={child.id} node={child} parent={p.parent} context={p.context} />
-    );
+    return <ExpandableItem kind="opened-link" key={child.id} node={child} parent={p.parent} context={p.context} />;
   });
 
   return (
@@ -766,7 +770,8 @@ function UserPage(props: {server: API.Server}) {
           onClick={async () => {
             await props.server.setEmail(emailField);
             window.location.reload();
-          }}>
+          }}
+        >
           Change email
         </button>
       </div>
@@ -776,7 +781,8 @@ function UserPage(props: {server: API.Server}) {
           onClick={async () => {
             await props.server.setPassword(passwordField);
             window.location.reload();
-          }}>
+          }}
+        >
           Change password
         </button>
       </div>
@@ -789,7 +795,8 @@ function UserPage(props: {server: API.Server}) {
               window.location.href = "/";
             }
           }
-        }}>
+        }}
+      >
         Delete account and all data
       </button>
       <hr />
@@ -801,10 +808,10 @@ function UserPage(props: {server: API.Server}) {
           <b>Import Files</b> in the top-right menu inside Roam.
         </p>
         <p>
-          All your notes will be imported to a single page, because Roam does not let you have multiple pages
-          with the same name. (So some documents that are valid in Thinktool would not be in Roam.)
-          Additionally, items with multiple parents will turn into "embedded" content inside Roam. This is
-          because Roam cannot represent an item with multiple parents, unlike Thinktool.
+          All your notes will be imported to a single page, because Roam does not let you have multiple pages with
+          the same name. (So some documents that are valid in Thinktool would not be in Roam.) Additionally, items
+          with multiple parents will turn into "embedded" content inside Roam. This is because Roam cannot
+          represent an item with multiple parents, unlike Thinktool.
         </p>
         <button
           onClick={async () => {
@@ -821,7 +828,8 @@ function UserPage(props: {server: API.Server}) {
 
             const state = API.transformFullStateResponseIntoState(await props.server.getFullState());
             download("thinktool-export-for-roam.json", ExportRoam.exportString(state));
-          }}>
+          }}
+        >
           Download data for importing into Roam
         </button>
       </div>
