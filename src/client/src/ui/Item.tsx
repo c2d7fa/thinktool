@@ -2,7 +2,7 @@ import * as React from "react";
 import * as Misc from "@johv/miscjs";
 
 import * as T from "../tree";
-import {DragInfo} from "../context";
+import {AppState, DragInfo, merge, jump} from "../context";
 
 import Bullet from "./Bullet";
 
@@ -17,11 +17,49 @@ export function dragState(dragInfo: DragInfo, node: T.NodeRef): "source" | "targ
   return null;
 }
 
+export function click(app: AppState, node: T.NodeRef): AppState {
+  const kind = T.kind(app.tree, node);
+
+  if (kind === "opened-link") {
+    return merge(app, {
+      tree: T.toggleLink(app.state, app.tree, T.parent(app.tree, node)!, T.thing(app.tree, node)),
+    });
+  } else {
+    console.error("Called unimplemented click; doing nothing.");
+    return app;
+  }
+}
+
+export function altClick(app: AppState, node: T.NodeRef): AppState {
+  const kind = T.kind(app.tree, node);
+
+  if (kind === "opened-link") {
+    return jump(app, T.thing(app.tree, node));
+  } else {
+    console.error("Called unimplemented altClick; doing nothing.");
+    return app;
+  }
+}
+
 export function onClickCallbacks(args: {
   kind: ItemKind;
+  app: AppState;
+  node: T.NodeRef;
+  updateAppState(f: (app: AppState) => AppState): void;
   onJump(): void;
   onToggle(): void;
 }): {onBulletClick(): void; onBulletAltClick(): void} {
+  if (args.kind === "opened-link") {
+    return {
+      onBulletClick() {
+        args.updateAppState((app) => click(args.app, args.node));
+      },
+      onBulletAltClick() {
+        args.updateAppState((app) => altClick(args.app, args.node));
+      },
+    };
+  }
+
   const [onBulletClick, onBulletAltClick] =
     args.kind === "parent" ? [args.onJump, args.onToggle] : [args.onToggle, args.onJump];
   return {onBulletClick, onBulletAltClick};

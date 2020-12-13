@@ -646,7 +646,16 @@ function ExpandableItem(props: {
     <Item.Item
       dragState={Item.dragState(props.context.drag, props.node)}
       status={Item.status(props.context.tree, props.node)}
-      {...Item.onClickCallbacks({kind: props.kind, onJump: jump, onToggle: toggle})}
+      {...Item.onClickCallbacks({
+        app: props.context,
+        node: props.node,
+        kind: props.kind,
+        onJump: jump,
+        onToggle: toggle,
+        updateAppState(f) {
+          setAppState(props.context, f(props.context));
+        },
+      })}
       id={props.node.id}
       beginDrag={beginDrag}
       kind={props.kind}

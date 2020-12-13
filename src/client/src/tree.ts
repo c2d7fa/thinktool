@@ -45,11 +45,20 @@ function refEq(x: NodeRef, y: NodeRef): boolean {
   return x.id === y.id;
 }
 
-function parent(tree: Tree, child: NodeRef): NodeRef | undefined {
+function parentAndType(tree: Tree, child: NodeRef): [NodeRef, "child" | "opened-link"] | undefined {
   for (const node of I.allNodes(tree)) {
-    if (Misc.includesBy(children(tree, node), child, refEq)) return node;
+    if (Misc.includesBy(children(tree, node), child, refEq)) return [node, "child"];
+  }
+  for (const node of I.allNodes(tree)) {
+    if (I.openedLinkNode(tree, node, thing(tree, child)) !== undefined) return [node, "opened-link"];
   }
   return undefined;
+}
+
+export function parent(tree: Tree, child: NodeRef): NodeRef | undefined {
+  const parentAndType_ = parentAndType(tree, child);
+  if (parentAndType_ === undefined) return undefined;
+  return parentAndType_[0];
 }
 
 function indexInParent(tree: Tree, node: NodeRef): number | undefined {
@@ -670,3 +679,14 @@ export function toggleLink(state: D.State, tree: Tree, node: NodeRef, link: stri
 }
 
 export const openedLinksChildren = I.openedLinksChildren;
+
+// Given a node, we may want to figure out what kind of node it is and inspect
+// its parents as they appear to the user, even if the parent-child relationship
+// is not represented in the data state.
+
+// Returns undefined if we can't figure it out.
+export function kind(tree: Tree, node: NodeRef): "opened-link" | "child" | undefined {
+  const parentAndType_ = parentAndType(tree, node);
+  if (parentAndType_ === undefined) return undefined;
+  return parentAndType_[1];
+}
