@@ -4,7 +4,7 @@ import * as Misc from "@johv/miscjs";
 import * as ChangelogData from "./changes.json";
 
 import {State, diffState} from "./data";
-import {Context, DragInfo, ActiveEditor} from "./context";
+import {Context, DragInfo, ActiveEditor, setAppState} from "./context";
 import {extractThingFromURL} from "./url";
 import {useBatched} from "./batched";
 
@@ -25,6 +25,7 @@ import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLink, ExternalLinkType} from "./ui/ExternalLink";
 import Bullet from "./ui/Bullet";
 import Item from "./ui/Item";
+import * as PlaceholderItem from "./ui/PlaceholderItem";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -529,39 +530,12 @@ function ReferencesOutline(p: {context: Context}) {
 function Outline(p: {context: Context}) {
   return (
     <Subtree context={p.context} parent={T.root(p.context.tree)} omitReferences={true}>
-      {T.children(p.context.tree, T.root(p.context.tree)).length === 0 && (
-        <PlaceholderItem context={p.context} parent={T.root(p.context.tree)} />
+      {PlaceholderItem.isVisible(p.context) && (
+        <PlaceholderItem.PlaceholderItem
+          onCreate={() => setAppState(p.context, PlaceholderItem.create(p.context))}
+        />
       )}
     </Subtree>
-  );
-}
-
-function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
-  function onFocus(ev: React.FocusEvent<HTMLDivElement>): void {
-    const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, T.root(p.context.tree));
-    p.context.setState(newState);
-    p.context.setTree(T.focus(newTree, newId));
-    ev.stopPropagation();
-    ev.preventDefault();
-  }
-
-  return (
-    <li className="subtree-container">
-      <div className="item">
-        <Bullet
-          beginDrag={() => {
-            return;
-          }}
-          status="terminal"
-          toggle={() => {
-            return;
-          }}
-        />
-        <div className="editor content placeholder-child" onFocus={onFocus} tabIndex={0}>
-          New Item
-        </div>
-      </div>
-    </li>
   );
 }
 

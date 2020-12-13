@@ -39,6 +39,11 @@ export function merge(app: AppState, values: {[K in keyof AppState]?: AppState[K
   return result;
 }
 
+export function setAppState(context: Context, app: AppState): void {
+  context.setState(app.state);
+  context.setTree(app.tree);
+}
+
 export interface Context extends AppState {
   storage: Storage;
   server?: Server;
