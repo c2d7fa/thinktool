@@ -412,11 +412,7 @@ export function copyToAbove(
   return copy(state, tree, sourceNode, {parent: parent_, index: childIndex(tree, parent_, destinationNode)});
 }
 
-export function createSiblingBefore(
-  state: D.State,
-  tree: Tree,
-  node: NodeRef,
-): [D.State, Tree, string, NodeRef] {
+export function createSiblingBefore(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree, string, NodeRef] {
   let newState = state;
 
   const [newState_, newThing] = D.create(newState);
@@ -446,11 +442,7 @@ export function createSiblingBefore(
   return [newState, newTree, newThing, newNode];
 }
 
-export function createSiblingAfter(
-  state: D.State,
-  tree: Tree,
-  node: NodeRef,
-): [D.State, Tree, string, NodeRef] {
+export function createSiblingAfter(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree, string, NodeRef] {
   let newState = state;
 
   const [newState_, newThing] = D.create(newState);
@@ -546,12 +538,7 @@ export function insertChild(
   return [newState, newTree, childNode];
 }
 
-export function insertSiblingAfter(
-  state: D.State,
-  tree: Tree,
-  node: NodeRef,
-  sibling: string,
-): [D.State, Tree] {
+export function insertSiblingAfter(state: D.State, tree: Tree, node: NodeRef, sibling: string): [D.State, Tree] {
   if (parent(tree, node) === undefined) return [state, tree];
   const result = insertChild(state, tree, parent(tree, node)!, sibling, indexInParent(tree, node)! + 1);
   return [result[0], result[1]];

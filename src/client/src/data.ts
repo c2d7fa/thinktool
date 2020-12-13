@@ -171,11 +171,7 @@ export function removeChild(state: State, parent: string, index: number): State 
       ...result.things,
       [child]: {
         ...childData,
-        parents: Misc.removeBy(
-          childData.parents,
-          removedConnection,
-          (x, y) => x.connectionId === y.connectionId,
-        ),
+        parents: Misc.removeBy(childData.parents, removedConnection, (x, y) => x.connectionId === y.connectionId),
       },
     },
   };
