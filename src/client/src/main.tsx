@@ -23,7 +23,7 @@ import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLink, ExternalLinkType} from "./ui/ExternalLink";
 import Bullet from "./ui/Bullet";
-import Item from "./ui/Item";
+import * as Item from "./ui/Item";
 import UserPage from "./ui/UserPage";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
 
@@ -31,7 +31,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import undo from "./undo";
-import {nodeStatus} from "./node-status";
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
 
@@ -625,10 +624,6 @@ function ExpandableItem(props: {
     props.context.setSelectedThing(T.thing(props.context.tree, props.node));
   }
 
-  const status = nodeStatus(props.context.tree, props.node);
-
-  const dragInfo = props.context.drag;
-
   function beginDrag() {
     props.context.setDrag({current: props.node, target: null, finished: false});
   }
@@ -648,20 +643,16 @@ function ExpandableItem(props: {
   );
 
   return (
-    <Item
-      {...{
-        node: props.node,
-        parent: props.parent,
-        dragInfo,
-        beginDrag,
-        kind: props.kind,
-        status,
-        toggle,
-        jump,
-        otherParents,
-        subtree,
-        content,
-      }}
+    <Item.Item
+      dragState={Item.dragState(props.context.drag, props.node)}
+      status={Item.status(props.context.tree, props.node)}
+      {...Item.onClickCallbacks({kind: props.kind, onJump: jump, onToggle: toggle})}
+      id={props.node.id}
+      beginDrag={beginDrag}
+      kind={props.kind}
+      otherParents={otherParents}
+      subtree={subtree}
+      content={content}
     />
   );
 }
