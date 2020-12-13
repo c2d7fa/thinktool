@@ -11,7 +11,8 @@ import * as E from "../editing";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
 import {Context} from "../context";
-import {NodeStatus} from "../node-status";
+
+import type {ItemStatus} from "./Item";
 
 import Bullet from "./Bullet";
 
@@ -54,7 +55,7 @@ function findExternalLinks(textContent: string): {from: number; to: number}[] {
 }
 
 function buildInternalLink(args: {
-  status: NodeStatus;
+  status: ItemStatus;
   jump(): void;
   toggle(): void;
   content: {invalid: string} | string;
@@ -107,7 +108,7 @@ function buildInternalLink(args: {
 }
 
 type LinkAttrs = {
-  status: NodeStatus;
+  status: ItemStatus;
   content: string | null;
   jump: () => void;
   target: string;
