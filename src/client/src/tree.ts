@@ -704,7 +704,7 @@ export const openedLinksChildren = I.openedLinksChildren;
 // is not represented in the data state.
 
 // Returns undefined if we can't figure it out.
-export function kind(tree: Tree, node: NodeRef): "opened-link" | "child" | "reference" | undefined {
+export function kind(tree: Tree, node: NodeRef): "opened-link" | "child" | "reference" | "parent" | undefined {
   const parentAndType_ = parentAndType(tree, node);
   if (parentAndType_ === undefined) return undefined;
   return parentAndType_[1];

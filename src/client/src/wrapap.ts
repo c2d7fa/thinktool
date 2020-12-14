@@ -4,9 +4,12 @@
 import * as C from "./context";
 import * as D from "./data";
 import * as T from "./tree";
+import * as G from "./goal";
+import * as U from "./tutorial";
 
 export interface Wrapap {
   root: Node;
+  completed(goal: G.GoalId): boolean;
   map(f: (app: C.AppState) => C.AppState): Wrapap;
 }
 
@@ -67,6 +70,10 @@ export function from(app: C.AppState): Wrapap {
   const wrapap = {
     get root() {
       return node(T.root(app.tree));
+    },
+
+    completed(goal: G.GoalId) {
+      return U.isGoalFinished(app.tutorialState, goal);
     },
 
     map(f: (app: C.AppState) => C.AppState) {

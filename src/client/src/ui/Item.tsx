@@ -2,6 +2,7 @@ import * as React from "react";
 import * as Misc from "@johv/miscjs";
 
 import * as T from "../tree";
+import * as U from "../tutorial";
 import {AppState, DragInfo, merge, jump} from "../context";
 
 import Bullet from "./Bullet";
@@ -27,7 +28,15 @@ export function click(app: AppState, node: T.NodeRef): AppState {
   } else if (kind === "child" || kind === "reference") {
     return merge(app, {tree: T.toggle(app.state, app.tree, node)});
   } else if (kind === "parent") {
-    return jump(app, T.thing(app.tree, node));
+    app = merge(app, {
+      tutorialState: U.action(app.tutorialState, {
+        action: "jump",
+        previouslyFocused: T.thing(app.tree, T.root(app.tree)),
+        thing: T.thing(app.tree, node),
+      }),
+    });
+    app = jump(app, T.thing(app.tree, node));
+    return app;
   } else {
     console.error("Called unimplemented click; doing nothing.");
     return app;
@@ -38,7 +47,15 @@ export function altClick(app: AppState, node: T.NodeRef): AppState {
   const kind = T.kind(app.tree, node);
 
   if (kind === "opened-link" || kind === "child" || kind === "reference") {
-    return jump(app, T.thing(app.tree, node));
+    app = merge(app, {
+      tutorialState: U.action(app.tutorialState, {
+        action: "jump",
+        previouslyFocused: T.thing(app.tree, T.root(app.tree)),
+        thing: T.thing(app.tree, node),
+      }),
+    });
+    app = jump(app, T.thing(app.tree, node));
+    return app;
   } else if (kind === "parent") {
     return merge(app, {tree: T.toggle(app.state, app.tree, node)});
   } else {

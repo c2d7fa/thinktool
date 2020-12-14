@@ -134,7 +134,7 @@ describe("clicking on an item's bullet", () => {
       expect(x.root.child(0).expanded).toBe(true);
     });
 
-    test("an alt-click jumps to the item", () => {
+    describe("alt-clicking the item", () => {
       let data = D.empty;
       data = D.create(data, "1")[0];
       data = D.addChild(data, "0", "1")[0];
@@ -144,6 +144,16 @@ describe("clicking on an item's bullet", () => {
 
       const x = w.map((app) => Item.altClick(app, w.root.child(0).ref));
       expect(x.root.thing).toBe("1");
+
+      test("jumps to it", () => {
+        expect(w.root.thing).toBe("0");
+        expect(x.root.thing).toBe("1");
+      });
+
+      test("completes the 'jump-item' goal", () => {
+        expect(w.completed("jump-item")).toBe(false);
+        expect(x.completed("jump-item")).toBe(true);
+      });
     });
   });
 
@@ -193,7 +203,7 @@ describe("clicking on an item's bullet", () => {
   });
 
   describe("if the item is a parent", () => {
-    test("a normal click jumps to the item", () => {
+    describe("a normal click", () => {
       let data = D.empty;
       data = D.create(data, "1")[0];
       data = D.create(data, "2")[0];
@@ -206,8 +216,15 @@ describe("clicking on an item's bullet", () => {
 
       const w2 = w1.map((app) => Item.click(app, w1.root.parent(0).ref));
 
-      expect(w1.root.thing).toBe("0");
-      expect(w2.root.thing).toBe("1");
+      test("jumps to the item", () => {
+        expect(w1.root.thing).toBe("0");
+        expect(w2.root.thing).toBe("1");
+      });
+
+      test("completes the 'jump-item' goal", () => {
+        expect(w1.completed("jump-item")).toBe(false);
+        expect(w2.completed("jump-item")).toBe(true);
+      });
     });
 
     test("an alt-click expands the item", () => {
