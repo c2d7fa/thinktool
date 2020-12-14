@@ -147,7 +147,48 @@ describe("clicking on an item's bullet", () => {
     });
   });
 
-  describe("if the item is a parent", () => {
-    it.todo("a normal click jumps to the item");
+  describe("if the item is a reference", () => {
+    test("a normal click causes it to be expanded", () => {
+      let data = D.empty;
+      data = D.create(data, "1")[0];
+      data = D.create(data, "2")[0];
+      data = D.create(data, "3")[0];
+      data = D.addChild(data, "0", "1")[0];
+      data = D.addChild(data, "2", "3")[0];
+      data = D.setContent(data, "2", ["This is a link to ", {link: "1"}, "."]);
+
+      let w = W.from(appState(data, T.fromRoot(data, "0")));
+      w = w.root.child(0).expand();
+
+      const r1 = w.root.child(0).reference(0);
+      expect(r1.thing).toBe("2");
+      expect(r1.expanded).toBe(false);
+
+      w = w.map((app) => Item.click(app, r1.ref));
+      const r2 = w.root.child(0).reference(0);
+      expect(r2.thing).toBe("2");
+      expect(r2.expanded).toBe(true);
+    });
+
+    test("an alt-click jumps to the item", () => {
+      let data = D.empty;
+      data = D.create(data, "1")[0];
+      data = D.create(data, "2")[0];
+      data = D.create(data, "3")[0];
+      data = D.addChild(data, "0", "1")[0];
+      data = D.addChild(data, "2", "3")[0];
+      data = D.setContent(data, "2", ["This is a link to ", {link: "1"}, "."]);
+
+      let w = W.from(appState(data, T.fromRoot(data, "0")));
+      w = w.root.child(0).expand();
+
+      const r1 = w.root.child(0).reference(0);
+      expect(r1.thing).toBe("2");
+
+      expect(w.root.thing).toBe("0");
+
+      w = w.map((app) => Item.altClick(app, r1.ref));
+      expect(w.root.thing).toBe("2");
+    });
   });
 });

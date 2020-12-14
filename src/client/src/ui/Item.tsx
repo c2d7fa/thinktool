@@ -24,7 +24,7 @@ export function click(app: AppState, node: T.NodeRef): AppState {
     return merge(app, {
       tree: T.toggleLink(app.state, app.tree, T.parent(app.tree, node)!, T.thing(app.tree, node)),
     });
-  } else if (kind === "child") {
+  } else if (kind === "child" || kind === "reference") {
     return merge(app, {tree: T.toggle(app.state, app.tree, node)});
   } else {
     console.error("Called unimplemented click; doing nothing.");
@@ -35,7 +35,7 @@ export function click(app: AppState, node: T.NodeRef): AppState {
 export function altClick(app: AppState, node: T.NodeRef): AppState {
   const kind = T.kind(app.tree, node);
 
-  if (kind === "opened-link" || kind === "child") {
+  if (kind === "opened-link" || kind === "child" || kind === "reference") {
     return jump(app, T.thing(app.tree, node));
   } else {
     console.error("Called unimplemented altClick; doing nothing.");
@@ -51,7 +51,7 @@ export function onClickCallbacks(args: {
   onJump(): void;
   onToggle(): void;
 }): {onBulletClick(): void; onBulletAltClick(): void} {
-  if (args.kind === "opened-link" || args.kind === "child") {
+  if (args.kind === "opened-link" || args.kind === "child" || args.kind === "reference") {
     return {
       onBulletClick() {
         args.updateAppState((app) => click(args.app, args.node));

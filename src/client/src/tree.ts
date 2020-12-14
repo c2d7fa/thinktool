@@ -45,12 +45,20 @@ function refEq(x: NodeRef, y: NodeRef): boolean {
   return x.id === y.id;
 }
 
-function parentAndType(tree: Tree, child: NodeRef): [NodeRef, "child" | "opened-link"] | undefined {
+function parentAndType(tree: Tree, child: NodeRef): [NodeRef, "child" | "opened-link" | "reference"] | undefined {
   for (const node of I.allNodes(tree)) {
     if (Misc.includesBy(children(tree, node), child, refEq)) return [node, "child"];
   }
   for (const node of I.allNodes(tree)) {
     if (I.openedLinkNode(tree, node, thing(tree, child)) !== undefined) return [node, "opened-link"];
+  }
+  for (const node of I.allNodes(tree)) {
+    if (
+      I.backreferencesChildren(tree, node)
+        .map((r) => r.id)
+        .includes(child.id)
+    )
+      return [node, "reference"];
   }
   return undefined;
 }
@@ -685,7 +693,7 @@ export const openedLinksChildren = I.openedLinksChildren;
 // is not represented in the data state.
 
 // Returns undefined if we can't figure it out.
-export function kind(tree: Tree, node: NodeRef): "opened-link" | "child" | undefined {
+export function kind(tree: Tree, node: NodeRef): "opened-link" | "child" | "reference" | undefined {
   const parentAndType_ = parentAndType(tree, node);
   if (parentAndType_ === undefined) return undefined;
   return parentAndType_[1];
