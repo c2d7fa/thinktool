@@ -98,12 +98,7 @@ export function executeOn(
   (async () => {
     const result = await updateOn(context, action, target, config);
 
-    if (result.app) {
-      console.log("setting state %o", result.app.state);
-      context.setState(result.app.state);
-      context.setTree(result.app.tree);
-      context.setTutorialState(result.app.tutorialState);
-    }
+    if (result.app) A.setAppState(context, result.app);
 
     // [HACK] The mechanism for inserting a link in the editor is really
     // awkward. This is ultimately due to the fact that we don't really want to
