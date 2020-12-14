@@ -3,6 +3,7 @@
 import * as Item from "../src/ui/Item";
 
 import {appState} from "./misc";
+import * as W from "../src/wrapap";
 
 import * as D from "../src/data";
 import * as T from "../src/tree";
@@ -108,10 +109,42 @@ describe("clicking on an item's bullet", () => {
   });
 
   describe("if the item is a normal child item", () => {
-    it.todo("if it doesn't have children, it's still collapsed after a normal click");
-    it.todo("if it has children, a normal click expands the item");
-    it.todo("another normal click collapses the item again");
-    it.todo("an alt-click jumps to the item");
+    test("if it doesn't have children, nothing happens after a normal click", () => {
+      let data = D.empty;
+      data = D.create(data, "1")[0];
+      data = D.addChild(data, "0", "1")[0];
+
+      const w = W.from(appState(data, T.fromRoot(data, "0")));
+      expect(w.root.child(0).expanded).toBe(true);
+
+      const x = w.map((app) => Item.click(app, w.root.child(0).ref));
+      expect(x.root.child(0).expanded).toBe(true);
+    });
+
+    test("if it has children, a normal click expands the item", () => {
+      let data = D.empty;
+      data = D.create(data, "1")[0];
+      data = D.addChild(data, "0", "1")[0];
+      data = D.addChild(data, "1", "2")[0];
+
+      const w = W.from(appState(data, T.fromRoot(data, "0")));
+      expect(w.root.child(0).expanded).toBe(false);
+
+      const x = w.map((app) => Item.click(app, w.root.child(0).ref));
+      expect(x.root.child(0).expanded).toBe(true);
+    });
+
+    test("an alt-click jumps to the item", () => {
+      let data = D.empty;
+      data = D.create(data, "1")[0];
+      data = D.addChild(data, "0", "1")[0];
+
+      const w = W.from(appState(data, T.fromRoot(data, "0")));
+      expect(w.root.thing).toBe("0");
+
+      const x = w.map((app) => Item.altClick(app, w.root.child(0).ref));
+      expect(x.root.thing).toBe("1");
+    });
   });
 
   describe("if the item is a parent", () => {
