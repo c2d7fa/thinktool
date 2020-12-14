@@ -4,7 +4,7 @@ import * as Misc from "@johv/miscjs";
 import * as ChangelogData from "./changes.json";
 
 import {State, diffState} from "./data";
-import {Context, DragInfo, ActiveEditor} from "./context";
+import {Context, DragInfo, ActiveEditor, setAppState} from "./context";
 import {extractThingFromURL} from "./url";
 import {useBatched} from "./batched";
 
@@ -14,7 +14,6 @@ import * as Tutorial from "./tutorial";
 import * as API from "./server-api";
 import * as Storage from "./storage";
 import * as Actions from "./actions";
-import * as ExportRoam from "./export-roam";
 import * as Sh from "./shortcuts";
 
 import Editor from "./ui/Editor";
@@ -24,13 +23,14 @@ import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLink, ExternalLinkType} from "./ui/ExternalLink";
 import Bullet from "./ui/Bullet";
-import Item from "./ui/Item";
+import * as Item from "./ui/Item";
+import UserPage from "./ui/UserPage";
+import * as PlaceholderItem from "./ui/PlaceholderItem";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import undo from "./undo";
-import {nodeStatus} from "./node-status";
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
 
@@ -529,39 +529,12 @@ function ReferencesOutline(p: {context: Context}) {
 function Outline(p: {context: Context}) {
   return (
     <Subtree context={p.context} parent={T.root(p.context.tree)} omitReferences={true}>
-      {T.children(p.context.tree, T.root(p.context.tree)).length === 0 && (
-        <PlaceholderItem context={p.context} parent={T.root(p.context.tree)} />
+      {PlaceholderItem.isVisible(p.context) && (
+        <PlaceholderItem.PlaceholderItem
+          onCreate={() => setAppState(p.context, PlaceholderItem.create(p.context))}
+        />
       )}
     </Subtree>
-  );
-}
-
-function PlaceholderItem(p: {context: Context; parent: T.NodeRef}) {
-  function onFocus(ev: React.FocusEvent<HTMLDivElement>): void {
-    const [newState, newTree, _, newId] = T.createChild(p.context.state, p.context.tree, T.root(p.context.tree));
-    p.context.setState(newState);
-    p.context.setTree(T.focus(newTree, newId));
-    ev.stopPropagation();
-    ev.preventDefault();
-  }
-
-  return (
-    <li className="subtree-container">
-      <div className="item">
-        <Bullet
-          beginDrag={() => {
-            return;
-          }}
-          status="terminal"
-          toggle={() => {
-            return;
-          }}
-        />
-        <div className="editor content placeholder-child" onFocus={onFocus} tabIndex={0}>
-          New Item
-        </div>
-      </div>
-    </li>
   );
 }
 
@@ -621,40 +594,6 @@ function ExpandableItem(props: {
     return <ul className="other-parents-small">{listItems}</ul>;
   }
 
-  function toggle() {
-    if (props.kind === "opened-link" && props.parent !== undefined) {
-      props.context.setTree(
-        T.toggleLink(
-          props.context.state,
-          props.context.tree,
-          props.parent,
-          T.thing(props.context.tree, props.node),
-        ),
-      );
-    } else {
-      const newTree = T.toggle(props.context.state, props.context.tree, props.node);
-      props.context.setTutorialState(
-        Tutorial.action(props.context.tutorialState, {action: "toggled-item", newTree, node: props.node}),
-      );
-      props.context.setTree(newTree);
-    }
-  }
-
-  function jump() {
-    props.context.setTutorialState(
-      Tutorial.action(props.context.tutorialState, {
-        action: "jump",
-        previouslyFocused: T.thing(props.context.tree, T.root(props.context.tree)),
-        thing: T.thing(props.context.tree, props.node),
-      }),
-    );
-    props.context.setSelectedThing(T.thing(props.context.tree, props.node));
-  }
-
-  const status = nodeStatus(props.context.tree, props.node);
-
-  const dragInfo = props.context.drag;
-
   function beginDrag() {
     props.context.setDrag({current: props.node, target: null, finished: false});
   }
@@ -674,20 +613,17 @@ function ExpandableItem(props: {
   );
 
   return (
-    <Item
-      {...{
-        node: props.node,
-        parent: props.parent,
-        dragInfo,
-        beginDrag,
-        kind: props.kind,
-        status,
-        toggle,
-        jump,
-        otherParents,
-        subtree,
-        content,
-      }}
+    <Item.Item
+      dragState={Item.dragState(props.context.drag, props.node)}
+      status={Item.status(props.context.tree, props.node)}
+      onBulletClick={() => setAppState(props.context, Item.click(props.context, props.node))}
+      onBulletAltClick={() => setAppState(props.context, Item.altClick(props.context, props.node))}
+      id={props.node.id}
+      beginDrag={beginDrag}
+      kind={props.kind}
+      otherParents={otherParents}
+      subtree={subtree}
+      content={content}
     />
   );
 }
@@ -743,97 +679,6 @@ function Subtree(p: {
       {p.children}
       {!p.omitReferences && <BackreferencesItem key="backreferences" parent={p.parent} context={p.context} />}
     </ul>
-  );
-}
-
-// User Page
-
-function UserPage(props: {server: API.Server}) {
-  const [username, setUsername] = React.useState<string | null>(null);
-  const [emailField, setEmailField] = React.useState<string>("(Loading...)");
-  const [passwordField, setPasswordField] = React.useState<string>("");
-
-  React.useEffect(() => {
-    props.server.getUsername().then((username) => setUsername(username));
-    props.server.getEmail().then((email) => setEmailField(email));
-  }, []);
-
-  return (
-    <div id="user">
-      <div>
-        You are <strong>{username}</strong>.
-      </div>
-      <hr />
-      <div>
-        <input value={emailField} onChange={(ev) => setEmailField(ev.target.value)} />
-        <button
-          onClick={async () => {
-            await props.server.setEmail(emailField);
-            window.location.reload();
-          }}
-        >
-          Change email
-        </button>
-      </div>
-      <div>
-        <input value={passwordField} onChange={(ev) => setPasswordField(ev.target.value)} type="password" />
-        <button
-          onClick={async () => {
-            await props.server.setPassword(passwordField);
-            window.location.reload();
-          }}
-        >
-          Change password
-        </button>
-      </div>
-      <hr />
-      <button
-        onClick={async () => {
-          if (confirm("Are you sure you want to PERMANENTLY DELETE YOUR ACCOUNT AND ALL YOUR DATA?")) {
-            if (username) {
-              await props.server.deleteAccount(username);
-              window.location.href = "/";
-            }
-          }
-        }}
-      >
-        Delete account and all data
-      </button>
-      <hr />
-      <div>
-        <h1>Export to Roam</h1>
-        <p>
-          Click the button below to download a file that can be imported into{" "}
-          <ExternalLink href="https://roamresearch.com/">Roam Research</ExternalLink>. To import it, select{" "}
-          <b>Import Files</b> in the top-right menu inside Roam.
-        </p>
-        <p>
-          All your notes will be imported to a single page, because Roam does not let you have multiple pages with
-          the same name. (So some documents that are valid in Thinktool would not be in Roam.) Additionally, items
-          with multiple parents will turn into "embedded" content inside Roam. This is because Roam cannot
-          represent an item with multiple parents, unlike Thinktool.
-        </p>
-        <button
-          onClick={async () => {
-            // https://stackoverflow.com/questions/45831191/generate-and-download-file-from-js
-            function download(filename: string, text: string) {
-              const element = document.createElement("a");
-              element.href = "data:text/plain;charset=utf-8," + encodeURIComponent(text);
-              element.download = filename;
-              element.style.display = "none";
-              document.body.appendChild(element);
-              element.click();
-              document.body.removeChild(element);
-            }
-
-            const state = API.transformFullStateResponseIntoState(await props.server.getFullState());
-            download("thinktool-export-for-roam.json", ExportRoam.exportString(state));
-          }}
-        >
-          Download data for importing into Roam
-        </button>
-      </div>
-    </div>
   );
 }
 

@@ -98,13 +98,7 @@ export function executeOn(
   (async () => {
     const result = await updateOn(context, action, target, config);
 
-    if (result.app) {
-      console.log("setting state %o", result.app.state);
-      context.setState(result.app.state);
-      context.setTree(result.app.tree);
-      context.setTutorialState(result.app.tutorialState);
-      context.setSelectedThing(result.app.selectedThing);
-    }
+    if (result.app) A.setAppState(context, result.app);
 
     // [HACK] The mechanism for inserting a link in the editor is really
     // awkward. This is ultimately due to the fact that we don't really want to
@@ -240,7 +234,7 @@ const updates = {
   async "zoom"({app, target}: UpdateArgs) {
     let result = app;
     const previouslyFocused = T.thing(result.tree, T.root(result.tree));
-    result = A.merge(result, {selectedThing: T.thing(result.tree, require(target))});
+    result = A.jump(result, T.thing(result.tree, require(target)));
     result = applyActionEvent(result, {
       action: "jump",
       previouslyFocused,
@@ -341,7 +335,7 @@ const updates = {
   async "find"({app, input}: UpdateArgs) {
     const previouslyFocused = T.thing(app.tree, T.root(app.tree));
     let [result, selection] = await input();
-    result = A.merge(result, {selectedThing: selection});
+    result = A.jump(result, selection);
     result = applyActionEvent(result, {action: "found", previouslyFocused, thing: selection});
     return {app: result};
   },

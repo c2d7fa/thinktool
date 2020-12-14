@@ -26,7 +26,6 @@ export interface AppState {
   changelog: Communication.Changelog | "loading";
   tree: Tree;
   drag: DragInfo;
-  selectedThing: string;
 }
 
 export function merge(app: AppState, values: {[K in keyof AppState]?: AppState[K]}): AppState {
@@ -37,6 +36,16 @@ export function merge(app: AppState, values: {[K in keyof AppState]?: AppState[K
     (result[k as keyof AppState] as any) = values[k as keyof AppState]!;
   }
   return result;
+}
+
+export function jump(app: AppState, thing: string): AppState {
+  return merge(app, {tree: T.fromRoot(app.state, thing)});
+}
+
+export function setAppState(context: Context, app: AppState): void {
+  context.setState(app.state);
+  context.setTree(app.tree);
+  context.setTutorialState(app.tutorialState);
 }
 
 export interface Context extends AppState {

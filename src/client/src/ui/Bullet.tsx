@@ -1,9 +1,9 @@
 import * as React from "react";
 
-import {NodeStatus} from "../node-status";
+import type {ItemStatus} from "./Item";
 
 export default function Bullet(props: {
-  status: NodeStatus;
+  status: ItemStatus;
   toggle: () => void;
   beginDrag: (ev?: React.MouseEvent<never>) => void;
   onMiddleClick?(): void;
