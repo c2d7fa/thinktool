@@ -4,32 +4,27 @@ windows:
   - layout: even-vertical
     panes:
       - shell_command:
+          - cd src/web
+          - sleep 10
+          - npm ci
+          - npm run link-client
+          - npm run dev
+      - shell_command:
+          - cd src/client
+          - npm ci
+          - npm run watch
+      - shell_command:
+          - cd src/client
+          - sleep 10
+          - npm run test-watch
+      - shell_command:
+          - cd src/client
+          - sleep 10
+          - npm run check
+  - layout: even-vertical
+    panes:
+      - shell_command:
           - cd dist/server
           - node server.js
-      - shell_command:
-          - cd src/web
-          - sleep 5; npm link @thinktool/client
-          - npm run serve
-      - shell_command:
-          - cd src/server
-          - npm run watch
-      - shell_command:
-          - ./tools/build-client.sh
-          - cd src/client
-          - npm link
-          - npm run watch
-  - layout: even-vertical
-    panes:
-      - shell_command:
-          - cd src/client
-          - npm run check
-      - shell_command:
-          - cd src/server
-          - npm run check
-      - shell_command:
-          - cd src/client
-          - npm run test
-  - layout: even-vertical
-    panes:
       - shell_command:
           - tmux set-option mouse on

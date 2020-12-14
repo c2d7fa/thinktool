@@ -10,4 +10,5 @@ cd src/client
 npm ci
 
 cd ../web
+npm ci
 npm run link-client
