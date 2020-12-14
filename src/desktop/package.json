@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/desktop",
-  "version": "202012141942.0.0",
+  "version": "0.0.0-noversion",
   "description": "The desktop client for Thinktool.",
   "license": "UNLICENSED",
   "repository": {
@@ -8,29 +8,29 @@
     "url": "https://github.com/c2d7fa/thinktool.git"
   },
   "devDependencies": {
-    "@types/node": "^12.12.62",
-    "@types/react": "^16.9.49",
-    "@types/react-dom": "^16.9.9",
+    "@types/node": "^14.14.13",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
     "@types/sqlite3": "^3.1.6",
-    "electron": "^8.5.2",
+    "electron": "^11.1.0",
     "electron-builder": "^22.9.1",
     "parcel-bundler": "^1.12.4",
-    "typescript": "^4.0.3"
+    "typescript": "^4.1.3"
   },
   "dependencies": {
-    "@thinktool/client": "^3.3.3",
+    "@thinktool/client": "^3.3.4",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "sqlite": "^4.0.14",
-    "sqlite3": "^4.2.0"
+    "sqlite": "^4.0.18",
+    "sqlite3": "^5.0.0"
   },
   "scripts": {
     "check": "./node_modules/.bin/tsc --noEmit",
     "build-static": "./build-static-and-client-for-desktop.sh",
     "build": "mkdir -p build && ./node_modules/.bin/tsc && npm run build-static",
     "start": "./node_modules/.bin/electron-builder --dir && ./dist/linux-unpacked/thinktool-desktop-client",
-    "bundle-linux": "npm run build && ./node_modules/.bin/electron-builder -l -p never && echo 'Output in ./dist/'",
-    "bundle-windows": "npm run build && ./node_modules/.bin/electron-builder -w -p never && echo 'Output in ./dist/'"
+    "bundle-linux": "npm run build && ./node_modules/.bin/electron-builder -l -p never && mv 'dist/Thinktool Desktop Prototype-0.0.0-noversion.AppImage' 'dist/Thinktool Desktop Prototype.AppImage' && echo 'Output in ./dist/'",
+    "bundle-windows": "npm run build && ./node_modules/.bin/electron-builder -w -p never && mv 'dist/Thinktool Desktop Prototype 0.0.0-noversion.exe' 'dist/Thinktool Desktop Prototype.exe' && echo 'Output in ./dist/'"
   },
   "main": "build/start.js",
   "build": {
