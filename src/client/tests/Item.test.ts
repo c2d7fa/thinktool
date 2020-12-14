@@ -191,4 +191,40 @@ describe("clicking on an item's bullet", () => {
       expect(w.root.thing).toBe("2");
     });
   });
+
+  describe("if the item is a parent", () => {
+    test("a normal click jumps to the item", () => {
+      let data = D.empty;
+      data = D.create(data, "1")[0];
+      data = D.create(data, "2")[0];
+      data = D.addChild(data, "1", "0")[0];
+      data = D.addChild(data, "1", "2")[0];
+
+      const w1 = W.from(appState(data, T.fromRoot(data, "0")));
+
+      expect(w1.root.parent(0).thing).toBe("1");
+
+      const w2 = w1.map((app) => Item.click(app, w1.root.parent(0).ref));
+
+      expect(w1.root.thing).toBe("0");
+      expect(w2.root.thing).toBe("1");
+    });
+
+    test("an alt-click expands the item", () => {
+      let data = D.empty;
+      data = D.create(data, "1")[0];
+      data = D.create(data, "2")[0];
+      data = D.addChild(data, "1", "0")[0];
+      data = D.addChild(data, "1", "2")[0];
+
+      let w = W.from(appState(data, T.fromRoot(data, "0")));
+
+      expect(w.root.parent(0).thing).toBe("1");
+      expect(w.root.parent(0).expanded).toBe(false);
+
+      w = w.map((app) => Item.altClick(app, w.root.parent(0).ref));
+
+      expect(w.root.parent(0).expanded).toBe(true);
+    });
+  });
 });

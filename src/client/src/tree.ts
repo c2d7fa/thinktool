@@ -45,7 +45,10 @@ function refEq(x: NodeRef, y: NodeRef): boolean {
   return x.id === y.id;
 }
 
-function parentAndType(tree: Tree, child: NodeRef): [NodeRef, "child" | "opened-link" | "reference"] | undefined {
+function parentAndType(
+  tree: Tree,
+  child: NodeRef,
+): [NodeRef, "child" | "opened-link" | "reference" | "parent"] | undefined {
   for (const node of I.allNodes(tree)) {
     if (Misc.includesBy(children(tree, node), child, refEq)) return [node, "child"];
   }
@@ -59,6 +62,14 @@ function parentAndType(tree: Tree, child: NodeRef): [NodeRef, "child" | "opened-
         .includes(child.id)
     )
       return [node, "reference"];
+  }
+  for (const node of I.allNodes(tree)) {
+    if (
+      I.otherParentsChildren(tree, node)
+        .map((p) => p.id)
+        .includes(child.id)
+    )
+      return [node, "parent"];
   }
   return undefined;
 }

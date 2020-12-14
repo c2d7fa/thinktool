@@ -12,6 +12,7 @@ export interface Wrapap {
 
 export interface Node {
   child(index: number): Node | undefined;
+  parent(index: number): Node | undefined;
   references: Node[];
   reference(index: number): Node | undefined;
   thing: string;
@@ -35,6 +36,12 @@ export function from(app: C.AppState): Wrapap {
 
       reference(index: number) {
         const referenceRef = T.backreferencesChildren(app.tree, ref)[index];
+        if (referenceRef === undefined) return undefined;
+        return node(referenceRef);
+      },
+
+      parent(index: number) {
+        const referenceRef = T.otherParentsChildren(app.tree, ref)[index];
         if (referenceRef === undefined) return undefined;
         return node(referenceRef);
       },
