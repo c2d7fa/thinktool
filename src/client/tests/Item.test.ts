@@ -121,17 +121,24 @@ describe("clicking on an item's bullet", () => {
       expect(x.root.child(0).expanded).toBe(true);
     });
 
-    test("if it has children, a normal click expands the item", () => {
+    describe("if it has children, a normal click", () => {
       let data = D.empty;
       data = D.create(data, "1")[0];
       data = D.addChild(data, "0", "1")[0];
       data = D.addChild(data, "1", "2")[0];
 
       const w = W.from(appState(data, T.fromRoot(data, "0")));
-      expect(w.root.child(0).expanded).toBe(false);
-
       const x = w.map((app) => Item.click(app, w.root.child(0).ref));
-      expect(x.root.child(0).expanded).toBe(true);
+
+      it("expands the item", () => {
+        expect(w.root.child(0).expanded).toBe(false);
+        expect(x.root.child(0).expanded).toBe(true);
+      });
+
+      it("completes the 'expand-item' goal", () => {
+        expect(w.completed("expand-item")).toBe(false);
+        expect(x.completed("expand-item")).toBe(true);
+      });
     });
 
     describe("alt-clicking the item", () => {

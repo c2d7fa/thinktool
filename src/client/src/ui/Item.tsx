@@ -26,7 +26,16 @@ export function click(app: AppState, node: T.NodeRef): AppState {
       tree: T.toggleLink(app.state, app.tree, T.parent(app.tree, node)!, T.thing(app.tree, node)),
     });
   } else if (kind === "child" || kind === "reference") {
-    return merge(app, {tree: T.toggle(app.state, app.tree, node)});
+    const tree = T.toggle(app.state, app.tree, node);
+    app = merge(app, {
+      tutorialState: U.action(app.tutorialState, {
+        action: "toggled-item",
+        newTree: tree,
+        node: node,
+      }),
+    });
+    app = merge(app, {tree});
+    return app;
   } else if (kind === "parent") {
     app = merge(app, {
       tutorialState: U.action(app.tutorialState, {
