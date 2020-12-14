@@ -14,7 +14,7 @@
     "link-client": "npm ci && npm link ../client && npm link node_modules/@thinktool/client/node_modules/react && npm link node_modules/@thinktool/client/node_modules/react-dom"
   },
   "dependencies": {
-    "@thinktool/client": "^3.3.4",
+    "@thinktool/client": "^3.3.5",
     "next": "^10.0.3",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",

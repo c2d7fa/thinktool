@@ -359,6 +359,10 @@
     {
       "date": "2020-12-14",
       "title": "Continued refactoring various component to allow for more automatic tests."
+    },
+    {
+      "date": "2020-12-14",
+      "title": "Fixed an issue where the changelog would not appear when clicking 'Updates', and improve the appearance of the changelog."
     }
   ]
 }

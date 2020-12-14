@@ -46,6 +46,7 @@ export function setAppState(context: Context, app: AppState): void {
   context.setState(app.state);
   context.setTree(app.tree);
   context.setTutorialState(app.tutorialState);
+  context.setChangelogShown(app.changelogShown);
 }
 
 export interface Context extends AppState {

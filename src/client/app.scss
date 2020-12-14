@@ -810,29 +810,25 @@ a.plain-text-link:hover {
 
   max-height: calc(100vh - 6rem);
 
-  background-color: hsl(0, 0%, 97%);
+  background-color: hsl(0, 0%, 95%);
   border-radius: 6px;
+  border: 2px solid hsl(0, 0%, 80%);
 
   z-index: 600;
 
   font-size: 0.9em;
+
+  display: grid;
+  grid-template: "body" 1fr "nav" auto / 1fr;
+  row-gap: 1rem;
 }
 
 .changelog > button {
-  position: absolute;
-  top: 0.75rem;
-  right: 1rem;
+  grid-area: nav;
+  justify-self: flex-end;
 
-  outline: none;
-  border: none;
-  background: none;
-  font: inherit;
-
-  font-size: 0.9em;
-
-  color: #a0a0a0;
-
-  transition: color base.$quick-transition-time;
+  @include base.subtle-button(#888);
+  color: #888;
 }
 
 .changelog > button:hover {
@@ -842,6 +838,8 @@ a.plain-text-link:hover {
 }
 
 .changelog-entries {
+  grid-area: body;
+
   @include base.reset-list;
 
   display: flex;
