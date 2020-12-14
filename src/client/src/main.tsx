@@ -594,36 +594,6 @@ function ExpandableItem(props: {
     return <ul className="other-parents-small">{listItems}</ul>;
   }
 
-  function toggle() {
-    if (props.kind === "opened-link" && props.parent !== undefined) {
-      props.context.setTree(
-        T.toggleLink(
-          props.context.state,
-          props.context.tree,
-          props.parent,
-          T.thing(props.context.tree, props.node),
-        ),
-      );
-    } else {
-      const newTree = T.toggle(props.context.state, props.context.tree, props.node);
-      props.context.setTutorialState(
-        Tutorial.action(props.context.tutorialState, {action: "toggled-item", newTree, node: props.node}),
-      );
-      props.context.setTree(newTree);
-    }
-  }
-
-  function jump() {
-    props.context.setTutorialState(
-      Tutorial.action(props.context.tutorialState, {
-        action: "jump",
-        previouslyFocused: T.thing(props.context.tree, T.root(props.context.tree)),
-        thing: T.thing(props.context.tree, props.node),
-      }),
-    );
-    props.context.setSelectedThing(T.thing(props.context.tree, props.node));
-  }
-
   function beginDrag() {
     props.context.setDrag({current: props.node, target: null, finished: false});
   }
@@ -646,16 +616,8 @@ function ExpandableItem(props: {
     <Item.Item
       dragState={Item.dragState(props.context.drag, props.node)}
       status={Item.status(props.context.tree, props.node)}
-      {...Item.onClickCallbacks({
-        app: props.context,
-        node: props.node,
-        kind: props.kind,
-        onJump: jump,
-        onToggle: toggle,
-        updateAppState(f) {
-          setAppState(props.context, f(props.context));
-        },
-      })}
+      onBulletClick={() => setAppState(props.context, Item.click(props.context, props.node))}
+      onBulletAltClick={() => setAppState(props.context, Item.altClick(props.context, props.node))}
       id={props.node.id}
       beginDrag={beginDrag}
       kind={props.kind}

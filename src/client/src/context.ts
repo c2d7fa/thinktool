@@ -46,6 +46,7 @@ export function jump(app: AppState, thing: string): AppState {
 export function setAppState(context: Context, app: AppState): void {
   context.setState(app.state);
   context.setTree(app.tree);
+  context.setTutorialState(app.tutorialState);
 }
 
 export interface Context extends AppState {

@@ -73,25 +73,6 @@ export function altClick(app: AppState, node: T.NodeRef): AppState {
   }
 }
 
-export function onClickCallbacks(args: {
-  kind: ItemKind;
-  app: AppState;
-  node: T.NodeRef;
-  updateAppState(f: (app: AppState) => AppState): void;
-  onJump(): void;
-  onToggle(): void;
-}): {onBulletClick(): void; onBulletAltClick(): void} {
-  return {
-    onBulletClick() {
-      args.updateAppState((app) => click(args.app, args.node));
-    },
-
-    onBulletAltClick() {
-      args.updateAppState((app) => altClick(args.app, args.node));
-    },
-  };
-}
-
 export function status(tree: T.Tree, node: T.NodeRef): ItemStatus {
   if (!T.expanded(tree, node)) {
     return "collapsed";
