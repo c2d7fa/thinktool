@@ -24,7 +24,13 @@ windows:
   - layout: even-vertical
     panes:
       - shell_command:
+          - sleep 10
           - cd dist/server
           - node server.js
+      - shell_command:
+          - cd src/server
+          - npm run watch
+  - layout: even-vertical
+    panes:
       - shell_command:
           - tmux set-option mouse on

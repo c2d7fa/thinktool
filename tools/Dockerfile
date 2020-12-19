@@ -10,5 +10,6 @@ RUN tools/build-server.sh
 FROM node:lts
 COPY --from=build /work/dist/server /server
 WORKDIR /server
+RUN npm ci
 EXPOSE 80
 CMD node server.js
