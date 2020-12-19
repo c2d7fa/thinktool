@@ -133,14 +133,21 @@ export function TutorialBox(props: {state: State; setState(state: State): void})
         <p>An error happened while loading the tutorial!</p>
       )}
       <div className="tutorial-navigation">
-        <button
-          onClick={() => props.setState(previousStep(props.state))}
-          disabled={!hasPreviousStep(props.state)}>
+        <button onClick={() => props.setState(previousStep(props.state))} disabled={!hasPreviousStep(props.state)}>
           &lt; Back
         </button>
         <NextStep {...props} />
       </div>
     </div>
+  );
+}
+
+function FakeButton(props: {label: string; icon: string}) {
+  return (
+    <span className="fake-button">
+      <span className={`icon fa-fw ${props.icon}`} />
+      {props.label}
+    </span>
   );
 }
 
@@ -151,15 +158,8 @@ export function StepGettingStarted(props: {goalState: G.State}) {
         <i>Let's start with the basics.</i>
       </p>
       <p>
-        The outline contains <em>items</em>. You can press{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-plus-square"></span>New
-        </span>{" "}
-        and{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-caret-square-down"></span>New Child
-        </span>{" "}
-        on the toolbar to create a some items.
+        The outline contains <em>items</em>. You can press <FakeButton icon="fas fa-plus-square" label="New" /> and{" "}
+        <FakeButton icon="fas fa-caret-square-down" label="New Child" /> on the toolbar to create a some items.
       </p>
       <p>
         <G.EmbeddedGoal id="create-item" state={props.goalState} />
@@ -191,42 +191,27 @@ export function StepReorganizing(props: {goalState: G.State}) {
       </p>
       <p>
         To delete an item you no longer care about from the database, use{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-trash"></span>Destroy
-        </span>
-        . This deletes the item permanently.
+        <FakeButton icon="fas fa-trash" label="Destroy" />. This deletes the item permanently.
       </p>
       <p>
         <G.EmbeddedGoal id="delete-item" state={props.goalState} />
       </p>
       <p>
         You can also remove an item from its parent <em>without</em> deleting it from the database with{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-minus-square"></span>Remove
-        </span>
-        . If the item has any other parents, you can still find it there.
+        <FakeButton icon="fas fa-minus-square" label="Remove" />. If the item has any other parents, you can still
+        find it there.
       </p>
       <p>
         <G.EmbeddedGoal id="remove-item" state={props.goalState} />
       </p>
       <p>
-        You can use{" "}
+        You can use <FakeButton icon="fas fa-chevron-up" label="Up" />,
         <span className="fake-button">
-          <span className="icon fas fa-chevron-up"></span>Up
+          {" "}
+          <FakeButton icon="fas fa-chevron-right" label="Down" />
         </span>
-        ,
-        <span className="fake-button">{" "}
-          <span className="icon fas fa-chevron-right"></span>Down
-        </span>
-        ,
-        <span className="fake-button">{" "}
-          <span className="icon fas fa-chevron-left"></span>Unindent
-        </span>{" "}
-        and{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-chevron-right"></span>Indent
-        </span>{" "}
-        to reorganize items among their neighbours.
+        , <FakeButton icon="fas fa-chevron-left" label="Unindent" /> and{" "}
+        <FakeButton icon="fas fa-chevron-right" label="Indent" /> to reorganize items among their neighbours.
       </p>
       <p>
         <G.EmbeddedGoal id="move-item" state={props.goalState} />
@@ -252,10 +237,8 @@ export function StepFlexibleHierarchy(props: {goalState: G.State}) {
       </p>
       <p>
         To add a second parent to an existing item, first click on an item to focus it. Then click{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-chevron-circle-up"></span>Parent,
-        </span>{" "}
-        and search for another item that you want to add as a parent.
+        <FakeButton icon="fas fa-chevron-circle-up" label="Parent" />, and search for another item that you want to
+        add as a parent.
       </p>
       <p>
         <G.EmbeddedGoal id="add-parent" state={props.goalState} />
@@ -269,14 +252,8 @@ export function StepFlexibleHierarchy(props: {goalState: G.State}) {
       </p>
       <p>
         You can also add an existing item as a sibling of the focused item with{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-plus-circle"></span>Sibling
-        </span>{" "}
-        or as a child with{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-chevron-circle-down"></span>Child
-        </span>
-        .
+        <FakeButton icon="fas fa-plus-circle" label="Sibling" /> or as a child with{" "}
+        <FakeButton icon="fas fa-chevron-circle-down" label="Child" />.
       </p>
     </>
   );
@@ -290,10 +267,7 @@ export function StepBidirectionalLinks(props: {goalState: G.State}) {
       </p>
       <p>
         To insert a link, first edit an item by clicking on it. Then press{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-link"></span>Link
-        </span>
-        , and select the item that you want to link to.
+        <FakeButton icon="fas fa-link" label="Link" />, and select the item that you want to link to.
       </p>
       <p>
         <G.EmbeddedGoal id="insert-link" state={props.goalState} />
@@ -329,10 +303,8 @@ export function StepStayingFocused(props: {goalState: G.State}) {
       </p>
       <p>
         To narrow your view, click on an item and then press{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-hand-point-right"></span>Jump
-        </span>
-        . This will show you just that item and all its parents, children and references.
+        <FakeButton icon="fas fa-hand-point-right" label="Jump" />. This will show you just that item and all its
+        parents, children and references.
       </p>
       <p>
         <p>
@@ -348,25 +320,17 @@ export function StepStayingFocused(props: {goalState: G.State}) {
       </p>
       <p>
         If you get lost, you can always go back to the default item with
-        <span className="fake-button">
-          <span className="icon fas fa-home"></span>Home
-        </span>
-        .
+        <FakeButton icon="fas fa-home" label="Home" />.
       </p>
       <p>
         <G.EmbeddedGoal id="jump-home" state={props.goalState} />
       </p>
       <p>
-        <i>
-          Tip: Try to organize your items so you can find them again from the home view.
-        </i>
+        <i>Tip: Try to organize your items so you can find them again from the home view.</i>
       </p>
       <p>
-        You can also find a specific item with the{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-search"></span>Find
-        </span>{" "}
-        button. Just search for an item by its content and select it to jump there.
+        You can also find a specific item with the <FakeButton icon="fas fa-search" label="Find" /> button. Just
+        search for an item by its content and select it to jump there.
       </p>
       <p>
         <G.EmbeddedGoal id="find-item" state={props.goalState} />
@@ -383,19 +347,12 @@ export function StepHaveFun() {
       </p>
       <p>
         If you ever want to do the tutorial again, just press the{" "}
-        <span className="fake-button">
-          <span className="icon fas fa-info"></span>Tutorial
-        </span>{" "}
-        button.
+        <FakeButton icon="fas fa-info" label="Tutorial" /> button.
       </p>
       <p>
         If you have any questions, feedback or other comments, post them to{" "}
-        <ExternalLink href="https://old.reddit.com/r/thinktool/">the subreddit</ExternalLink>, which you can
-        always get to by pressing{" "}
-        <span className="fake-button">
-          <span className="icon fab fa-reddit-alien"></span>Forum
-        </span>
-        .
+        <ExternalLink href="https://old.reddit.com/r/thinktool/">the subreddit</ExternalLink>, which you can always
+        get to by pressing <FakeButton icon="fab fa-reddit-alien" label="Forum" />.
       </p>
       <p>
         If you prefer, you are also welcome to email me directly at{" "}

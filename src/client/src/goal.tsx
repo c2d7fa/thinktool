@@ -161,8 +161,8 @@ function title(goal: GoalId): string {
 export function EmbeddedGoal(props: {id: GoalId; state: State}) {
   const finished = props.state.finished.has(props.id);
   return (
-    <span className={classes({goal: true, "goal-finished": finished})}>
-      <i className="fas fa-pen" />
+    <span className={classes({"goal": true, "goal-finished": finished})}>
+      <i className="icon fa-fw fas fa-pen" />
       <span>{title(props.id)}</span>
     </span>
   );
