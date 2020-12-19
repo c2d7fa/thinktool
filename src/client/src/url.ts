@@ -1,11 +1,10 @@
 import * as React from "react";
-import * as T from "./tree";
 
 export function useThingUrl(args: {current: string; jump: (thing: string) => void}) {
   React.useEffect(() => {
     // TODO: We should manage this in a cleaner way, in case anyone else also
     // wants to set onpopstate.
-    window.onpopstate = (ev: PopStateEvent) => {
+    window.onpopstate = () => {
       args.jump(extractThingFromURL());
     };
 
@@ -15,6 +14,15 @@ export function useThingUrl(args: {current: string; jump: (thing: string) => voi
   }, []);
 
   React.useEffect(() => {
+    if (window.location.hash === `#${args.current}` || (window.location.hash === "" && args.current === "0"))
+      return; // URL is already correct.
+
+    if (args.current === "0") {
+      // Default. Remove hash part of URL.
+      window.history.pushState(undefined, document.title, window.location.pathname);
+      return;
+    }
+
     // TODO: Update title here as well?
     window.history.pushState(undefined, document.title, `#${args.current}`);
   }, [args.current]);
