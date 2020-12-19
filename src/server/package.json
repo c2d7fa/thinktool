@@ -25,7 +25,8 @@
     "node": "^12.18.4"
   },
   "scripts": {
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "watch": "cp package.json package-lock.json ../../dist/server && tsc --watch --outDir ../../dist/server"
   },
   "dependencies": {
     "mailgun-js": "^0.22.0"
