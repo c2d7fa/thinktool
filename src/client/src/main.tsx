@@ -5,7 +5,7 @@ import * as ChangelogData from "./changes.json";
 
 import {State, diffState} from "./data";
 import {Context, DragInfo, ActiveEditor, setAppState, jump} from "./context";
-import {extractThingFromURL} from "./url";
+import {extractThingFromURL, useThingUrl} from "./url";
 import {useBatched} from "./batched";
 
 import * as Data from "./data";
@@ -112,24 +112,18 @@ function useContext({
     );
   }
 
-  // Selected thing:
-
-  /*
-  function setSelectedThing(thing: string): void {
-    // TODO: Update title?
-    setSelectedThing_(thing);
-    window.history.pushState(undefined, document.title, `#${thing}`);
-  }
-
-  // TODO: We should manage this in a cleaner way, in case anyone else also
-  // wants to set onpopstate.
-  window.onpopstate = (ev: PopStateEvent) => {
-    setSelectedThing_(extractThingFromURL());
-  };*/
-
   // Tree:
 
   const [tree, setTree] = React.useState(T.fromRoot(state, extractThingFromURL()));
+
+  // URL:
+
+  useThingUrl({
+    current: T.thing(tree, T.root(tree)),
+    jump(thing: string) {
+      setTree(T.fromRoot(state, thing));
+    },
+  });
 
   // Drag and drop:
 
