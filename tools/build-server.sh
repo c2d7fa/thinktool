@@ -6,7 +6,8 @@ echo "Building server..."
 mkdir -p dist/server
 cd src/server
 npm ci
-./node_modules/.bin/parcel build server.ts -t node -d ../../dist/server -o server.js # TODO: Just use TSC
+node_modules/.bin/tsc --outDir ../../dist/server
+cp package.json package-lock.json ../../dist/server
 cd ../..
 cp -r src/server/{node_modules,package.json} dist/server
 echo "Built 'dist/server' from 'src/server'."
