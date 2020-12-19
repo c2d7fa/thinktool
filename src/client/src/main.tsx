@@ -4,7 +4,7 @@ import * as Misc from "@johv/miscjs";
 import * as ChangelogData from "./changes.json";
 
 import {State, diffState} from "./data";
-import {Context, DragInfo, ActiveEditor, setAppState} from "./context";
+import {Context, DragInfo, ActiveEditor, setAppState, jump} from "./context";
 import {extractThingFromURL} from "./url";
 import {useBatched} from "./batched";
 
@@ -114,8 +114,7 @@ function useContext({
 
   // Selected thing:
 
-  const [selectedThing, setSelectedThing_] = React.useState(extractThingFromURL());
-
+  /*
   function setSelectedThing(thing: string): void {
     // TODO: Update title?
     setSelectedThing_(thing);
@@ -126,15 +125,11 @@ function useContext({
   // wants to set onpopstate.
   window.onpopstate = (ev: PopStateEvent) => {
     setSelectedThing_(extractThingFromURL());
-  };
+  };*/
 
   // Tree:
 
-  const [tree, setTree] = React.useState(T.fromRoot(state, selectedThing));
-
-  React.useEffect(() => {
-    setTree(T.fromRoot(state, selectedThing));
-  }, [selectedThing]);
+  const [tree, setTree] = React.useState(T.fromRoot(state, extractThingFromURL()));
 
   // Drag and drop:
 
@@ -177,8 +172,6 @@ function useContext({
         return newState;
       });
     },
-    selectedThing,
-    setSelectedThing,
     tree,
     setTree,
     drag,
@@ -445,7 +438,8 @@ function App_({
 }
 
 function ThingOverview(p: {context: Context}) {
-  const hasReferences = Data.backreferences(p.context.state, p.context.selectedThing).length > 0;
+  const hasReferences =
+    Data.backreferences(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))).length > 0;
 
   function openLink(target: string): void {
     p.context.setTree(T.toggleLink(p.context.state, p.context.tree, T.root(p.context.tree), target));
@@ -459,7 +453,7 @@ function ThingOverview(p: {context: Context}) {
         thing: target,
       }),
     );
-    p.context.setSelectedThing(target);
+    setAppState(p.context, jump(p.context, target));
   }
 
   return (
@@ -563,7 +557,7 @@ function ExpandableItem(props: {
         thing: target,
       }),
     );
-    props.context.setSelectedThing(target);
+    setAppState(props.context, jump(props.context, target));
   }
 
   function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
@@ -579,7 +573,7 @@ function ExpandableItem(props: {
           <span
             className="other-parent-small"
             onClick={() => {
-              props.context.setSelectedThing(otherParentThing);
+              setAppState(props.context, jump(props.context, otherParentThing));
             }}
             title={Data.contentText(props.context.state, otherParentThing)}
           >
