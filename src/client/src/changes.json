@@ -365,12 +365,16 @@
       "title": "Fixed an issue where the changelog would not appear when clicking 'Updates', and improve the appearance of the changelog."
     },
     {
-      "date": "2020-12-19",
+      "date": "2020-12-18",
       "title": "Made it possible to 'Remove' a parent from its child."
     },
     {
-      "date": "2020-12-19",
+      "date": "2020-12-18",
       "title": "Fixed issue where icons would sometimes not show up until the page was reloaded."
+    },
+    {
+      "date": "2020-12-19",
+      "title": "Fixed an issue with URL updates that would cause the back button to be unable to navigate through history inside Thinktool."
     }
   ]
 }

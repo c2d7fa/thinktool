@@ -73,9 +73,6 @@ export interface Context extends AppState {
   drag: DragInfo;
   setDrag(value: DragInfo): void;
 
-  selectedThing: string;
-  setSelectedThing(value: string): void;
-
   activeEditor: ActiveEditor | null;
   registerActiveEditor(activeEditor: ActiveEditor | null): void;
 
