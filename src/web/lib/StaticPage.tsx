@@ -23,22 +23,23 @@ export default function StaticPage(props: {children: React.ReactNode}) {
         </a>
         <nav>
           <a href="https://github.com/c2d7fa/thinktool">
-            <i className="fab fa-github"></i>Code
+            <i className="icon fab fa-github" />
+            Code
           </a>
           <a href="https://reddit.com/r/thinktool">
-            <i className="fab fa-reddit-alien"></i>Forum
+            <i className="icon fab fa-reddit-alien"></i>Forum
           </a>
           <a href="/blog/">
-            <i className="fas fa-newspaper"></i>Blog
+            <i className="icon fas fa-newspaper"></i>Blog
           </a>
           <a href="/download.html">
-            <i className="fas fa-desktop"></i>Download
+            <i className="icon fas fa-desktop"></i>Download
           </a>
           <a href="/login.html">
-            <i className="fas fa-sign-in-alt"></i>Log in
+            <i className="icon fas fa-sign-in-alt"></i>Log in
           </a>
           <a href="/demo.html" className="demo demo-small">
-            <i className="fas fa-star"></i>Demo
+            <i className="icon fas fa-star"></i>Demo
           </a>
         </nav>
       </div>

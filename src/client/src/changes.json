@@ -367,6 +367,10 @@
     {
       "date": "2020-12-19",
       "title": "Made it possible to 'Remove' a parent from its child."
+    },
+    {
+      "date": "2020-12-19",
+      "title": "Fixed issue where icons would sometimes not show up until the page was reloaded."
     }
   ]
 }

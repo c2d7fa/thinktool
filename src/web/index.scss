@@ -382,8 +382,8 @@ p {
   }
 }
 
-a > i.fas,
-a > i.fab {
+a > .icon,
+a > .icon {
   @include components.icon-before;
 }
 

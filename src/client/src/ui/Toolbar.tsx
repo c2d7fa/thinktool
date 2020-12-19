@@ -31,7 +31,7 @@ function ToolbarButton(props: {
 }) {
   const shortcut = Sh.format(Ac.shortcut(props.action));
 
-  const iconClasses = props.icon === "reddit" ? "fab fa-reddit-alien" : `fas fa-${props.icon}`;
+  const iconClasses = props.icon === "reddit" ? "fab fa-fw fa-reddit-alien" : `fas fa-fw fa-${props.icon}`;
 
   return (
     <button
