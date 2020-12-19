@@ -265,3 +265,28 @@ test("Removing focused item as child of other item immediately updates list of p
 
   expectOtherParentItemsToHaveExactly(["parent1"]);
 });
+
+describe("removing a parent from the root node", () => {
+  let data = D.empty;
+  data = D.create(data, "1")[0];
+  data = D.create(data, "2")[0];
+  data = D.create(data, "3")[0];
+  data = D.addChild(data, "1", "0")[0];
+  data = D.addChild(data, "2", "0")[0];
+  data = D.addChild(data, "3", "0")[0];
+
+  let tree = T.fromRoot(data, "0");
+
+  const [data_, tree_] = T.remove(data, tree, T.otherParentsChildren(tree, T.root(tree))[1]);
+
+  test("removes the parent from the tree", () => {
+    let parentThings = (t: T.Tree) => T.otherParentsChildren(t, T.root(t)).map((n) => T.thing(t, n));
+    expect(parentThings(tree)).toEqual(["3", "2", "1"]);
+    expect(parentThings(tree_)).toEqual(["3", "1"]);
+  });
+
+  test("removes the parent from the graph", () => {
+    expect(D.parents(data, "0")).toEqual(["3", "2", "1"]);
+    expect(D.parents(data_, "0")).toEqual(["3", "1"]);
+  });
+});

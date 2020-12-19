@@ -329,9 +329,17 @@ export function unindent(state: D.State, tree: Tree, node: NodeRef): [D.State, T
 }
 
 function childIndex(tree: Tree, parent: NodeRef, child: NodeRef): number {
-  const result = Misc.indexOfBy(children(tree, parent), child, refEq);
-  if (result === undefined) throw "Parent does not contain child";
-  return result;
+  if (kind(tree, child) === "child") {
+    const result = Misc.indexOfBy(children(tree, parent), child, refEq);
+    if (result === undefined) throw "Parent does not contain child";
+    return result;
+  } else if (kind(tree, child) === "parent") {
+    const result = Misc.indexOfBy(otherParentsChildren(tree, parent), child, refEq);
+    if (result === undefined) throw "Parent does not contain child";
+    return result;
+  } else {
+    throw "Can't get index of type";
+  }
 }
 
 // [TODO] The index in destination refers to a node, but elsewhere in this
@@ -507,27 +515,52 @@ export function createChild(state: D.State, tree: Tree, node: NodeRef): [D.State
 }
 
 export function remove(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {
-  const parent_ = parent(tree, node);
-  if (parent_ === undefined) return [state, tree];
-
-  const newState = D.removeChild(state, thing(tree, parent_), childIndex(tree, parent_, node));
-  let newTree = focus(tree, previousVisibleItem(tree, node));
-
-  // Remove nodes from tree to match state
-  for (const n of I.allNodes(tree)) {
-    if (thing(newTree, n) === thing(tree, parent_)) {
-      newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, indexInParent(tree, node)!, 1));
+  if (kind(tree, node) === "parent") {
+    const parent_ = parent(tree, node);
+    if (parent_ === undefined) {
+      console.log("Tried to remove node with no parent. Ignoring.");
+      return [state, tree];
     }
-  }
 
-  // Refresh list of other parents for all nodes representing the removed item
-  for (const n of I.allNodes(newTree)) {
-    if (thing(newTree, n) === thing(newTree, node)) {
-      newTree = refreshOtherParentsChildren(newState, newTree, n);
+    const newState = D.removeChild(
+      state,
+      thing(tree, node),
+      D.children(state, thing(tree, node)).indexOf(thing(tree, parent_)),
+    );
+    const newTree = I.updateOtherParentsChildren(tree, parent_, (ch) =>
+      Misc.splice(ch, indexInParent(tree, node)!, 1),
+    );
+
+    return [newState, newTree];
+  } else if (kind(tree, node) !== "child") {
+    console.warn("Tried to remove %o node in tree. Not implemented. Ignoring.", kind(tree, node));
+    return [state, tree];
+  } else {
+    const parent_ = parent(tree, node);
+    if (parent_ === undefined) {
+      console.log("Tried to remove node with no parent. Ignoring.");
+      return [state, tree];
     }
-  }
 
-  return [newState, newTree];
+    const newState = D.removeChild(state, thing(tree, parent_), childIndex(tree, parent_, node));
+    let newTree = focus(tree, previousVisibleItem(tree, node));
+
+    // Remove nodes from tree to match state
+    for (const n of I.allNodes(tree)) {
+      if (thing(newTree, n) === thing(tree, parent_)) {
+        newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, indexInParent(tree, node)!, 1));
+      }
+    }
+
+    // Refresh list of other parents for all nodes representing the removed item
+    for (const n of I.allNodes(newTree)) {
+      if (thing(newTree, n) === thing(newTree, node)) {
+        newTree = refreshOtherParentsChildren(newState, newTree, n);
+      }
+    }
+
+    return [newState, newTree];
+  }
 }
 
 export function insertChild(
