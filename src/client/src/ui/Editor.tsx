@@ -243,9 +243,11 @@ export default function Editor(props: {
   onOpenLink(target: string): void;
   onJumpLink(target: string): void;
   onFocus(): void;
+  content: D.Content;
 }) {
   const stateRef = usePropRef(props.context.state);
   const treeRef = usePropRef(props.context.tree);
+  const contentRef = usePropRef(props.content);
   const onOpenLinkRef = usePropRef(props.onOpenLink);
   const onJumpLinkRef = usePropRef(props.onJumpLink);
   const onActionRef = usePropRef(props.onAction);
@@ -335,21 +337,25 @@ export default function Editor(props: {
     }
   }
 
-  const initialState = PS.EditorState.create({
-    schema,
-    doc: docFromContent({
-      content: D.content(props.context.state, T.thing(props.context.tree, props.node)),
-      textContentOf: (thing) =>
-        D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null,
-      openLink: (thing) => {
-        onOpenLinkRef.current!(thing);
-        linkToggled(thing);
-      },
-      jumpLink: (thing) => onJumpLinkRef.current!(thing),
-      openLinks: openLinksRef.current!,
-    }),
-    plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
-  });
+  function recreateEditorState() {
+    return PS.EditorState.create({
+      schema,
+      doc: docFromContent({
+        content: props.content,
+        textContentOf: (thing) =>
+          D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null,
+        openLink: (thing) => {
+          onOpenLinkRef.current!(thing);
+          linkToggled(thing);
+        },
+        jumpLink: (thing) => onJumpLinkRef.current!(thing),
+        openLinks: openLinksRef.current!,
+      }),
+      plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
+    });
+  }
+
+  const initialState = recreateEditorState();
 
   const editorViewRef = React.useRef<PV.EditorView<typeof schema> | null>(null);
 
@@ -367,10 +373,7 @@ export default function Editor(props: {
 
       // We don't need to update anything if the transaction didn't actually
       // change any of the content.
-      if (
-        D.contentEq(D.content(stateRef.current!, T.thing(treeRef.current!, props.node)), contentFromDoc(editorDoc))
-      )
-        return;
+      if (D.contentEq(contentRef.current!, contentFromDoc(editorDoc))) return;
 
       setStateRef.current!(
         D.setContent(stateRef.current!, T.thing(treeRef.current!, props.node), contentFromDoc(editorDoc)),
@@ -379,40 +382,6 @@ export default function Editor(props: {
 
     editorViewRef.current = new PV.EditorView(ref.current!, {state: initialState, dispatchTransaction});
   }, []);
-
-  // When the state managed by React gets updated from elsewhere, we want to
-  // reflect those updates in the editor state.
-  React.useEffect(() => {
-    // It should have focus but doesn't for some reason. I don't know why this
-    // happens, but it does. Probably related to popup. When we insert a link,
-    // we need this, I think.
-    if (T.focused(treeRef.current!) === props.node) {
-      console.log("Forced focus");
-      editorViewRef.current!.focus();
-    }
-
-    // If this editor has focus, then the changes were probably made via the
-    // editor itself. In that case, we wouldn't want to update the editor again.
-    if (editorViewRef.current!.hasFocus()) return;
-
-    editorViewRef.current!.updateState(
-      PS.EditorState.create({
-        schema,
-        doc: docFromContent({
-          content: D.content(props.context.state, T.thing(props.context.tree, props.node)),
-          textContentOf: (thing) =>
-            D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null,
-          openLink: (thing) => {
-            onOpenLinkRef.current!(thing);
-            linkToggled(thing);
-          },
-          jumpLink: (thing) => onJumpLinkRef.current!(thing),
-          openLinks: openLinksRef.current!,
-        }),
-        plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
-      }),
-    );
-  }, [props.context.state, props.node, openLinks]);
 
   React.useEffect(() => {
     if (!T.hasFocus(props.context.tree, props.node)) return;
@@ -456,6 +425,16 @@ export default function Editor(props: {
       },
     });
   }, [T.focused(props.context.tree)]);
+
+  // When our content gets updated via our props, we want to reflect those
+  // updates in the editor state.
+  React.useEffect(() => {
+    // If we're the focused node, then the changes were probably made via this
+    // editor. In that case, we don't want to update the editor again.
+    if (T.focused(props.context.tree) === props.node) return;
+
+    editorViewRef.current!.updateState(recreateEditorState());
+  }, [props.context.tree, props.node, props.content]);
 
   return <div className="editor content" ref={ref}></div>;
 }
