@@ -235,7 +235,7 @@ function contentFromDoc(doc: PM.Node<typeof schema>): D.Content {
   return content;
 }
 
-function ContentEditor(props: {
+export default function Editor(props: {
   context: Context;
   node: T.NodeRef;
   placeholder?: string;
@@ -458,15 +458,4 @@ function ContentEditor(props: {
   }, [T.focused(props.context.tree)]);
 
   return <div className="editor content" ref={ref}></div>;
-}
-
-export default function Editor(props: {
-  context: Context;
-  node: T.NodeRef;
-  placeholder?: string;
-  onAction(action: Ac.ActionName): void;
-  onOpenLink(target: string): void;
-  onJumpLink(target: string): void;
-}) {
-  return <ContentEditor {...props} />;
 }
