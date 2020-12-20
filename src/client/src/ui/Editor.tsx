@@ -10,7 +10,7 @@ import * as T from "../tree";
 import * as E from "../editing";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
-import {Context} from "../context";
+import {AppState, Context, merge, setAppState} from "../context";
 
 import type {ItemStatus} from "./Item";
 
@@ -235,6 +235,20 @@ function contentFromDoc(doc: PM.Node<typeof schema>): D.Content {
   return content;
 }
 
+function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: string[]): AppState {
+  let [state, tree] = [app.state, app.tree];
+  let lastNode = node;
+
+  for (const paragraph of paragraphs) {
+    const [state_, tree_, thing, lastNode_] = T.createSiblingAfter(state, tree, lastNode);
+    [state, tree, lastNode] = [state_, tree_, lastNode_];
+
+    state = D.setContent(state, thing, [paragraph]);
+  }
+
+  return merge(app, {state, tree});
+}
+
 export default function Editor(props: {
   context: Context;
   node: T.NodeRef;
@@ -293,20 +307,7 @@ export default function Editor(props: {
 
         if (text !== undefined && E.isParagraphFormattedText(text)) {
           const paragraphs = E.paragraphs(text);
-
-          let [state, tree] = [props.context.state, props.context.tree];
-          let lastNode = props.node;
-
-          for (const paragraph of paragraphs) {
-            const [state_, tree_, thing, lastNode_] = T.createSiblingAfter(state, tree, lastNode);
-            [state, tree, lastNode] = [state_, tree_, lastNode_];
-
-            state = D.setContent(state, thing, [paragraph]);
-          }
-
-          props.context.setState(state);
-          props.context.setTree(tree);
-
+          setAppState(props.context, onPastedParagraphs(props.context, props.node, paragraphs));
           return true;
         }
 
