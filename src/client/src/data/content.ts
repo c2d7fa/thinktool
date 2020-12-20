@@ -3,6 +3,17 @@ import * as D from "../data";
 
 export type Content = Shared.Communication.Content;
 
+export function contentEq(a: Content, b: Content): boolean {
+  if (a.length !== b.length) return false;
+
+  for (let i = 0; i < a.length; ++i) {
+    if (typeof a[i] === "string" && a[i] !== b[i]) return false;
+    if (typeof a[i] !== "string" && (typeof b[i] !== "string" || a[i].link !== b[i].link)) return false;
+  }
+
+  return true;
+}
+
 export function contentText(state: D.State, thing: string): string {
   function contentText_(thing: string, seen: string[]): string {
     if (seen.includes(thing)) return "...";

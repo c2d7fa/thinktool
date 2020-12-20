@@ -368,8 +368,7 @@ export default function Editor(props: {
       // We don't need to update anything if the transaction didn't actually
       // change any of the content.
       if (
-        E.contentToEditString(D.content(stateRef.current!, T.thing(treeRef.current!, props.node))) ===
-        E.contentToEditString(contentFromDoc(editorDoc))
+        D.contentEq(D.content(stateRef.current!, T.thing(treeRef.current!, props.node)), contentFromDoc(editorDoc))
       )
         return;
 

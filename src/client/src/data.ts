@@ -1,7 +1,7 @@
 import * as Misc from "@johv/miscjs";
 import {Content} from "./data/content";
 
-export {Content, references, backreferences, contentText} from "./data/content";
+export {Content, references, backreferences, contentText, contentEq} from "./data/content";
 
 export interface State {
   things: {[id: string]: ThingData | undefined};
