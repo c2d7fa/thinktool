@@ -460,6 +460,7 @@ function ThingOverview(p: {context: Context}) {
           onAction={(action) => p.context.send("action", {action})}
           onOpenLink={openLink}
           onJumpLink={jumpLink}
+          onFocus={() => p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)))}
         />
         <div className="children">
           <Outline context={p.context} />
@@ -597,6 +598,7 @@ function ExpandableItem(props: {
       onAction={(action) => props.context.send("action", {action})}
       onOpenLink={onOpenLink}
       onJumpLink={onJumpLink}
+      onFocus={() => props.context.setTree(T.focus(props.context.tree, props.node))}
     />
   );
 

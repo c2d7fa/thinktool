@@ -242,12 +242,14 @@ export default function Editor(props: {
   onAction(action: Ac.ActionName): void;
   onOpenLink(target: string): void;
   onJumpLink(target: string): void;
+  onFocus(): void;
 }) {
   const stateRef = usePropRef(props.context.state);
   const treeRef = usePropRef(props.context.tree);
   const onOpenLinkRef = usePropRef(props.onOpenLink);
   const onJumpLinkRef = usePropRef(props.onJumpLink);
   const onActionRef = usePropRef(props.onAction);
+  const onFocusRef = usePropRef(props.onFocus);
 
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -316,8 +318,7 @@ export default function Editor(props: {
   const focusPlugin = new PS.Plugin({
     props: {
       handleClick(view, pos, ev) {
-        props.context.setTree(T.focus(treeRef.current!, props.node));
-
+        onFocusRef.current!();
         return false;
       },
     },
