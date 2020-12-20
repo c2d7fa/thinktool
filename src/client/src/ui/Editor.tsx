@@ -430,9 +430,13 @@ export default function Editor(props: {
   // When our content gets updated via our props, we want to reflect those
   // updates in the editor state.
   React.useEffect(() => {
-    // If we're the focused node, then the changes were probably made via this
-    // editor. In that case, we don't want to update the editor again.
-    if (T.focused(props.context.tree) === props.node) return;
+    // If we're focused, then the changes were probably made via this editor. In
+    // that case, we don't want to update the editor again.
+    //
+    // The node may be focused in the tree without the editor having focus
+    // immediately after inserting a link. The editor may have focus without the
+    // tree node having focus immediately after the user clicks on an editor.
+    if (T.focused(props.context.tree) === props.node || editorViewRef.current!.hasFocus()) return;
 
     editorViewRef.current!.updateState(recreateEditorState());
   }, [props.context.tree, props.node, props.content]);
