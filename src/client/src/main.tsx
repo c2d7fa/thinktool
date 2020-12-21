@@ -462,6 +462,11 @@ function ThingOverview(p: {context: Context}) {
           onJumpLink={jumpLink}
           onFocus={() => p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)))}
           content={Data.content(p.context.state, T.thing(p.context.tree, T.root(p.context.tree)))}
+          onEdit={(content) =>
+            p.context.setState(
+              Data.setContent(p.context.state, T.thing(p.context.tree, T.root(p.context.tree)), content),
+            )
+          }
         />
         <div className="children">
           <Outline context={p.context} />
@@ -601,6 +606,11 @@ function ExpandableItem(props: {
       onJumpLink={onJumpLink}
       onFocus={() => props.context.setTree(T.focus(props.context.tree, props.node))}
       content={Data.content(props.context.state, T.thing(props.context.tree, props.node))}
+      onEdit={(content) =>
+        props.context.setState(
+          Data.setContent(props.context.state, T.thing(props.context.tree, props.node), content),
+        )
+      }
     />
   );
 

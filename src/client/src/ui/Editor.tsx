@@ -258,14 +258,15 @@ export default function Editor(props: {
   onJumpLink(target: string): void;
   onFocus(): void;
   content: D.Content;
+  onEdit(content: D.Content): void;
 }) {
   const stateRef = usePropRef(props.context.state);
-  const treeRef = usePropRef(props.context.tree);
   const contentRef = usePropRef(props.content);
   const onOpenLinkRef = usePropRef(props.onOpenLink);
   const onJumpLinkRef = usePropRef(props.onJumpLink);
   const onActionRef = usePropRef(props.onAction);
   const onFocusRef = usePropRef(props.onFocus);
+  const onEditRef = usePropRef(props.onEdit);
 
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -360,8 +361,6 @@ export default function Editor(props: {
 
   const editorViewRef = React.useRef<PV.EditorView<typeof schema> | null>(null);
 
-  const setStateRef = usePropRef(props.context.setState);
-
   // Initialize editor
   React.useEffect(() => {
     function dispatchTransaction(this: PV.EditorView<typeof schema>, transaction: PS.Transaction<typeof schema>) {
@@ -376,9 +375,7 @@ export default function Editor(props: {
       // change any of the content.
       if (D.contentEq(contentRef.current!, contentFromDoc(editorDoc))) return;
 
-      setStateRef.current!(
-        D.setContent(stateRef.current!, T.thing(treeRef.current!, props.node), contentFromDoc(editorDoc)),
-      );
+      onEditRef.current!(contentFromDoc(editorDoc));
     }
 
     editorViewRef.current = new PV.EditorView(ref.current!, {state: initialState, dispatchTransaction});
