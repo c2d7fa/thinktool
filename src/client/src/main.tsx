@@ -467,6 +467,7 @@ function ThingOverview(p: {context: Context}) {
               Data.setContent(p.context.state, T.thing(p.context.tree, T.root(p.context.tree)), content),
             )
           }
+          hasFocus={T.hasFocus(p.context.tree, T.root(p.context.tree))}
         />
         <div className="children">
           <Outline context={p.context} />
@@ -611,6 +612,7 @@ function ExpandableItem(props: {
           Data.setContent(props.context.state, T.thing(props.context.tree, props.node), content),
         )
       }
+      hasFocus={T.hasFocus(props.context.tree, props.node)}
     />
   );
 

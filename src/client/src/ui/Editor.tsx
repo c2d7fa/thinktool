@@ -259,6 +259,7 @@ export default function Editor(props: {
   onFocus(): void;
   content: D.Content;
   onEdit(content: D.Content): void;
+  hasFocus: boolean;
 }) {
   const stateRef = usePropRef(props.context.state);
   const contentRef = usePropRef(props.content);
@@ -382,7 +383,7 @@ export default function Editor(props: {
   }, []);
 
   React.useEffect(() => {
-    if (!T.hasFocus(props.context.tree, props.node)) return;
+    if (!props.hasFocus) return;
 
     editorViewRef.current!.focus();
 
@@ -422,7 +423,7 @@ export default function Editor(props: {
         editorViewRef.current!.dispatch(tr);
       },
     });
-  }, [T.focused(props.context.tree)]);
+  }, [props.hasFocus]);
 
   // When our content gets updated via our props, we want to reflect those
   // updates in the editor state.
@@ -433,10 +434,10 @@ export default function Editor(props: {
     // The node may be focused in the tree without the editor having focus
     // immediately after inserting a link. The editor may have focus without the
     // tree node having focus immediately after the user clicks on an editor.
-    if (T.focused(props.context.tree) === props.node || editorViewRef.current!.hasFocus()) return;
+    if (props.hasFocus || editorViewRef.current!.hasFocus()) return;
 
     editorViewRef.current!.updateState(recreateEditorState());
-  }, [props.context.tree, props.node, props.content]);
+  }, [props.hasFocus, props.node, props.content]);
 
   return <div className="editor content" ref={ref}></div>;
 }
