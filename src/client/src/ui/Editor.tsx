@@ -259,6 +259,11 @@ export function collate(content: D.Content, state: D.State): EditorContent {
   });
 }
 
+export interface EditorState {
+  selection: string;
+  replace(link: string, textContent: string): void;
+}
+
 export function Editor(props: {
   context: Context;
   content: EditorContent;
@@ -270,6 +275,7 @@ export function Editor(props: {
   onEdit(content: D.Content): void;
   hasFocus: boolean;
   onPastedParagraphs(paragraphs: string[]): void;
+  onEditorStateChanged(editorState: EditorState): void;
 }) {
   const contentRef = usePropRef(props.content);
   const onOpenLinkRef = usePropRef(props.onOpenLink);
@@ -278,6 +284,7 @@ export function Editor(props: {
   const onFocusRef = usePropRef(props.onFocus);
   const onEditRef = usePropRef(props.onEdit);
   const onPastedParagraphsRef = usePropRef(props.onPastedParagraphs);
+  const onEditorStateChangedRef = usePropRef(props.onEditorStateChanged);
 
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -390,10 +397,10 @@ export function Editor(props: {
   }, []);
 
   React.useEffect(() => {
-    if (!props.hasFocus) return;
+    if (props.hasFocus) editorViewRef.current!.focus();
+  }, [props.hasFocus]);
 
-    editorViewRef.current!.focus();
-
+  React.useEffect(() => {
     // The popup that appears e.g. when inserting a link needs to have access
     // to the current selection.
     const textSelection = (() => {
@@ -408,21 +415,18 @@ export function Editor(props: {
       return E.contentToEditString(content);
     })();
 
-    // [TODO] Technically, we should react to changes in
-    // registerActiveEditor, although I don't think we actually update this
-    // anywhere currently.
-    props.context.registerActiveEditor({
+    onEditorStateChangedRef.current!({
       selection: textSelection,
 
-      replaceSelectionWithLink(target: string, textContent: string): void {
+      replace(link: string, textContent: string): void {
         editorViewRef.current!.focus();
 
         const tr = editorViewRef.current!.state.tr;
         const attrs: LinkAttrs = {
-          target,
-          status: openLinksRef.current!.includes(target) ? "expanded" : "collapsed",
-          toggle: () => onOpenLinkRef.current!(target),
-          jump: () => onJumpLinkRef.current!(target),
+          target: link,
+          status: openLinksRef.current!.includes(link) ? "expanded" : "collapsed",
+          toggle: () => onOpenLinkRef.current!(link),
+          jump: () => onJumpLinkRef.current!(link),
           content: textContent,
         };
         tr.replaceSelectionWith(schema.node("link", attrs));
