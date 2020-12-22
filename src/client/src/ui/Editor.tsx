@@ -252,7 +252,6 @@ function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: string[]
 export default function Editor(props: {
   context: Context;
   node: T.NodeRef;
-  placeholder?: string;
   onAction(action: Ac.ActionName): void;
   onOpenLink(target: string): void;
   onJumpLink(target: string): void;
