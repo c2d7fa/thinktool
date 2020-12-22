@@ -265,9 +265,7 @@ export interface EditorState {
 }
 
 export function Editor(props: {
-  context: Context;
   content: EditorContent;
-  node: T.NodeRef;
   onAction(action: Ac.ActionName): void;
   onOpenLink(target: string): void;
   onJumpLink(target: string): void;
@@ -276,6 +274,7 @@ export function Editor(props: {
   hasFocus: boolean;
   onPastedParagraphs(paragraphs: string[]): void;
   onEditorStateChanged(editorState: EditorState): void;
+  onOpenExternalUrl(url: string): void;
 }) {
   const contentRef = usePropRef(props.content);
   const onOpenLinkRef = usePropRef(props.onOpenLink);
@@ -285,6 +284,7 @@ export function Editor(props: {
   const onEditRef = usePropRef(props.onEdit);
   const onPastedParagraphsRef = usePropRef(props.onPastedParagraphs);
   const onEditorStateChangedRef = usePropRef(props.onEditorStateChanged);
+  const onOpenExternalUrlRef = usePropRef(props.onOpenExternalUrl);
 
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -316,7 +316,9 @@ export function Editor(props: {
   });
 
   const externalLinkDecorationPlugin = createExternalLinkDecorationPlugin({
-    openExternalUrl: props.context.openExternalUrl,
+    openExternalUrl(url: string) {
+      onOpenExternalUrlRef.current!(url);
+    },
   });
 
   const pastePlugin = new PS.Plugin({
@@ -448,7 +450,7 @@ export function Editor(props: {
     if (props.hasFocus || editorViewRef.current!.hasFocus()) return;
 
     editorViewRef.current!.updateState(recreateEditorState());
-  }, [props.hasFocus, props.node, props.content]);
+  }, [props.hasFocus, props.content]);
 
   return <div className="editor content" ref={ref}></div>;
 }
