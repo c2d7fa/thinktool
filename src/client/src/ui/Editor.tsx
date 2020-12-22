@@ -219,18 +219,35 @@ function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string):
   });
 }
 
-function contentFromDoc(doc: PM.Node<typeof schema>): D.Content {
-  const content: D.Content = [];
+function contentFromDoc(doc: PM.Node<typeof schema>): EditorContent {
+  const content: EditorContent = [];
 
   doc.forEach((node) => {
     if (node.isText) {
       content.push(node.textContent);
     } else if (node.type.name === "link") {
-      content.push({link: node.attrs.target});
+      content.push({link: node.attrs.target, title: node.attrs.content});
     }
   });
 
   return content;
+}
+
+export function contentEq(a: EditorContent, b: EditorContent): boolean {
+  if (a.length !== b.length) return false;
+
+  for (let i = 0; i < a.length; ++i) {
+    if (typeof a[i] === "string" && a[i] !== b[i]) return false;
+    if (
+      typeof a[i] !== "string" &&
+      (typeof b[i] === "string" ||
+        a[i].link !== b[i].link ||
+        (a[i] as {link: string; title: string}).title !== (b[i] as {link: string; title: string}).title)
+    )
+      return false;
+  }
+
+  return true;
 }
 
 export function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: string[]) {
@@ -264,29 +281,56 @@ export interface EditorState {
   replace(link: string, textContent: string): void;
 }
 
+function ProseMirror<Schema extends PM.Schema>(props: {
+  state: PS.EditorState<Schema>;
+  onTransaction(transaction: PS.Transaction<Schema>, view: PV.EditorView<Schema>): void;
+  hasFocus: boolean;
+}) {
+  const onTransactionRef = usePropRef(props.onTransaction);
+
+  const editorViewRef = React.useRef<PV.EditorView<Schema> | null>(null);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function dispatchTransaction(this: PV.EditorView<Schema>, transaction: PS.Transaction<Schema>) {
+      onTransactionRef.current!(transaction, this);
+    }
+
+    editorViewRef.current = new PV.EditorView(ref.current!, {state: props.state, dispatchTransaction});
+  }, []);
+
+  React.useEffect(() => {
+    if (props.hasFocus) editorViewRef.current!.focus();
+  }, [props.hasFocus]);
+
+  React.useEffect(() => {
+    if (props.hasFocus && !editorViewRef.current!.hasFocus()) editorViewRef.current!.focus(); // Restore focus after inserting link from poup
+
+    editorViewRef.current?.updateState(props.state);
+  }, [props.hasFocus, props.state]);
+
+  return <div className="editor content" ref={ref}></div>;
+}
+
 export function Editor(props: {
   content: EditorContent;
+  hasFocus: boolean;
   onAction(action: Ac.ActionName): void;
   onOpenLink(target: string): void;
   onJumpLink(target: string): void;
   onFocus(): void;
   onEdit(content: D.Content): void;
-  hasFocus: boolean;
   onPastedParagraphs(paragraphs: string[]): void;
   onEditorStateChanged(editorState: EditorState): void;
   onOpenExternalUrl(url: string): void;
 }) {
-  const contentRef = usePropRef(props.content);
   const onOpenLinkRef = usePropRef(props.onOpenLink);
   const onJumpLinkRef = usePropRef(props.onJumpLink);
   const onActionRef = usePropRef(props.onAction);
   const onFocusRef = usePropRef(props.onFocus);
-  const onEditRef = usePropRef(props.onEdit);
   const onPastedParagraphsRef = usePropRef(props.onPastedParagraphs);
   const onEditorStateChangedRef = usePropRef(props.onEditorStateChanged);
   const onOpenExternalUrlRef = usePropRef(props.onOpenExternalUrl);
-
-  const ref = React.useRef<HTMLDivElement>(null);
 
   const keyPlugin = new PS.Plugin({
     props: {
@@ -374,40 +418,26 @@ export function Editor(props: {
     });
   }
 
-  const initialState = recreateEditorState();
+  const [editorState, setEditorState] = React.useState(recreateEditorState());
 
-  const editorViewRef = React.useRef<PV.EditorView<typeof schema> | null>(null);
-
-  // Initialize editor
-  React.useEffect(() => {
-    function dispatchTransaction(this: PV.EditorView<typeof schema>, transaction: PS.Transaction<typeof schema>) {
-      this.updateState(this.state.apply(transaction));
-
-      // This is where we communicate changes made by the user back into the
-      // state managed by React.
-
-      const editorDoc = this.state.doc;
-
-      // We don't need to update anything if the transaction didn't actually
-      // change any of the content.
-      if (D.contentEq(contentRef.current!, contentFromDoc(editorDoc))) return;
-
-      onEditRef.current!(contentFromDoc(editorDoc));
-    }
-
-    editorViewRef.current = new PV.EditorView(ref.current!, {state: initialState, dispatchTransaction});
-  }, []);
+  function onTransaction(transaction: PS.Transaction<typeof schema>, view: PV.EditorView<typeof schema>) {
+    setEditorState(editorState.apply(transaction));
+  }
 
   React.useEffect(() => {
-    if (props.hasFocus) editorViewRef.current!.focus();
-  }, [props.hasFocus]);
+    // Avoid infinite loop:
+    if (!props.hasFocus) return;
+    if (contentEq(props.content, contentFromDoc(editorState.doc))) return;
+
+    props.onEdit(contentFromDoc(editorState.doc));
+  }, [props.onEdit, editorState]);
 
   React.useEffect(() => {
     // The popup that appears e.g. when inserting a link needs to have access
     // to the current selection.
     const textSelection = (() => {
       let content: D.Content = [];
-      editorViewRef.current!.state.selection.content().content.forEach((node) => {
+      editorState.selection.content().content.forEach((node) => {
         if (node.isText) {
           content.push(node.textContent);
         } else if (node.type.name === "link") {
@@ -421,9 +451,7 @@ export function Editor(props: {
       selection: textSelection,
 
       replace(link: string, textContent: string): void {
-        editorViewRef.current!.focus();
-
-        const tr = editorViewRef.current!.state.tr;
+        const tr = editorState.tr;
         const attrs: LinkAttrs = {
           target: link,
           status: openLinksRef.current!.includes(link) ? "expanded" : "collapsed",
@@ -433,24 +461,20 @@ export function Editor(props: {
         };
         tr.replaceSelectionWith(schema.node("link", attrs));
 
-        editorViewRef.current!.dispatch(tr);
+        setEditorState(editorState.apply(tr));
       },
     });
-  }, [props.hasFocus]);
+  }, [editorState]);
 
   // When our content gets updated via our props, we want to reflect those
   // updates in the editor state.
   React.useEffect(() => {
-    // If we're focused, then the changes were probably made via this editor. In
-    // that case, we don't want to update the editor again.
-    //
-    // The node may be focused in the tree without the editor having focus
-    // immediately after inserting a link. The editor may have focus without the
-    // tree node having focus immediately after the user clicks on an editor.
-    if (props.hasFocus || editorViewRef.current!.hasFocus()) return;
+    // Avoid infinite loop:
+    if (props.hasFocus) return;
+    if (contentEq(props.content, contentFromDoc(editorState.doc))) return;
 
-    editorViewRef.current!.updateState(recreateEditorState());
-  }, [props.hasFocus, props.content]);
+    setEditorState(recreateEditorState());
+  }, [props.hasFocus, editorState, props.content]);
 
-  return <div className="editor content" ref={ref}></div>;
+  return <ProseMirror state={editorState} onTransaction={onTransaction} hasFocus={props.hasFocus} />;
 }
