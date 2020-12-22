@@ -139,13 +139,11 @@ const schema = new PM.Schema({
 
 function docFromContent({
   content,
-  textContentOf,
   openLink,
   jumpLink,
   openLinks,
 }: {
-  content: D.Content;
-  textContentOf: (thing: string) => string | null;
+  content: EditorContent;
   openLink: (link: string) => void;
   jumpLink: (link: string) => void;
   openLinks: string[];
@@ -169,7 +167,7 @@ function docFromContent({
         status: openLinks.includes(contentNode.link) ? "expanded" : "collapsed",
         toggle: () => openLink(contentNode.link),
         jump: () => jumpLink(contentNode.link),
-        content: textContentOf(contentNode.link),
+        content: contentNode.title,
       };
       nodes.push(schema.node("link", attrs));
     }
@@ -249,19 +247,30 @@ export function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: s
   return merge(app, {state, tree});
 }
 
+export type EditorContent = (string | {link: string; title: string | null})[];
+
+export function collate(content: D.Content, state: D.State): EditorContent {
+  return content.map((piece) => {
+    if (typeof piece === "string") {
+      return piece;
+    } else {
+      return {link: piece.link, title: D.exists(state, piece.link) ? D.contentText(state, piece.link) : null};
+    }
+  });
+}
+
 export function Editor(props: {
   context: Context;
+  content: EditorContent;
   node: T.NodeRef;
   onAction(action: Ac.ActionName): void;
   onOpenLink(target: string): void;
   onJumpLink(target: string): void;
   onFocus(): void;
-  content: D.Content;
   onEdit(content: D.Content): void;
   hasFocus: boolean;
   onPastedParagraphs(paragraphs: string[]): void;
 }) {
-  const stateRef = usePropRef(props.context.state);
   const contentRef = usePropRef(props.content);
   const onOpenLinkRef = usePropRef(props.onOpenLink);
   const onJumpLinkRef = usePropRef(props.onJumpLink);
@@ -345,8 +354,6 @@ export function Editor(props: {
       schema,
       doc: docFromContent({
         content: props.content,
-        textContentOf: (thing) =>
-          D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null,
         openLink: (thing) => {
           onOpenLinkRef.current!(thing);
           linkToggled(thing);
