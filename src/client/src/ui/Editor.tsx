@@ -235,7 +235,7 @@ function contentFromDoc(doc: PM.Node<typeof schema>): D.Content {
   return content;
 }
 
-function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: string[]): AppState {
+export function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: string[]) {
   let [state, tree] = [app.state, app.tree];
   let lastNode = node;
 
@@ -249,7 +249,7 @@ function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: string[]
   return merge(app, {state, tree});
 }
 
-export default function Editor(props: {
+export function Editor(props: {
   context: Context;
   node: T.NodeRef;
   onAction(action: Ac.ActionName): void;
@@ -259,6 +259,7 @@ export default function Editor(props: {
   content: D.Content;
   onEdit(content: D.Content): void;
   hasFocus: boolean;
+  onPastedParagraphs(paragraphs: string[]): void;
 }) {
   const stateRef = usePropRef(props.context.state);
   const contentRef = usePropRef(props.content);
@@ -267,6 +268,7 @@ export default function Editor(props: {
   const onActionRef = usePropRef(props.onAction);
   const onFocusRef = usePropRef(props.onFocus);
   const onEditRef = usePropRef(props.onEdit);
+  const onPastedParagraphsRef = usePropRef(props.onPastedParagraphs);
 
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -307,8 +309,7 @@ export default function Editor(props: {
         const text = ev.clipboardData?.getData("text/plain");
 
         if (text !== undefined && E.isParagraphFormattedText(text)) {
-          const paragraphs = E.paragraphs(text);
-          setAppState(props.context, onPastedParagraphs(props.context, props.node, paragraphs));
+          onPastedParagraphsRef.current!(E.paragraphs(text));
           return true;
         }
 

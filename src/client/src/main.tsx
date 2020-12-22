@@ -16,7 +16,7 @@ import * as Storage from "./storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 
-import Editor from "./ui/Editor";
+import * as Editor from "./ui/Editor";
 import {usePopup} from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
@@ -454,7 +454,7 @@ function ThingOverview(p: {context: Context}) {
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        <Editor
+        <Editor.Editor
           context={p.context}
           node={T.root(p.context.tree)}
           onAction={(action) => p.context.send("action", {action})}
@@ -468,6 +468,9 @@ function ThingOverview(p: {context: Context}) {
             )
           }
           hasFocus={T.hasFocus(p.context.tree, T.root(p.context.tree))}
+          onPastedParagraphs={(paragraphs) =>
+            setAppState(p.context, Editor.onPastedParagraphs(p.context, T.root(p.context.tree), paragraphs))
+          }
         />
         <div className="children">
           <Outline context={p.context} />
@@ -599,7 +602,7 @@ function ExpandableItem(props: {
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
   const content = (
-    <Editor
+    <Editor.Editor
       context={props.context}
       node={props.node}
       onAction={(action) => props.context.send("action", {action})}
@@ -613,6 +616,9 @@ function ExpandableItem(props: {
         )
       }
       hasFocus={T.hasFocus(props.context.tree, props.node)}
+      onPastedParagraphs={(paragraphs) =>
+        setAppState(props.context, Editor.onPastedParagraphs(props.context, props.node, paragraphs))
+      }
     />
   );
 
