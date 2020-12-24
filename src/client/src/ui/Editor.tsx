@@ -14,6 +14,7 @@ import {AppState, Context, merge, setAppState} from "../context";
 
 import type {ItemStatus} from "./Item";
 
+import ProseMirror from "./ProseMirror";
 import Bullet from "./Bullet";
 
 // Sometimes we want to pass a callback to some function that doesn't know about
@@ -279,37 +280,6 @@ export function collate(content: D.Content, state: D.State): EditorContent {
 export interface EditorState {
   selection: string;
   replace(link: string, textContent: string): void;
-}
-
-function ProseMirror<Schema extends PM.Schema>(props: {
-  state: PS.EditorState<Schema>;
-  onTransaction(transaction: PS.Transaction<Schema>, view: PV.EditorView<Schema>): void;
-  hasFocus: boolean;
-}) {
-  const onTransactionRef = usePropRef(props.onTransaction);
-
-  const editorViewRef = React.useRef<PV.EditorView<Schema> | null>(null);
-  const ref = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    function dispatchTransaction(this: PV.EditorView<Schema>, transaction: PS.Transaction<Schema>) {
-      onTransactionRef.current!(transaction, this);
-    }
-
-    editorViewRef.current = new PV.EditorView(ref.current!, {state: props.state, dispatchTransaction});
-  }, []);
-
-  React.useEffect(() => {
-    if (props.hasFocus) editorViewRef.current!.focus();
-  }, [props.hasFocus]);
-
-  React.useEffect(() => {
-    if (props.hasFocus && !editorViewRef.current!.hasFocus()) editorViewRef.current!.focus(); // Restore focus after inserting link from poup
-
-    editorViewRef.current?.updateState(props.state);
-  }, [props.hasFocus, props.state]);
-
-  return <div className="editor content" ref={ref}></div>;
 }
 
 export function Editor(props: {
