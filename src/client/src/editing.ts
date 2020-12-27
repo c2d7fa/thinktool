@@ -1,6 +1,7 @@
 import * as D from "./data";
 
 export type EditorContent = (string | {link: string; title: string | null})[];
+export type Range = {from: number; to: number};
 
 export function collate(content: D.Content, state: D.State): EditorContent {
   return content.map((piece) => {
@@ -10,6 +11,43 @@ export function collate(content: D.Content, state: D.State): EditorContent {
       return {link: piece.link, title: D.exists(state, piece.link) ? D.contentText(state, piece.link) : null};
     }
   });
+}
+
+export function externalLinkRanges(content: EditorContent): Range[] {
+  let indexedTexts: {index: number; text: string}[] = [];
+
+  let index = 0;
+  for (const element of content) {
+    if (typeof element === "string") {
+      indexedTexts.push({index, text: element});
+      index += element.length;
+    } else {
+      index += 1;
+    }
+  }
+
+  let ranges: {from: number; to: number}[] = [];
+
+  for (const indexedText of indexedTexts) {
+    for (const match of [...indexedText.text.matchAll(/https?:\/\S*/g)]) {
+      if (match.index === undefined) {
+        console.warn("An unexpected error occurred while parsing links. Ignoring.");
+        continue;
+      }
+
+      const start = match.index;
+      let end = match.index + match[0].length;
+
+      // Trim punctuation at the end of link:
+      if ([",", ".", ":", ")", "]"].includes(indexedText.text[end - 1])) {
+        end -= 1;
+      }
+
+      ranges.push({from: indexedText.index + start, to: indexedText.index + end});
+    }
+  }
+
+  return ranges;
 }
 
 // #region Paragraphs

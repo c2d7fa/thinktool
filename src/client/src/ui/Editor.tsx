@@ -31,28 +31,6 @@ function usePropRef<T>(prop: T): React.RefObject<T> {
   return ref;
 }
 
-function findExternalLinks(textContent: string): {from: number; to: number}[] {
-  let results: {from: number; to: number}[] = [];
-
-  const linkRegex = /https?:\/\S*/g;
-
-  for (const match of [...textContent.matchAll(linkRegex)]) {
-    if (match.index === undefined) throw "bad programmer error";
-
-    const start = match.index;
-    let end = match.index + match[0].length;
-
-    // Trim punctuation at the end of link:
-    if ([",", ".", ":", ")", "]"].includes(textContent[end - 1])) {
-      end -= 1;
-    }
-
-    results.push({from: start, to: end});
-  }
-
-  return results;
-}
-
 function buildInternalLink(args: {
   jump(): void;
   toggle(): void;
@@ -149,16 +127,7 @@ function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string):
   return new PS.Plugin({
     props: {
       decorations(state: PS.EditorState<PM.Schema>) {
-        let ranges: {from: number; to: number}[] = [];
-        state.doc.content.forEach((node, offset) => {
-          ranges = ranges.concat(
-            findExternalLinks(node.textContent).map((range) => ({
-              from: offset + range.from,
-              to: offset + range.to,
-            })),
-          );
-        });
-
+        const ranges = E.externalLinkRanges(fromProseMirror(state));
         return PV.DecorationSet.create(
           state.doc,
           ranges.map((range) =>

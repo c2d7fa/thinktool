@@ -53,3 +53,34 @@ describe("loading editor from application state", () => {
     expect(content).toEqual(["Item 1 has link to ", {link: "0", title: "Item 0"}, "."]);
   });
 });
+
+describe("external link decorations", () => {
+  test("when there are no external links in the text, there are no decorations", () => {
+    expect(E.externalLinkRanges(["No external links here!"])).toEqual([]);
+  });
+
+  test("an external link inside a single text node is detected", () => {
+    expect(E.externalLinkRanges(["Link to https://example.com should be detected!"])).toEqual([{from: 8, to: 27}]);
+  });
+
+  test("an external link after an internal link is detected", () => {
+    expect(
+      E.externalLinkRanges([
+        "First, ",
+        {link: "0", title: "an internal link"},
+        ". And now: https://example.com should still be detected!",
+      ]),
+    ).toEqual([{from: 19, to: 38}]);
+  });
+
+  test("multiple links in the same text fragment are detected", () => {
+    expect(E.externalLinkRanges(["First, https://example.com. And now https://another.example.com."])).toEqual([
+      {from: 7, to: 26},
+      {from: 36, to: 63},
+    ]);
+  });
+
+  test("when a link is enclosed in parentheses, the closing parenthesis is not part of the link", () => {
+    expect(E.externalLinkRanges(["An example (https://example.com) it is."])).toEqual([{from: 12, to: 31}]);
+  });
+});
