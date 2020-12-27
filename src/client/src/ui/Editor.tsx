@@ -56,7 +56,6 @@ function findExternalLinks(textContent: string): {from: number; to: number}[] {
 }
 
 function buildInternalLink(args: {
-  status: ItemStatus;
   jump(): void;
   toggle(): void;
   content: {invalid: string} | string;
@@ -69,7 +68,7 @@ function buildInternalLink(args: {
 
   ReactDOM.render(
     <span
-      className={classes({"internal-link": true, "internal-link-open": status === "expanded"})}
+      className="internal-link"
       onMouseDown={(ev) => {
         ev.preventDefault();
       }}
@@ -86,7 +85,7 @@ function buildInternalLink(args: {
     >
       <Bullet
         specialType="link"
-        status={args.status}
+        status="collapsed"
         toggle={args.toggle}
         beginDrag={(ev) => {
           // [TODO] This is undefined on mobile. This may or may not cause issues; I haven't tested it.
@@ -109,7 +108,6 @@ function buildInternalLink(args: {
 }
 
 type LinkAttrs = {
-  status: ItemStatus;
   content: string | null;
   jump: () => void;
   target: string;
@@ -120,14 +118,13 @@ const schema = new PM.Schema({
   nodes: {
     doc: {content: "(text | link)*"},
     link: {
-      attrs: {target: {}, status: {}, jump: {}, toggle: {}, content: {}},
+      attrs: {target: {}, jump: {}, toggle: {}, content: {}},
       inline: true,
       atom: true,
       selectable: false,
       toDOM(node) {
         const attrs = node.attrs as LinkAttrs;
         return buildInternalLink({
-          status: attrs.status,
           jump: attrs.jump,
           toggle: attrs.toggle,
           content: attrs.content ? attrs.content : {invalid: attrs.target},
@@ -142,12 +139,10 @@ function docFromContent({
   content,
   openLink,
   jumpLink,
-  openLinks,
 }: {
   content: EditorContent;
   openLink: (link: string) => void;
   jumpLink: (link: string) => void;
-  openLinks: string[];
 }): PM.Node<typeof schema> {
   const nodes = [];
 
@@ -165,7 +160,6 @@ function docFromContent({
       // to the application state, which also feels weird.
       const attrs: LinkAttrs = {
         target: contentNode.link,
-        status: openLinks.includes(contentNode.link) ? "expanded" : "collapsed",
         toggle: () => openLink(contentNode.link),
         jump: () => jumpLink(contentNode.link),
         content: contentNode.title,
@@ -361,17 +355,6 @@ export function Editor(props: {
     },
   });
 
-  const [openLinks, setOpenLinks] = React.useState<string[]>([]);
-  const openLinksRef = usePropRef(openLinks);
-
-  function linkToggled(link: string): void {
-    if (openLinksRef.current!.includes(link)) {
-      setOpenLinks((openLinks) => openLinks.filter((openedLink) => openedLink !== link));
-    } else {
-      setOpenLinks((openLinks) => [...openLinks, link]);
-    }
-  }
-
   function recreateEditorState() {
     return PS.EditorState.create({
       schema,
@@ -379,10 +362,8 @@ export function Editor(props: {
         content: props.content,
         openLink: (thing) => {
           onOpenLinkRef.current!(thing);
-          linkToggled(thing);
         },
         jumpLink: (thing) => onJumpLinkRef.current!(thing),
-        openLinks: openLinksRef.current!,
       }),
       plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
     });
@@ -424,7 +405,6 @@ export function Editor(props: {
         const tr = editorState.tr;
         const attrs: LinkAttrs = {
           target: link,
-          status: openLinksRef.current!.includes(link) ? "expanded" : "collapsed",
           toggle: () => onOpenLinkRef.current!(link),
           jump: () => onJumpLinkRef.current!(link),
           content: textContent,
