@@ -9,6 +9,18 @@ export function contentToEditString(content: D.Content): string {
   return result;
 }
 
+export type EditorContent = (string | {link: string; title: string | null})[];
+
+export function collate(content: D.Content, state: D.State): EditorContent {
+  return content.map((piece) => {
+    if (typeof piece === "string") {
+      return piece;
+    } else {
+      return {link: piece.link, title: D.exists(state, piece.link) ? D.contentText(state, piece.link) : null};
+    }
+  });
+}
+
 // #region Paragraphs
 
 // When the user pastes a series of paragraph, the application should split each

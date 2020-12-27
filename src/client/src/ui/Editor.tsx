@@ -1,20 +1,18 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+
 import * as PS from "prosemirror-state";
 import * as PV from "prosemirror-view";
 import * as PM from "prosemirror-model";
-import {classes} from "@johv/miscjs";
+import ProseMirror from "./ProseMirror";
 
 import * as D from "../data";
 import * as T from "../tree";
 import * as E from "../editing";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
-import {AppState, Context, merge, setAppState} from "../context";
+import {AppState, merge} from "../context";
 
-import type {ItemStatus} from "./Item";
-
-import ProseMirror from "./ProseMirror";
 import Bullet from "./Bullet";
 
 // Sometimes we want to pass a callback to some function that doesn't know about
@@ -179,7 +177,7 @@ function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string):
 }
 
 function toProseMirror(
-  content: EditorContent,
+  content: E.EditorContent,
   args: {
     openLink: (link: string) => void;
     jumpLink: (link: string) => void;
@@ -212,8 +210,8 @@ function toProseMirror(
   return schema.node("doc", {}, nodes);
 }
 
-function fromProseMirror(doc: PM.Node<typeof schema>): EditorContent {
-  const content: EditorContent = [];
+function fromProseMirror(doc: PM.Node<typeof schema>): E.EditorContent {
+  const content: E.EditorContent = [];
 
   doc.forEach((node) => {
     if (node.isText) {
@@ -226,7 +224,7 @@ function fromProseMirror(doc: PM.Node<typeof schema>): EditorContent {
   return content;
 }
 
-export function contentEq(a: EditorContent, b: EditorContent): boolean {
+function contentEq(a: E.EditorContent, b: E.EditorContent): boolean {
   if (a.length !== b.length) return false;
 
   for (let i = 0; i < a.length; ++i) {
@@ -257,25 +255,13 @@ export function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: s
   return merge(app, {state, tree});
 }
 
-export function collate(content: D.Content, state: D.State): EditorContent {
-  return content.map((piece) => {
-    if (typeof piece === "string") {
-      return piece;
-    } else {
-      return {link: piece.link, title: D.exists(state, piece.link) ? D.contentText(state, piece.link) : null};
-    }
-  });
-}
-
-export type EditorContent = (string | {link: string; title: string | null})[];
-
 export interface EditorState {
   selection: string;
   replace(link: string, textContent: string): void;
 }
 
 export function Editor(props: {
-  content: EditorContent;
+  content: E.EditorContent;
   hasFocus: boolean;
   onAction(action: Ac.ActionName): void;
   onOpenLink(target: string): void;

@@ -17,6 +17,7 @@ import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 
 import * as Editor from "./ui/Editor";
+import * as Editing from "./editing";
 import {usePopup} from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
@@ -460,7 +461,7 @@ function ThingOverview(p: {context: Context}) {
           onOpenLink={openLink}
           onJumpLink={jumpLink}
           onFocus={() => p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)))}
-          content={Editor.collate(
+          content={Editing.collate(
             Data.content(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))),
             p.context.state,
           )}
@@ -620,7 +621,7 @@ function ExpandableItem(props: {
       onOpenLink={onOpenLink}
       onJumpLink={onJumpLink}
       onFocus={() => props.context.setTree(T.focus(props.context.tree, props.node))}
-      content={Editor.collate(
+      content={Editing.collate(
         Data.content(props.context.state, T.thing(props.context.tree, props.node)),
         props.context.state,
       )}
