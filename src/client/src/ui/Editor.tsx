@@ -135,42 +135,6 @@ const schema = new PM.Schema({
   },
 });
 
-function docFromContent({
-  content,
-  openLink,
-  jumpLink,
-}: {
-  content: EditorContent;
-  openLink: (link: string) => void;
-  jumpLink: (link: string) => void;
-}): PM.Node<typeof schema> {
-  const nodes = [];
-
-  for (const contentNode of content) {
-    if (typeof contentNode === "string") {
-      if (contentNode === "") {
-        // Empty text nodes are not allowed by ProseMirror.
-        continue;
-      }
-      nodes.push(schema.text(contentNode));
-    } else if (contentNode.link !== undefined) {
-      // We store the 'onclick' callback on each node. Perhaps it would make
-      // more sense to only pass in the target here, and construct that callback
-      // in the 'toDOM' method. But that would require the schema to have access
-      // to the application state, which also feels weird.
-      const attrs: LinkAttrs = {
-        target: contentNode.link,
-        toggle: () => openLink(contentNode.link),
-        jump: () => jumpLink(contentNode.link),
-        content: contentNode.title,
-      };
-      nodes.push(schema.node("link", attrs));
-    }
-  }
-
-  return schema.node("doc", {}, nodes);
-}
-
 function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string): void}): PS.Plugin<typeof schema> {
   // We need custom handlers for some events related to links to get the
   // behavior we want. Sadly, ProseMirror does not let us bind event
@@ -214,7 +178,41 @@ function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string):
   });
 }
 
-function contentFromDoc(doc: PM.Node<typeof schema>): EditorContent {
+function toProseMirror(
+  content: EditorContent,
+  args: {
+    openLink: (link: string) => void;
+    jumpLink: (link: string) => void;
+  },
+): PM.Node<typeof schema> {
+  const nodes = [];
+
+  for (const contentNode of content) {
+    if (typeof contentNode === "string") {
+      if (contentNode === "") {
+        // Empty text nodes are not allowed by ProseMirror.
+        continue;
+      }
+      nodes.push(schema.text(contentNode));
+    } else if (contentNode.link !== undefined) {
+      // We store the 'onclick' callback on each node. Perhaps it would make
+      // more sense to only pass in the target here, and construct that callback
+      // in the 'toDOM' method. But that would require the schema to have access
+      // to the application state, which also feels weird.
+      const attrs: LinkAttrs = {
+        target: contentNode.link,
+        toggle: () => args.openLink(contentNode.link),
+        jump: () => args.jumpLink(contentNode.link),
+        content: contentNode.title,
+      };
+      nodes.push(schema.node("link", attrs));
+    }
+  }
+
+  return schema.node("doc", {}, nodes);
+}
+
+function fromProseMirror(doc: PM.Node<typeof schema>): EditorContent {
   const content: EditorContent = [];
 
   doc.forEach((node) => {
@@ -259,8 +257,6 @@ export function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: s
   return merge(app, {state, tree});
 }
 
-export type EditorContent = (string | {link: string; title: string | null})[];
-
 export function collate(content: D.Content, state: D.State): EditorContent {
   return content.map((piece) => {
     if (typeof piece === "string") {
@@ -270,6 +266,8 @@ export function collate(content: D.Content, state: D.State): EditorContent {
     }
   });
 }
+
+export type EditorContent = (string | {link: string; title: string | null})[];
 
 export interface EditorState {
   selection: string;
@@ -358,11 +356,8 @@ export function Editor(props: {
   function recreateEditorState() {
     return PS.EditorState.create({
       schema,
-      doc: docFromContent({
-        content: props.content,
-        openLink: (thing) => {
-          onOpenLinkRef.current!(thing);
-        },
+      doc: toProseMirror(props.content, {
+        openLink: (thing) => onOpenLinkRef.current!(thing),
         jumpLink: (thing) => onJumpLinkRef.current!(thing),
       }),
       plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
@@ -378,9 +373,9 @@ export function Editor(props: {
   React.useEffect(() => {
     // Avoid infinite loop:
     if (!props.hasFocus) return;
-    if (contentEq(props.content, contentFromDoc(editorState.doc))) return;
+    if (contentEq(props.content, fromProseMirror(editorState.doc))) return;
 
-    props.onEdit(contentFromDoc(editorState.doc));
+    props.onEdit(fromProseMirror(editorState.doc));
   }, [props.onEdit, editorState]);
 
   React.useEffect(() => {
@@ -421,7 +416,7 @@ export function Editor(props: {
   React.useEffect(() => {
     // Avoid infinite loop:
     if (props.hasFocus) return;
-    if (contentEq(props.content, contentFromDoc(editorState.doc))) return;
+    if (contentEq(props.content, fromProseMirror(editorState.doc))) return;
 
     setEditorState(recreateEditorState());
   }, [props.hasFocus, editorState, props.content]);
