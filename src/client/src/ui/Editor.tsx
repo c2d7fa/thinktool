@@ -256,7 +256,6 @@ export function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: s
 }
 
 export interface EditorState {
-  selection: string;
   replace(link: string, textContent: string): void;
 }
 
@@ -365,23 +364,7 @@ export function Editor(props: {
   }, [props.onEdit, editorState]);
 
   React.useEffect(() => {
-    // The popup that appears e.g. when inserting a link needs to have access
-    // to the current selection.
-    const textSelection = (() => {
-      let content: D.Content = [];
-      editorState.selection.content().content.forEach((node) => {
-        if (node.isText) {
-          content.push(node.textContent);
-        } else if (node.type.name === "link") {
-          content.push({link: node.attrs.target});
-        }
-      });
-      return E.contentToEditString(content);
-    })();
-
     onEditorStateChangedRef.current!({
-      selection: textSelection,
-
       replace(link: string, textContent: string): void {
         const tr = editorState.tr;
         const attrs: LinkAttrs = {

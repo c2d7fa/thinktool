@@ -1,14 +1,5 @@
 import * as D from "./data";
 
-export function contentToEditString(content: D.Content): string {
-  let result = "";
-  for (const segment of content) {
-    if (typeof segment === "string") result += segment;
-    else result += `#${segment.link}`;
-  }
-  return result;
-}
-
 export type EditorContent = (string | {link: string; title: string | null})[];
 
 export function collate(content: D.Content, state: D.State): EditorContent {
