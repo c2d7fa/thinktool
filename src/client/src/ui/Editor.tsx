@@ -181,8 +181,9 @@ function toProseMirror(
   args: {
     openLink: (link: string) => void;
     jumpLink: (link: string) => void;
+    plugins: PS.Plugin<typeof schema>[];
   },
-): PM.Node<typeof schema> {
+): PS.EditorState<typeof schema> {
   const nodes = [];
 
   for (const contentNode of content) {
@@ -207,13 +208,21 @@ function toProseMirror(
     }
   }
 
-  return schema.node("doc", {}, nodes);
+  const doc = schema.node("doc", {}, nodes);
+
+  let result = PS.EditorState.create({
+    schema,
+    doc: doc,
+    plugins: args.plugins,
+  });
+
+  return result;
 }
 
-function fromProseMirror(doc: PM.Node<typeof schema>): E.EditorContent {
+function fromProseMirror(proseMirrorEditorState: PS.EditorState<typeof schema>): E.EditorContent {
   const content: E.EditorContent = [];
 
-  doc.forEach((node) => {
+  proseMirrorEditorState.doc.forEach((node) => {
     if (node.isText) {
       content.push(node.textContent);
     } else if (node.type.name === "link") {
@@ -339,12 +348,9 @@ export function Editor(props: {
   });
 
   function recreateEditorState() {
-    return PS.EditorState.create({
-      schema,
-      doc: toProseMirror(props.content, {
-        openLink: (thing) => onOpenLinkRef.current!(thing),
-        jumpLink: (thing) => onJumpLinkRef.current!(thing),
-      }),
+    return toProseMirror(props.content, {
+      openLink: (thing) => onOpenLinkRef.current!(thing),
+      jumpLink: (thing) => onJumpLinkRef.current!(thing),
       plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
     });
   }
@@ -358,9 +364,9 @@ export function Editor(props: {
   React.useEffect(() => {
     // Avoid infinite loop:
     if (!props.hasFocus) return;
-    if (contentEq(props.content, fromProseMirror(editorState.doc))) return;
+    if (contentEq(props.content, fromProseMirror(editorState))) return;
 
-    props.onEdit(fromProseMirror(editorState.doc));
+    props.onEdit(fromProseMirror(editorState));
   }, [props.onEdit, editorState]);
 
   React.useEffect(() => {
@@ -385,7 +391,7 @@ export function Editor(props: {
   React.useEffect(() => {
     // Avoid infinite loop:
     if (props.hasFocus) return;
-    if (contentEq(props.content, fromProseMirror(editorState.doc))) return;
+    if (contentEq(props.content, fromProseMirror(editorState))) return;
 
     setEditorState(recreateEditorState());
   }, [props.hasFocus, editorState, props.content]);
