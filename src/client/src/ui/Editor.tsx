@@ -146,7 +146,7 @@ function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string):
 }
 
 function toProseMirror(
-  content: E.EditorContent,
+  editor: E.Editor,
   args: {
     openLink: (link: string) => void;
     jumpLink: (link: string) => void;
@@ -155,7 +155,7 @@ function toProseMirror(
 ): PS.EditorState<typeof schema> {
   const nodes = [];
 
-  for (const contentNode of content) {
+  for (const contentNode of editor.content) {
     if (typeof contentNode === "string") {
       if (contentNode === "") {
         // Empty text nodes are not allowed by ProseMirror.
@@ -238,7 +238,7 @@ export interface EditorState {
 }
 
 export function Editor(props: {
-  content: E.EditorContent;
+  editor: E.Editor;
   hasFocus: boolean;
   onAction(action: Ac.ActionName): void;
   onOpenLink(target: string): void;
@@ -317,7 +317,7 @@ export function Editor(props: {
   });
 
   function recreateEditorState() {
-    return toProseMirror(props.content, {
+    return toProseMirror(props.editor, {
       openLink: (thing) => onOpenLinkRef.current!(thing),
       jumpLink: (thing) => onJumpLinkRef.current!(thing),
       plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
@@ -332,15 +332,15 @@ export function Editor(props: {
 
   // Send our changes to the parent.
   React.useEffect(() => {
-    if (contentEq(props.content, fromProseMirror(editorState))) return;
+    if (contentEq(props.editor.content, fromProseMirror(editorState))) return;
     props.onEdit(fromProseMirror(editorState));
   }, [editorState]);
 
   // Receive parent's changes for us.
   React.useEffect(() => {
-    if (contentEq(props.content, fromProseMirror(editorState))) return;
+    if (contentEq(props.editor.content, fromProseMirror(editorState))) return;
     setEditorState(recreateEditorState());
-  }, [props.content]);
+  }, [props.editor]);
 
   React.useEffect(() => {
     onEditorStateChangedRef.current!({

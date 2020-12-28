@@ -48,7 +48,7 @@ describe("loading editor from application state", () => {
     state = D.setContent(state, "0", ["Item 0"]);
     state = D.setContent(state, "1", ["Item 1 has link to ", {link: "0"}, "."]);
 
-    const content = E.collate(D.content(state, "1"), state);
+    const content = E.load(D.content(state, "1"), state).content;
 
     expect(content).toEqual(["Item 1 has link to ", {link: "0", title: "Item 0"}, "."]);
   });

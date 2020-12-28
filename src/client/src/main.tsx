@@ -461,7 +461,7 @@ function ThingOverview(p: {context: Context}) {
           onOpenLink={openLink}
           onJumpLink={jumpLink}
           onFocus={() => p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)))}
-          content={Editing.collate(
+          editor={Editing.load(
             Data.content(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))),
             p.context.state,
           )}
@@ -621,7 +621,7 @@ function ExpandableItem(props: {
       onOpenLink={onOpenLink}
       onJumpLink={onJumpLink}
       onFocus={() => props.context.setTree(T.focus(props.context.tree, props.node))}
-      content={Editing.collate(
+      editor={Editing.load(
         Data.content(props.context.state, T.thing(props.context.tree, props.node)),
         props.context.state,
       )}

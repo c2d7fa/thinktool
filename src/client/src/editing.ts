@@ -1,16 +1,22 @@
 import * as D from "./data";
 
+export interface Editor {
+  content: EditorContent;
+}
+
 export type EditorContent = (string | {link: string; title: string | null})[];
 export type Range = {from: number; to: number};
 
-export function collate(content: D.Content, state: D.State): EditorContent {
-  return content.map((piece) => {
-    if (typeof piece === "string") {
-      return piece;
-    } else {
-      return {link: piece.link, title: D.exists(state, piece.link) ? D.contentText(state, piece.link) : null};
-    }
-  });
+export function load(content: D.Content, state: D.State): Editor {
+  return {
+    content: content.map((piece) => {
+      if (typeof piece === "string") {
+        return piece;
+      } else {
+        return {link: piece.link, title: D.exists(state, piece.link) ? D.contentText(state, piece.link) : null};
+      }
+    }),
+  };
 }
 
 export function externalLinkRanges(content: EditorContent): Range[] {
