@@ -179,10 +179,13 @@ function toProseMirror(
 
   const doc = schema.node("doc", {}, nodes);
 
+  const selection = new PS.TextSelection(doc.resolve(editor.selection.from), doc.resolve(editor.selection.to));
+
   let result = PS.EditorState.create({
     schema,
     doc: doc,
     plugins: args.plugins,
+    selection,
   });
 
   return result;
