@@ -330,13 +330,17 @@ export function Editor(props: {
     setEditorState(editorState.apply(transaction));
   }
 
+  // Send our changes to the parent.
   React.useEffect(() => {
-    // Avoid infinite loop:
-    if (!props.hasFocus) return;
     if (contentEq(props.content, fromProseMirror(editorState))) return;
-
     props.onEdit(fromProseMirror(editorState));
-  }, [props.onEdit, editorState]);
+  }, [editorState]);
+
+  // Receive parent's changes for us.
+  React.useEffect(() => {
+    if (contentEq(props.content, fromProseMirror(editorState))) return;
+    setEditorState(recreateEditorState());
+  }, [props.content]);
 
   React.useEffect(() => {
     onEditorStateChangedRef.current!({
@@ -354,16 +358,6 @@ export function Editor(props: {
       },
     });
   }, [editorState]);
-
-  // When our content gets updated via our props, we want to reflect those
-  // updates in the editor state.
-  React.useEffect(() => {
-    // Avoid infinite loop:
-    if (props.hasFocus) return;
-    if (contentEq(props.content, fromProseMirror(editorState))) return;
-
-    setEditorState(recreateEditorState());
-  }, [props.hasFocus, editorState, props.content]);
 
   return <ProseMirror state={editorState} onTransaction={onTransaction} hasFocus={props.hasFocus} />;
 }
