@@ -322,47 +322,39 @@ export function Editor(props: {
   });
 
   function recreateEditorState() {
-    return toProseMirror(props.editor, {
+    return toProseMirror(editor, {
       openLink: (thing) => onOpenLinkRef.current!(thing),
       jumpLink: (thing) => onJumpLinkRef.current!(thing),
       plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
     });
   }
 
-  const [editorState, setEditorState] = React.useState(recreateEditorState());
+  const [editor, setEditor] = React.useState(props.editor);
 
   function onTransaction(transaction: PS.Transaction<typeof schema>, view: PV.EditorView<typeof schema>) {
-    setEditorState(editorState.apply(transaction));
+    setEditor(fromProseMirror(view.state.apply(transaction)));
   }
 
-  // Send our changes to the parent.
+  // Send our changes to our parent
   React.useEffect(() => {
-    if (contentEq(props.editor.content, fromProseMirror(editorState).content)) return;
-    props.onEdit(fromProseMirror(editorState));
-  }, [editorState]);
+    if (contentEq(props.editor.content, editor.content)) return;
+    props.onEdit(editor);
+  }, [editor.content]);
 
-  // Receive parent's changes for us.
+  // Receive changes from our parent
   React.useEffect(() => {
-    if (contentEq(props.editor.content, fromProseMirror(editorState).content)) return;
-    setEditorState(recreateEditorState());
+    if (contentEq(props.editor.content, editor.content)) return;
+    setEditor(props.editor);
   }, [props.editor]);
 
   React.useEffect(() => {
     onEditorStateChangedRef.current!({
-      replace(link: string, textContent: string): void {
-        const tr = editorState.tr;
-        const attrs: LinkAttrs = {
-          target: link,
-          toggle: () => onOpenLinkRef.current!(link),
-          jump: () => onJumpLinkRef.current!(link),
-          content: textContent,
-        };
-        tr.replaceSelectionWith(schema.node("link", attrs));
-
-        setEditorState(editorState.apply(tr));
+      replace(link: string, title: string): void {
+        setEditor((editor) => E.insertLink(editor, {link, title}));
       },
     });
-  }, [editorState]);
+  }, [editor]);
 
-  return <ProseMirror state={editorState} onTransaction={onTransaction} hasFocus={props.hasFocus} />;
+  const proseMirrorState = React.useMemo(recreateEditorState, [editor]);
+  return <ProseMirror state={proseMirrorState} onTransaction={onTransaction} hasFocus={props.hasFocus} />;
 }
