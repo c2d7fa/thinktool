@@ -84,3 +84,20 @@ describe("external link decorations", () => {
     expect(E.externalLinkRanges(["An example (https://example.com) it is."])).toEqual([{from: 12, to: 31}]);
   });
 });
+
+describe("inserting a link while having some text selected", () => {
+  const before: E.Editor = {
+    content: ["This is just some text. How about that?"],
+    selection: {from: 8, to: 22},
+  };
+
+  const after = E.insertLink(before, {link: "1234", title: "my very own link"});
+
+  it("modifies the content to contain the link", () => {
+    expect(after.content).toEqual(["This is ", {link: "1234", title: "my very own link"}, ". How about that?"]);
+  });
+
+  it("places the selection after the link", () => {
+    expect(after.selection).toEqual({from: 9, to: 9});
+  });
+});

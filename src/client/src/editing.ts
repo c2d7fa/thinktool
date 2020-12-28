@@ -2,9 +2,11 @@ import * as D from "./data";
 
 export interface Editor {
   content: EditorContent;
+  selection: Range;
 }
 
-export type EditorContent = (string | {link: string; title: string | null})[];
+export type EditorContent = ContentElement[];
+export type ContentElement = string | {link: string; title: string | null};
 export type Range = {from: number; to: number};
 
 export function load(content: D.Content, state: D.State): Editor {
@@ -16,6 +18,7 @@ export function load(content: D.Content, state: D.State): Editor {
         return {link: piece.link, title: D.exists(state, piece.link) ? D.contentText(state, piece.link) : null};
       }
     }),
+    selection: {from: 0, to: 0},
   };
 }
 
@@ -54,6 +57,43 @@ export function externalLinkRanges(content: EditorContent): Range[] {
   }
 
   return ranges;
+}
+
+export function insertLink(editor: Editor, link: {link: string; title: string}): Editor {
+  let positionalElements: ContentElement[] = [];
+  for (const element of editor.content) {
+    if (typeof element === "string") {
+      positionalElements.push(...element);
+    } else {
+      positionalElements.push(element);
+    }
+  }
+
+  positionalElements.splice(editor.selection.from, editor.selection.to - editor.selection.from, link);
+
+  let content: EditorContent = [];
+
+  let current: string | null = null;
+  for (const element of positionalElements) {
+    if (typeof element !== "string") {
+      if (current !== null) {
+        content.push(current);
+        current = null;
+      }
+      content.push(element as {link: string; title: string});
+    } else {
+      if (current === null) {
+        current = element;
+      } else {
+        current += element;
+      }
+    }
+  }
+  if (current !== null) content.push(current);
+
+  const cursor = editor.selection.from + 1;
+
+  return {content, selection: {from: cursor, to: cursor}};
 }
 
 // #region Paragraphs
