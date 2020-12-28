@@ -127,7 +127,7 @@ function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string):
   return new PS.Plugin({
     props: {
       decorations(state: PS.EditorState<PM.Schema>) {
-        const ranges = E.externalLinkRanges(fromProseMirror(state));
+        const ranges = E.externalLinkRanges(fromProseMirror(state).content);
         return PV.DecorationSet.create(
           state.doc,
           ranges.map((range) =>
@@ -188,7 +188,7 @@ function toProseMirror(
   return result;
 }
 
-function fromProseMirror(proseMirrorEditorState: PS.EditorState<typeof schema>): E.EditorContent {
+function fromProseMirror(proseMirrorEditorState: PS.EditorState<typeof schema>): E.Editor {
   const content: E.EditorContent = [];
 
   proseMirrorEditorState.doc.forEach((node) => {
@@ -199,7 +199,9 @@ function fromProseMirror(proseMirrorEditorState: PS.EditorState<typeof schema>):
     }
   });
 
-  return content;
+  const selection = {from: proseMirrorEditorState.selection.anchor, to: proseMirrorEditorState.selection.head};
+
+  return {content, selection};
 }
 
 function contentEq(a: E.EditorContent, b: E.EditorContent): boolean {
@@ -332,13 +334,13 @@ export function Editor(props: {
 
   // Send our changes to the parent.
   React.useEffect(() => {
-    if (contentEq(props.editor.content, fromProseMirror(editorState))) return;
-    props.onEdit({content: fromProseMirror(editorState), selection: {from: 0, to: 0}});
+    if (contentEq(props.editor.content, fromProseMirror(editorState).content)) return;
+    props.onEdit(fromProseMirror(editorState));
   }, [editorState]);
 
   // Receive parent's changes for us.
   React.useEffect(() => {
-    if (contentEq(props.editor.content, fromProseMirror(editorState))) return;
+    if (contentEq(props.editor.content, fromProseMirror(editorState).content)) return;
     setEditorState(recreateEditorState());
   }, [props.editor]);
 
