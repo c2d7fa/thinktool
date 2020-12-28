@@ -244,7 +244,7 @@ export function Editor(props: {
   onOpenLink(target: string): void;
   onJumpLink(target: string): void;
   onFocus(): void;
-  onEdit(content: D.Content): void;
+  onEdit(editor: E.Editor): void;
   onPastedParagraphs(paragraphs: string[]): void;
   onEditorStateChanged(editorState: EditorState): void;
   onOpenExternalUrl(url: string): void;
@@ -333,7 +333,7 @@ export function Editor(props: {
   // Send our changes to the parent.
   React.useEffect(() => {
     if (contentEq(props.editor.content, fromProseMirror(editorState))) return;
-    props.onEdit(fromProseMirror(editorState));
+    props.onEdit({content: fromProseMirror(editorState), selection: {from: 0, to: 0}});
   }, [editorState]);
 
   // Receive parent's changes for us.
