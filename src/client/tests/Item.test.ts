@@ -2,7 +2,7 @@
 
 import * as Item from "../src/ui/Item";
 
-import {appState} from "./misc";
+import * as App from "../src/app";
 import * as W from "../src/wrapap";
 
 import * as D from "../src/data";
@@ -74,7 +74,7 @@ describe("clicking on an item's bullet", () => {
     expect(T.isLinkOpen(tree, node(), "2")).toBe(true);
 
     it("a normal click closes the link", () => {
-      let app = appState(data, tree);
+      let app = App.from(data, tree);
       const linking = () => T.children(tree, T.root(tree))[0];
 
       expect(T.thing(tree, linking())).toBe("1");
@@ -90,7 +90,7 @@ describe("clicking on an item's bullet", () => {
     });
 
     it("an alt-click jumps to the linked item", () => {
-      let app = appState(data, tree);
+      let app = App.from(data, tree);
       const linking = () => T.children(tree, T.root(tree))[0];
 
       expect(T.thing(tree, linking())).toBe("1");
@@ -114,7 +114,7 @@ describe("clicking on an item's bullet", () => {
       data = D.create(data, "1")[0];
       data = D.addChild(data, "0", "1")[0];
 
-      const w = W.from(appState(data, T.fromRoot(data, "0")));
+      const w = W.from(App.from(data, T.fromRoot(data, "0")));
       expect(w.root.child(0).expanded).toBe(true);
 
       const x = w.map((app) => Item.click(app, w.root.child(0).ref));
@@ -127,7 +127,7 @@ describe("clicking on an item's bullet", () => {
       data = D.addChild(data, "0", "1")[0];
       data = D.addChild(data, "1", "2")[0];
 
-      const w = W.from(appState(data, T.fromRoot(data, "0")));
+      const w = W.from(App.from(data, T.fromRoot(data, "0")));
       const x = w.map((app) => Item.click(app, w.root.child(0).ref));
 
       it("expands the item", () => {
@@ -146,7 +146,7 @@ describe("clicking on an item's bullet", () => {
       data = D.create(data, "1")[0];
       data = D.addChild(data, "0", "1")[0];
 
-      const w = W.from(appState(data, T.fromRoot(data, "0")));
+      const w = W.from(App.from(data, T.fromRoot(data, "0")));
       expect(w.root.thing).toBe("0");
 
       const x = w.map((app) => Item.altClick(app, w.root.child(0).ref));
@@ -174,7 +174,7 @@ describe("clicking on an item's bullet", () => {
       data = D.addChild(data, "2", "3")[0];
       data = D.setContent(data, "2", ["This is a link to ", {link: "1"}, "."]);
 
-      let w = W.from(appState(data, T.fromRoot(data, "0")));
+      let w = W.from(App.from(data, T.fromRoot(data, "0")));
       w = w.root.child(0).expand();
 
       const r1 = w.root.child(0).reference(0);
@@ -196,7 +196,7 @@ describe("clicking on an item's bullet", () => {
       data = D.addChild(data, "2", "3")[0];
       data = D.setContent(data, "2", ["This is a link to ", {link: "1"}, "."]);
 
-      let w = W.from(appState(data, T.fromRoot(data, "0")));
+      let w = W.from(App.from(data, T.fromRoot(data, "0")));
       w = w.root.child(0).expand();
 
       const r1 = w.root.child(0).reference(0);
@@ -217,7 +217,7 @@ describe("clicking on an item's bullet", () => {
       data = D.addChild(data, "1", "0")[0];
       data = D.addChild(data, "1", "2")[0];
 
-      const w1 = W.from(appState(data, T.fromRoot(data, "0")));
+      const w1 = W.from(App.from(data, T.fromRoot(data, "0")));
 
       expect(w1.root.parent(0).thing).toBe("1");
 
@@ -241,7 +241,7 @@ describe("clicking on an item's bullet", () => {
       data = D.addChild(data, "1", "0")[0];
       data = D.addChild(data, "1", "2")[0];
 
-      let w = W.from(appState(data, T.fromRoot(data, "0")));
+      let w = W.from(App.from(data, T.fromRoot(data, "0")));
 
       expect(w.root.parent(0).thing).toBe("1");
       expect(w.root.parent(0).expanded).toBe(false);

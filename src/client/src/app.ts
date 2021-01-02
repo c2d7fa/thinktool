@@ -11,6 +11,16 @@ export interface App {
   tree: T.Tree;
 }
 
+export function from(data: D.State, tree: T.Tree): App {
+  return {
+    state: data,
+    tree: tree,
+    tutorialState: Tutorial.initialize(false),
+    changelogShown: false,
+    changelog: "loading",
+  };
+}
+
 export function merge(app: App, values: {[K in keyof App]?: App[K]}): App {
   const result = {...app};
   for (const k in values) {

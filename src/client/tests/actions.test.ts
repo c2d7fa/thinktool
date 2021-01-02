@@ -1,6 +1,6 @@
 /// <reference types="@types/jest" />
 
-import {appState} from "./misc";
+import * as App from "../src/app";
 
 import * as C from "../src/context";
 import * as D from "../src/data";
@@ -22,12 +22,12 @@ describe.each(["find", "new"] as A.ActionName[])("an action that is always enabl
   let tree_ = T.fromRoot(data_, "0");
 
   it("is enabled even when no node is focused", () => {
-    expect(A.enabled(appState(data_, tree_), action)).toBe(true);
+    expect(A.enabled(App.from(data_, tree_), action)).toBe(true);
   });
 
   it("is also enabled when a node is focused", () => {
     let tree = T.focus(tree_, T.children(tree_, T.root(tree_))[0]);
-    expect(A.enabled(appState(data_, tree), action)).toBe(true);
+    expect(A.enabled(App.from(data_, tree), action)).toBe(true);
   });
 });
 
@@ -39,12 +39,12 @@ describe.each(["insert-sibling", "zoom", "indent", "new-child", "remove"] as A.A
     let tree_ = T.fromRoot(data_, "0");
 
     it("is disabled when no node is focused", () => {
-      expect(A.enabled(appState(data_, tree_), action)).toBe(false);
+      expect(A.enabled(App.from(data_, tree_), action)).toBe(false);
     });
 
     it("is enabled when a node is focused", () => {
       let tree = T.focus(tree_, T.children(tree_, T.root(tree_))[0]);
-      expect(A.enabled(appState(data_, tree), action)).toBe(true);
+      expect(A.enabled(App.from(data_, tree), action)).toBe(true);
     });
   },
 );
@@ -56,23 +56,23 @@ describe("new", () => {
     let tree = T.fromRoot(data, "0");
 
     it("creates a new child of the root thing in the state", async () => {
-      const app = appState(data, tree);
+      const app = App.from(data, tree);
       expect(D.children(app.state, "0").length).toBe(1);
 
-      const result = (await A.update(appState(data, tree), "new", stubConfig)).app!;
+      const result = (await A.update(App.from(data, tree), "new", stubConfig)).app!;
       expect(D.children(result.state, "0").length).toBe(2);
     });
 
     it("creates a new child of the root node in the tree", async () => {
-      const app = appState(data, tree);
+      const app = App.from(data, tree);
       expect(T.children(app.tree, T.root(app.tree)).length).toBe(1);
 
-      const result = (await A.update(appState(data, tree), "new", stubConfig)).app!;
+      const result = (await A.update(App.from(data, tree), "new", stubConfig)).app!;
       expect(T.children(result.tree, T.root(result.tree)).length).toBe(2);
     });
 
     it("inserts the new item as the first child", async () => {
-      const app = appState(data, tree);
+      const app = App.from(data, tree);
       const old = D.children(app.state, "0")[0];
 
       const result = (await A.update(app, "new", stubConfig)).app!;
@@ -89,7 +89,7 @@ describe("new", () => {
     let tree = T.fromRoot(data, "0");
     tree = T.focus(tree, T.children(tree, T.root(tree))[0]);
 
-    const app = appState(data, tree);
+    const app = App.from(data, tree);
 
     it("inserts the new item after the focused item", async () => {
       expect(D.children(app.state, "0")[0]).toBe("1");
@@ -113,7 +113,7 @@ describe("new", () => {
     data = D.addChild(data, "0", "1")[0];
     let tree = T.fromRoot(data, "0");
 
-    const app = appState(data, tree);
+    const app = App.from(data, tree);
     expect(completed(app, "create-item")).toBe(false);
 
     const result = (await A.update(app, "new", stubConfig)).app!;
