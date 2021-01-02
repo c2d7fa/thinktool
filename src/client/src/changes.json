@@ -375,6 +375,10 @@
     {
       "date": "2020-12-19",
       "title": "Fixed an issue with URL updates that would cause the back button to be unable to navigate through history inside Thinktool."
+    },
+    {
+      "date": "2021-01-02",
+      "title": "Continuing overhauling various parts of the application, especially the editor component to make them more testable. This will hopefully reduce the number of bugs in the long term, but may introduce new bugs in the short term."
     }
   ]
 }
