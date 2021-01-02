@@ -8,6 +8,11 @@ import {Storage} from "./storage";
 import type {Receiver} from "./receiver";
 import type {Message} from "./messages";
 
+import {App} from "./app";
+
+export {App as AppState};
+export {jump, merge} from "./app";
+
 export interface DragInfo {
   current: T.NodeRef | null;
   target: T.NodeRef | null;
@@ -19,37 +24,14 @@ export interface ActiveEditor {
   replaceSelectionWithLink(target: string, textContent: string): void;
 }
 
-export interface AppState {
-  state: State;
-  tutorialState: Tutorial.State;
-  changelogShown: boolean;
-  changelog: Communication.Changelog | "loading";
-  tree: Tree;
-  drag: DragInfo;
-}
-
-export function merge(app: AppState, values: {[K in keyof AppState]?: AppState[K]}): AppState {
-  const result = {...app};
-  for (const k in values) {
-    // I'm sure there's a smarter way to do this, but it doesn't really
-    // matter. Our function signature is fine.
-    (result[k as keyof AppState] as any) = values[k as keyof AppState]!;
-  }
-  return result;
-}
-
-export function jump(app: AppState, thing: string): AppState {
-  return merge(app, {tree: T.fromRoot(app.state, thing)});
-}
-
-export function setAppState(context: Context, app: AppState): void {
+export function setAppState(context: Context, app: App): void {
   context.setState(app.state);
   context.setTree(app.tree);
   context.setTutorialState(app.tutorialState);
   context.setChangelogShown(app.changelogShown);
 }
 
-export interface Context extends AppState {
+export interface Context extends App {
   storage: Storage;
   server?: Server;
 
