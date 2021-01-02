@@ -455,12 +455,9 @@ function ThingOverview(p: {context: Context}) {
             p.context.state,
           )}
           onEdit={(editor) =>
-            p.context.setState(
-              Data.setContent(
-                p.context.state,
-                T.thing(p.context.tree, T.root(p.context.tree)),
-                Editing.produceContent(editor),
-              ),
+            setAppState(
+              p.context,
+              Editing.emit(p.context, editor, T.thing(p.context.tree, T.root(p.context.tree))),
             )
           }
           hasFocus={T.hasFocus(p.context.tree, T.root(p.context.tree))}
@@ -608,13 +605,7 @@ function ExpandableItem(props: {
         props.context.state,
       )}
       onEdit={(editor) =>
-        props.context.setState(
-          Data.setContent(
-            props.context.state,
-            T.thing(props.context.tree, props.node),
-            Editing.produceContent(editor),
-          ),
-        )
+        setAppState(props.context, Editing.emit(props.context, editor, T.thing(props.context.tree, props.node)))
       }
       hasFocus={T.hasFocus(props.context.tree, props.node)}
       onPastedParagraphs={(paragraphs) =>

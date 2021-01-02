@@ -1,4 +1,6 @@
 import * as D from "./data";
+import * as A from "./app";
+import * as T from "./tree";
 
 export interface Editor {
   content: EditorContent;
@@ -96,13 +98,19 @@ export function insertLink(editor: Editor, link: {link: string; title: string}):
   return {content, selection: {from: cursor, to: cursor}};
 }
 
-export function produceContent(editor: Editor): D.Content {
-  return editor.content.map((segment) => {
-    if (typeof segment === "string") {
-      return segment;
-    } else {
-      return {link: segment.link};
-    }
+export function emit(app: A.App, editor: Editor, thing: string): A.App {
+  return A.merge(app, {
+    state: D.setContent(
+      app.state,
+      thing,
+      editor.content.map((segment) => {
+        if (typeof segment === "string") {
+          return segment;
+        } else {
+          return {link: segment.link};
+        }
+      }),
+    ),
   });
 }
 

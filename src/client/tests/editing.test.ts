@@ -1,6 +1,7 @@
 /// <reference types="@types/jest" />
 
 import * as D from "../src/data";
+import * as A from "../src/app";
 
 import * as E from "../src/editing";
 
@@ -102,24 +103,30 @@ describe("inserting a link while having some text selected", () => {
   });
 });
 
-describe("when converting editor content to plain data content", () => {
+describe("when emitting changes from editor into application state", () => {
+  const before = A.of({
+    "1": {content: ["Item 1 before content was edited"]},
+  });
+
   const editor: E.Editor = {
     content: ["This is a link: ", {link: "2", title: "Item 2"}, "."],
     selection: {from: 0, to: 0},
   };
 
-  const content = E.produceContent(editor);
+  const after = E.emit(before, editor, "1");
 
-  test("the text segments are the same", () => {
+  const content = D.content(after.state, "1");
+
+  test("the text segments are taken from the editor state", () => {
     expect(content[0]).toBe("This is a link: ");
     expect(content[2]).toBe(".");
   });
 
-  test("the links mention only the IDs of each linked item", () => {
+  test("the links mention only the IDs of each linked item from the editor state", () => {
     expect(content[1]).toEqual({link: "2"});
   });
 
-  test("there aren't any other segments added", () => {
+  test("any segments not in the editor state are deleted", () => {
     expect(content.length).toBe(3);
   });
 });
