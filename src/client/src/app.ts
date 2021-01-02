@@ -1,7 +1,9 @@
 import * as D from "./data";
 import * as T from "./tree";
-import * as Tutorial from "./tutorial";
 import {Communication} from "@thinktool/shared";
+
+import * as Tutorial from "./tutorial";
+import {GoalId} from "./goal";
 
 export interface App {
   state: D.State;
@@ -32,5 +34,14 @@ export function merge(app: App, values: {[K in keyof App]?: App[K]}): App {
 }
 
 export function jump(app: App, thing: string): App {
-  return merge(app, {tree: T.fromRoot(app.state, thing)});
+  const tutorialState = Tutorial.action(app.tutorialState, {
+    action: "jump",
+    previouslyFocused: T.thing(app.tree, T.root(app.tree)),
+    thing,
+  });
+  return merge(app, {tree: T.fromRoot(app.state, thing), tutorialState});
+}
+
+export function isGoalFinished(app: App, goal: GoalId): boolean {
+  return Tutorial.isGoalFinished(app.tutorialState, goal);
 }

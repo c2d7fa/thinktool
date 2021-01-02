@@ -233,13 +233,7 @@ const updates = {
 
   async "zoom"({app, target}: UpdateArgs) {
     let result = app;
-    const previouslyFocused = T.thing(result.tree, T.root(result.tree));
     result = A.jump(result, T.thing(result.tree, require(target)));
-    result = applyActionEvent(result, {
-      action: "jump",
-      previouslyFocused,
-      thing: T.thing(result.tree, require(target)),
-    });
     return {app: result};
   },
 
