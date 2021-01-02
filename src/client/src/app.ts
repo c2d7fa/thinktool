@@ -23,6 +23,21 @@ export function from(data: D.State, tree: T.Tree): App {
   };
 }
 
+export type ItemGraph = {[id: string]: {content: D.Content; children?: string[]}};
+export function of(items: ItemGraph): App {
+  let state = D.empty;
+  for (const id in items) {
+    state = D.create(state, id)[0];
+    state = D.setContent(state, id, items[id].content);
+  }
+  for (const id in items) {
+    for (const child of items[id].children ?? []) {
+      state = D.addChild(state, id, child)[0];
+    }
+  }
+  return from(state, T.fromRoot(state, "0"));
+}
+
 export function merge(app: App, values: {[K in keyof App]?: App[K]}): App {
   const result = {...app};
   for (const k in values) {
