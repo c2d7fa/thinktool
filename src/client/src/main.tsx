@@ -16,7 +16,8 @@ import * as Storage from "./storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 
-import Editor from "./ui/Editor";
+import * as Editor from "./ui/Editor";
+import * as Editing from "./editing";
 import {usePopup} from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
@@ -33,6 +34,7 @@ import * as ReactDOM from "react-dom";
 import undo from "./undo";
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
+import {contentText} from "./data/content";
 
 function useContext({
   initialState,
@@ -454,12 +456,39 @@ function ThingOverview(p: {context: Context}) {
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        <Editor
-          context={p.context}
-          node={T.root(p.context.tree)}
+        <Editor.Editor
           onAction={(action) => p.context.send("action", {action})}
           onOpenLink={openLink}
           onJumpLink={jumpLink}
+          onFocus={() => p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)))}
+          editor={Editing.load(
+            Data.content(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))),
+            p.context.state,
+          )}
+          onEdit={(editor) =>
+            p.context.setState(
+              Data.setContent(
+                p.context.state,
+                T.thing(p.context.tree, T.root(p.context.tree)),
+                Editing.produceContent(editor),
+              ),
+            )
+          }
+          hasFocus={T.hasFocus(p.context.tree, T.root(p.context.tree))}
+          onPastedParagraphs={(paragraphs) =>
+            setAppState(p.context, Editor.onPastedParagraphs(p.context, T.root(p.context.tree), paragraphs))
+          }
+          onEditorStateChanged={(editor) => {
+            if (T.hasFocus(p.context.tree, T.root(p.context.tree))) {
+              p.context.registerActiveEditor({
+                selection: "", // [FIXME] We should get this from editor
+                replaceSelectionWithLink(target, textContent) {
+                  editor.replace(target, textContent);
+                },
+              });
+            }
+          }}
+          onOpenExternalUrl={p.context.openExternalUrl}
         />
         <div className="children">
           <Outline context={p.context} />
@@ -591,12 +620,39 @@ function ExpandableItem(props: {
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
   const content = (
-    <Editor
-      context={props.context}
-      node={props.node}
+    <Editor.Editor
       onAction={(action) => props.context.send("action", {action})}
       onOpenLink={onOpenLink}
       onJumpLink={onJumpLink}
+      onFocus={() => props.context.setTree(T.focus(props.context.tree, props.node))}
+      editor={Editing.load(
+        Data.content(props.context.state, T.thing(props.context.tree, props.node)),
+        props.context.state,
+      )}
+      onEdit={(editor) =>
+        props.context.setState(
+          Data.setContent(
+            props.context.state,
+            T.thing(props.context.tree, props.node),
+            Editing.produceContent(editor),
+          ),
+        )
+      }
+      hasFocus={T.hasFocus(props.context.tree, props.node)}
+      onPastedParagraphs={(paragraphs) =>
+        setAppState(props.context, Editor.onPastedParagraphs(props.context, props.node, paragraphs))
+      }
+      onEditorStateChanged={(editor) => {
+        if (T.hasFocus(props.context.tree, props.node)) {
+          props.context.registerActiveEditor({
+            selection: "", // [FIXME] We should get this from FIXME. We should get this from editor
+            replaceSelectionWithLink(target, textContent) {
+              editor.replace(target, textContent);
+            },
+          });
+        }
+      }}
+      onOpenExternalUrl={props.context.openExternalUrl}
     />
   );
 

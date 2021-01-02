@@ -1,7 +1,7 @@
-import {Communication} from "@thinktool/shared";
 import * as Misc from "@johv/miscjs";
+import {Content} from "./data/content";
 
-export type Content = Communication.Content;
+export {Content, references, backreferences, contentText, contentEq} from "./data/content";
 
 export interface State {
   things: {[id: string]: ThingData | undefined};
@@ -270,56 +270,6 @@ export function remove(state: State, removedThing: string): State {
 
 export function otherParents(state: State, child: string, parent?: string): string[] {
   return parents(state, child).filter((p) => p !== parent);
-}
-
-export function contentText(state: State, thing: string): string {
-  function contentText_(thing: string, seen: string[]): string {
-    if (seen.includes(thing)) return "...";
-
-    let result = "";
-    for (const segment of content(state, thing)) {
-      if (typeof segment === "string") {
-        result += segment;
-      } else if (typeof segment.link === "string") {
-        if (exists(state, segment.link)) {
-          result += contentText_(segment.link, [...seen, thing]);
-        } else {
-          result += `[${segment.link}]`;
-        }
-      }
-    }
-
-    return result;
-  }
-
-  return contentText_(thing, []);
-}
-
-// In-line references
-//
-// Items may reference other items in their content. Such items are displayed
-// with the referenced item embedded where the reference is.
-
-export function references(state: State, thing: string): string[] {
-  let result: string[] = [];
-
-  for (const segment of content(state, thing)) {
-    if (typeof segment.link === "string") {
-      result = [...result, segment.link];
-    }
-  }
-
-  return result;
-}
-
-export function backreferences(state: State, thing: string): string[] {
-  let result: string[] = [];
-  for (const other in state.things) {
-    if (references(state, other).includes(thing)) {
-      result = [...result, other];
-    }
-  }
-  return result;
 }
 
 // When the user does something, we need to update both the local state and the

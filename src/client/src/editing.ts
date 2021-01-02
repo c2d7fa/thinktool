@@ -1,57 +1,109 @@
 import * as D from "./data";
 
-export function contentToEditString(content: D.Content): string {
-  let result = "";
-  for (const segment of content) {
-    if (typeof segment === "string") result += segment;
-    else result += `#${segment.link}`;
-  }
-  return result;
+export interface Editor {
+  content: EditorContent;
+  selection: Range;
 }
 
-export function contentFromEditString(editString: string): D.Content {
-  try {
-    let result: D.Content = [];
-    let buffer = "";
-    let readingLink = false;
+export type EditorContent = ContentElement[];
+export type ContentElement = string | {link: string; title: string | null};
+export type Range = {from: number; to: number};
 
-    function commit() {
-      if (buffer !== "") {
-        if (readingLink) {
-          result.push({link: buffer});
-        } else {
-          result.push(buffer);
-        }
-      } else if (buffer === "" && readingLink) {
-        result.push("#");
-      }
-      buffer = "";
-    }
-
-    for (const ch of [...editString]) {
-      if (ch === "#") {
-        commit();
-        readingLink = true;
-      } else if (readingLink) {
-        if (ch.match(/[a-z0-9]/)) {
-          buffer += ch;
-        } else {
-          commit();
-          readingLink = false;
-          buffer = ch;
-        }
+export function load(content: D.Content, state: D.State): Editor {
+  return {
+    content: content.map((piece) => {
+      if (typeof piece === "string") {
+        return piece;
       } else {
-        buffer += ch;
+        return {link: piece.link, title: D.exists(state, piece.link) ? D.contentText(state, piece.link) : null};
+      }
+    }),
+    selection: {from: 0, to: 0},
+  };
+}
+
+export function externalLinkRanges(content: EditorContent): Range[] {
+  let indexedTexts: {index: number; text: string}[] = [];
+
+  let index = 0;
+  for (const element of content) {
+    if (typeof element === "string") {
+      indexedTexts.push({index, text: element});
+      index += element.length;
+    } else {
+      index += 1;
+    }
+  }
+
+  let ranges: {from: number; to: number}[] = [];
+
+  for (const indexedText of indexedTexts) {
+    for (const match of [...indexedText.text.matchAll(/https?:\/\S*/g)]) {
+      if (match.index === undefined) {
+        console.warn("An unexpected error occurred while parsing links. Ignoring.");
+        continue;
+      }
+
+      const start = match.index;
+      let end = match.index + match[0].length;
+
+      // Trim punctuation at the end of link:
+      if ([",", ".", ":", ")", "]"].includes(indexedText.text[end - 1])) {
+        end -= 1;
+      }
+
+      ranges.push({from: indexedText.index + start, to: indexedText.index + end});
+    }
+  }
+
+  return ranges;
+}
+
+export function insertLink(editor: Editor, link: {link: string; title: string}): Editor {
+  let positionalElements: ContentElement[] = [];
+  for (const element of editor.content) {
+    if (typeof element === "string") {
+      positionalElements.push(...element);
+    } else {
+      positionalElements.push(element);
+    }
+  }
+
+  positionalElements.splice(editor.selection.from, editor.selection.to - editor.selection.from, link);
+
+  let content: EditorContent = [];
+
+  let current: string | null = null;
+  for (const element of positionalElements) {
+    if (typeof element !== "string") {
+      if (current !== null) {
+        content.push(current);
+        current = null;
+      }
+      content.push(element as {link: string; title: string});
+    } else {
+      if (current === null) {
+        current = element;
+      } else {
+        current += element;
       }
     }
-
-    commit();
-
-    return result;
-  } catch (e) {
-    console.error("Parse error while trying to convert string %o to content: %o", editString, e);
-    return [];
   }
+  if (current !== null) content.push(current);
+
+  const cursor = editor.selection.from + 1;
+
+  return {content, selection: {from: cursor, to: cursor}};
+}
+
+export function produceContent(editor: Editor): D.Content {
+  return editor.content.map((segment) => {
+    if (typeof segment === "string") {
+      return segment;
+    } else {
+      return {link: segment.link};
+    }
+  });
 }
 
 // #region Paragraphs

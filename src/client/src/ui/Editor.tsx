@@ -1,18 +1,17 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+
 import * as PS from "prosemirror-state";
 import * as PV from "prosemirror-view";
 import * as PM from "prosemirror-model";
-import {classes} from "@johv/miscjs";
+import ProseMirror from "./ProseMirror";
 
 import * as D from "../data";
 import * as T from "../tree";
 import * as E from "../editing";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
-import {Context} from "../context";
-
-import type {ItemStatus} from "./Item";
+import {AppState, merge} from "../context";
 
 import Bullet from "./Bullet";
 
@@ -32,30 +31,7 @@ function usePropRef<T>(prop: T): React.RefObject<T> {
   return ref;
 }
 
-function findExternalLinks(textContent: string): {from: number; to: number}[] {
-  let results: {from: number; to: number}[] = [];
-
-  const linkRegex = /https?:\/\S*/g;
-
-  for (const match of [...textContent.matchAll(linkRegex)]) {
-    if (match.index === undefined) throw "bad programmer error";
-
-    const start = match.index;
-    let end = match.index + match[0].length;
-
-    // Trim punctuation at the end of link:
-    if ([",", ".", ":", ")", "]"].includes(textContent[end - 1])) {
-      end -= 1;
-    }
-
-    results.push({from: start, to: end});
-  }
-
-  return results;
-}
-
 function buildInternalLink(args: {
-  status: ItemStatus;
   jump(): void;
   toggle(): void;
   content: {invalid: string} | string;
@@ -68,7 +44,7 @@ function buildInternalLink(args: {
 
   ReactDOM.render(
     <span
-      className={classes({"internal-link": true, "internal-link-open": status === "expanded"})}
+      className="internal-link"
       onMouseDown={(ev) => {
         ev.preventDefault();
       }}
@@ -85,7 +61,7 @@ function buildInternalLink(args: {
     >
       <Bullet
         specialType="link"
-        status={args.status}
+        status="collapsed"
         toggle={args.toggle}
         beginDrag={(ev) => {
           // [TODO] This is undefined on mobile. This may or may not cause issues; I haven't tested it.
@@ -108,7 +84,6 @@ function buildInternalLink(args: {
 }
 
 type LinkAttrs = {
-  status: ItemStatus;
   content: string | null;
   jump: () => void;
   target: string;
@@ -119,14 +94,13 @@ const schema = new PM.Schema({
   nodes: {
     doc: {content: "(text | link)*"},
     link: {
-      attrs: {target: {}, status: {}, jump: {}, toggle: {}, content: {}},
+      attrs: {target: {}, jump: {}, toggle: {}, content: {}},
       inline: true,
       atom: true,
       selectable: false,
       toDOM(node) {
         const attrs = node.attrs as LinkAttrs;
         return buildInternalLink({
-          status: attrs.status,
           jump: attrs.jump,
           toggle: attrs.toggle,
           content: attrs.content ? attrs.content : {invalid: attrs.target},
@@ -136,47 +110,6 @@ const schema = new PM.Schema({
     text: {},
   },
 });
-
-function docFromContent({
-  content,
-  textContentOf,
-  openLink,
-  jumpLink,
-  openLinks,
-}: {
-  content: D.Content;
-  textContentOf: (thing: string) => string | null;
-  openLink: (link: string) => void;
-  jumpLink: (link: string) => void;
-  openLinks: string[];
-}): PM.Node<typeof schema> {
-  const nodes = [];
-
-  for (const contentNode of content) {
-    if (typeof contentNode === "string") {
-      if (contentNode === "") {
-        // Empty text nodes are not allowed by ProseMirror.
-        continue;
-      }
-      nodes.push(schema.text(contentNode));
-    } else if (contentNode.link !== undefined) {
-      // We store the 'onclick' callback on each node. Perhaps it would make
-      // more sense to only pass in the target here, and construct that callback
-      // in the 'toDOM' method. But that would require the schema to have access
-      // to the application state, which also feels weird.
-      const attrs: LinkAttrs = {
-        target: contentNode.link,
-        status: openLinks.includes(contentNode.link) ? "expanded" : "collapsed",
-        toggle: () => openLink(contentNode.link),
-        jump: () => jumpLink(contentNode.link),
-        content: textContentOf(contentNode.link),
-      };
-      nodes.push(schema.node("link", attrs));
-    }
-  }
-
-  return schema.node("doc", {}, nodes);
-}
 
 function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string): void}): PS.Plugin<typeof schema> {
   // We need custom handlers for some events related to links to get the
@@ -194,16 +127,7 @@ function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string):
   return new PS.Plugin({
     props: {
       decorations(state: PS.EditorState<PM.Schema>) {
-        let ranges: {from: number; to: number}[] = [];
-        state.doc.content.forEach((node, offset) => {
-          ranges = ranges.concat(
-            findExternalLinks(node.textContent).map((range) => ({
-              from: offset + range.from,
-              to: offset + range.to,
-            })),
-          );
-        });
-
+        const ranges = E.externalLinkRanges(fromProseMirror(state).content);
         return PV.DecorationSet.create(
           state.doc,
           ranges.map((range) =>
@@ -221,35 +145,122 @@ function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string):
   });
 }
 
-function contentFromDoc(doc: PM.Node<typeof schema>): D.Content {
-  const content: D.Content = [];
+function toProseMirror(
+  editor: E.Editor,
+  args: {
+    openLink: (link: string) => void;
+    jumpLink: (link: string) => void;
+    plugins: PS.Plugin<typeof schema>[];
+  },
+): PS.EditorState<typeof schema> {
+  const nodes = [];
 
-  doc.forEach((node) => {
+  for (const contentNode of editor.content) {
+    if (typeof contentNode === "string") {
+      if (contentNode === "") {
+        // Empty text nodes are not allowed by ProseMirror.
+        continue;
+      }
+      nodes.push(schema.text(contentNode));
+    } else if (contentNode.link !== undefined) {
+      // We store the 'onclick' callback on each node. Perhaps it would make
+      // more sense to only pass in the target here, and construct that callback
+      // in the 'toDOM' method. But that would require the schema to have access
+      // to the application state, which also feels weird.
+      const attrs: LinkAttrs = {
+        target: contentNode.link,
+        toggle: () => args.openLink(contentNode.link),
+        jump: () => args.jumpLink(contentNode.link),
+        content: contentNode.title,
+      };
+      nodes.push(schema.node("link", attrs));
+    }
+  }
+
+  const doc = schema.node("doc", {}, nodes);
+
+  const selection = new PS.TextSelection(doc.resolve(editor.selection.from), doc.resolve(editor.selection.to));
+
+  let result = PS.EditorState.create({
+    schema,
+    doc: doc,
+    plugins: args.plugins,
+    selection,
+  });
+
+  return result;
+}
+
+function fromProseMirror(proseMirrorEditorState: PS.EditorState<typeof schema>): E.Editor {
+  const content: E.EditorContent = [];
+
+  proseMirrorEditorState.doc.forEach((node) => {
     if (node.isText) {
       content.push(node.textContent);
     } else if (node.type.name === "link") {
-      content.push({link: node.attrs.target});
+      content.push({link: node.attrs.target, title: node.attrs.content});
     }
   });
 
-  return content;
+  const selection = {from: proseMirrorEditorState.selection.anchor, to: proseMirrorEditorState.selection.head};
+
+  return {content, selection};
 }
 
-function ContentEditor(props: {
-  context: Context;
-  node: T.NodeRef;
-  placeholder?: string;
+function contentEq(a: E.EditorContent, b: E.EditorContent): boolean {
+  if (a.length !== b.length) return false;
+
+  for (let i = 0; i < a.length; ++i) {
+    if (typeof a[i] === "string" && a[i] !== b[i]) return false;
+    if (
+      typeof a[i] !== "string" &&
+      (typeof b[i] === "string" ||
+        a[i].link !== b[i].link ||
+        (a[i] as {link: string; title: string}).title !== (b[i] as {link: string; title: string}).title)
+    )
+      return false;
+  }
+
+  return true;
+}
+
+export function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: string[]) {
+  let [state, tree] = [app.state, app.tree];
+  let lastNode = node;
+
+  for (const paragraph of paragraphs) {
+    const [state_, tree_, thing, lastNode_] = T.createSiblingAfter(state, tree, lastNode);
+    [state, tree, lastNode] = [state_, tree_, lastNode_];
+
+    state = D.setContent(state, thing, [paragraph]);
+  }
+
+  return merge(app, {state, tree});
+}
+
+export interface EditorState {
+  replace(link: string, textContent: string): void;
+}
+
+export function Editor(props: {
+  editor: E.Editor;
+  hasFocus: boolean;
   onAction(action: Ac.ActionName): void;
   onOpenLink(target: string): void;
   onJumpLink(target: string): void;
+  onFocus(): void;
+  onEdit(editor: E.Editor): void;
+  onPastedParagraphs(paragraphs: string[]): void;
+  onEditorStateChanged(editorState: EditorState): void;
+  onOpenExternalUrl(url: string): void;
 }) {
-  const stateRef = usePropRef(props.context.state);
-  const treeRef = usePropRef(props.context.tree);
   const onOpenLinkRef = usePropRef(props.onOpenLink);
   const onJumpLinkRef = usePropRef(props.onJumpLink);
   const onActionRef = usePropRef(props.onAction);
-
-  const ref = React.useRef<HTMLDivElement>(null);
+  const onFocusRef = usePropRef(props.onFocus);
+  const onPastedParagraphsRef = usePropRef(props.onPastedParagraphs);
+  const onEditorStateChangedRef = usePropRef(props.onEditorStateChanged);
+  const onOpenExternalUrlRef = usePropRef(props.onOpenExternalUrl);
 
   const keyPlugin = new PS.Plugin({
     props: {
@@ -279,7 +290,9 @@ function ContentEditor(props: {
   });
 
   const externalLinkDecorationPlugin = createExternalLinkDecorationPlugin({
-    openExternalUrl: props.context.openExternalUrl,
+    openExternalUrl(url: string) {
+      onOpenExternalUrlRef.current!(url);
+    },
   });
 
   const pastePlugin = new PS.Plugin({
@@ -288,21 +301,7 @@ function ContentEditor(props: {
         const text = ev.clipboardData?.getData("text/plain");
 
         if (text !== undefined && E.isParagraphFormattedText(text)) {
-          const paragraphs = E.paragraphs(text);
-
-          let [state, tree] = [props.context.state, props.context.tree];
-          let lastNode = props.node;
-
-          for (const paragraph of paragraphs) {
-            const [state_, tree_, thing, lastNode_] = T.createSiblingAfter(state, tree, lastNode);
-            [state, tree, lastNode] = [state_, tree_, lastNode_];
-
-            state = D.setContent(state, thing, [paragraph]);
-          }
-
-          props.context.setState(state);
-          props.context.setTree(tree);
-
+          onPastedParagraphsRef.current!(E.paragraphs(text));
           return true;
         }
 
@@ -316,157 +315,46 @@ function ContentEditor(props: {
   const focusPlugin = new PS.Plugin({
     props: {
       handleClick(view, pos, ev) {
-        props.context.setTree(T.focus(treeRef.current!, props.node));
-
+        onFocusRef.current!();
         return false;
       },
     },
   });
 
-  const [openLinks, setOpenLinks] = React.useState<string[]>([]);
-  const openLinksRef = usePropRef(openLinks);
-
-  function linkToggled(link: string): void {
-    if (openLinksRef.current!.includes(link)) {
-      setOpenLinks((openLinks) => openLinks.filter((openedLink) => openedLink !== link));
-    } else {
-      setOpenLinks((openLinks) => [...openLinks, link]);
-    }
+  function recreateEditorState() {
+    return toProseMirror(editor, {
+      openLink: (thing) => onOpenLinkRef.current!(thing),
+      jumpLink: (thing) => onJumpLinkRef.current!(thing),
+      plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
+    });
   }
 
-  const initialState = PS.EditorState.create({
-    schema,
-    doc: docFromContent({
-      content: D.content(props.context.state, T.thing(props.context.tree, props.node)),
-      textContentOf: (thing) =>
-        D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null,
-      openLink: (thing) => {
-        onOpenLinkRef.current!(thing);
-        linkToggled(thing);
-      },
-      jumpLink: (thing) => onJumpLinkRef.current!(thing),
-      openLinks: openLinksRef.current!,
-    }),
-    plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
-  });
+  const [editor, setEditor] = React.useState(props.editor);
 
-  const editorViewRef = React.useRef<PV.EditorView<typeof schema> | null>(null);
+  function onTransaction(transaction: PS.Transaction<typeof schema>, view: PV.EditorView<typeof schema>) {
+    setEditor(fromProseMirror(view.state.apply(transaction)));
+  }
 
-  const setStateRef = usePropRef(props.context.setState);
-
-  // Initialize editor
+  // Send our changes to our parent
   React.useEffect(() => {
-    function dispatchTransaction(this: PV.EditorView<typeof schema>, transaction: PS.Transaction<typeof schema>) {
-      this.updateState(this.state.apply(transaction));
+    if (contentEq(props.editor.content, editor.content)) return;
+    props.onEdit(editor);
+  }, [editor.content]);
 
-      // This is where we communicate changes made by the user back into the
-      // state managed by React.
-
-      const editorDoc = this.state.doc;
-
-      // We don't need to update anything if the transaction didn't actually
-      // change any of the content.
-      if (
-        E.contentToEditString(D.content(stateRef.current!, T.thing(treeRef.current!, props.node))) ===
-        E.contentToEditString(contentFromDoc(editorDoc))
-      )
-        return;
-
-      setStateRef.current!(
-        D.setContent(stateRef.current!, T.thing(treeRef.current!, props.node), contentFromDoc(editorDoc)),
-      );
-    }
-
-    editorViewRef.current = new PV.EditorView(ref.current!, {state: initialState, dispatchTransaction});
-  }, []);
-
-  // When the state managed by React gets updated from elsewhere, we want to
-  // reflect those updates in the editor state.
+  // Receive changes from our parent
   React.useEffect(() => {
-    // It should have focus but doesn't for some reason. I don't know why this
-    // happens, but it does. Probably related to popup. When we insert a link,
-    // we need this, I think.
-    if (T.focused(treeRef.current!) === props.node) {
-      console.log("Forced focus");
-      editorViewRef.current!.focus();
-    }
-
-    // If this editor has focus, then the changes were probably made via the
-    // editor itself. In that case, we wouldn't want to update the editor again.
-    if (editorViewRef.current!.hasFocus()) return;
-
-    editorViewRef.current!.updateState(
-      PS.EditorState.create({
-        schema,
-        doc: docFromContent({
-          content: D.content(props.context.state, T.thing(props.context.tree, props.node)),
-          textContentOf: (thing) =>
-            D.exists(stateRef.current!, thing) ? D.contentText(stateRef.current!, thing) : null,
-          openLink: (thing) => {
-            onOpenLinkRef.current!(thing);
-            linkToggled(thing);
-          },
-          jumpLink: (thing) => onJumpLinkRef.current!(thing),
-          openLinks: openLinksRef.current!,
-        }),
-        plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
-      }),
-    );
-  }, [props.context.state, props.node, openLinks]);
+    if (contentEq(props.editor.content, editor.content)) return;
+    setEditor(props.editor);
+  }, [props.editor]);
 
   React.useEffect(() => {
-    if (!T.hasFocus(props.context.tree, props.node)) return;
-
-    editorViewRef.current!.focus();
-
-    // The popup that appears e.g. when inserting a link needs to have access
-    // to the current selection.
-    const textSelection = (() => {
-      let content: D.Content = [];
-      editorViewRef.current!.state.selection.content().content.forEach((node) => {
-        if (node.isText) {
-          content.push(node.textContent);
-        } else if (node.type.name === "link") {
-          content.push({link: node.attrs.target});
-        }
-      });
-      return E.contentToEditString(content);
-    })();
-
-    // [TODO] Technically, we should react to changes in
-    // registerActiveEditor, although I don't think we actually update this
-    // anywhere currently.
-    props.context.registerActiveEditor({
-      selection: textSelection,
-
-      replaceSelectionWithLink(target: string, textContent: string): void {
-        editorViewRef.current!.focus();
-
-        const tr = editorViewRef.current!.state.tr;
-        const attrs: LinkAttrs = {
-          target,
-          status: openLinksRef.current!.includes(target) ? "expanded" : "collapsed",
-          toggle: () => onOpenLinkRef.current!(target),
-          jump: () => onJumpLinkRef.current!(target),
-          content: textContent,
-        };
-        tr.replaceSelectionWith(schema.node("link", attrs));
-
-        editorViewRef.current!.dispatch(tr);
+    onEditorStateChangedRef.current!({
+      replace(link: string, title: string): void {
+        setEditor((editor) => E.insertLink(editor, {link, title}));
       },
     });
-  }, [T.focused(props.context.tree)]);
+  }, [editor]);
 
-  return <div className="editor content" ref={ref}></div>;
-}
-
-export default function Editor(props: {
-  context: Context;
-  node: T.NodeRef;
-  placeholder?: string;
-  onAction(action: Ac.ActionName): void;
-  onOpenLink(target: string): void;
-  onJumpLink(target: string): void;
-}) {
-  return <ContentEditor {...props} />;
+  const proseMirrorState = React.useMemo(recreateEditorState, [editor]);
+  return <ProseMirror state={proseMirrorState} onTransaction={onTransaction} hasFocus={props.hasFocus} />;
 }
