@@ -467,7 +467,11 @@ function ThingOverview(p: {context: Context}) {
           )}
           onEdit={(editor) =>
             p.context.setState(
-              Data.setContent(p.context.state, T.thing(p.context.tree, T.root(p.context.tree)), editor.content),
+              Data.setContent(
+                p.context.state,
+                T.thing(p.context.tree, T.root(p.context.tree)),
+                Editing.produceContent(editor),
+              ),
             )
           }
           hasFocus={T.hasFocus(p.context.tree, T.root(p.context.tree))}
@@ -627,7 +631,11 @@ function ExpandableItem(props: {
       )}
       onEdit={(editor) =>
         props.context.setState(
-          Data.setContent(props.context.state, T.thing(props.context.tree, props.node), editor.content),
+          Data.setContent(
+            props.context.state,
+            T.thing(props.context.tree, props.node),
+            Editing.produceContent(editor),
+          ),
         )
       }
       hasFocus={T.hasFocus(props.context.tree, props.node)}

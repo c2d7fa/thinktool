@@ -101,3 +101,25 @@ describe("inserting a link while having some text selected", () => {
     expect(after.selection).toEqual({from: 9, to: 9});
   });
 });
+
+describe("when converting editor content to plain data content", () => {
+  const editor: E.Editor = {
+    content: ["This is a link: ", {link: "2", title: "Item 2"}, "."],
+    selection: {from: 0, to: 0},
+  };
+
+  const content = E.produceContent(editor);
+
+  test("the text segments are the same", () => {
+    expect(content[0]).toBe("This is a link: ");
+    expect(content[2]).toBe(".");
+  });
+
+  test("the links mention only the IDs of each linked item", () => {
+    expect(content[1]).toEqual({link: "2"});
+  });
+
+  test("there aren't any other segments added", () => {
+    expect(content.length).toBe(3);
+  });
+});

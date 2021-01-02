@@ -96,6 +96,16 @@ export function insertLink(editor: Editor, link: {link: string; title: string}):
   return {content, selection: {from: cursor, to: cursor}};
 }
 
+export function produceContent(editor: Editor): D.Content {
+  return editor.content.map((segment) => {
+    if (typeof segment === "string") {
+      return segment;
+    } else {
+      return {link: segment.link};
+    }
+  });
+}
+
 // #region Paragraphs
 
 // When the user pastes a series of paragraph, the application should split each
