@@ -1,6 +1,7 @@
 /// <reference types="@types/jest" />
 
 import * as D from "../src/data";
+import * as T from "../src/tree";
 import * as A from "../src/app";
 
 import * as E from "../src/editing";
@@ -43,15 +44,19 @@ describe("paragraphs", () => {
 });
 
 describe("loading editor from application state", () => {
+  const app = A.of({
+    "0": {content: ["Item 0 has link to ", {link: "1"}, "."]},
+    "1": {content: ["Item 1"]},
+  });
+
+  const editor = E.load(app, T.root(app.tree));
+
   it("annotates links with their content", () => {
-    let state = D.empty;
-    state = D.create(state, "1")[0];
-    state = D.setContent(state, "0", ["Item 0"]);
-    state = D.setContent(state, "1", ["Item 1 has link to ", {link: "0"}, "."]);
+    expect(editor.content).toEqual(["Item 0 has link to ", {link: "1", title: "Item 1"}, "."]);
+  });
 
-    const content = E.load(D.content(state, "1"), state).content;
-
-    expect(content).toEqual(["Item 1 has link to ", {link: "0", title: "Item 0"}, "."]);
+  it("resets the selection to (0, 0)", () => {
+    expect(editor.selection).toEqual({from: 0, to: 0});
   });
 });
 

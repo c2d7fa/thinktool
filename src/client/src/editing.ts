@@ -11,7 +11,10 @@ export type EditorContent = ContentElement[];
 export type ContentElement = string | {link: string; title: string | null};
 export type Range = {from: number; to: number};
 
-export function load(content: D.Content, state: D.State): Editor {
+export function load(app: A.App, node: T.NodeRef): Editor {
+  const content = D.content(app.state, T.thing(app.tree, node));
+  const state = app.state;
+
   return {
     content: content.map((piece) => {
       if (typeof piece === "string") {
