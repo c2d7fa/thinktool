@@ -57,6 +57,15 @@ export function jump(app: App, thing: string): App {
   return merge(app, {tree: T.fromRoot(app.state, thing), tutorialState});
 }
 
+export function toggleLink(app: App, node: T.NodeRef, link: string): App {
+  const tutorialState = Tutorial.action(app.tutorialState, {
+    action: "link-toggled",
+    expanded: !T.isLinkOpen(app.tree, node, link),
+  });
+  const tree = T.toggleLink(app.state, app.tree, node, link);
+  return merge(app, {tutorialState, tree});
+}
+
 export function isGoalFinished(app: App, goal: GoalId): boolean {
   return Tutorial.isGoalFinished(app.tutorialState, goal);
 }

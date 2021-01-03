@@ -15,6 +15,7 @@ import * as API from "./server-api";
 import * as Storage from "./storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
+import * as A from "./app";
 
 import * as Editor from "./ui/Editor";
 import * as Editing from "./editing";
@@ -437,17 +438,13 @@ function ThingOverview(p: {context: Context}) {
   const hasReferences =
     Data.backreferences(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))).length > 0;
 
-  function openLink(target: string): void {
-    p.context.setTree(T.toggleLink(p.context.state, p.context.tree, T.root(p.context.tree), target));
-  }
-
   return (
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
         <Editor.Editor
           onAction={(action) => p.context.send("action", {action})}
-          onOpenLink={openLink}
+          onOpenLink={(link) => setAppState(p.context, A.toggleLink(p.context, T.root(p.context.tree), link))}
           onJumpLink={(target) => setAppState(p.context, jump(p.context, target))}
           onFocus={() => p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)))}
           editor={Editing.load(
@@ -548,16 +545,6 @@ function ExpandableItem(props: {
 
   kind: "child" | "reference" | "opened-link" | "parent";
 }) {
-  function onOpenLink(target: string): void {
-    props.context.setTutorialState(
-      Tutorial.action(props.context.tutorialState, {
-        action: "link-toggled",
-        expanded: !T.isLinkOpen(props.context.tree, props.node, target),
-      }),
-    );
-    props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, target));
-  }
-
   function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
     const otherParents = Data.otherParents(
       props.context.state,
@@ -597,7 +584,7 @@ function ExpandableItem(props: {
   const content = (
     <Editor.Editor
       onAction={(action) => props.context.send("action", {action})}
-      onOpenLink={onOpenLink}
+      onOpenLink={(link) => setAppState(props.context, A.toggleLink(props.context, props.node, link))}
       onJumpLink={(target) => setAppState(props.context, jump(props.context, target))}
       onFocus={() => props.context.setTree(T.focus(props.context.tree, props.node))}
       editor={Editing.load(
