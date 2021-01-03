@@ -64,6 +64,10 @@ export function selectedText(editor: Editor): string {
   return result;
 }
 
+export function select(editor: Editor, selection: Range): Editor {
+  return {...editor, selection};
+}
+
 export function externalLinkRanges(content: EditorContent): Range[] {
   let indexedTexts: {index: number; text: string}[] = [];
 

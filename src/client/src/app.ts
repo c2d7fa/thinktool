@@ -5,6 +5,7 @@ import {Communication} from "@thinktool/shared";
 
 import * as Tutorial from "./tutorial";
 import {GoalId} from "./goal";
+import {App} from "./main";
 
 export interface App {
   state: D.State;
@@ -49,6 +50,19 @@ export function editor(app: App, node: T.NodeRef): E.Editor | null {
 
 export function edit(app: App, node: T.NodeRef, editor: E.Editor): App {
   return merge(E.save(app, editor, T.thing(app.tree, node)), {editors: {[node.id]: editor}});
+}
+
+export function editInsertLink(app: App, node: T.NodeRef, link: string): App {
+  if (editor(app, node) === null) return app;
+  return edit(app, node, E.insertLink(editor(app, node)!, {link, title: D.contentText(app.state, link)}));
+}
+
+export function selectedText(app: App): string {
+  const focusedNode = T.focused(app.tree);
+  if (focusedNode === null) return "";
+  const activeEditor = editor(app, focusedNode);
+  if (activeEditor === null) return "";
+  return E.selectedText(activeEditor);
 }
 
 export function merge(app: App, values: {[K in keyof App]?: App[K]}): App {

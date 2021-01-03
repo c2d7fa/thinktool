@@ -457,16 +457,6 @@ function ThingOverview(p: {context: Context}) {
           onPastedParagraphs={(paragraphs) =>
             setAppState(p.context, Editor.onPastedParagraphs(p.context, T.root(p.context.tree), paragraphs))
           }
-          onEditorStateChanged={(editor) => {
-            if (T.hasFocus(p.context.tree, T.root(p.context.tree))) {
-              p.context.registerActiveEditor({
-                selection: editor.selection,
-                replaceSelectionWithLink(target, textContent) {
-                  editor.replace(target, textContent);
-                },
-              });
-            }
-          }}
           onOpenExternalUrl={p.context.openExternalUrl}
         />
         <div className="children">
@@ -589,16 +579,6 @@ function ExpandableItem(props: {
       onPastedParagraphs={(paragraphs) =>
         setAppState(props.context, Editor.onPastedParagraphs(props.context, props.node, paragraphs))
       }
-      onEditorStateChanged={(editor) => {
-        if (T.hasFocus(props.context.tree, props.node)) {
-          props.context.registerActiveEditor({
-            selection: editor.selection,
-            replaceSelectionWithLink(target, textContent) {
-              editor.replace(target, textContent);
-            },
-          });
-        }
-      }}
       onOpenExternalUrl={props.context.openExternalUrl}
     />
   );

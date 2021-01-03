@@ -252,7 +252,6 @@ export function Editor(props: {
   onFocus(): void;
   onEdit(editor: E.Editor): void;
   onPastedParagraphs(paragraphs: string[]): void;
-  onEditorStateChanged(editorState: EditorState): void;
   onOpenExternalUrl(url: string): void;
 }) {
   const onOpenLinkRef = usePropRef(props.onOpenLink);
@@ -260,7 +259,6 @@ export function Editor(props: {
   const onActionRef = usePropRef(props.onAction);
   const onFocusRef = usePropRef(props.onFocus);
   const onPastedParagraphsRef = usePropRef(props.onPastedParagraphs);
-  const onEditorStateChangedRef = usePropRef(props.onEditorStateChanged);
   const onOpenExternalUrlRef = usePropRef(props.onOpenExternalUrl);
 
   const keyPlugin = new PS.Plugin({
@@ -338,24 +336,25 @@ export function Editor(props: {
 
   // Send our changes to our parent
   React.useEffect(() => {
-    if (contentEq(props.editor.content, editor.content)) return;
+    if (
+      contentEq(props.editor.content, editor.content) &&
+      props.editor.selection.from === editor.selection.from &&
+      props.editor.selection.to === editor.selection.to
+    )
+      return;
     props.onEdit(editor);
-  }, [editor.content]);
+  }, [editor]);
 
   // Receive changes from our parent
   React.useEffect(() => {
-    if (contentEq(props.editor.content, editor.content)) return;
+    if (
+      contentEq(props.editor.content, editor.content) &&
+      props.editor.selection.from === editor.selection.from &&
+      props.editor.selection.to === editor.selection.to
+    )
+      return;
     setEditor(props.editor);
   }, [props.editor]);
-
-  React.useEffect(() => {
-    onEditorStateChangedRef.current!({
-      selection: E.selectedText(editor),
-      replace(link: string, title: string): void {
-        setEditor((editor) => E.insertLink(editor, {link, title}));
-      },
-    });
-  }, [editor]);
 
   const proseMirrorState = React.useMemo(recreateEditorState, [editor]);
   return <ProseMirror state={proseMirrorState} onTransaction={onTransaction} hasFocus={props.hasFocus} />;

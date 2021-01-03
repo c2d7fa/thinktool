@@ -101,38 +101,20 @@ export function executeOn(
   const config_ = {
     ...config,
     async input() {
-      if (context.activeEditor?.selection === undefined) {
-        return await config.input();
-      } else {
-        return await config.input(context.activeEditor.selection);
-      }
+      return await config.input(Ap.selectedText(context));
     },
   };
 
   (async () => {
     const result = await updateOn(context, action, target, config_);
 
-    if (result.app) A.setAppState(context, result.app);
+    let app = result.app ?? context;
 
-    // [HACK] The mechanism for inserting a link in the editor is really
-    // awkward. This is ultimately due to the fact that we don't really want to
-    // manage the entire editor state in React. But it could probably be
-    // improved.
-    //
-    // We intentionally do this last, because if we do it first, then the editor
-    // will update the global state from the *old* state, and then afterwards we
-    // would override with the new state (which might have a new item from the
-    // popup for example), and then we would not get the link that the editor
-    // inserted.
-    //
-    // (Disclaimer: That explanation may not only be confusing but also wrong. I
-    // don't really understand why this code works; in fact, it might not.)
     if (result.insertLinkInActiveEditor) {
-      if (context.activeEditor === null) throw "No active editor.";
-      const target = result.insertLinkInActiveEditor;
-      const textContent = D.contentText(result.app!.state, target);
-      context.activeEditor.replaceSelectionWithLink(target, textContent);
+      app = Ap.editInsertLink(app, require(target), result.insertLinkInActiveEditor);
     }
+
+    A.setAppState(context, app);
 
     if (result.undo) {
       context.undo();
