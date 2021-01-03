@@ -43,23 +43,6 @@ describe("paragraphs", () => {
   });
 });
 
-describe("loading editor from application state", () => {
-  const app = A.of({
-    "0": {content: ["Item 0 has link to ", {link: "1"}, "."]},
-    "1": {content: ["Item 1"]},
-  });
-
-  const editor = E.load(app, T.root(app.tree));
-
-  it("annotates links with their content", () => {
-    expect(editor.content).toEqual(["Item 0 has link to ", {link: "1", title: "Item 1"}, "."]);
-  });
-
-  it("resets the selection to (0, 0)", () => {
-    expect(editor.selection).toEqual({from: 0, to: 0});
-  });
-});
-
 describe("external link decorations", () => {
   test("when there are no external links in the text, there are no decorations", () => {
     expect(E.externalLinkRanges(["No external links here!"])).toEqual([]);
@@ -132,5 +115,52 @@ describe("when saving editor state into application", () => {
 
   test("any segments not in the editor state are deleted", () => {
     expect(content.length).toBe(3);
+  });
+});
+
+describe("an editor is created from the application state", () => {
+  test("when initializing the application", () => {
+    const app = A.of({
+      "0": {content: ["Item 0"]},
+    });
+
+    expect(A.editor(app, T.root(app.tree))).toEqual({content: ["Item 0"], selection: {from: 0, to: 0}});
+  });
+
+  test("when adding a new item", () => {
+    const before = A.of({
+      "0": {content: ["Item 0"]},
+    });
+
+    let [state, tree, thing, node] = T.createChild(before.state, before.tree, T.root(before.tree));
+    state = D.setContent(state, thing, ["New Item"]);
+    const after = A.merge(before, {state, tree});
+
+    expect(A.editor(before, node)).toBeNull();
+    expect(A.editor(after, node)).toEqual({content: ["New Item"], selection: {from: 0, to: 0}});
+  });
+
+  test("when loading an existing item", () => {
+    const before = A.of({
+      "0": {content: ["Item 0"]},
+    });
+
+    let [state, tree, node] = T.insertChild(before.state, before.tree, T.root(before.tree), "0", 0);
+    const after = A.merge(before, {state, tree});
+
+    expect(A.editor(before, node)).toBeNull();
+    expect(A.editor(after, node)).toEqual({content: ["Item 0"], selection: {from: 0, to: 0}});
+  });
+
+  test("links in the loaded editor are annotated with link title", () => {
+    const app = A.of({
+      "0": {content: ["Item 0 has link to ", {link: "1"}, "."]},
+      "1": {content: ["Item 1"]},
+    });
+
+    expect(A.editor(app, T.root(app.tree))).toEqual({
+      content: ["Item 0 has link to ", {link: "1", title: "Item 1"}, "."],
+      selection: {from: 0, to: 0},
+    });
   });
 });

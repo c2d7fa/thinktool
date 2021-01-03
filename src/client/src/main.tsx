@@ -447,7 +447,7 @@ function ThingOverview(p: {context: Context}) {
           onOpenLink={(link) => setAppState(p.context, A.toggleLink(p.context, T.root(p.context.tree), link))}
           onJumpLink={(target) => setAppState(p.context, jump(p.context, target))}
           onFocus={() => p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)))}
-          editor={Editing.load(p.context, T.root(p.context.tree))}
+          editor={A.editor(p.context, T.root(p.context.tree))!}
           onEdit={(editor) =>
             setAppState(
               p.context,
@@ -584,7 +584,7 @@ function ExpandableItem(props: {
       onOpenLink={(link) => setAppState(props.context, A.toggleLink(props.context, props.node, link))}
       onJumpLink={(target) => setAppState(props.context, jump(props.context, target))}
       onFocus={() => props.context.setTree(T.focus(props.context.tree, props.node))}
-      editor={Editing.load(props.context, props.node)}
+      editor={A.editor(props.context, props.node)!}
       onEdit={(editor) =>
         setAppState(props.context, Editing.save(props.context, editor, T.thing(props.context.tree, props.node)))
       }

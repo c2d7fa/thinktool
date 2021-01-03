@@ -1,5 +1,6 @@
 import * as D from "./data";
 import * as T from "./tree";
+import * as E from "./editing";
 import {Communication} from "@thinktool/shared";
 
 import * as Tutorial from "./tutorial";
@@ -36,6 +37,11 @@ export function of(items: ItemGraph): App {
     }
   }
   return from(state, T.fromRoot(state, "0"));
+}
+
+export function editor(app: App, node: T.NodeRef): E.Editor | null {
+  if (!(node.id in app.tree.nodes)) return null;
+  return E.load(app, node);
 }
 
 export function merge(app: App, values: {[K in keyof App]?: App[K]}): App {
