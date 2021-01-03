@@ -239,6 +239,7 @@ export function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: s
 }
 
 export interface EditorState {
+  selection: string;
   replace(link: string, textContent: string): void;
 }
 
@@ -349,6 +350,7 @@ export function Editor(props: {
 
   React.useEffect(() => {
     onEditorStateChangedRef.current!({
+      selection: E.selectedText(editor),
       replace(link: string, title: string): void {
         setEditor((editor) => E.insertLink(editor, {link, title}));
       },

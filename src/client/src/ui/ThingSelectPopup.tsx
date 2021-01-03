@@ -152,8 +152,9 @@ export function usePopup(app: C.AppState) {
     console.error("onSelect callback not set!");
   });
 
-  function input(): Promise<[C.AppState, string]> {
+  function input(seedText?: string): Promise<[C.AppState, string]> {
     return new Promise((resolve, reject) => {
+      setQuery(seedText ?? "");
       setOnCreate(() => (content: string) => {
         let [state, selection] = D.create(appRef.current!.state);
         state = D.setContent(state, selection, [content]);

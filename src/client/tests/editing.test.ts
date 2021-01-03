@@ -228,3 +228,18 @@ test("editing the root and then jumping to a different item resets the root edit
   });
   expect(A.editor(jumped, T.root(jumped.tree))).toEqual({content: ["Item 1"], selection: {from: 0, to: 0}});
 });
+
+describe("reading selection from editor", () => {
+  it("when there aren't any links gives the selected text", () => {
+    const editor = {content: ["This is some text inside an editor."], selection: {from: 8, to: 17}};
+    expect(E.selectedText(editor)).toBe("some text");
+  });
+
+  it("replaces links with their titles", () => {
+    const editor = {
+      content: ["This is a ", {link: "1", title: "Link"}, " inside an editor."],
+      selection: {from: 8, to: 18},
+    };
+    expect(E.selectedText(editor)).toBe("a Link inside");
+  });
+});

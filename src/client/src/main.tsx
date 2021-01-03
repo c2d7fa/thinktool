@@ -460,7 +460,7 @@ function ThingOverview(p: {context: Context}) {
           onEditorStateChanged={(editor) => {
             if (T.hasFocus(p.context.tree, T.root(p.context.tree))) {
               p.context.registerActiveEditor({
-                selection: "", // [FIXME] We should get this from editor
+                selection: editor.selection,
                 replaceSelectionWithLink(target, textContent) {
                   editor.replace(target, textContent);
                 },
@@ -592,7 +592,7 @@ function ExpandableItem(props: {
       onEditorStateChanged={(editor) => {
         if (T.hasFocus(props.context.tree, props.node)) {
           props.context.registerActiveEditor({
-            selection: "", // [FIXME] We should get this from FIXME. We should get this from editor
+            selection: editor.selection,
             replaceSelectionWithLink(target, textContent) {
               editor.replace(target, textContent);
             },

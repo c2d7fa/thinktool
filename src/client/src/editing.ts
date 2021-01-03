@@ -43,6 +43,27 @@ export function save(app: A.App, editor: Editor, thing: string): A.App {
   });
 }
 
+export function selectedText(editor: Editor): string {
+  let positionalElements: ContentElement[] = [];
+  for (const element of editor.content) {
+    if (typeof element === "string") {
+      positionalElements.push(...element);
+    } else {
+      positionalElements.push(element);
+    }
+  }
+  const slice = positionalElements.slice(editor.selection.from, editor.selection.to);
+  let result = "";
+  for (const element of slice) {
+    if (typeof element === "string") {
+      result += element;
+    } else {
+      result += element.title;
+    }
+  }
+  return result;
+}
+
 export function externalLinkRanges(content: EditorContent): Range[] {
   let indexedTexts: {index: number; text: string}[] = [];
 

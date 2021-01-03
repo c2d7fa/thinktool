@@ -6,6 +6,9 @@ import * as Tutorial from "./tutorial";
 import * as S from "./shortcuts";
 import * as Goal from "./goal";
 import {NodeRef} from "./tree-internal";
+import {App} from "./app";
+import * as Ap from "./app";
+import * as E from "./editing";
 
 export type ActionName =
   | "insert-sibling"
@@ -95,8 +98,19 @@ export function executeOn(
     console.warn("The action %o appears not to be enabled.", action);
   }
 
+  const config_ = {
+    ...config,
+    async input() {
+      if (context.activeEditor?.selection === undefined) {
+        return await config.input();
+      } else {
+        return await config.input(context.activeEditor.selection);
+      }
+    },
+  };
+
   (async () => {
-    const result = await updateOn(context, action, target, config);
+    const result = await updateOn(context, action, target, config_);
 
     if (result.app) A.setAppState(context, result.app);
 
@@ -174,7 +188,7 @@ function applyActionEvent(app: AppState, event: Goal.ActionEvent): AppState {
 }
 
 export type UpdateConfig = {
-  input(): Promise<[AppState, string]>;
+  input(seedText?: string): Promise<[AppState, string]>;
 };
 
 type UpdateArgs = UpdateConfig & {
