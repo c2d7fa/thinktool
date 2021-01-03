@@ -108,7 +108,7 @@ describe("inserting a link while having some text selected", () => {
   });
 });
 
-describe("when emitting changes from editor into application state", () => {
+describe("when saving editor state into application", () => {
   const before = A.of({
     "1": {content: ["Item 1 before content was edited"]},
   });
@@ -118,8 +118,7 @@ describe("when emitting changes from editor into application state", () => {
     selection: {from: 0, to: 0},
   };
 
-  const after = E.emit(before, editor, "1");
-
+  const after = E.save(before, editor, "1");
   const content = D.content(after.state, "1");
 
   test("the text segments are taken from the editor state", () => {

@@ -27,6 +27,22 @@ export function load(app: A.App, node: T.NodeRef): Editor {
   };
 }
 
+export function save(app: A.App, editor: Editor, thing: string): A.App {
+  return A.merge(app, {
+    state: D.setContent(
+      app.state,
+      thing,
+      editor.content.map((segment) => {
+        if (typeof segment === "string") {
+          return segment;
+        } else {
+          return {link: segment.link};
+        }
+      }),
+    ),
+  });
+}
+
 export function externalLinkRanges(content: EditorContent): Range[] {
   let indexedTexts: {index: number; text: string}[] = [];
 
@@ -99,22 +115,6 @@ export function insertLink(editor: Editor, link: {link: string; title: string}):
   const cursor = editor.selection.from + 1;
 
   return {content, selection: {from: cursor, to: cursor}};
-}
-
-export function emit(app: A.App, editor: Editor, thing: string): A.App {
-  return A.merge(app, {
-    state: D.setContent(
-      app.state,
-      thing,
-      editor.content.map((segment) => {
-        if (typeof segment === "string") {
-          return segment;
-        } else {
-          return {link: segment.link};
-        }
-      }),
-    ),
-  });
 }
 
 // #region Paragraphs
