@@ -29,6 +29,7 @@ export function setAppState(context: Context, app: App): void {
   context.setTree(app.tree);
   context.setTutorialState(app.tutorialState);
   context.setChangelogShown(app.changelogShown);
+  context.setEditors(app.editors);
 }
 
 export interface Context extends App {
@@ -61,4 +62,6 @@ export interface Context extends App {
   openExternalUrl(url: string): void;
 
   send: Receiver<Message>["send"];
+
+  setEditors(editors: App["editors"]): void;
 }

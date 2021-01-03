@@ -164,3 +164,67 @@ describe("an editor is created from the application state", () => {
     });
   });
 });
+
+describe("when one item exists in multiple places", () => {
+  const app = A.of({
+    "0": {content: ["Root"], children: ["1", "1"]},
+    "1": {content: ["Item 1"]},
+  });
+
+  const node1 = () => T.children(app.tree, T.root(app.tree))[0];
+  const node2 = () => T.children(app.tree, T.root(app.tree))[1];
+
+  test("both editors start out with the same content and an empty selection", () => {
+    expect(A.editor(app, node1())).toEqual({content: ["Item 1"], selection: {from: 0, to: 0}});
+    expect(A.editor(app, node2())).toEqual({content: ["Item 1"], selection: {from: 0, to: 0}});
+  });
+
+  describe("editing the item in one editor", () => {
+    const after = A.edit(app, node1(), {content: ["Edited Item 1"], selection: {from: 13, to: 13}});
+
+    it("directly updates that editor, including selection", () => {
+      expect(A.editor(app, node1())).toEqual({content: ["Item 1"], selection: {from: 0, to: 0}});
+      expect(A.editor(after, node1())).toEqual({content: ["Edited Item 1"], selection: {from: 13, to: 13}});
+    });
+
+    it("updates the content of the other item and resets the selection", () => {
+      expect(A.editor(app, node2())).toEqual({content: ["Item 1"], selection: {from: 0, to: 0}});
+      expect(A.editor(after, node2())).toEqual({content: ["Edited Item 1"], selection: {from: 0, to: 0}});
+    });
+  });
+
+  describe("and then editing the item in the other editor", () => {
+    const first = A.edit(app, node1(), {content: ["Edited Item 1"], selection: {from: 13, to: 13}});
+    const second = A.edit(first, node2(), {content: ["Edited Item 1 again"], selection: {from: 19, to: 19}});
+
+    it("directly updates that editor, including selection", () => {
+      expect(A.editor(first, node2())).toEqual({content: ["Edited Item 1"], selection: {from: 0, to: 0}});
+      expect(A.editor(second, node2())).toEqual({content: ["Edited Item 1 again"], selection: {from: 19, to: 19}});
+    });
+
+    it("updates the content of the previous editor and resets the selection", () => {
+      expect(A.editor(first, node1())).toEqual({content: ["Edited Item 1"], selection: {from: 13, to: 13}});
+      expect(A.editor(second, node1())).toEqual({content: ["Edited Item 1 again"], selection: {from: 0, to: 0}});
+    });
+  });
+});
+
+test("editing the root and then jumping to a different item resets the root editor", () => {
+  const initial = A.of({
+    "0": {content: ["Item 0"]},
+    "1": {content: ["Item 1"]},
+  });
+
+  const edited = A.edit(initial, T.root(initial.tree), {
+    content: ["Edited Item 0"],
+    selection: {from: 13, to: 13},
+  });
+
+  const jumped = A.jump(edited, "1");
+
+  expect(A.editor(edited, T.root(edited.tree))).toEqual({
+    content: ["Edited Item 0"],
+    selection: {from: 13, to: 13},
+  });
+  expect(A.editor(jumped, T.root(jumped.tree))).toEqual({content: ["Item 1"], selection: {from: 0, to: 0}});
+});

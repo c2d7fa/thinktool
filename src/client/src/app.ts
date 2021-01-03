@@ -12,6 +12,7 @@ export interface App {
   changelogShown: boolean;
   changelog: Communication.Changelog | "loading";
   tree: T.Tree;
+  editors: {[nodeId: number]: E.Editor};
 }
 
 export function from(data: D.State, tree: T.Tree): App {
@@ -21,6 +22,7 @@ export function from(data: D.State, tree: T.Tree): App {
     tutorialState: Tutorial.initialize(false),
     changelogShown: false,
     changelog: "loading",
+    editors: {},
   };
 }
 
@@ -41,7 +43,12 @@ export function of(items: ItemGraph): App {
 
 export function editor(app: App, node: T.NodeRef): E.Editor | null {
   if (!(node.id in app.tree.nodes)) return null;
+  if (node.id in app.editors) return app.editors[node.id];
   return E.load(app, node);
+}
+
+export function edit(app: App, node: T.NodeRef, editor: E.Editor): App {
+  return merge(E.save(app, editor, T.thing(app.tree, node)), {editors: {[node.id]: editor}});
 }
 
 export function merge(app: App, values: {[K in keyof App]?: App[K]}): App {
@@ -60,7 +67,7 @@ export function jump(app: App, thing: string): App {
     previouslyFocused: T.thing(app.tree, T.root(app.tree)),
     thing,
   });
-  return merge(app, {tree: T.fromRoot(app.state, thing), tutorialState});
+  return merge(app, {tree: T.fromRoot(app.state, thing), tutorialState, editors: {}});
 }
 
 export function toggleLink(app: App, node: T.NodeRef, link: string): App {

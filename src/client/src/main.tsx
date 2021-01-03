@@ -155,6 +155,8 @@ function useContext({
   // Changelog
   const [changelogShown, setChangelogShown] = React.useState<boolean>(false);
 
+  const [editors, setEditors] = React.useState<Context["editors"]>({});
+
   return {
     state,
     setState,
@@ -184,6 +186,8 @@ function useContext({
     server,
     openExternalUrl,
     send: receiver.send,
+    editors,
+    setEditors,
   };
 }
 
@@ -448,12 +452,7 @@ function ThingOverview(p: {context: Context}) {
           onJumpLink={(target) => setAppState(p.context, jump(p.context, target))}
           onFocus={() => p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)))}
           editor={A.editor(p.context, T.root(p.context.tree))!}
-          onEdit={(editor) =>
-            setAppState(
-              p.context,
-              Editing.save(p.context, editor, T.thing(p.context.tree, T.root(p.context.tree))),
-            )
-          }
+          onEdit={(editor) => setAppState(p.context, A.edit(p.context, T.root(p.context.tree), editor))}
           hasFocus={T.hasFocus(p.context.tree, T.root(p.context.tree))}
           onPastedParagraphs={(paragraphs) =>
             setAppState(p.context, Editor.onPastedParagraphs(p.context, T.root(p.context.tree), paragraphs))
@@ -585,9 +584,7 @@ function ExpandableItem(props: {
       onJumpLink={(target) => setAppState(props.context, jump(props.context, target))}
       onFocus={() => props.context.setTree(T.focus(props.context.tree, props.node))}
       editor={A.editor(props.context, props.node)!}
-      onEdit={(editor) =>
-        setAppState(props.context, Editing.save(props.context, editor, T.thing(props.context.tree, props.node)))
-      }
+      onEdit={(editor) => setAppState(props.context, A.edit(props.context, props.node, editor))}
       hasFocus={T.hasFocus(props.context.tree, props.node)}
       onPastedParagraphs={(paragraphs) =>
         setAppState(props.context, Editor.onPastedParagraphs(props.context, props.node, paragraphs))
