@@ -50,41 +50,9 @@ function useContext({
   openExternalUrl(url: string): void;
   receiver: Receiver<Message>;
 }): Context {
-  const [state, setLocalState] = React.useState(initialState);
+  const [state, setState] = React.useState(initialState);
 
   const batched = useBatched(200);
-
-  function setState(newState: State): void {
-    if (newState !== state) {
-      undo.pushState(state);
-      setLocalState(newState);
-
-      const diff = diffState(state, newState);
-      for (const thing of diff.deleted) {
-        storage.deleteThing(thing);
-      }
-      for (const thing of diff.changedContent) {
-        batched.update(thing, () => {
-          storage.setContent(thing, Data.content(newState, thing));
-        });
-      }
-      if (diff.added.length !== 0 || diff.changed.length !== 0) {
-        storage.updateThings(
-          [...diff.added, ...diff.changed].map((thing) => ({
-            name: thing,
-            content: Data.content(newState, thing),
-            children: Data.childConnections(newState, thing).map((c) => {
-              return {
-                name: c.connectionId,
-                child: Data.connectionChild(newState, c)!,
-              };
-            }),
-            isPage: Data.isPage(newState, thing),
-          })),
-        );
-      }
-    }
-  }
 
   function undo_(): void {
     const oldState = undo.popState();
@@ -92,8 +60,8 @@ function useContext({
       console.log("Can't undo further");
       return;
     }
-    setLocalState(oldState);
-    // TODO: Code duplication, see setState above
+    setState(oldState);
+    // TODO: Code duplication, see state update handler in 'setApp'
     const diff = diffState(state, oldState);
     for (const thing of diff.deleted) {
       storage.deleteThing(thing);
@@ -131,58 +99,115 @@ function useContext({
   const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
 
   // Tutorial:
-  const [tutorialState, setTutorialState_] = React.useState<Tutorial.State>(
+  const [tutorialState, setTutorialState] = React.useState<Tutorial.State>(
     Tutorial.initialize(initialTutorialFinished),
   );
-  function setTutorialState(tutorialState: Tutorial.State): void {
-    setTutorialState_(tutorialState);
-    if (!Tutorial.isActive(tutorialState)) {
-      storage.setTutorialFinished();
-    }
-  }
 
-  // Changelog
+  // Changelog:
   const [changelogShown, setChangelogShown] = React.useState<boolean>(false);
 
   const [editors, setEditors] = React.useState<Context["editors"]>({});
 
-  return {
+  // --
+
+  const context: Context = {
     setApp(app: A.App) {
-      setState(app.state);
-      setTree(app.tree);
-      setTutorialState(app.tutorialState);
-      setChangelogShown(app.changelogShown);
-      setEditors(app.editors);
+      if (app.editors !== editors) {
+        setEditors(app.editors);
+      }
+
+      if (app.state !== state) {
+        undo.pushState(state);
+        setState(app.state);
+
+        const diff = diffState(state, app.state);
+        for (const thing of diff.deleted) {
+          storage.deleteThing(thing);
+        }
+        for (const thing of diff.changedContent) {
+          batched.update(thing, () => {
+            storage.setContent(thing, Data.content(app.state, thing));
+          });
+        }
+        if (diff.added.length !== 0 || diff.changed.length !== 0) {
+          storage.updateThings(
+            [...diff.added, ...diff.changed].map((thing) => ({
+              name: thing,
+              content: Data.content(app.state, thing),
+              children: Data.childConnections(app.state, thing).map((c) => {
+                return {
+                  name: c.connectionId,
+                  child: Data.connectionChild(app.state, c)!,
+                };
+              }),
+              isPage: Data.isPage(app.state, thing),
+            })),
+          );
+        }
+      }
+
+      if (app.tree !== tree) {
+        setTree(app.tree);
+      }
+
+      if (app.changelogShown !== changelogShown) {
+        setChangelogShown(app.changelogShown);
+      }
+
+      if (app.tutorialState !== tutorialState) {
+        setTutorialState(app.tutorialState);
+        if (!Tutorial.isActive(app.tutorialState)) {
+          storage.setTutorialFinished();
+        }
+      }
     },
+
     state,
-    setState,
-    setLocalState,
+    setLocalState: setState,
     undo: undo_,
     updateLocalState: (update) => {
       // [TODO] I'm almost certain that this is not how things are supposed to
       // be done.
-      setLocalState((state) => {
+      setState((state) => {
         const newState = update(state);
         setTree((tree) => T.refresh(tree, newState));
         return newState;
       });
     },
     tree,
-    setTree,
     drag,
     setDrag,
     tutorialState,
-    setTutorialState,
     changelogShown,
-    setChangelogShown,
     changelog: ChangelogData,
     storage,
     server,
     openExternalUrl,
     send: receiver.send,
     editors,
-    setEditors,
+
+    setTutorialState(tutorialState) {
+      context.setApp(A.merge(context, {tutorialState}));
+    },
+
+    setChangelogShown(changelogShown) {
+      context.setApp(A.merge(context, {changelogShown}));
+    },
+
+    setTree(tree) {
+      context.setApp(A.merge(context, {tree}));
+    },
+
+    setState(state) {
+      context.setApp(A.merge(context, {state}));
+    },
+
+    setEditors(editors) {
+      context.setApp(A.merge(context, editors));
+    },
   };
+
+  return context;
 }
 
 function App_({
