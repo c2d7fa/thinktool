@@ -2,7 +2,6 @@ import {State} from "./data";
 import * as T from "./tree";
 import {Tree} from "./tree";
 import * as Tutorial from "./tutorial";
-import {Communication} from "@thinktool/shared";
 import {Server} from "./server-api";
 import {Storage} from "./storage";
 import type {Receiver} from "./receiver";
@@ -46,9 +45,6 @@ export interface Context extends App {
 
   drag: DragInfo;
   setDrag(value: DragInfo): void;
-
-  activeEditor: ActiveEditor | null;
-  registerActiveEditor(activeEditor: ActiveEditor | null): void;
 
   openExternalUrl(url: string): void;
 

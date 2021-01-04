@@ -18,7 +18,6 @@ import * as Sh from "./shortcuts";
 import * as A from "./app";
 
 import * as Editor from "./ui/Editor";
-import * as Editing from "./editing";
 import {usePopup} from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
@@ -35,7 +34,6 @@ import * as ReactDOM from "react-dom";
 import undo from "./undo";
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
-import {contentText} from "./data/content";
 
 function useContext({
   initialState,
@@ -132,15 +130,6 @@ function useContext({
 
   const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
 
-  // Popup:
-  const [activePopup, setActivePopup] = React.useState<
-    ((state: State, tree: T.Tree, target: T.NodeRef, selection: string) => [State, T.Tree]) | null
-  >(null);
-  const [popupTarget, setPopupTarget] = React.useState<T.NodeRef | null>(null);
-
-  // Editor:
-  const [activeEditor, registerActiveEditor] = React.useState<ActiveEditor | null>(null);
-
   // Tutorial:
   const [tutorialState, setTutorialState_] = React.useState<Tutorial.State>(
     Tutorial.initialize(initialTutorialFinished),
@@ -182,8 +171,6 @@ function useContext({
     setTree,
     drag,
     setDrag,
-    activeEditor,
-    registerActiveEditor,
     tutorialState,
     setTutorialState,
     changelogShown,
