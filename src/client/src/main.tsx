@@ -158,6 +158,13 @@ function useContext({
   const [editors, setEditors] = React.useState<Context["editors"]>({});
 
   return {
+    setApp(app: A.App) {
+      setState(app.state);
+      setTree(app.tree);
+      setTutorialState(app.tutorialState);
+      setChangelogShown(app.changelogShown);
+      setEditors(app.editors);
+    },
     state,
     setState,
     setLocalState,

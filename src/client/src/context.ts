@@ -25,33 +25,24 @@ export interface ActiveEditor {
 }
 
 export function setAppState(context: Context, app: App): void {
-  context.setState(app.state);
-  context.setTree(app.tree);
-  context.setTutorialState(app.tutorialState);
-  context.setChangelogShown(app.changelogShown);
-  context.setEditors(app.editors);
+  context.setApp(app);
 }
 
 export interface Context extends App {
+  setApp(app: App): void;
+  setState(value: State): void;
+  setTutorialState(tutorialState: Tutorial.State): void;
+  setChangelogShown(changelogShown: boolean): void;
+  setTree(value: Tree): void;
+  setEditors(editors: App["editors"]): void;
+
   storage: Storage;
   server?: Server;
 
-  state: State;
-  setState(value: State): void;
   setLocalState(value: State): void;
   updateLocalState(f: (value: State) => State): void;
 
-  tutorialState: Tutorial.State;
-  setTutorialState(tutorialState: Tutorial.State): void;
-
-  changelogShown: boolean;
-  setChangelogShown(changelogShown: boolean): void;
-  changelog: Communication.Changelog | "loading";
-
   undo(): void;
-
-  tree: Tree;
-  setTree(value: Tree): void;
 
   drag: DragInfo;
   setDrag(value: DragInfo): void;
@@ -62,6 +53,4 @@ export interface Context extends App {
   openExternalUrl(url: string): void;
 
   send: Receiver<Message>["send"];
-
-  setEditors(editors: App["editors"]): void;
 }
