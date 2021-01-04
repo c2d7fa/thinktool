@@ -54,33 +54,6 @@ function useContext({
 
   const batched = useBatched(200);
 
-  function undo_(): void {
-    const oldState = undo.popState();
-    if (oldState === null) {
-      console.log("Can't undo further");
-      return;
-    }
-    setState(oldState);
-    // TODO: Code duplication, see state update handler in 'setApp'
-    const diff = diffState(state, oldState);
-    for (const thing of diff.deleted) {
-      storage.deleteThing(thing);
-    }
-    storage.updateThings(
-      [...diff.added, ...diff.changed].map((thing) => ({
-        name: thing,
-        content: Data.content(oldState, thing),
-        children: Data.childConnections(oldState, thing).map((c) => {
-          return {
-            name: c.connectionId,
-            child: Data.connectionChild(oldState, c)!,
-          };
-        }),
-        isPage: Data.isPage(oldState, thing),
-      })),
-    );
-  }
-
   // Tree:
 
   const [tree, setTree] = React.useState(T.fromRoot(state, extractThingFromURL()));
@@ -164,7 +137,6 @@ function useContext({
 
     state,
     setLocalState: setState,
-    undo: undo_,
     updateLocalState: (update) => {
       // [TODO] I'm almost certain that this is not how things are supposed to
       // be done.

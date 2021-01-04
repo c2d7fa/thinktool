@@ -117,7 +117,8 @@ export function executeOn(
     A.setAppState(context, app);
 
     if (result.undo) {
-      context.undo();
+      // [TODO]
+      console.warn("Undo is currently broken. Ignoring.");
     }
 
     if (result.openUrl) {

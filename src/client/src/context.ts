@@ -41,8 +41,6 @@ export interface Context extends App {
   setLocalState(value: State): void;
   updateLocalState(f: (value: State) => State): void;
 
-  undo(): void;
-
   drag: DragInfo;
   setDrag(value: DragInfo): void;
 
