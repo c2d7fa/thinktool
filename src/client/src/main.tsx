@@ -50,113 +50,89 @@ function useContext({
   openExternalUrl(url: string): void;
   receiver: Receiver<Message>;
 }): Context {
-  const [state, setState] = React.useState(initialState);
+  const [innerApp, setInnerApp] = React.useState<A.App>(
+    A.from(initialState, T.fromRoot(initialState, extractThingFromURL()), {
+      tutorialFinished: initialTutorialFinished,
+    }),
+  );
+  const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
 
   const batched = useBatched(200);
 
-  // Tree:
-
-  const [tree, setTree] = React.useState(T.fromRoot(state, extractThingFromURL()));
-
-  // URL:
-
-  useThingUrl({
-    current: T.thing(tree, T.root(tree)),
-    jump(thing: string) {
-      setTree(T.fromRoot(state, thing));
-    },
-  });
-
-  // Drag and drop:
-
-  const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
-
-  // Tutorial:
-  const [tutorialState, setTutorialState] = React.useState<Tutorial.State>(
-    Tutorial.initialize(initialTutorialFinished),
-  );
-
-  // Changelog:
-  const [changelogShown, setChangelogShown] = React.useState<boolean>(false);
-
-  const [editors, setEditors] = React.useState<Context["editors"]>({});
-
-  // --
-
   const context: Context = {
     setApp(app: A.App) {
-      if (app.editors !== editors) {
-        setEditors(app.editors);
+      // Push changes to server
+      const diff = diffState(innerApp.state, app.state);
+      for (const thing of diff.deleted) {
+        storage.deleteThing(thing);
+      }
+      for (const thing of diff.changedContent) {
+        batched.update(thing, () => {
+          storage.setContent(thing, Data.content(app.state, thing));
+        });
+      }
+      if (diff.added.length !== 0 || diff.changed.length !== 0) {
+        storage.updateThings(
+          [...diff.added, ...diff.changed].map((thing) => ({
+            name: thing,
+            content: Data.content(app.state, thing),
+            children: Data.childConnections(app.state, thing).map((c) => {
+              return {
+                name: c.connectionId,
+                child: Data.connectionChild(app.state, c)!,
+              };
+            }),
+            isPage: Data.isPage(app.state, thing),
+          })),
+        );
       }
 
-      if (app.state !== state) {
-        undo.pushState(state);
-        setState(app.state);
-
-        const diff = diffState(state, app.state);
-        for (const thing of diff.deleted) {
-          storage.deleteThing(thing);
-        }
-        for (const thing of diff.changedContent) {
-          batched.update(thing, () => {
-            storage.setContent(thing, Data.content(app.state, thing));
-          });
-        }
-        if (diff.added.length !== 0 || diff.changed.length !== 0) {
-          storage.updateThings(
-            [...diff.added, ...diff.changed].map((thing) => ({
-              name: thing,
-              content: Data.content(app.state, thing),
-              children: Data.childConnections(app.state, thing).map((c) => {
-                return {
-                  name: c.connectionId,
-                  child: Data.connectionChild(app.state, c)!,
-                };
-              }),
-              isPage: Data.isPage(app.state, thing),
-            })),
-          );
-        }
+      if (!Tutorial.isActive(app.tutorialState)) {
+        storage.setTutorialFinished();
       }
 
-      if (app.tree !== tree) {
-        setTree(app.tree);
-      }
-
-      if (app.changelogShown !== changelogShown) {
-        setChangelogShown(app.changelogShown);
-      }
-
-      if (app.tutorialState !== tutorialState) {
-        setTutorialState(app.tutorialState);
-        if (!Tutorial.isActive(app.tutorialState)) {
-          storage.setTutorialFinished();
-        }
-      }
+      // Update actual app
+      setInnerApp(app);
     },
 
-    state,
-    setLocalState: setState,
-    updateLocalState: (update) => {
-      // [TODO] I'm almost certain that this is not how things are supposed to
-      // be done.
-      setState((state) => {
-        const newState = update(state);
-        setTree((tree) => T.refresh(tree, newState));
-        return newState;
+    get state() {
+      return innerApp.state;
+    },
+    get tree() {
+      return innerApp.tree;
+    },
+    get tutorialState() {
+      return innerApp.tutorialState;
+    },
+    get changelogShown() {
+      return innerApp.changelogShown;
+    },
+    get editors() {
+      return innerApp.editors;
+    },
+
+    // [TODO] Do we actually need this?
+    setLocalState(state) {
+      setInnerApp((innerApp) => A.merge(innerApp, {state}));
+    },
+
+    // [TODO] Do we actually need this?
+    updateLocalState(update) {
+      setInnerApp((innerApp) => {
+        const state = update(innerApp.state);
+        const tree = T.refresh(innerApp.tree, state);
+        return A.merge(innerApp, {state, tree});
       });
     },
-    tree,
+
     drag,
     setDrag,
-    tutorialState,
-    changelogShown,
+
     changelog: ChangelogData,
     storage,
     server,
     openExternalUrl,
     send: receiver.send,
-    editors,
 
     setTutorialState(tutorialState) {
       context.setApp(A.merge(context, {tutorialState}));
@@ -178,6 +154,13 @@ function useContext({
       context.setApp(A.merge(context, editors));
     },
   };
+
+  useThingUrl({
+    current: T.thing(context.tree, T.root(context.tree)),
+    jump(thing: string) {
+      context.setTree(T.fromRoot(context.state, thing));
+    },
+  });
 
   return context;
 }

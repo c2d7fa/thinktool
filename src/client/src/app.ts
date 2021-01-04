@@ -16,11 +16,11 @@ export interface App {
   editors: {[nodeId: number]: E.Editor};
 }
 
-export function from(data: D.State, tree: T.Tree): App {
+export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: boolean}): App {
   return {
     state: data,
     tree: tree,
-    tutorialState: Tutorial.initialize(false),
+    tutorialState: Tutorial.initialize(options?.tutorialFinished ?? false),
     changelogShown: false,
     changelog: "loading",
     editors: {},
