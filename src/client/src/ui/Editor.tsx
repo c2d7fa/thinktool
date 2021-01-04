@@ -260,6 +260,7 @@ export function Editor(props: {
   const onFocusRef = usePropRef(props.onFocus);
   const onPastedParagraphsRef = usePropRef(props.onPastedParagraphs);
   const onOpenExternalUrlRef = usePropRef(props.onOpenExternalUrl);
+  const onEditRef = usePropRef(props.onEdit);
 
   const keyPlugin = new PS.Plugin({
     props: {
@@ -320,42 +321,18 @@ export function Editor(props: {
     },
   });
 
-  function recreateEditorState() {
-    return toProseMirror(editor, {
-      openLink: (thing) => onOpenLinkRef.current!(thing),
-      jumpLink: (thing) => onJumpLinkRef.current!(thing),
-      plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
-    });
-  }
-
-  const [editor, setEditor] = React.useState(props.editor);
-
   function onTransaction(transaction: PS.Transaction<typeof schema>, view: PV.EditorView<typeof schema>) {
-    setEditor(fromProseMirror(view.state.apply(transaction)));
+    onEditRef.current!(fromProseMirror(view.state.apply(transaction)));
   }
 
-  // Send our changes to our parent
-  React.useEffect(() => {
-    if (
-      contentEq(props.editor.content, editor.content) &&
-      props.editor.selection.from === editor.selection.from &&
-      props.editor.selection.to === editor.selection.to
-    )
-      return;
-    props.onEdit(editor);
-  }, [editor]);
-
-  // Receive changes from our parent
-  React.useEffect(() => {
-    if (
-      contentEq(props.editor.content, editor.content) &&
-      props.editor.selection.from === editor.selection.from &&
-      props.editor.selection.to === editor.selection.to
-    )
-      return;
-    setEditor(props.editor);
-  }, [props.editor]);
-
-  const proseMirrorState = React.useMemo(recreateEditorState, [editor]);
+  const proseMirrorState = React.useMemo(
+    () =>
+      toProseMirror(props.editor, {
+        openLink: (thing) => onOpenLinkRef.current!(thing),
+        jumpLink: (thing) => onJumpLinkRef.current!(thing),
+        plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
+      }),
+    [props.editor],
+  );
   return <ProseMirror state={proseMirrorState} onTransaction={onTransaction} hasFocus={props.hasFocus} />;
 }
