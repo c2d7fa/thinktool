@@ -12,6 +12,7 @@ import * as E from "../editing";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
 import {App, merge} from "../app";
+import * as A from "../app";
 
 import Bullet from "./Bullet";
 
@@ -251,6 +252,28 @@ export type Event =
   | {tag: "edit"; editor: E.Editor}
   | {tag: "paste"; paragraphs: string[]}
   | {tag: "openUrl"; url: string};
+
+// [TODO] This can only handle some cases. It can't handle actions, since that
+// requires opening a popup and waiting for user input.
+//
+// [TODO] Add unit tests for this function.
+export function handling(app: App, node: T.NodeRef) {
+  return (ev: Event): {handled: boolean; app: App} => {
+    if (ev.tag === "edit") {
+      return {handled: true, app: A.edit(app, node, ev.editor)};
+    } else if (ev.tag === "open") {
+      return {handled: true, app: A.toggleLink(app, node, ev.link)};
+    } else if (ev.tag === "jump") {
+      return {handled: true, app: A.jump(app, ev.link)};
+    } else if (ev.tag === "paste") {
+      return {handled: true, app: onPastedParagraphs(app, node, ev.paragraphs)};
+    } else if (ev.tag === "focus") {
+      return {handled: true, app: A.merge(app, {tree: T.focus(app.tree, node)})};
+    }
+
+    return {handled: false, app};
+  };
+}
 
 export function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(event: Event): void}) {
   const onEventRef = usePropRef(props.onEvent);

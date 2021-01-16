@@ -497,18 +497,12 @@ function Outline(p: {context: Context}) {
 }
 
 const handlingEditorEvent = (context: Context, node: T.NodeRef) => (event: Editor.Event): void => {
-  if (event.tag === "action") {
+  const result = Editor.handling(context, node)(event);
+
+  if (result.handled) {
+    setAppState(context, result.app);
+  } else if (event.tag === "action") {
     context.send("action", {action: event.action});
-  } else if (event.tag === "focus") {
-    context.setTree(T.focus(context.tree, node));
-  } else if (event.tag === "open") {
-    setAppState(context, A.toggleLink(context, node, event.link));
-  } else if (event.tag === "jump") {
-    setAppState(context, A.jump(context, event.link));
-  } else if (event.tag === "edit") {
-    setAppState(context, A.edit(context, node, event.editor));
-  } else if (event.tag === "paste") {
-    setAppState(context, Editor.onPastedParagraphs(context, node, event.paragraphs));
   } else if (event.tag === "openUrl") {
     context.openExternalUrl(event.url);
   } else {
