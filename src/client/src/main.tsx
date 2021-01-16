@@ -183,8 +183,14 @@ function App_({
   const receiver = React.useRef(createReceiver<Message>());
 
   React.useEffect(() => {
-    receiver.current.subscribe("action", (ev) => {
-      Actions.execute(contextRef.current, ev.action, {input: popup.input});
+    receiver.current.subscribe("action", async (ev) => {
+      setAppState(
+        contextRef.current,
+        await Actions.execute(contextRef.current, ev.action, {
+          input: popup.input,
+          openUrl: context.openExternalUrl,
+        }),
+      );
     });
 
     receiver.current.subscribe("toolbar", (ev) => {

@@ -74,17 +74,9 @@ export function enabled(state: App, action: ActionName): boolean {
   }
 }
 
-export function execute(context: Context, action: ActionName, config: UpdateConfig): void {
-  if (!enabled(context, action)) {
-    console.error("The action %o is not enabled! Ignoring.", action);
-    return;
-  }
-
-  const focused = T.focused(context.tree);
-  if (focused === null) throw `Bug in 'enabled'. Ran action '${action}', even though there was no node selected.`;
-
-  executeOn(context, action, focused, config);
-}
+export type UpdateConfig = {
+  input(seedText?: string): Promise<[App, string]>;
+};
 
 export function executeOn(
   context: Context,
@@ -117,6 +109,25 @@ export function executeOn(
       context.openExternalUrl(result.openUrl);
     }
   })();
+}
+
+export async function execute(
+  app: App,
+  action: ActionName,
+  config: {
+    openUrl(url: string): void;
+    input(seedText?: string): Promise<[App, string]>;
+  },
+): Promise<App> {
+  if (!enabled(app, action)) {
+    console.error("The action %o is not enabled! Ignoring.", action);
+    return app;
+  }
+
+  const result = await update(app, action, config);
+  if (result.undo) console.warn("Undo is currently broken. Ignoring."); // [TODO]
+  if (result.openUrl) config.openUrl(result.openUrl);
+  return result.app ?? app;
 }
 
 interface UpdateResult {
@@ -156,10 +167,6 @@ function require<T>(x: T | null): T {
 function applyActionEvent(app: App, event: Goal.ActionEvent): App {
   return A.merge(app, {tutorialState: Tutorial.action(app.tutorialState, event)});
 }
-
-export type UpdateConfig = {
-  input(seedText?: string): Promise<[App, string]>;
-};
 
 type UpdateArgs = UpdateConfig & {
   app: App;
