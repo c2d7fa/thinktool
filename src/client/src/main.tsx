@@ -505,9 +505,9 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
       props.parent && T.thing(props.context.tree, props.parent),
     );
 
-    const listItems = otherParents.map((otherParentThing) => {
+    const listItems = otherParents.map((otherParentThing, index) => {
       return (
-        <li key={otherParentThing}>
+        <li key={index}>
           <span
             className="other-parent-small"
             onClick={() => {
