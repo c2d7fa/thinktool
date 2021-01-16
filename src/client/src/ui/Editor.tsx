@@ -243,24 +243,17 @@ export interface EditorState {
   replace(link: string, textContent: string): void;
 }
 
-export function Editor(props: {
-  editor: E.Editor;
-  hasFocus: boolean;
-  onAction(action: Ac.ActionName): void;
-  onOpenLink(target: string): void;
-  onJumpLink(target: string): void;
-  onFocus(): void;
-  onEdit(editor: E.Editor): void;
-  onPastedParagraphs(paragraphs: string[]): void;
-  onOpenExternalUrl(url: string): void;
-}) {
-  const onOpenLinkRef = usePropRef(props.onOpenLink);
-  const onJumpLinkRef = usePropRef(props.onJumpLink);
-  const onActionRef = usePropRef(props.onAction);
-  const onFocusRef = usePropRef(props.onFocus);
-  const onPastedParagraphsRef = usePropRef(props.onPastedParagraphs);
-  const onOpenExternalUrlRef = usePropRef(props.onOpenExternalUrl);
-  const onEditRef = usePropRef(props.onEdit);
+export type Event =
+  | {tag: "action"; action: Ac.ActionName}
+  | {tag: "open"; link: string}
+  | {tag: "jump"; link: string}
+  | {tag: "focus"}
+  | {tag: "edit"; editor: E.Editor}
+  | {tag: "paste"; paragraphs: string[]}
+  | {tag: "openUrl"; url: string};
+
+export function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(event: Event): void}) {
+  const onEventRef = usePropRef(props.onEvent);
 
   const keyPlugin = new PS.Plugin({
     props: {
@@ -273,14 +266,15 @@ export function Editor(props: {
 
         for (const action of Ac.allActionsWithShortcuts) {
           if (Sh.matches(ev, Ac.shortcut(action), conditions)) {
-            onActionRef.current!(action);
+            onEventRef.current!({tag: "action", action});
             return true;
           }
         }
 
         if (ev.key === "Backspace" && view.state.doc.childCount === 0) {
           console.log("Destroying item due to backspace on empty item.");
-          onActionRef.current!("destroy");
+          onEventRef.current!({tag: "action", action: "destroy"});
+          // [TODO] Shouldn't we also return here?
         }
 
         // We don't want to handle anything by default.
@@ -291,7 +285,7 @@ export function Editor(props: {
 
   const externalLinkDecorationPlugin = createExternalLinkDecorationPlugin({
     openExternalUrl(url: string) {
-      onOpenExternalUrlRef.current!(url);
+      onEventRef.current!({tag: "openUrl", url});
     },
   });
 
@@ -301,7 +295,7 @@ export function Editor(props: {
         const text = ev.clipboardData?.getData("text/plain");
 
         if (text !== undefined && E.isParagraphFormattedText(text)) {
-          onPastedParagraphsRef.current!(E.paragraphs(text));
+          onEventRef.current!({tag: "paste", paragraphs: E.paragraphs(text)});
           return true;
         }
 
@@ -315,21 +309,21 @@ export function Editor(props: {
   const focusPlugin = new PS.Plugin({
     props: {
       handleClick(view, pos, ev) {
-        onFocusRef.current!();
+        onEventRef.current!({tag: "focus"});
         return false;
       },
     },
   });
 
   function onTransaction(transaction: PS.Transaction<typeof schema>, view: PV.EditorView<typeof schema>) {
-    onEditRef.current!(fromProseMirror(view.state.apply(transaction)));
+    onEventRef.current!({tag: "edit", editor: fromProseMirror(view.state.apply(transaction))});
   }
 
   const proseMirrorState = React.useMemo(
     () =>
       toProseMirror(props.editor, {
-        openLink: (thing) => onOpenLinkRef.current!(thing),
-        jumpLink: (thing) => onJumpLinkRef.current!(thing),
+        openLink: (link) => onEventRef.current!({tag: "open", link}),
+        jumpLink: (link) => onEventRef.current!({tag: "jump", link}),
         plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
       }),
     [props.editor],

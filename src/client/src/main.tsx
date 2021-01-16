@@ -33,6 +33,7 @@ import * as ReactDOM from "react-dom";
 
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
+import {EditorState} from "prosemirror-state";
 
 function useContext({
   initialState,
@@ -420,17 +421,9 @@ function ThingOverview(p: {context: Context}) {
       <ParentsOutline context={p.context} />
       <div className="overview-main">
         <Editor.Editor
-          onAction={(action) => p.context.send("action", {action})}
-          onOpenLink={(link) => setAppState(p.context, A.toggleLink(p.context, T.root(p.context.tree), link))}
-          onJumpLink={(target) => setAppState(p.context, A.jump(p.context, target))}
-          onFocus={() => p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)))}
           editor={A.editor(p.context, T.root(p.context.tree))!}
-          onEdit={(editor) => setAppState(p.context, A.edit(p.context, T.root(p.context.tree), editor))}
           hasFocus={T.hasFocus(p.context.tree, T.root(p.context.tree))}
-          onPastedParagraphs={(paragraphs) =>
-            setAppState(p.context, Editor.onPastedParagraphs(p.context, T.root(p.context.tree), paragraphs))
-          }
-          onOpenExternalUrl={p.context.openExternalUrl}
+          onEvent={handlingEditorEvent(p.context, T.root(p.context.tree))}
         />
         <div className="children">
           <Outline context={p.context} />
@@ -497,6 +490,26 @@ function Outline(p: {context: Context}) {
   );
 }
 
+const handlingEditorEvent = (context: Context, node: T.NodeRef) => (event: Editor.Event): void => {
+  if (event.tag === "action") {
+    context.send("action", {action: event.action});
+  } else if (event.tag === "focus") {
+    context.setTree(T.focus(context.tree, node));
+  } else if (event.tag === "open") {
+    setAppState(context, A.toggleLink(context, node, event.link));
+  } else if (event.tag === "jump") {
+    setAppState(context, A.jump(context, event.link));
+  } else if (event.tag === "edit") {
+    setAppState(context, A.edit(context, node, event.editor));
+  } else if (event.tag === "paste") {
+    setAppState(context, Editor.onPastedParagraphs(context, node, event.paragraphs));
+  } else if (event.tag === "openUrl") {
+    context.openExternalUrl(event.url);
+  } else {
+    console.error("Unhandled event from editor: %o", event);
+  }
+};
+
 function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.NodeRef}) {
   function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
     const otherParents = Data.otherParents(
@@ -536,17 +549,9 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
 
   const content = (
     <Editor.Editor
-      onAction={(action) => props.context.send("action", {action})}
-      onOpenLink={(link) => setAppState(props.context, A.toggleLink(props.context, props.node, link))}
-      onJumpLink={(target) => setAppState(props.context, A.jump(props.context, target))}
-      onFocus={() => props.context.setTree(T.focus(props.context.tree, props.node))}
       editor={A.editor(props.context, props.node)!}
-      onEdit={(editor) => setAppState(props.context, A.edit(props.context, props.node, editor))}
       hasFocus={T.hasFocus(props.context.tree, props.node)}
-      onPastedParagraphs={(paragraphs) =>
-        setAppState(props.context, Editor.onPastedParagraphs(props.context, props.node, paragraphs))
-      }
-      onOpenExternalUrl={props.context.openExternalUrl}
+      onEvent={handlingEditorEvent(props.context, props.node)}
     />
   );
 
