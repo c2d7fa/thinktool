@@ -2,8 +2,7 @@
 
 import * as PlaceholderItem from "../src/ui/PlaceholderItem";
 
-import {appState} from "./misc";
-
+import * as App from "../src/app";
 import * as D from "../src/data";
 import * as T from "../src/tree";
 
@@ -12,7 +11,7 @@ describe("a placeholder item", () => {
     let data = D.empty;
     let tree = T.fromRoot(data, "0");
 
-    let app = appState(data, tree);
+    let app = App.from(data, tree);
 
     expect(PlaceholderItem.isVisible(app)).toBe(true);
   });
@@ -25,7 +24,7 @@ describe("a placeholder item", () => {
 
     let tree = T.fromRoot(data, "0");
 
-    let app = appState(data, tree);
+    let app = App.from(data, tree);
 
     expect(PlaceholderItem.isVisible(app)).toBe(false);
   });
@@ -34,7 +33,7 @@ describe("a placeholder item", () => {
     let data = D.empty;
     let tree = T.fromRoot(data, "0");
 
-    let app = appState(data, tree);
+    let app = App.from(data, tree);
     expect(D.children(app.state, "0").length).toBe(0);
 
     app = PlaceholderItem.create(app);
@@ -45,7 +44,7 @@ describe("a placeholder item", () => {
     let data = D.empty;
     let tree = T.fromRoot(data, "0");
 
-    let app = appState(data, tree);
+    let app = App.from(data, tree);
     expect(T.focused(app.tree)).toBeNull();
 
     app = PlaceholderItem.create(app);

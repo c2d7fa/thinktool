@@ -4,7 +4,7 @@ import * as Misc from "@johv/miscjs";
 import * as ChangelogData from "./changes.json";
 
 import {State, diffState} from "./data";
-import {Context, DragInfo, ActiveEditor, setAppState, jump} from "./context";
+import {Context, DragInfo, setAppState} from "./context";
 import {extractThingFromURL, useThingUrl} from "./url";
 import {useBatched} from "./batched";
 
@@ -15,9 +15,9 @@ import * as API from "./server-api";
 import * as Storage from "./storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
+import * as A from "./app";
 
 import * as Editor from "./ui/Editor";
-import * as Editing from "./editing";
 import {usePopup} from "./ui/ThingSelectPopup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
@@ -31,10 +31,8 @@ import * as PlaceholderItem from "./ui/PlaceholderItem";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import undo from "./undo";
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
-import {contentText} from "./data/content";
 
 function useContext({
   initialState,
@@ -51,139 +49,119 @@ function useContext({
   openExternalUrl(url: string): void;
   receiver: Receiver<Message>;
 }): Context {
-  const [state, setLocalState] = React.useState(initialState);
+  const [innerApp, setInnerApp] = React.useState<A.App>(
+    A.from(initialState, T.fromRoot(initialState, extractThingFromURL()), {
+      tutorialFinished: initialTutorialFinished,
+    }),
+  );
+  const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
 
   const batched = useBatched(200);
 
-  function setState(newState: State): void {
-    if (newState !== state) {
-      undo.pushState(state);
-      setLocalState(newState);
-
-      const diff = diffState(state, newState);
+  const context: Context = {
+    setApp(app: A.App) {
+      // Push changes to server
+      const diff = diffState(innerApp.state, app.state);
       for (const thing of diff.deleted) {
         storage.deleteThing(thing);
       }
       for (const thing of diff.changedContent) {
         batched.update(thing, () => {
-          storage.setContent(thing, Data.content(newState, thing));
+          storage.setContent(thing, Data.content(app.state, thing));
         });
       }
       if (diff.added.length !== 0 || diff.changed.length !== 0) {
         storage.updateThings(
           [...diff.added, ...diff.changed].map((thing) => ({
             name: thing,
-            content: Data.content(newState, thing),
-            children: Data.childConnections(newState, thing).map((c) => {
+            content: Data.content(app.state, thing),
+            children: Data.childConnections(app.state, thing).map((c) => {
               return {
                 name: c.connectionId,
-                child: Data.connectionChild(newState, c)!,
+                child: Data.connectionChild(app.state, c)!,
               };
             }),
-            isPage: Data.isPage(newState, thing),
+            isPage: Data.isPage(app.state, thing),
           })),
         );
       }
-    }
-  }
 
-  function undo_(): void {
-    const oldState = undo.popState();
-    if (oldState === null) {
-      console.log("Can't undo further");
-      return;
-    }
-    setLocalState(oldState);
-    // TODO: Code duplication, see setState above
-    const diff = diffState(state, oldState);
-    for (const thing of diff.deleted) {
-      storage.deleteThing(thing);
-    }
-    storage.updateThings(
-      [...diff.added, ...diff.changed].map((thing) => ({
-        name: thing,
-        content: Data.content(oldState, thing),
-        children: Data.childConnections(oldState, thing).map((c) => {
-          return {
-            name: c.connectionId,
-            child: Data.connectionChild(oldState, c)!,
-          };
-        }),
-        isPage: Data.isPage(oldState, thing),
-      })),
-    );
-  }
+      if (!Tutorial.isActive(app.tutorialState)) {
+        storage.setTutorialFinished();
+      }
 
-  // Tree:
-
-  const [tree, setTree] = React.useState(T.fromRoot(state, extractThingFromURL()));
-
-  // URL:
-
-  useThingUrl({
-    current: T.thing(tree, T.root(tree)),
-    jump(thing: string) {
-      setTree(T.fromRoot(state, thing));
+      // Update actual app
+      setInnerApp(app);
     },
-  });
 
-  // Drag and drop:
+    get state() {
+      return innerApp.state;
+    },
+    get tree() {
+      return innerApp.tree;
+    },
+    get tutorialState() {
+      return innerApp.tutorialState;
+    },
+    get changelogShown() {
+      return innerApp.changelogShown;
+    },
+    get editors() {
+      return innerApp.editors;
+    },
 
-  const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
+    // [TODO] Do we actually need this?
+    setLocalState(state) {
+      setInnerApp((innerApp) => A.merge(innerApp, {state}));
+    },
 
-  // Popup:
-  const [activePopup, setActivePopup] = React.useState<
-    ((state: State, tree: T.Tree, target: T.NodeRef, selection: string) => [State, T.Tree]) | null
-  >(null);
-  const [popupTarget, setPopupTarget] = React.useState<T.NodeRef | null>(null);
-
-  // Editor:
-  const [activeEditor, registerActiveEditor] = React.useState<ActiveEditor | null>(null);
-
-  // Tutorial:
-  const [tutorialState, setTutorialState_] = React.useState<Tutorial.State>(
-    Tutorial.initialize(initialTutorialFinished),
-  );
-  function setTutorialState(tutorialState: Tutorial.State): void {
-    setTutorialState_(tutorialState);
-    if (!Tutorial.isActive(tutorialState)) {
-      storage.setTutorialFinished();
-    }
-  }
-
-  // Changelog
-  const [changelogShown, setChangelogShown] = React.useState<boolean>(false);
-
-  return {
-    state,
-    setState,
-    setLocalState,
-    undo: undo_,
-    updateLocalState: (update) => {
-      // [TODO] I'm almost certain that this is not how things are supposed to
-      // be done.
-      setLocalState((state) => {
-        const newState = update(state);
-        setTree((tree) => T.refresh(tree, newState));
-        return newState;
+    // [TODO] Do we actually need this?
+    updateLocalState(update) {
+      setInnerApp((innerApp) => {
+        const state = update(innerApp.state);
+        const tree = T.refresh(innerApp.tree, state);
+        return A.merge(innerApp, {state, tree});
       });
     },
-    tree,
-    setTree,
+
     drag,
     setDrag,
-    activeEditor,
-    registerActiveEditor,
-    tutorialState,
-    setTutorialState,
-    changelogShown,
-    setChangelogShown,
+
     changelog: ChangelogData,
     storage,
     server,
     openExternalUrl,
     send: receiver.send,
+
+    setTutorialState(tutorialState) {
+      context.setApp(A.merge(context, {tutorialState}));
+    },
+
+    setChangelogShown(changelogShown) {
+      context.setApp(A.merge(context, {changelogShown}));
+    },
+
+    setTree(tree) {
+      context.setApp(A.merge(context, {tree}));
+    },
+
+    setState(state) {
+      context.setApp(A.merge(context, {state}));
+    },
+
+    setEditors(editors) {
+      context.setApp(A.merge(context, editors));
+    },
   };
+
+  useThingUrl({
+    current: T.thing(context.tree, T.root(context.tree)),
+    jump(thing: string) {
+      context.setTree(T.fromRoot(context.state, thing));
+    },
+  });
+
+  return context;
 }
 
 function App_({
@@ -437,57 +415,21 @@ function ThingOverview(p: {context: Context}) {
   const hasReferences =
     Data.backreferences(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))).length > 0;
 
-  function openLink(target: string): void {
-    p.context.setTree(T.toggleLink(p.context.state, p.context.tree, T.root(p.context.tree), target));
-  }
-
-  function jumpLink(target: string): void {
-    p.context.setTutorialState(
-      Tutorial.action(p.context.tutorialState, {
-        action: "jump",
-        previouslyFocused: T.thing(p.context.tree, T.root(p.context.tree)),
-        thing: target,
-      }),
-    );
-    setAppState(p.context, jump(p.context, target));
-  }
-
   return (
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
         <Editor.Editor
           onAction={(action) => p.context.send("action", {action})}
-          onOpenLink={openLink}
-          onJumpLink={jumpLink}
+          onOpenLink={(link) => setAppState(p.context, A.toggleLink(p.context, T.root(p.context.tree), link))}
+          onJumpLink={(target) => setAppState(p.context, A.jump(p.context, target))}
           onFocus={() => p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)))}
-          editor={Editing.load(
-            Data.content(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))),
-            p.context.state,
-          )}
-          onEdit={(editor) =>
-            p.context.setState(
-              Data.setContent(
-                p.context.state,
-                T.thing(p.context.tree, T.root(p.context.tree)),
-                Editing.produceContent(editor),
-              ),
-            )
-          }
+          editor={A.editor(p.context, T.root(p.context.tree))!}
+          onEdit={(editor) => setAppState(p.context, A.edit(p.context, T.root(p.context.tree), editor))}
           hasFocus={T.hasFocus(p.context.tree, T.root(p.context.tree))}
           onPastedParagraphs={(paragraphs) =>
             setAppState(p.context, Editor.onPastedParagraphs(p.context, T.root(p.context.tree), paragraphs))
           }
-          onEditorStateChanged={(editor) => {
-            if (T.hasFocus(p.context.tree, T.root(p.context.tree))) {
-              p.context.registerActiveEditor({
-                selection: "", // [FIXME] We should get this from editor
-                replaceSelectionWithLink(target, textContent) {
-                  editor.replace(target, textContent);
-                },
-              });
-            }
-          }}
           onOpenExternalUrl={p.context.openExternalUrl}
         />
         <div className="children">
@@ -562,27 +504,6 @@ function ExpandableItem(props: {
 
   kind: "child" | "reference" | "opened-link" | "parent";
 }) {
-  function onOpenLink(target: string): void {
-    props.context.setTutorialState(
-      Tutorial.action(props.context.tutorialState, {
-        action: "link-toggled",
-        expanded: !T.isLinkOpen(props.context.tree, props.node, target),
-      }),
-    );
-    props.context.setTree(T.toggleLink(props.context.state, props.context.tree, props.node, target));
-  }
-
-  function onJumpLink(target: string): void {
-    props.context.setTutorialState(
-      Tutorial.action(props.context.tutorialState, {
-        action: "jump",
-        previouslyFocused: T.thing(props.context.tree, T.root(props.context.tree)),
-        thing: target,
-      }),
-    );
-    setAppState(props.context, jump(props.context, target));
-  }
-
   function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
     const otherParents = Data.otherParents(
       props.context.state,
@@ -596,7 +517,7 @@ function ExpandableItem(props: {
           <span
             className="other-parent-small"
             onClick={() => {
-              setAppState(props.context, jump(props.context, otherParentThing));
+              setAppState(props.context, A.jump(props.context, otherParentThing));
             }}
             title={Data.contentText(props.context.state, otherParentThing)}
           >
@@ -622,36 +543,15 @@ function ExpandableItem(props: {
   const content = (
     <Editor.Editor
       onAction={(action) => props.context.send("action", {action})}
-      onOpenLink={onOpenLink}
-      onJumpLink={onJumpLink}
+      onOpenLink={(link) => setAppState(props.context, A.toggleLink(props.context, props.node, link))}
+      onJumpLink={(target) => setAppState(props.context, A.jump(props.context, target))}
       onFocus={() => props.context.setTree(T.focus(props.context.tree, props.node))}
-      editor={Editing.load(
-        Data.content(props.context.state, T.thing(props.context.tree, props.node)),
-        props.context.state,
-      )}
-      onEdit={(editor) =>
-        props.context.setState(
-          Data.setContent(
-            props.context.state,
-            T.thing(props.context.tree, props.node),
-            Editing.produceContent(editor),
-          ),
-        )
-      }
+      editor={A.editor(props.context, props.node)!}
+      onEdit={(editor) => setAppState(props.context, A.edit(props.context, props.node, editor))}
       hasFocus={T.hasFocus(props.context.tree, props.node)}
       onPastedParagraphs={(paragraphs) =>
         setAppState(props.context, Editor.onPastedParagraphs(props.context, props.node, paragraphs))
       }
-      onEditorStateChanged={(editor) => {
-        if (T.hasFocus(props.context.tree, props.node)) {
-          props.context.registerActiveEditor({
-            selection: "", // [FIXME] We should get this from FIXME. We should get this from editor
-            replaceSelectionWithLink(target, textContent) {
-              editor.replace(target, textContent);
-            },
-          });
-        }
-      }}
       onOpenExternalUrl={props.context.openExternalUrl}
     />
   );

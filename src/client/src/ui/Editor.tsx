@@ -11,7 +11,7 @@ import * as T from "../tree";
 import * as E from "../editing";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
-import {AppState, merge} from "../context";
+import {App, merge} from "../app";
 
 import Bullet from "./Bullet";
 
@@ -224,7 +224,7 @@ function contentEq(a: E.EditorContent, b: E.EditorContent): boolean {
   return true;
 }
 
-export function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: string[]) {
+export function onPastedParagraphs(app: App, node: T.NodeRef, paragraphs: string[]) {
   let [state, tree] = [app.state, app.tree];
   let lastNode = node;
 
@@ -239,6 +239,7 @@ export function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: s
 }
 
 export interface EditorState {
+  selection: string;
   replace(link: string, textContent: string): void;
 }
 
@@ -251,7 +252,6 @@ export function Editor(props: {
   onFocus(): void;
   onEdit(editor: E.Editor): void;
   onPastedParagraphs(paragraphs: string[]): void;
-  onEditorStateChanged(editorState: EditorState): void;
   onOpenExternalUrl(url: string): void;
 }) {
   const onOpenLinkRef = usePropRef(props.onOpenLink);
@@ -259,8 +259,8 @@ export function Editor(props: {
   const onActionRef = usePropRef(props.onAction);
   const onFocusRef = usePropRef(props.onFocus);
   const onPastedParagraphsRef = usePropRef(props.onPastedParagraphs);
-  const onEditorStateChangedRef = usePropRef(props.onEditorStateChanged);
   const onOpenExternalUrlRef = usePropRef(props.onOpenExternalUrl);
+  const onEditRef = usePropRef(props.onEdit);
 
   const keyPlugin = new PS.Plugin({
     props: {
@@ -321,40 +321,18 @@ export function Editor(props: {
     },
   });
 
-  function recreateEditorState() {
-    return toProseMirror(editor, {
-      openLink: (thing) => onOpenLinkRef.current!(thing),
-      jumpLink: (thing) => onJumpLinkRef.current!(thing),
-      plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
-    });
-  }
-
-  const [editor, setEditor] = React.useState(props.editor);
-
   function onTransaction(transaction: PS.Transaction<typeof schema>, view: PV.EditorView<typeof schema>) {
-    setEditor(fromProseMirror(view.state.apply(transaction)));
+    onEditRef.current!(fromProseMirror(view.state.apply(transaction)));
   }
 
-  // Send our changes to our parent
-  React.useEffect(() => {
-    if (contentEq(props.editor.content, editor.content)) return;
-    props.onEdit(editor);
-  }, [editor.content]);
-
-  // Receive changes from our parent
-  React.useEffect(() => {
-    if (contentEq(props.editor.content, editor.content)) return;
-    setEditor(props.editor);
-  }, [props.editor]);
-
-  React.useEffect(() => {
-    onEditorStateChangedRef.current!({
-      replace(link: string, title: string): void {
-        setEditor((editor) => E.insertLink(editor, {link, title}));
-      },
-    });
-  }, [editor]);
-
-  const proseMirrorState = React.useMemo(recreateEditorState, [editor]);
+  const proseMirrorState = React.useMemo(
+    () =>
+      toProseMirror(props.editor, {
+        openLink: (thing) => onOpenLinkRef.current!(thing),
+        jumpLink: (thing) => onJumpLinkRef.current!(thing),
+        plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
+      }),
+    [props.editor],
+  );
   return <ProseMirror state={proseMirrorState} onTransaction={onTransaction} hasFocus={props.hasFocus} />;
 }

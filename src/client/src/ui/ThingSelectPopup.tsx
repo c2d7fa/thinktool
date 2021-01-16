@@ -4,8 +4,9 @@ import {choose} from "@johv/miscjs";
 
 import type {Result} from "../search";
 
+import {App, merge} from "../app";
+
 import * as D from "../data";
-import * as C from "../context";
 import Search from "../search";
 
 function useFocusInputRef(): React.RefObject<HTMLInputElement> {
@@ -136,7 +137,7 @@ function Popup(props: {
   );
 }
 
-export function usePopup(app: C.AppState) {
+export function usePopup(app: App) {
   const [isPopupVisible, setIsPopupVisible] = React.useState(false);
 
   const appRef = React.useRef(app);
@@ -152,12 +153,13 @@ export function usePopup(app: C.AppState) {
     console.error("onSelect callback not set!");
   });
 
-  function input(): Promise<[C.AppState, string]> {
+  function input(seedText?: string): Promise<[App, string]> {
     return new Promise((resolve, reject) => {
+      setQuery(seedText ?? "");
       setOnCreate(() => (content: string) => {
         let [state, selection] = D.create(appRef.current!.state);
         state = D.setContent(state, selection, [content]);
-        resolve([C.merge(appRef.current!, {state}), selection]);
+        resolve([merge(appRef.current!, {state}), selection]);
       });
       setOnSelect(() => (selection: string) => {
         resolve([appRef.current!, selection]);

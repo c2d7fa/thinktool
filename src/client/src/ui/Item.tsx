@@ -3,7 +3,8 @@ import * as Misc from "@johv/miscjs";
 
 import * as T from "../tree";
 import * as U from "../tutorial";
-import {AppState, DragInfo, merge, jump} from "../context";
+import {DragInfo} from "../context";
+import {App, merge, jump} from "../app";
 
 import Bullet from "./Bullet";
 
@@ -18,7 +19,7 @@ export function dragState(dragInfo: DragInfo, node: T.NodeRef): "source" | "targ
   return null;
 }
 
-export function click(app: AppState, node: T.NodeRef): AppState {
+export function click(app: App, node: T.NodeRef): App {
   const kind = T.kind(app.tree, node);
 
   if (kind === "opened-link") {
@@ -37,13 +38,6 @@ export function click(app: AppState, node: T.NodeRef): AppState {
     app = merge(app, {tree});
     return app;
   } else if (kind === "parent") {
-    app = merge(app, {
-      tutorialState: U.action(app.tutorialState, {
-        action: "jump",
-        previouslyFocused: T.thing(app.tree, T.root(app.tree)),
-        thing: T.thing(app.tree, node),
-      }),
-    });
     app = jump(app, T.thing(app.tree, node));
     return app;
   } else {
@@ -52,17 +46,10 @@ export function click(app: AppState, node: T.NodeRef): AppState {
   }
 }
 
-export function altClick(app: AppState, node: T.NodeRef): AppState {
+export function altClick(app: App, node: T.NodeRef): App {
   const kind = T.kind(app.tree, node);
 
   if (kind === "opened-link" || kind === "child" || kind === "reference") {
-    app = merge(app, {
-      tutorialState: U.action(app.tutorialState, {
-        action: "jump",
-        previouslyFocused: T.thing(app.tree, T.root(app.tree)),
-        thing: T.thing(app.tree, node),
-      }),
-    });
     app = jump(app, T.thing(app.tree, node));
     return app;
   } else if (kind === "parent") {

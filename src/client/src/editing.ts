@@ -1,4 +1,6 @@
 import * as D from "./data";
+import * as A from "./app";
+import * as T from "./tree";
 
 export interface Editor {
   content: EditorContent;
@@ -9,7 +11,10 @@ export type EditorContent = ContentElement[];
 export type ContentElement = string | {link: string; title: string | null};
 export type Range = {from: number; to: number};
 
-export function load(content: D.Content, state: D.State): Editor {
+export function load(app: A.App, node: T.NodeRef): Editor {
+  const content = D.content(app.state, T.thing(app.tree, node));
+  const state = app.state;
+
   return {
     content: content.map((piece) => {
       if (typeof piece === "string") {
@@ -20,6 +25,47 @@ export function load(content: D.Content, state: D.State): Editor {
     }),
     selection: {from: 0, to: 0},
   };
+}
+
+export function save(app: A.App, editor: Editor, thing: string): A.App {
+  return A.merge(app, {
+    state: D.setContent(
+      app.state,
+      thing,
+      editor.content.map((segment) => {
+        if (typeof segment === "string") {
+          return segment;
+        } else {
+          return {link: segment.link};
+        }
+      }),
+    ),
+  });
+}
+
+export function selectedText(editor: Editor): string {
+  let positionalElements: ContentElement[] = [];
+  for (const element of editor.content) {
+    if (typeof element === "string") {
+      positionalElements.push(...element);
+    } else {
+      positionalElements.push(element);
+    }
+  }
+  const slice = positionalElements.slice(editor.selection.from, editor.selection.to);
+  let result = "";
+  for (const element of slice) {
+    if (typeof element === "string") {
+      result += element;
+    } else {
+      result += element.title;
+    }
+  }
+  return result;
+}
+
+export function select(editor: Editor, selection: Range): Editor {
+  return {...editor, selection};
 }
 
 export function externalLinkRanges(content: EditorContent): Range[] {
@@ -94,16 +140,6 @@ export function insertLink(editor: Editor, link: {link: string; title: string}):
   const cursor = editor.selection.from + 1;
 
   return {content, selection: {from: cursor, to: cursor}};
-}
-
-export function produceContent(editor: Editor): D.Content {
-  return editor.content.map((segment) => {
-    if (typeof segment === "string") {
-      return segment;
-    } else {
-      return {link: segment.link};
-    }
-  });
 }
 
 // #region Paragraphs

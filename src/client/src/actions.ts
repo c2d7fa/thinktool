@@ -1,11 +1,12 @@
-import {AppState, Context} from "./context";
-import * as A from "./context";
+import {Context} from "./context";
 import * as T from "./tree";
 import * as D from "./data";
 import * as Tutorial from "./tutorial";
 import * as S from "./shortcuts";
 import * as Goal from "./goal";
 import {NodeRef} from "./tree-internal";
+import {App} from "./app";
+import * as A from "./app";
 
 export type ActionName =
   | "insert-sibling"
@@ -39,7 +40,7 @@ export type ActionName =
 // If enabled(context, action) returns false, then the toolbar button for the
 // given action should be disabled, and pressing the shortcut should not execute
 // the action.
-export function enabled(state: AppState, action: ActionName): boolean {
+export function enabled(state: App, action: ActionName): boolean {
   const alwaysEnabled: ActionName[] = ["find", "new", "changelog", "undo", "home", "forum"];
   const requireTarget: ActionName[] = [
     "zoom",
@@ -95,33 +96,27 @@ export function executeOn(
     console.warn("The action %o appears not to be enabled.", action);
   }
 
+  const config_ = {
+    ...config,
+    async input() {
+      return await config.input(A.selectedText(context));
+    },
+  };
+
   (async () => {
-    const result = await updateOn(context, action, target, config);
+    const result = await updateOn(context, action, target, config_);
 
-    if (result.app) A.setAppState(context, result.app);
+    let app = result.app ?? context;
 
-    // [HACK] The mechanism for inserting a link in the editor is really
-    // awkward. This is ultimately due to the fact that we don't really want to
-    // manage the entire editor state in React. But it could probably be
-    // improved.
-    //
-    // We intentionally do this last, because if we do it first, then the editor
-    // will update the global state from the *old* state, and then afterwards we
-    // would override with the new state (which might have a new item from the
-    // popup for example), and then we would not get the link that the editor
-    // inserted.
-    //
-    // (Disclaimer: That explanation may not only be confusing but also wrong. I
-    // don't really understand why this code works; in fact, it might not.)
     if (result.insertLinkInActiveEditor) {
-      if (context.activeEditor === null) throw "No active editor.";
-      const target = result.insertLinkInActiveEditor;
-      const textContent = D.contentText(result.app!.state, target);
-      context.activeEditor.replaceSelectionWithLink(target, textContent);
+      app = A.editInsertLink(app, require(target), result.insertLinkInActiveEditor);
     }
 
+    context.setApp(app);
+
     if (result.undo) {
-      context.undo();
+      // [TODO]
+      console.warn("Undo is currently broken. Ignoring.");
     }
 
     if (result.openUrl) {
@@ -131,17 +126,13 @@ export function executeOn(
 }
 
 interface UpdateResult {
-  app?: AppState;
+  app?: App;
   insertLinkInActiveEditor?: string;
   openUrl?: string;
   undo?: boolean;
 }
 
-export async function update(
-  app: AppState,
-  action: keyof typeof updates,
-  config: UpdateConfig,
-): Promise<UpdateResult> {
+export async function update(app: App, action: keyof typeof updates, config: UpdateConfig): Promise<UpdateResult> {
   if (!enabled(app, action)) {
     console.error("The action %o should not be enabled! Continuing anyway...", action);
   }
@@ -150,7 +141,7 @@ export async function update(
 }
 
 async function updateOn(
-  app: AppState,
+  app: App,
   action: keyof typeof updates,
   target: NodeRef | null,
   config: UpdateConfig,
@@ -169,16 +160,16 @@ function require<T>(x: T | null): T {
   return x;
 }
 
-function applyActionEvent(app: AppState, event: Goal.ActionEvent): AppState {
+function applyActionEvent(app: App, event: Goal.ActionEvent): App {
   return A.merge(app, {tutorialState: Tutorial.action(app.tutorialState, event)});
 }
 
 export type UpdateConfig = {
-  input(): Promise<[AppState, string]>;
+  input(seedText?: string): Promise<[App, string]>;
 };
 
 type UpdateArgs = UpdateConfig & {
-  app: AppState;
+  app: App;
   target: NodeRef | null;
 };
 
@@ -233,13 +224,7 @@ const updates = {
 
   async "zoom"({app, target}: UpdateArgs) {
     let result = app;
-    const previouslyFocused = T.thing(result.tree, T.root(result.tree));
     result = A.jump(result, T.thing(result.tree, require(target)));
-    result = applyActionEvent(result, {
-      action: "jump",
-      previouslyFocused,
-      thing: T.thing(result.tree, require(target)),
-    });
     return {app: result};
   },
 

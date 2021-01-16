@@ -1,18 +1,18 @@
 import * as React from "react";
 
-import * as C from "../context";
-import * as T from "../tree";
-
+import {App, merge} from "../app";
 import Bullet from "./Bullet";
 
-export function isVisible(app: C.AppState): boolean {
+import * as T from "../tree";
+
+export function isVisible(app: App): boolean {
   return T.children(app.tree, T.root(app.tree)).length === 0;
 }
 
-export function create(app: C.AppState): C.AppState {
+export function create(app: App): App {
   let [state, tree, _, id] = T.createChild(app.state, app.tree, T.root(app.tree));
   tree = T.focus(tree, id);
-  return C.merge(app, {state, tree});
+  return merge(app, {state, tree});
 }
 
 export function PlaceholderItem(props: {onCreate(): void}) {

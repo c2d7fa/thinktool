@@ -1,6 +1,8 @@
 /// <reference types="@types/jest" />
 
 import * as D from "../src/data";
+import * as T from "../src/tree";
+import * as A from "../src/app";
 
 import * as E from "../src/editing";
 
@@ -38,19 +40,6 @@ describe("paragraphs", () => {
   test("Line breaks are converted to spaces inside paragraphs", () => {
     expect(E.paragraphs("1 2 3\n4 5 6\n\n7 8 9")).toEqual(["1 2 3 4 5 6", "7 8 9"]);
     expect(E.paragraphs("1 2 3\r\n4 5 6\r\n\r\n7 8 9")).toEqual(["1 2 3 4 5 6", "7 8 9"]);
-  });
-});
-
-describe("loading editor from application state", () => {
-  it("annotates links with their content", () => {
-    let state = D.empty;
-    state = D.create(state, "1")[0];
-    state = D.setContent(state, "0", ["Item 0"]);
-    state = D.setContent(state, "1", ["Item 1 has link to ", {link: "0"}, "."]);
-
-    const content = E.load(D.content(state, "1"), state).content;
-
-    expect(content).toEqual(["Item 1 has link to ", {link: "0", title: "Item 0"}, "."]);
   });
 });
 
@@ -102,24 +91,155 @@ describe("inserting a link while having some text selected", () => {
   });
 });
 
-describe("when converting editor content to plain data content", () => {
+describe("when saving editor state into application", () => {
+  const before = A.of({
+    "1": {content: ["Item 1 before content was edited"]},
+  });
+
   const editor: E.Editor = {
     content: ["This is a link: ", {link: "2", title: "Item 2"}, "."],
     selection: {from: 0, to: 0},
   };
 
-  const content = E.produceContent(editor);
+  const after = E.save(before, editor, "1");
+  const content = D.content(after.state, "1");
 
-  test("the text segments are the same", () => {
+  test("the text segments are taken from the editor state", () => {
     expect(content[0]).toBe("This is a link: ");
     expect(content[2]).toBe(".");
   });
 
-  test("the links mention only the IDs of each linked item", () => {
+  test("the links mention only the IDs of each linked item from the editor state", () => {
     expect(content[1]).toEqual({link: "2"});
   });
 
-  test("there aren't any other segments added", () => {
+  test("any segments not in the editor state are deleted", () => {
     expect(content.length).toBe(3);
+  });
+});
+
+describe("an editor is created from the application state", () => {
+  test("when initializing the application", () => {
+    const app = A.of({
+      "0": {content: ["Item 0"]},
+    });
+
+    expect(A.editor(app, T.root(app.tree))).toEqual({content: ["Item 0"], selection: {from: 0, to: 0}});
+  });
+
+  test("when adding a new item", () => {
+    const before = A.of({
+      "0": {content: ["Item 0"]},
+    });
+
+    let [state, tree, thing, node] = T.createChild(before.state, before.tree, T.root(before.tree));
+    state = D.setContent(state, thing, ["New Item"]);
+    const after = A.merge(before, {state, tree});
+
+    expect(A.editor(before, node)).toBeNull();
+    expect(A.editor(after, node)).toEqual({content: ["New Item"], selection: {from: 0, to: 0}});
+  });
+
+  test("when loading an existing item", () => {
+    const before = A.of({
+      "0": {content: ["Item 0"]},
+    });
+
+    let [state, tree, node] = T.insertChild(before.state, before.tree, T.root(before.tree), "0", 0);
+    const after = A.merge(before, {state, tree});
+
+    expect(A.editor(before, node)).toBeNull();
+    expect(A.editor(after, node)).toEqual({content: ["Item 0"], selection: {from: 0, to: 0}});
+  });
+
+  test("links in the loaded editor are annotated with link title", () => {
+    const app = A.of({
+      "0": {content: ["Item 0 has link to ", {link: "1"}, "."]},
+      "1": {content: ["Item 1"]},
+    });
+
+    expect(A.editor(app, T.root(app.tree))).toEqual({
+      content: ["Item 0 has link to ", {link: "1", title: "Item 1"}, "."],
+      selection: {from: 0, to: 0},
+    });
+  });
+});
+
+describe("when one item exists in multiple places", () => {
+  const app = A.of({
+    "0": {content: ["Root"], children: ["1", "1"]},
+    "1": {content: ["Item 1"]},
+  });
+
+  const node1 = () => T.children(app.tree, T.root(app.tree))[0];
+  const node2 = () => T.children(app.tree, T.root(app.tree))[1];
+
+  test("both editors start out with the same content and an empty selection", () => {
+    expect(A.editor(app, node1())).toEqual({content: ["Item 1"], selection: {from: 0, to: 0}});
+    expect(A.editor(app, node2())).toEqual({content: ["Item 1"], selection: {from: 0, to: 0}});
+  });
+
+  describe("editing the item in one editor", () => {
+    const after = A.edit(app, node1(), {content: ["Edited Item 1"], selection: {from: 13, to: 13}});
+
+    it("directly updates that editor, including selection", () => {
+      expect(A.editor(app, node1())).toEqual({content: ["Item 1"], selection: {from: 0, to: 0}});
+      expect(A.editor(after, node1())).toEqual({content: ["Edited Item 1"], selection: {from: 13, to: 13}});
+    });
+
+    it("updates the content of the other item and resets the selection", () => {
+      expect(A.editor(app, node2())).toEqual({content: ["Item 1"], selection: {from: 0, to: 0}});
+      expect(A.editor(after, node2())).toEqual({content: ["Edited Item 1"], selection: {from: 0, to: 0}});
+    });
+  });
+
+  describe("and then editing the item in the other editor", () => {
+    const first = A.edit(app, node1(), {content: ["Edited Item 1"], selection: {from: 13, to: 13}});
+    const second = A.edit(first, node2(), {content: ["Edited Item 1 again"], selection: {from: 19, to: 19}});
+
+    it("directly updates that editor, including selection", () => {
+      expect(A.editor(first, node2())).toEqual({content: ["Edited Item 1"], selection: {from: 0, to: 0}});
+      expect(A.editor(second, node2())).toEqual({content: ["Edited Item 1 again"], selection: {from: 19, to: 19}});
+    });
+
+    it("updates the content of the previous editor and resets the selection", () => {
+      expect(A.editor(first, node1())).toEqual({content: ["Edited Item 1"], selection: {from: 13, to: 13}});
+      expect(A.editor(second, node1())).toEqual({content: ["Edited Item 1 again"], selection: {from: 0, to: 0}});
+    });
+  });
+});
+
+test("editing the root and then jumping to a different item resets the root editor", () => {
+  const initial = A.of({
+    "0": {content: ["Item 0"]},
+    "1": {content: ["Item 1"]},
+  });
+
+  const edited = A.edit(initial, T.root(initial.tree), {
+    content: ["Edited Item 0"],
+    selection: {from: 13, to: 13},
+  });
+
+  const jumped = A.jump(edited, "1");
+
+  expect(A.editor(edited, T.root(edited.tree))).toEqual({
+    content: ["Edited Item 0"],
+    selection: {from: 13, to: 13},
+  });
+  expect(A.editor(jumped, T.root(jumped.tree))).toEqual({content: ["Item 1"], selection: {from: 0, to: 0}});
+});
+
+describe("reading selection from editor", () => {
+  it("when there aren't any links gives the selected text", () => {
+    const editor = {content: ["This is some text inside an editor."], selection: {from: 8, to: 17}};
+    expect(E.selectedText(editor)).toBe("some text");
+  });
+
+  it("replaces links with their titles", () => {
+    const editor = {
+      content: ["This is a ", {link: "1", title: "Link"}, " inside an editor."],
+      selection: {from: 8, to: 18},
+    };
+    expect(E.selectedText(editor)).toBe("a Link inside");
   });
 });
