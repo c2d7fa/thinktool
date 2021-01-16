@@ -9,8 +9,6 @@ import type {Message} from "./messages";
 
 import {App} from "./app";
 
-export {jump, merge} from "./app";
-
 export interface DragInfo {
   current: T.NodeRef | null;
   target: T.NodeRef | null;

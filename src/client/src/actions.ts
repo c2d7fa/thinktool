@@ -1,5 +1,4 @@
 import {Context} from "./context";
-import * as A from "./context";
 import * as T from "./tree";
 import * as D from "./data";
 import * as Tutorial from "./tutorial";
@@ -7,7 +6,7 @@ import * as S from "./shortcuts";
 import * as Goal from "./goal";
 import {NodeRef} from "./tree-internal";
 import {App} from "./app";
-import * as Ap from "./app";
+import * as A from "./app";
 
 export type ActionName =
   | "insert-sibling"
@@ -100,7 +99,7 @@ export function executeOn(
   const config_ = {
     ...config,
     async input() {
-      return await config.input(Ap.selectedText(context));
+      return await config.input(A.selectedText(context));
     },
   };
 
@@ -110,10 +109,10 @@ export function executeOn(
     let app = result.app ?? context;
 
     if (result.insertLinkInActiveEditor) {
-      app = Ap.editInsertLink(app, require(target), result.insertLinkInActiveEditor);
+      app = A.editInsertLink(app, require(target), result.insertLinkInActiveEditor);
     }
 
-    A.setAppState(context, app);
+    context.setApp(app);
 
     if (result.undo) {
       // [TODO]

@@ -4,7 +4,7 @@ import * as Misc from "@johv/miscjs";
 import * as ChangelogData from "./changes.json";
 
 import {State, diffState} from "./data";
-import {Context, DragInfo, ActiveEditor, setAppState, jump} from "./context";
+import {Context, DragInfo, setAppState} from "./context";
 import {extractThingFromURL, useThingUrl} from "./url";
 import {useBatched} from "./batched";
 
@@ -31,7 +31,6 @@ import * as PlaceholderItem from "./ui/PlaceholderItem";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import undo from "./undo";
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
 
@@ -423,7 +422,7 @@ function ThingOverview(p: {context: Context}) {
         <Editor.Editor
           onAction={(action) => p.context.send("action", {action})}
           onOpenLink={(link) => setAppState(p.context, A.toggleLink(p.context, T.root(p.context.tree), link))}
-          onJumpLink={(target) => setAppState(p.context, jump(p.context, target))}
+          onJumpLink={(target) => setAppState(p.context, A.jump(p.context, target))}
           onFocus={() => p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)))}
           editor={A.editor(p.context, T.root(p.context.tree))!}
           onEdit={(editor) => setAppState(p.context, A.edit(p.context, T.root(p.context.tree), editor))}
@@ -518,7 +517,7 @@ function ExpandableItem(props: {
           <span
             className="other-parent-small"
             onClick={() => {
-              setAppState(props.context, jump(props.context, otherParentThing));
+              setAppState(props.context, A.jump(props.context, otherParentThing));
             }}
             title={Data.contentText(props.context.state, otherParentThing)}
           >
@@ -545,7 +544,7 @@ function ExpandableItem(props: {
     <Editor.Editor
       onAction={(action) => props.context.send("action", {action})}
       onOpenLink={(link) => setAppState(props.context, A.toggleLink(props.context, props.node, link))}
-      onJumpLink={(target) => setAppState(props.context, jump(props.context, target))}
+      onJumpLink={(target) => setAppState(props.context, A.jump(props.context, target))}
       onFocus={() => props.context.setTree(T.focus(props.context.tree, props.node))}
       editor={A.editor(props.context, props.node)!}
       onEdit={(editor) => setAppState(props.context, A.edit(props.context, props.node, editor))}

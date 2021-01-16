@@ -3,8 +3,8 @@ import * as Misc from "@johv/miscjs";
 
 import * as T from "../tree";
 import * as U from "../tutorial";
-import {DragInfo, merge, jump} from "../context";
-import {App} from "../app";
+import {DragInfo} from "../context";
+import {App, merge, jump} from "../app";
 
 import Bullet from "./Bullet";
 
