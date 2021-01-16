@@ -106,13 +106,7 @@ export function executeOn(
   (async () => {
     const result = await updateOn(context, action, target, config_);
 
-    let app = result.app ?? context;
-
-    if (result.insertLinkInActiveEditor) {
-      app = A.editInsertLink(app, require(target), result.insertLinkInActiveEditor);
-    }
-
-    context.setApp(app);
+    if (result.app) context.setApp(result.app);
 
     if (result.undo) {
       // [TODO]
@@ -127,7 +121,6 @@ export function executeOn(
 
 interface UpdateResult {
   app?: App;
-  insertLinkInActiveEditor?: string;
   openUrl?: string;
   undo?: boolean;
 }
@@ -325,10 +318,11 @@ const updates = {
     return {app: result};
   },
 
-  async "insert-link"({input}: UpdateArgs) {
+  async "insert-link"({input, target}: UpdateArgs) {
     let [result, selection] = await input();
     result = applyActionEvent(result, {action: "link-inserted"});
-    return {app: result, insertLinkInActiveEditor: selection};
+    result = A.editInsertLink(result, require(target), selection);
+    return {app: result};
   },
 
   "undo"({}: UpdateArgs) {
