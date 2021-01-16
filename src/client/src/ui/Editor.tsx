@@ -11,7 +11,7 @@ import * as T from "../tree";
 import * as E from "../editing";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
-import {AppState, merge} from "../context";
+import {App, merge} from "../app";
 
 import Bullet from "./Bullet";
 
@@ -224,7 +224,7 @@ function contentEq(a: E.EditorContent, b: E.EditorContent): boolean {
   return true;
 }
 
-export function onPastedParagraphs(app: AppState, node: T.NodeRef, paragraphs: string[]) {
+export function onPastedParagraphs(app: App, node: T.NodeRef, paragraphs: string[]) {
   let [state, tree] = [app.state, app.tree];
   let lastNode = node;
 

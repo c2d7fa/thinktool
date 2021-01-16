@@ -1,8 +1,7 @@
-// This is a wrapper around an AppState. We use this for some of our tests to
-// make it easier to read.
+// This is a stateful wrapper around an App. We use this for some of our tests.
 
-import * as C from "./context";
-import * as D from "./data";
+import {App, merge} from "./app";
+
 import * as T from "./tree";
 import * as G from "./goal";
 import * as U from "./tutorial";
@@ -10,7 +9,7 @@ import * as U from "./tutorial";
 export interface Wrapap {
   root: Node;
   completed(goal: G.GoalId): boolean;
-  map(f: (app: C.AppState) => C.AppState): Wrapap;
+  map(f: (app: App) => App): Wrapap;
 }
 
 export interface Node {
@@ -24,7 +23,7 @@ export interface Node {
   ref: T.NodeRef;
 }
 
-export function from(app: C.AppState): Wrapap {
+export function from(app: App): Wrapap {
   function node(ref: T.NodeRef) {
     return {
       child(index: number) {
@@ -50,7 +49,7 @@ export function from(app: C.AppState): Wrapap {
       },
 
       expand() {
-        return from(C.merge(app, {tree: T.expand(app.state, app.tree, ref)}));
+        return from(merge(app, {tree: T.expand(app.state, app.tree, ref)}));
       },
 
       get thing() {
@@ -76,7 +75,7 @@ export function from(app: C.AppState): Wrapap {
       return U.isGoalFinished(app.tutorialState, goal);
     },
 
-    map(f: (app: C.AppState) => C.AppState) {
+    map(f: (app: App) => App) {
       return from(f(app));
     },
   };

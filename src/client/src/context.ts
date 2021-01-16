@@ -9,7 +9,6 @@ import type {Message} from "./messages";
 
 import {App} from "./app";
 
-export {App as AppState};
 export {jump, merge} from "./app";
 
 export interface DragInfo {

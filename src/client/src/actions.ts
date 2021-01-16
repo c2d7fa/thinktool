@@ -1,4 +1,4 @@
-import {AppState, Context} from "./context";
+import {Context} from "./context";
 import * as A from "./context";
 import * as T from "./tree";
 import * as D from "./data";
@@ -8,7 +8,6 @@ import * as Goal from "./goal";
 import {NodeRef} from "./tree-internal";
 import {App} from "./app";
 import * as Ap from "./app";
-import * as E from "./editing";
 
 export type ActionName =
   | "insert-sibling"
@@ -42,7 +41,7 @@ export type ActionName =
 // If enabled(context, action) returns false, then the toolbar button for the
 // given action should be disabled, and pressing the shortcut should not execute
 // the action.
-export function enabled(state: AppState, action: ActionName): boolean {
+export function enabled(state: App, action: ActionName): boolean {
   const alwaysEnabled: ActionName[] = ["find", "new", "changelog", "undo", "home", "forum"];
   const requireTarget: ActionName[] = [
     "zoom",
@@ -128,17 +127,13 @@ export function executeOn(
 }
 
 interface UpdateResult {
-  app?: AppState;
+  app?: App;
   insertLinkInActiveEditor?: string;
   openUrl?: string;
   undo?: boolean;
 }
 
-export async function update(
-  app: AppState,
-  action: keyof typeof updates,
-  config: UpdateConfig,
-): Promise<UpdateResult> {
+export async function update(app: App, action: keyof typeof updates, config: UpdateConfig): Promise<UpdateResult> {
   if (!enabled(app, action)) {
     console.error("The action %o should not be enabled! Continuing anyway...", action);
   }
@@ -147,7 +142,7 @@ export async function update(
 }
 
 async function updateOn(
-  app: AppState,
+  app: App,
   action: keyof typeof updates,
   target: NodeRef | null,
   config: UpdateConfig,
@@ -166,16 +161,16 @@ function require<T>(x: T | null): T {
   return x;
 }
 
-function applyActionEvent(app: AppState, event: Goal.ActionEvent): AppState {
+function applyActionEvent(app: App, event: Goal.ActionEvent): App {
   return A.merge(app, {tutorialState: Tutorial.action(app.tutorialState, event)});
 }
 
 export type UpdateConfig = {
-  input(seedText?: string): Promise<[AppState, string]>;
+  input(seedText?: string): Promise<[App, string]>;
 };
 
 type UpdateArgs = UpdateConfig & {
-  app: AppState;
+  app: App;
   target: NodeRef | null;
 };
 
