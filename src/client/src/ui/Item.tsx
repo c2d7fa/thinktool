@@ -75,6 +75,16 @@ export function status(tree: T.Tree, node: T.NodeRef): ItemStatus {
   }
 }
 
+export function kind(tree: T.Tree, node: T.NodeRef): ItemKind {
+  const maybeResult = T.kind(tree, node);
+  if (maybeResult === undefined) {
+    // [TODO] Why can this be undefined!?
+    console.warn("We couldn't get the kind of an item. That may be a problem.");
+    return "child";
+  }
+  return maybeResult;
+}
+
 // An item in the outline that represents a particular node in the tree. This is
 // a general component that takes the list of other parents, the subtree and
 // even the content editor components as props.

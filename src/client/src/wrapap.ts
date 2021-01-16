@@ -10,6 +10,7 @@ export interface Wrapap {
   root: Node;
   completed(goal: G.GoalId): boolean;
   map(f: (app: App) => App): Wrapap;
+  tree: T.Tree;
 }
 
 export interface Node {
@@ -21,10 +22,12 @@ export interface Node {
   expanded: boolean;
   expand(): Wrapap;
   ref: T.NodeRef;
+  toggleLink(link: string): Wrapap;
+  link(index: number): Node;
 }
 
 export function from(app: App): Wrapap {
-  function node(ref: T.NodeRef) {
+  function node(ref: T.NodeRef): Node {
     return {
       child(index: number) {
         const childRef = T.children(app.tree, ref)[index];
@@ -63,12 +66,24 @@ export function from(app: App): Wrapap {
       get ref() {
         return ref;
       },
+
+      toggleLink(link: string) {
+        return from(merge(app, {tree: T.toggleLink(app.state, app.tree, ref, link)}));
+      },
+
+      link(index: number) {
+        return node(T.openedLinksChildren(app.tree, ref)[index]);
+      },
     };
   }
 
   const wrapap = {
     get root() {
       return node(T.root(app.tree));
+    },
+
+    get tree() {
+      return app.tree;
     },
 
     completed(goal: G.GoalId) {
