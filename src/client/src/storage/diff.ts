@@ -1,6 +1,9 @@
 import * as Misc from "@johv/miscjs";
 import {Communication} from "@thinktool/shared";
+
 import {State, content, childConnections, connectionChild} from "../data";
+import * as A from "../app";
+import * as Tu from "../tutorial";
 
 // When the user does something, we need to update both the local state and the
 // state on the server. We can't just send over the entire state to the server
@@ -65,25 +68,25 @@ export type Effects = {
     children: {name: string; child: string}[];
     isPage: boolean; // [TODO] We don't use isPage anymore.
   }[];
-  tutorialActive: boolean | null;
+  tutorialFinished: boolean | null;
 };
 
-export function effects(oldState: State, newState: State): Effects {
-  const diff = diffState(oldState, newState);
+export function effects(before: A.App, after: A.App): Effects {
+  const diff = diffState(before.state, after.state);
 
   const deleted = diff.deleted;
 
   const edited = diff.changedContent.map((thing) => ({
     thing,
-    content: content(newState, thing),
+    content: content(after.state, thing),
   }));
 
   let updated = [...diff.added, ...diff.changed].map((thing) => ({
     name: thing,
-    content: content(newState, thing),
-    children: childConnections(newState, thing).map((c) => ({
+    content: content(after.state, thing),
+    children: childConnections(after.state, thing).map((c) => ({
       name: c.connectionId,
-      child: connectionChild(newState, c)!,
+      child: connectionChild(after.state, c)!,
     })),
     isPage: false,
   }));
@@ -92,6 +95,6 @@ export function effects(oldState: State, newState: State): Effects {
     deleted,
     edited,
     updated,
-    tutorialActive: null,
+    tutorialFinished: (Tu.isActive(before.tutorialState) && !Tu.isActive(after.tutorialState)) || null,
   };
 }

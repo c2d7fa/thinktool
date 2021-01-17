@@ -62,7 +62,7 @@ function useContext({
   const context: Context = {
     setApp(app: A.App) {
       // Push changes to server
-      const effects = Storage.Diff.effects(innerApp.state, app.state);
+      const effects = Storage.Diff.effects(innerApp, app);
       Storage.execute(storage, effects, {
         setContent(thing, content) {
           batched.update(thing, () => {
@@ -70,10 +70,6 @@ function useContext({
           });
         },
       });
-
-      if (!Tutorial.isActive(app.tutorialState)) {
-        storage.setTutorialFinished();
-      }
 
       // Update actual app
       setInnerApp(app);

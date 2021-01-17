@@ -55,4 +55,7 @@ export function execute(
   for (const edited of effects.edited) {
     args.setContent(edited.thing, edited.content);
   }
+  if (effects.tutorialFinished) {
+    storage.setTutorialFinished();
+  }
 }

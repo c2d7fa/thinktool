@@ -5,6 +5,7 @@ import * as Storage from "../src/storage";
 import * as W from "../src/wrapap";
 import * as A from "../src/app";
 import * as D from "../src/data";
+import * as Tu from "../src/tutorial";
 
 describe("calculating effects of updates", () => {
   describe("deleting an item", () => {
@@ -17,7 +18,7 @@ describe("calculating effects of updates", () => {
 
     const after = before.root.child(0).destroy();
 
-    const effects = Storage.Diff.effects(before.state, after.state);
+    const effects = Storage.Diff.effects(before.app, after.app);
 
     it("creates a 'deleted' effect for the given item", () => {
       expect(effects.deleted).toEqual(["1"]);
@@ -40,7 +41,7 @@ describe("calculating effects of updates", () => {
     const child = after.root.child(0).thing;
     const connection = D.childConnections(after.state, after.root.thing)[0].connectionId;
 
-    const effects = Storage.Diff.effects(before.state, after.state);
+    const effects = Storage.Diff.effects(before.app, after.app);
 
     it("creates an 'updated' effect for the parent", () => {
       expect(effects.updated).toContainEqual({
@@ -66,7 +67,7 @@ describe("calculating effects of updates", () => {
 
     const after = before.root.child(0).edit({content: ["Edited"], selection: {from: 6, to: 6}});
 
-    const effects = Storage.Diff.effects(before.state, after.state);
+    const effects = Storage.Diff.effects(before.app, after.app);
 
     it("creates an 'edited' effect for the child", () => {
       expect(effects.edited).toEqual([{thing: "1", content: ["Edited"]}]);
@@ -75,7 +76,17 @@ describe("calculating effects of updates", () => {
     it("doesn't create any other effects", () => {
       expect(effects.deleted).toEqual([]);
       expect(effects.updated).toEqual([]);
-      expect(effects.tutorialActive).toBeNull();
+      expect(effects.tutorialFinished).toBeNull();
+    });
+  });
+
+  describe("finishing the tutorial", () => {
+    const before = A.of({});
+    const after = A.merge(before, {tutorialState: Tu.initialize(true)});
+    const effects = Storage.Diff.effects(before, after);
+
+    it("creates a 'tutorialFinished' effect", () => {
+      expect(effects.tutorialFinished).toBe(true);
     });
   });
 });
