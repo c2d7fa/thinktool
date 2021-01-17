@@ -138,10 +138,6 @@ function useContext({
       context.setApp(A.merge(context, {tutorialState}));
     },
 
-    setChangelogShown(changelogShown) {
-      context.setApp(A.merge(context, {changelogShown}));
-    },
-
     setTree(tree) {
       context.setApp(A.merge(context, {tree}));
     },
@@ -406,7 +402,7 @@ function App_({
       <Changelog
         changelog={context.changelog}
         visible={context.changelogShown}
-        hide={() => context.setChangelogShown(false)}
+        hide={() => setAppState(context, A.merge(context, {changelogShown: false}))}
       />
       <ThingOverview context={context} />
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}

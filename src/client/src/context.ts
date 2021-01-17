@@ -28,7 +28,6 @@ export interface Context extends App {
   setApp(app: App): void;
   setState(value: State): void;
   setTutorialState(tutorialState: Tutorial.State): void;
-  setChangelogShown(changelogShown: boolean): void;
   setTree(value: Tree): void;
   setEditors(editors: App["editors"]): void;
 
