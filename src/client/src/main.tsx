@@ -192,10 +192,6 @@ function App_({
         }),
       );
     });
-
-    receiver.current.subscribe("toolbar", (ev) => {
-      Actions.executeOn(contextRef.current, ev.button, ev.target, {input: popup.input});
-    });
   }, []);
 
   const send = receiver.current.send;
@@ -400,7 +396,7 @@ function App_({
       </div>
       {toolbarShown ? (
         <Toolbar
-          executeAction={(action) => send("toolbar", {button: action, target: T.focused(context.tree)})}
+          executeAction={(action) => send("action", {action})}
           isEnabled={(action) => Actions.enabled(context, action)}
           isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
           isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}

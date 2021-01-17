@@ -78,39 +78,6 @@ export type UpdateConfig = {
   input(seedText?: string): Promise<[App, string]>;
 };
 
-export function executeOn(
-  context: Context,
-  action: ActionName,
-  target: NodeRef | null,
-  config: UpdateConfig,
-): void {
-  if (!enabled(context, action)) {
-    console.warn("The action %o appears not to be enabled.", action);
-  }
-
-  const config_ = {
-    ...config,
-    async input() {
-      return await config.input(A.selectedText(context));
-    },
-  };
-
-  (async () => {
-    const result = await updateOn(context, action, target, config_);
-
-    if (result.app) context.setApp(result.app);
-
-    if (result.undo) {
-      // [TODO]
-      console.warn("Undo is currently broken. Ignoring.");
-    }
-
-    if (result.openUrl) {
-      context.openExternalUrl(result.openUrl);
-    }
-  })();
-}
-
 export async function execute(
   app: App,
   action: ActionName,
