@@ -3,7 +3,7 @@ import * as Misc from "@johv/miscjs";
 
 import * as ChangelogData from "./changes.json";
 
-import {State, diffState} from "./data";
+import {State} from "./data";
 import {Context, DragInfo, setAppState} from "./context";
 import {extractThingFromURL, useThingUrl} from "./url";
 import {useBatched} from "./batched";
@@ -33,6 +33,7 @@ import * as ReactDOM from "react-dom";
 
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
+import {EditorState} from "prosemirror-state";
 
 function useContext({
   initialState,
@@ -61,34 +62,14 @@ function useContext({
   const context: Context = {
     setApp(app: A.App) {
       // Push changes to server
-      const diff = diffState(innerApp.state, app.state);
-      for (const thing of diff.deleted) {
-        storage.deleteThing(thing);
-      }
-      for (const thing of diff.changedContent) {
-        batched.update(thing, () => {
-          storage.setContent(thing, Data.content(app.state, thing));
-        });
-      }
-      if (diff.added.length !== 0 || diff.changed.length !== 0) {
-        storage.updateThings(
-          [...diff.added, ...diff.changed].map((thing) => ({
-            name: thing,
-            content: Data.content(app.state, thing),
-            children: Data.childConnections(app.state, thing).map((c) => {
-              return {
-                name: c.connectionId,
-                child: Data.connectionChild(app.state, c)!,
-              };
-            }),
-            isPage: Data.isPage(app.state, thing),
-          })),
-        );
-      }
-
-      if (!Tutorial.isActive(app.tutorialState)) {
-        storage.setTutorialFinished();
-      }
+      const effects = Storage.Diff.effects(innerApp, app);
+      Storage.execute(storage, effects, {
+        setContent(thing, content) {
+          batched.update(thing, () => {
+            storage.setContent(thing, content);
+          });
+        },
+      });
 
       // Update actual app
       setInnerApp(app);
@@ -111,11 +92,6 @@ function useContext({
     },
 
     // [TODO] Do we actually need this?
-    setLocalState(state) {
-      setInnerApp((innerApp) => A.merge(innerApp, {state}));
-    },
-
-    // [TODO] Do we actually need this?
     updateLocalState(update) {
       setInnerApp((innerApp) => {
         const state = update(innerApp.state);
@@ -132,14 +108,6 @@ function useContext({
     server,
     openExternalUrl,
     send: receiver.send,
-
-    setTutorialState(tutorialState) {
-      context.setApp(A.merge(context, {tutorialState}));
-    },
-
-    setChangelogShown(changelogShown) {
-      context.setApp(A.merge(context, {changelogShown}));
-    },
 
     setTree(tree) {
       context.setApp(A.merge(context, {tree}));
@@ -182,12 +150,14 @@ function App_({
   const receiver = React.useRef(createReceiver<Message>());
 
   React.useEffect(() => {
-    receiver.current.subscribe("action", (ev) => {
-      Actions.execute(contextRef.current, ev.action, {input: popup.input});
-    });
-
-    receiver.current.subscribe("toolbar", (ev) => {
-      Actions.executeOn(contextRef.current, ev.button, ev.target, {input: popup.input});
+    receiver.current.subscribe("action", async (ev) => {
+      setAppState(
+        contextRef.current,
+        await Actions.execute(contextRef.current, ev.action, {
+          input: popup.input,
+          openUrl: context.openExternalUrl,
+        }),
+      );
     });
   }, []);
 
@@ -393,17 +363,22 @@ function App_({
       </div>
       {toolbarShown ? (
         <Toolbar
-          executeAction={(action) => send("toolbar", {button: action, target: T.focused(context.tree)})}
+          executeAction={(action) => send("action", {action})}
           isEnabled={(action) => Actions.enabled(context, action)}
           isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
           isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
         />
       ) : null}
-      {!showSplash && <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />}
+      {!showSplash && (
+        <Tutorial.TutorialBox
+          state={context.tutorialState}
+          setState={(tutorialState) => setAppState(context, A.merge(context, {tutorialState}))}
+        />
+      )}
       <Changelog
         changelog={context.changelog}
         visible={context.changelogShown}
-        hide={() => context.setChangelogShown(false)}
+        hide={() => setAppState(context, A.merge(context, {changelogShown: false}))}
       />
       <ThingOverview context={context} />
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
@@ -420,17 +395,9 @@ function ThingOverview(p: {context: Context}) {
       <ParentsOutline context={p.context} />
       <div className="overview-main">
         <Editor.Editor
-          onAction={(action) => p.context.send("action", {action})}
-          onOpenLink={(link) => setAppState(p.context, A.toggleLink(p.context, T.root(p.context.tree), link))}
-          onJumpLink={(target) => setAppState(p.context, A.jump(p.context, target))}
-          onFocus={() => p.context.setTree(T.focus(p.context.tree, T.root(p.context.tree)))}
           editor={A.editor(p.context, T.root(p.context.tree))!}
-          onEdit={(editor) => setAppState(p.context, A.edit(p.context, T.root(p.context.tree), editor))}
           hasFocus={T.hasFocus(p.context.tree, T.root(p.context.tree))}
-          onPastedParagraphs={(paragraphs) =>
-            setAppState(p.context, Editor.onPastedParagraphs(p.context, T.root(p.context.tree), paragraphs))
-          }
-          onOpenExternalUrl={p.context.openExternalUrl}
+          onEvent={handlingEditorEvent(p.context, T.root(p.context.tree))}
         />
         <div className="children">
           <Outline context={p.context} />
@@ -454,7 +421,7 @@ function ThingOverview(p: {context: Context}) {
 
 function ParentsOutline(p: {context: Context}) {
   const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map((child: T.NodeRef) => {
-    return <ExpandableItem kind="parent" key={child.id} node={child} context={p.context} />;
+    return <ExpandableItem key={child.id} node={child} context={p.context} />;
   });
 
   const subtree = <ul className="subtree">{parentItems}</ul>;
@@ -474,7 +441,7 @@ function ParentsOutline(p: {context: Context}) {
 function ReferencesOutline(p: {context: Context}) {
   const referenceItems = T.backreferencesChildren(p.context.tree, T.root(p.context.tree)).map(
     (child: T.NodeRef) => {
-      return <ExpandableItem kind="reference" key={child.id} node={child} context={p.context} />;
+      return <ExpandableItem key={child.id} node={child} context={p.context} />;
     },
   );
 
@@ -497,13 +464,21 @@ function Outline(p: {context: Context}) {
   );
 }
 
-function ExpandableItem(props: {
-  context: Context;
-  node: T.NodeRef;
-  parent?: T.NodeRef;
+const handlingEditorEvent = (context: Context, node: T.NodeRef) => (event: Editor.Event): void => {
+  const result = Editor.handling(context, node)(event);
 
-  kind: "child" | "reference" | "opened-link" | "parent";
-}) {
+  if (result.handled) {
+    setAppState(context, result.app);
+  } else if (event.tag === "action") {
+    context.send("action", {action: event.action});
+  } else if (event.tag === "openUrl") {
+    context.openExternalUrl(event.url);
+  } else {
+    console.error("Unhandled event from editor: %o", event);
+  }
+};
+
+function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.NodeRef}) {
   function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
     const otherParents = Data.otherParents(
       props.context.state,
@@ -511,9 +486,9 @@ function ExpandableItem(props: {
       props.parent && T.thing(props.context.tree, props.parent),
     );
 
-    const listItems = otherParents.map((otherParentThing) => {
+    const listItems = otherParents.map((otherParentThing, index) => {
       return (
-        <li key={otherParentThing}>
+        <li key={index}>
           <span
             className="other-parent-small"
             onClick={() => {
@@ -542,17 +517,9 @@ function ExpandableItem(props: {
 
   const content = (
     <Editor.Editor
-      onAction={(action) => props.context.send("action", {action})}
-      onOpenLink={(link) => setAppState(props.context, A.toggleLink(props.context, props.node, link))}
-      onJumpLink={(target) => setAppState(props.context, A.jump(props.context, target))}
-      onFocus={() => props.context.setTree(T.focus(props.context.tree, props.node))}
       editor={A.editor(props.context, props.node)!}
-      onEdit={(editor) => setAppState(props.context, A.edit(props.context, props.node, editor))}
       hasFocus={T.hasFocus(props.context.tree, props.node)}
-      onPastedParagraphs={(paragraphs) =>
-        setAppState(props.context, Editor.onPastedParagraphs(props.context, props.node, paragraphs))
-      }
-      onOpenExternalUrl={props.context.openExternalUrl}
+      onEvent={handlingEditorEvent(props.context, props.node)}
     />
   );
 
@@ -564,7 +531,7 @@ function ExpandableItem(props: {
       onBulletAltClick={() => setAppState(props.context, Item.altClick(props.context, props.node))}
       id={props.node.id}
       beginDrag={beginDrag}
-      kind={props.kind}
+      kind={Item.kind(props.context.tree, props.node)}
       otherParents={otherParents}
       subtree={subtree}
       content={content}
@@ -580,7 +547,7 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
   }
 
   const children = T.backreferencesChildren(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem kind="reference" key={child.id} node={child} context={p.context} />;
+    return <ExpandableItem key={child.id} node={child} context={p.context} />;
   });
 
   return (
@@ -609,11 +576,11 @@ function Subtree(p: {
   omitReferences?: boolean;
 }) {
   const children = T.children(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem kind="child" key={child.id} node={child} parent={p.parent} context={p.context} />;
+    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
   });
 
   const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem kind="opened-link" key={child.id} node={child} parent={p.parent} context={p.context} />;
+    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
   });
 
   return (

@@ -1,6 +1,10 @@
 import * as API from "./server-api";
 import {Communication} from "@thinktool/shared";
 
+import {Effects} from "./storage/diff";
+
+export * as Diff from "./storage/diff";
+
 export interface Storage {
   getFullState(): Promise<Communication.FullStateResponse>;
 
@@ -35,4 +39,23 @@ export function ignore(): Storage {
     getTutorialFinished: async () => false,
     async setTutorialFinished() {},
   };
+}
+
+export function execute(
+  storage: Storage,
+  effects: Effects,
+  args: {setContent(thing: string, content: Communication.Content): void},
+) {
+  for (const deleted of effects.deleted) {
+    storage.deleteThing(deleted);
+  }
+  if (effects.updated.length > 0) {
+    storage.updateThings(effects.updated);
+  }
+  for (const edited of effects.edited) {
+    args.setContent(edited.thing, edited.content);
+  }
+  if (effects.tutorialFinished) {
+    storage.setTutorialFinished();
+  }
 }

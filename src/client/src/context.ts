@@ -27,15 +27,12 @@ export function setAppState(context: Context, app: App): void {
 export interface Context extends App {
   setApp(app: App): void;
   setState(value: State): void;
-  setTutorialState(tutorialState: Tutorial.State): void;
-  setChangelogShown(changelogShown: boolean): void;
   setTree(value: Tree): void;
   setEditors(editors: App["editors"]): void;
 
   storage: Storage;
   server?: Server;
 
-  setLocalState(value: State): void;
   updateLocalState(f: (value: State) => State): void;
 
   drag: DragInfo;

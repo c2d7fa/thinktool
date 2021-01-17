@@ -55,6 +55,65 @@ describe("item status", () => {
   });
 });
 
+describe("item kind", () => {
+  test("a normal child item has kind 'child'", () => {
+    const w = W.from(
+      App.of({
+        "0": {content: ["Item 0"], children: ["1"]},
+        "1": {content: ["Item 1"]},
+      }),
+    );
+
+    const node = w.root.child(0);
+
+    expect(node.thing).toBe("1");
+    expect(Item.kind(w.tree, node.ref)).toBe("child");
+  });
+
+  test("a parent of the root has kind 'parent'", () => {
+    const w = W.from(
+      App.of({
+        "0": {content: ["Item 0"]},
+        "1": {content: ["Item 1"], children: ["0"]},
+      }),
+    );
+
+    const node = w.root.parent(0);
+
+    expect(node.thing).toBe("1");
+    expect(Item.kind(w.tree, node.ref)).toBe("parent");
+  });
+
+  test("a reference to another item has kind 'reference'", () => {
+    const w = W.from(
+      App.of({
+        "0": {content: ["Item 0"]},
+        "1": {content: ["Item 1 references ", {link: "0"}]},
+      }),
+    );
+
+    const node = w.root.reference(0);
+
+    expect(node.thing).toBe("1");
+    expect(Item.kind(w.tree, node.ref)).toBe("reference");
+  });
+
+  test("an opened link has kind 'opened-link'", () => {
+    let w = W.from(
+      App.of({
+        "0": {content: ["Item 0 links to ", {link: "1"}]},
+        "1": {content: ["Item 1"]},
+      }),
+    );
+
+    w = w.root.toggleLink("1");
+    const node = w.root.link(0);
+
+    expect(node.thing).toBe("1");
+    expect(Item.kind(w.tree, node.ref)).toBe("opened-link");
+  });
+});
+
 describe("clicking on an item's bullet", () => {
   describe("if the item is an opened link", () => {
     let data = D.empty;

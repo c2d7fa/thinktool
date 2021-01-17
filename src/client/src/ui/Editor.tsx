@@ -12,6 +12,7 @@ import * as E from "../editing";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
 import {App, merge} from "../app";
+import * as A from "../app";
 
 import Bullet from "./Bullet";
 
@@ -243,24 +244,39 @@ export interface EditorState {
   replace(link: string, textContent: string): void;
 }
 
-export function Editor(props: {
-  editor: E.Editor;
-  hasFocus: boolean;
-  onAction(action: Ac.ActionName): void;
-  onOpenLink(target: string): void;
-  onJumpLink(target: string): void;
-  onFocus(): void;
-  onEdit(editor: E.Editor): void;
-  onPastedParagraphs(paragraphs: string[]): void;
-  onOpenExternalUrl(url: string): void;
-}) {
-  const onOpenLinkRef = usePropRef(props.onOpenLink);
-  const onJumpLinkRef = usePropRef(props.onJumpLink);
-  const onActionRef = usePropRef(props.onAction);
-  const onFocusRef = usePropRef(props.onFocus);
-  const onPastedParagraphsRef = usePropRef(props.onPastedParagraphs);
-  const onOpenExternalUrlRef = usePropRef(props.onOpenExternalUrl);
-  const onEditRef = usePropRef(props.onEdit);
+export type Event =
+  | {tag: "action"; action: Ac.ActionName}
+  | {tag: "open"; link: string}
+  | {tag: "jump"; link: string}
+  | {tag: "edit"; editor: E.Editor; focused: boolean}
+  | {tag: "paste"; paragraphs: string[]}
+  | {tag: "openUrl"; url: string};
+
+// [TODO] This can only handle some cases. It can't handle actions, since that
+// requires opening a popup and waiting for user input.
+//
+// [TODO] Add unit tests for this function.
+export function handling(app: App, node: T.NodeRef) {
+  return (ev: Event): {handled: boolean; app: App} => {
+    if (ev.tag === "edit") {
+      let result = app;
+      if (ev.focused) result = A.merge(app, {tree: T.focus(app.tree, node)});
+      result = A.edit(result, node, ev.editor);
+      return {handled: true, app: result};
+    } else if (ev.tag === "open") {
+      return {handled: true, app: A.toggleLink(app, node, ev.link)};
+    } else if (ev.tag === "jump") {
+      return {handled: true, app: A.jump(app, ev.link)};
+    } else if (ev.tag === "paste") {
+      return {handled: true, app: onPastedParagraphs(app, node, ev.paragraphs)};
+    }
+
+    return {handled: false, app};
+  };
+}
+
+export function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(event: Event): void}) {
+  const onEventRef = usePropRef(props.onEvent);
 
   const keyPlugin = new PS.Plugin({
     props: {
@@ -273,14 +289,15 @@ export function Editor(props: {
 
         for (const action of Ac.allActionsWithShortcuts) {
           if (Sh.matches(ev, Ac.shortcut(action), conditions)) {
-            onActionRef.current!(action);
+            onEventRef.current!({tag: "action", action});
             return true;
           }
         }
 
         if (ev.key === "Backspace" && view.state.doc.childCount === 0) {
           console.log("Destroying item due to backspace on empty item.");
-          onActionRef.current!("destroy");
+          onEventRef.current!({tag: "action", action: "destroy"});
+          // [TODO] Shouldn't we also return here?
         }
 
         // We don't want to handle anything by default.
@@ -291,7 +308,7 @@ export function Editor(props: {
 
   const externalLinkDecorationPlugin = createExternalLinkDecorationPlugin({
     openExternalUrl(url: string) {
-      onOpenExternalUrlRef.current!(url);
+      onEventRef.current!({tag: "openUrl", url});
     },
   });
 
@@ -301,7 +318,7 @@ export function Editor(props: {
         const text = ev.clipboardData?.getData("text/plain");
 
         if (text !== undefined && E.isParagraphFormattedText(text)) {
-          onPastedParagraphsRef.current!(E.paragraphs(text));
+          onEventRef.current!({tag: "paste", paragraphs: E.paragraphs(text)});
           return true;
         }
 
@@ -310,29 +327,23 @@ export function Editor(props: {
     },
   });
 
-  // When the user clicks on this editor to focus it, we want to communicate
-  // that back to the state managed by React. This plugin handles that.
-  const focusPlugin = new PS.Plugin({
-    props: {
-      handleClick(view, pos, ev) {
-        onFocusRef.current!();
-        return false;
-      },
-    },
-  });
-
-  function onTransaction(transaction: PS.Transaction<typeof schema>, view: PV.EditorView<typeof schema>) {
-    onEditRef.current!(fromProseMirror(view.state.apply(transaction)));
-  }
-
   const proseMirrorState = React.useMemo(
     () =>
       toProseMirror(props.editor, {
-        openLink: (thing) => onOpenLinkRef.current!(thing),
-        jumpLink: (thing) => onJumpLinkRef.current!(thing),
-        plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
+        openLink: (link) => onEventRef.current!({tag: "open", link}),
+        jumpLink: (link) => onEventRef.current!({tag: "jump", link}),
+        plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
       }),
     [props.editor],
   );
-  return <ProseMirror state={proseMirrorState} onTransaction={onTransaction} hasFocus={props.hasFocus} />;
+
+  return (
+    <ProseMirror
+      state={proseMirrorState}
+      onStateUpdated={(state, {focused}) =>
+        onEventRef.current!({tag: "edit", editor: fromProseMirror(state), focused})
+      }
+      hasFocus={props.hasFocus}
+    />
+  );
 }

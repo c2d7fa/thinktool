@@ -379,6 +379,10 @@
     {
       "date": "2021-01-02",
       "title": "Continuing overhauling various parts of the application, especially the editor component to make them more testable. This will hopefully reduce the number of bugs in the long term, but may introduce new bugs in the short term."
+    },
+    {
+      "date": "2021-01-17",
+      "title": "Fixed an issue where the text cursor would flicker when clicking inside an item."
     }
   ]
 }

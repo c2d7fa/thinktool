@@ -96,3 +96,8 @@ export function toggleLink(app: App, node: T.NodeRef, link: string): App {
 export function isGoalFinished(app: App, goal: GoalId): boolean {
   return Tutorial.isGoalFinished(app.tutorialState, goal);
 }
+
+export function createChild(app: App, node: T.NodeRef): App {
+  const [state, tree] = T.createChild(app.state, app.tree, node);
+  return merge(app, {state, tree});
+}

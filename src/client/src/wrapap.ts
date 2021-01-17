@@ -1,15 +1,22 @@
 // This is a stateful wrapper around an App. We use this for some of our tests.
 
 import {App, merge} from "./app";
+import * as A from "./app";
 
+import * as D from "./data";
 import * as T from "./tree";
 import * as G from "./goal";
 import * as U from "./tutorial";
+import * as E from "./editing";
 
 export interface Wrapap {
   root: Node;
   completed(goal: G.GoalId): boolean;
   map(f: (app: App) => App): Wrapap;
+
+  app: App;
+  tree: T.Tree;
+  state: D.State;
 }
 
 export interface Node {
@@ -21,10 +28,14 @@ export interface Node {
   expanded: boolean;
   expand(): Wrapap;
   ref: T.NodeRef;
+  toggleLink(link: string): Wrapap;
+  link(index: number): Node;
+  destroy(): Wrapap;
+  edit(editor: E.Editor): Wrapap;
 }
 
 export function from(app: App): Wrapap {
-  function node(ref: T.NodeRef) {
+  function node(ref: T.NodeRef): Node {
     return {
       child(index: number) {
         const childRef = T.children(app.tree, ref)[index];
@@ -63,12 +74,41 @@ export function from(app: App): Wrapap {
       get ref() {
         return ref;
       },
+
+      toggleLink(link: string) {
+        return from(merge(app, {tree: T.toggleLink(app.state, app.tree, ref, link)}));
+      },
+
+      link(index: number) {
+        return node(T.openedLinksChildren(app.tree, ref)[index]);
+      },
+
+      destroy() {
+        const [state, tree] = T.removeThing(app.state, app.tree, ref);
+        return from(merge(app, {state, tree}));
+      },
+
+      edit(editor) {
+        return from(A.edit(app, ref, editor));
+      },
     };
   }
 
   const wrapap = {
     get root() {
       return node(T.root(app.tree));
+    },
+
+    get tree() {
+      return app.tree;
+    },
+
+    get state() {
+      return app.state;
+    },
+
+    get app() {
+      return app;
     },
 
     completed(goal: G.GoalId) {

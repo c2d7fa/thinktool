@@ -1,5 +1,6 @@
 /// <reference types="@types/jest" />
 
+import * as W from "../src/wrapap";
 import * as A from "../src/app";
 import * as D from "../src/data";
 import * as T from "../src/tree";
@@ -142,5 +143,23 @@ describe("inserting a link in an editor", () => {
   it("sets the selection to be after the inserted link", () => {
     expect(editorBefore.selection).toEqual({from: 8, to: 14});
     expect(editorAfter.selection).toEqual({from: 9, to: 9});
+  });
+});
+
+describe("after creating a new child", () => {
+  const before = A.of({
+    "0": {content: ["Item 0"]},
+  });
+
+  const after = A.createChild(before, T.root(before.tree));
+
+  test("the parent item gets a new child", () => {
+    expect(T.children(before.tree, T.root(before.tree)).length).toBe(0);
+    expect(T.children(after.tree, T.root(after.tree)).length).toBe(1);
+  });
+
+  test("the child is focused", () => {
+    const child = W.from(after).root.child(0).ref;
+    expect(T.hasFocus(after.tree, child)).toBe(true);
   });
 });

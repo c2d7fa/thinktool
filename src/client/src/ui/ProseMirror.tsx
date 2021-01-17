@@ -20,19 +20,31 @@ function usePropRef<T>(prop: T): React.RefObject<T> {
   return ref;
 }
 
+// To improve responsiveness, the state that is actually used by the rendered
+// component is not always the same as the given state prop.
+//
+// Whenever the user makes a change inside the editor, that transaction is
+// *first* applied locally, and then `onStateUpdated` is called with the
+// resulting state.
+//
+// Our state is then updated again whenever the prop changes, but not until
+// then.
+
 export default function ProseMirror<Schema extends PM.Schema>(props: {
   state: PS.EditorState<Schema>;
-  onTransaction(transaction: PS.Transaction<Schema>, view: PV.EditorView<Schema>): void;
+  onStateUpdated(state: PS.EditorState<Schema>, args: {focused: boolean}): void;
   hasFocus: boolean;
 }) {
-  const onTransactionRef = usePropRef(props.onTransaction);
+  const onStateUpdatedRef = usePropRef(props.onStateUpdated);
 
   const editorViewRef = React.useRef<PV.EditorView<Schema> | null>(null);
   const ref = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     function dispatchTransaction(this: PV.EditorView<Schema>, transaction: PS.Transaction<Schema>) {
-      onTransactionRef.current!(transaction, this);
+      const newState = this.state.apply(transaction);
+      this.updateState(newState);
+      onStateUpdatedRef.current!(newState, {focused: this.hasFocus()});
     }
 
     editorViewRef.current = new PV.EditorView(ref.current!, {state: props.state, dispatchTransaction});

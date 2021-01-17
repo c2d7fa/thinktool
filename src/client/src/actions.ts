@@ -74,60 +74,31 @@ export function enabled(state: App, action: ActionName): boolean {
   }
 }
 
-export function execute(context: Context, action: ActionName, config: UpdateConfig): void {
-  if (!enabled(context, action)) {
-    console.error("The action %o is not enabled! Ignoring.", action);
-    return;
-  }
+export type UpdateConfig = {
+  input(seedText?: string): Promise<[App, string]>;
+};
 
-  const focused = T.focused(context.tree);
-  if (focused === null) throw `Bug in 'enabled'. Ran action '${action}', even though there was no node selected.`;
-
-  executeOn(context, action, focused, config);
-}
-
-export function executeOn(
-  context: Context,
+export async function execute(
+  app: App,
   action: ActionName,
-  target: NodeRef | null,
-  config: UpdateConfig,
-): void {
-  if (!enabled(context, action)) {
-    console.warn("The action %o appears not to be enabled.", action);
+  config: {
+    openUrl(url: string): void;
+    input(seedText?: string): Promise<[App, string]>;
+  },
+): Promise<App> {
+  if (!enabled(app, action)) {
+    console.error("The action %o is not enabled! Ignoring.", action);
+    return app;
   }
 
-  const config_ = {
-    ...config,
-    async input() {
-      return await config.input(A.selectedText(context));
-    },
-  };
-
-  (async () => {
-    const result = await updateOn(context, action, target, config_);
-
-    let app = result.app ?? context;
-
-    if (result.insertLinkInActiveEditor) {
-      app = A.editInsertLink(app, require(target), result.insertLinkInActiveEditor);
-    }
-
-    context.setApp(app);
-
-    if (result.undo) {
-      // [TODO]
-      console.warn("Undo is currently broken. Ignoring.");
-    }
-
-    if (result.openUrl) {
-      context.openExternalUrl(result.openUrl);
-    }
-  })();
+  const result = await update(app, action, config);
+  if (result.undo) console.warn("Undo is currently broken. Ignoring."); // [TODO]
+  if (result.openUrl) config.openUrl(result.openUrl);
+  return result.app ?? app;
 }
 
 interface UpdateResult {
   app?: App;
-  insertLinkInActiveEditor?: string;
   openUrl?: string;
   undo?: boolean;
 }
@@ -164,10 +135,6 @@ function applyActionEvent(app: App, event: Goal.ActionEvent): App {
   return A.merge(app, {tutorialState: Tutorial.action(app.tutorialState, event)});
 }
 
-export type UpdateConfig = {
-  input(seedText?: string): Promise<[App, string]>;
-};
-
 type UpdateArgs = UpdateConfig & {
   app: App;
   target: NodeRef | null;
@@ -197,9 +164,7 @@ const updates = {
   async "new"({app, target}: UpdateArgs) {
     let result = app;
     if (target === null) {
-      let [newState, newTree, _, newId] = T.createChild(app.state, app.tree, T.root(app.tree));
-      newTree = T.focus(newTree, newId);
-      result = A.merge(result, {state: newState, tree: newTree});
+      result = A.createChild(app, T.root(app.tree));
     } else {
       let [newState, newTree, _, newId] = T.createSiblingAfter(app.state, app.tree, target);
       newTree = T.focus(newTree, newId);
@@ -261,11 +226,8 @@ const updates = {
   },
 
   async "new-child"({app, target}: UpdateArgs) {
-    let result = app;
-    const [newState, newTree, _, newId] = T.createChild(result.state, result.tree, require(target));
-    result = A.merge(result, {state: newState, tree: T.focus(newTree, newId)});
-    result = applyActionEvent(result, {action: "created-item"});
-    return {app: result};
+    const result = A.createChild(app, require(target));
+    return {app: applyActionEvent(result, {action: "created-item"})};
   },
 
   async "remove"({app, target}: UpdateArgs) {
@@ -325,10 +287,11 @@ const updates = {
     return {app: result};
   },
 
-  async "insert-link"({input}: UpdateArgs) {
+  async "insert-link"({input, target}: UpdateArgs) {
     let [result, selection] = await input();
     result = applyActionEvent(result, {action: "link-inserted"});
-    return {app: result, insertLinkInActiveEditor: selection};
+    result = A.editInsertLink(result, require(target), selection);
+    return {app: result};
   },
 
   "undo"({}: UpdateArgs) {
