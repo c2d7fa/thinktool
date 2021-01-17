@@ -248,8 +248,7 @@ export type Event =
   | {tag: "action"; action: Ac.ActionName}
   | {tag: "open"; link: string}
   | {tag: "jump"; link: string}
-  | {tag: "focus"}
-  | {tag: "edit"; editor: E.Editor}
+  | {tag: "edit"; editor: E.Editor; focused: boolean}
   | {tag: "paste"; paragraphs: string[]}
   | {tag: "openUrl"; url: string};
 
@@ -260,15 +259,16 @@ export type Event =
 export function handling(app: App, node: T.NodeRef) {
   return (ev: Event): {handled: boolean; app: App} => {
     if (ev.tag === "edit") {
-      return {handled: true, app: A.edit(app, node, ev.editor)};
+      let result = app;
+      if (ev.focused) result = A.merge(app, {tree: T.focus(app.tree, node)});
+      result = A.edit(result, node, ev.editor);
+      return {handled: true, app: result};
     } else if (ev.tag === "open") {
       return {handled: true, app: A.toggleLink(app, node, ev.link)};
     } else if (ev.tag === "jump") {
       return {handled: true, app: A.jump(app, ev.link)};
     } else if (ev.tag === "paste") {
       return {handled: true, app: onPastedParagraphs(app, node, ev.paragraphs)};
-    } else if (ev.tag === "focus") {
-      return {handled: true, app: A.merge(app, {tree: T.focus(app.tree, node)})};
     }
 
     return {handled: false, app};
@@ -327,23 +327,12 @@ export function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(even
     },
   });
 
-  // When the user clicks on this editor to focus it, we want to communicate
-  // that back to the state managed by React. This plugin handles that.
-  const focusPlugin = new PS.Plugin({
-    props: {
-      handleClick(view, pos, ev) {
-        onEventRef.current!({tag: "focus"});
-        return false;
-      },
-    },
-  });
-
   const proseMirrorState = React.useMemo(
     () =>
       toProseMirror(props.editor, {
         openLink: (link) => onEventRef.current!({tag: "open", link}),
         jumpLink: (link) => onEventRef.current!({tag: "jump", link}),
-        plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin, focusPlugin],
+        plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
       }),
     [props.editor],
   );
@@ -351,7 +340,9 @@ export function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(even
   return (
     <ProseMirror
       state={proseMirrorState}
-      onStateUpdated={(state) => onEventRef.current!({tag: "edit", editor: fromProseMirror(state)})}
+      onStateUpdated={(state, {focused}) =>
+        onEventRef.current!({tag: "edit", editor: fromProseMirror(state), focused})
+      }
       hasFocus={props.hasFocus}
     />
   );

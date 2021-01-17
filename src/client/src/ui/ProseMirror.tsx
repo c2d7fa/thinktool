@@ -32,7 +32,7 @@ function usePropRef<T>(prop: T): React.RefObject<T> {
 
 export default function ProseMirror<Schema extends PM.Schema>(props: {
   state: PS.EditorState<Schema>;
-  onStateUpdated(state: PS.EditorState<Schema>): void;
+  onStateUpdated(state: PS.EditorState<Schema>, args: {focused: boolean}): void;
   hasFocus: boolean;
 }) {
   const onStateUpdatedRef = usePropRef(props.onStateUpdated);
@@ -44,7 +44,7 @@ export default function ProseMirror<Schema extends PM.Schema>(props: {
     function dispatchTransaction(this: PV.EditorView<Schema>, transaction: PS.Transaction<Schema>) {
       const newState = this.state.apply(transaction);
       this.updateState(newState);
-      onStateUpdatedRef.current!(newState);
+      onStateUpdatedRef.current!(newState, {focused: this.hasFocus()});
     }
 
     editorViewRef.current = new PV.EditorView(ref.current!, {state: props.state, dispatchTransaction});
