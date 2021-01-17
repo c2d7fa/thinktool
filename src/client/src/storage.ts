@@ -45,4 +45,7 @@ export function execute(storage: Storage, effects: Effects) {
   for (const deleted of effects.deleted) {
     storage.deleteThing(deleted);
   }
+  if (effects.updated.length > 0) {
+    storage.updateThings(effects.updated);
+  }
 }

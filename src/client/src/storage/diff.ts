@@ -1,6 +1,6 @@
 import * as Misc from "@johv/miscjs";
 import {Communication} from "@thinktool/shared";
-import {State, childConnections} from "../data";
+import {State, content, childConnections, connectionChild} from "../data";
 
 // When the user does something, we need to update both the local state and the
 // state on the server. We can't just send over the entire state to the server
@@ -73,10 +73,20 @@ export function effects(oldState: State, newState: State): Effects {
 
   const deleted = diff.deleted;
 
+  let updated = [...diff.added, ...diff.changed].map((thing) => ({
+    name: thing,
+    content: content(newState, thing),
+    children: childConnections(newState, thing).map((c) => ({
+      name: c.connectionId,
+      child: connectionChild(newState, c)!,
+    })),
+    isPage: false,
+  }));
+
   return {
     deleted,
     edited: [],
-    updated: [],
+    updated,
     tutorialActive: null,
   };
 }

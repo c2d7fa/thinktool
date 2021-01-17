@@ -71,21 +71,6 @@ function useContext({
           storage.setContent(thing, Data.content(app.state, thing));
         });
       }
-      if (diff.added.length !== 0 || diff.changed.length !== 0) {
-        storage.updateThings(
-          [...diff.added, ...diff.changed].map((thing) => ({
-            name: thing,
-            content: Data.content(app.state, thing),
-            children: Data.childConnections(app.state, thing).map((c) => {
-              return {
-                name: c.connectionId,
-                child: Data.connectionChild(app.state, c)!,
-              };
-            }),
-            isPage: Data.isPage(app.state, thing),
-          })),
-        );
-      }
 
       if (!Tutorial.isActive(app.tutorialState)) {
         storage.setTutorialFinished();
