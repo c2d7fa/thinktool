@@ -1,16 +1,22 @@
 // This is a stateful wrapper around an App. We use this for some of our tests.
 
 import {App, merge} from "./app";
+import * as A from "./app";
 
+import * as D from "./data";
 import * as T from "./tree";
 import * as G from "./goal";
 import * as U from "./tutorial";
+import * as E from "./editing";
 
 export interface Wrapap {
   root: Node;
   completed(goal: G.GoalId): boolean;
   map(f: (app: App) => App): Wrapap;
+
+  app: App;
   tree: T.Tree;
+  state: D.State;
 }
 
 export interface Node {
@@ -24,6 +30,8 @@ export interface Node {
   ref: T.NodeRef;
   toggleLink(link: string): Wrapap;
   link(index: number): Node;
+  destroy(): Wrapap;
+  edit(editor: E.Editor): Wrapap;
 }
 
 export function from(app: App): Wrapap {
@@ -74,6 +82,15 @@ export function from(app: App): Wrapap {
       link(index: number) {
         return node(T.openedLinksChildren(app.tree, ref)[index]);
       },
+
+      destroy() {
+        const [state, tree] = T.removeThing(app.state, app.tree, ref);
+        return from(merge(app, {state, tree}));
+      },
+
+      edit(editor) {
+        return from(A.edit(app, ref, editor));
+      },
     };
   }
 
@@ -84,6 +101,14 @@ export function from(app: App): Wrapap {
 
     get tree() {
       return app.tree;
+    },
+
+    get state() {
+      return app.state;
+    },
+
+    get app() {
+      return app;
     },
 
     completed(goal: G.GoalId) {

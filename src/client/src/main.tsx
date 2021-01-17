@@ -3,7 +3,7 @@ import * as Misc from "@johv/miscjs";
 
 import * as ChangelogData from "./changes.json";
 
-import {State, diffState} from "./data";
+import {State} from "./data";
 import {Context, DragInfo, setAppState} from "./context";
 import {extractThingFromURL, useThingUrl} from "./url";
 import {useBatched} from "./batched";
@@ -62,34 +62,14 @@ function useContext({
   const context: Context = {
     setApp(app: A.App) {
       // Push changes to server
-      const diff = diffState(innerApp.state, app.state);
-      for (const thing of diff.deleted) {
-        storage.deleteThing(thing);
-      }
-      for (const thing of diff.changedContent) {
-        batched.update(thing, () => {
-          storage.setContent(thing, Data.content(app.state, thing));
-        });
-      }
-      if (diff.added.length !== 0 || diff.changed.length !== 0) {
-        storage.updateThings(
-          [...diff.added, ...diff.changed].map((thing) => ({
-            name: thing,
-            content: Data.content(app.state, thing),
-            children: Data.childConnections(app.state, thing).map((c) => {
-              return {
-                name: c.connectionId,
-                child: Data.connectionChild(app.state, c)!,
-              };
-            }),
-            isPage: Data.isPage(app.state, thing),
-          })),
-        );
-      }
-
-      if (!Tutorial.isActive(app.tutorialState)) {
-        storage.setTutorialFinished();
-      }
+      const effects = Storage.Diff.effects(innerApp, app);
+      Storage.execute(storage, effects, {
+        setContent(thing, content) {
+          batched.update(thing, () => {
+            storage.setContent(thing, content);
+          });
+        },
+      });
 
       // Update actual app
       setInnerApp(app);
