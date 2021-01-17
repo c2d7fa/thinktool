@@ -41,11 +41,18 @@ export function ignore(): Storage {
   };
 }
 
-export function execute(storage: Storage, effects: Effects) {
+export function execute(
+  storage: Storage,
+  effects: Effects,
+  args: {setContent(thing: string, content: Communication.Content): void},
+) {
   for (const deleted of effects.deleted) {
     storage.deleteThing(deleted);
   }
   if (effects.updated.length > 0) {
     storage.updateThings(effects.updated);
+  }
+  for (const edited of effects.edited) {
+    args.setContent(edited.thing, edited.content);
   }
 }

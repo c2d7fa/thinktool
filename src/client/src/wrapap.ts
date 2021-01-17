@@ -1,11 +1,13 @@
 // This is a stateful wrapper around an App. We use this for some of our tests.
 
 import {App, merge} from "./app";
+import * as A from "./app";
 
 import * as D from "./data";
 import * as T from "./tree";
 import * as G from "./goal";
 import * as U from "./tutorial";
+import * as E from "./editing";
 
 export interface Wrapap {
   root: Node;
@@ -29,6 +31,7 @@ export interface Node {
   toggleLink(link: string): Wrapap;
   link(index: number): Node;
   destroy(): Wrapap;
+  edit(editor: E.Editor): Wrapap;
 }
 
 export function from(app: App): Wrapap {
@@ -83,6 +86,10 @@ export function from(app: App): Wrapap {
       destroy() {
         const [state, tree] = T.removeThing(app.state, app.tree, ref);
         return from(merge(app, {state, tree}));
+      },
+
+      edit(editor) {
+        return from(A.edit(app, ref, editor));
       },
     };
   }

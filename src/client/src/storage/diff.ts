@@ -14,7 +14,7 @@ import {State, content, childConnections, connectionChild} from "../data";
 // In theory, we would prefer to write our code such that we always know exactly
 // what to send to the server. In practice, we use diffState quite frequently.
 
-export function diffState(
+function diffState(
   oldState: State,
   newState: State,
 ): {added: string[]; deleted: string[]; changed: string[]; changedContent: string[]} {
@@ -73,6 +73,11 @@ export function effects(oldState: State, newState: State): Effects {
 
   const deleted = diff.deleted;
 
+  const edited = diff.changedContent.map((thing) => ({
+    thing,
+    content: content(newState, thing),
+  }));
+
   let updated = [...diff.added, ...diff.changed].map((thing) => ({
     name: thing,
     content: content(newState, thing),
@@ -85,7 +90,7 @@ export function effects(oldState: State, newState: State): Effects {
 
   return {
     deleted,
-    edited: [],
+    edited,
     updated,
     tutorialActive: null,
   };

@@ -55,4 +55,27 @@ describe("calculating effects of updates", () => {
       expect(effects.updated).toContainEqual({name: child, content: [], children: [], isPage: false});
     });
   });
+
+  describe("editing an item", () => {
+    const before = W.from(
+      A.of({
+        "0": {content: ["Item 0"], children: ["1"]},
+        "1": {content: ["Item 1"]},
+      }),
+    );
+
+    const after = before.root.child(0).edit({content: ["Edited"], selection: {from: 6, to: 6}});
+
+    const effects = Storage.Diff.effects(before.state, after.state);
+
+    it("creates an 'edited' effect for the child", () => {
+      expect(effects.edited).toEqual([{thing: "1", content: ["Edited"]}]);
+    });
+
+    it("doesn't create any other effects", () => {
+      expect(effects.deleted).toEqual([]);
+      expect(effects.updated).toEqual([]);
+      expect(effects.tutorialActive).toBeNull();
+    });
+  });
 });
