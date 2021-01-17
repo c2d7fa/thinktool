@@ -134,10 +134,6 @@ function useContext({
     openExternalUrl,
     send: receiver.send,
 
-    setTutorialState(tutorialState) {
-      context.setApp(A.merge(context, {tutorialState}));
-    },
-
     setTree(tree) {
       context.setApp(A.merge(context, {tree}));
     },
@@ -398,7 +394,12 @@ function App_({
           isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
         />
       ) : null}
-      {!showSplash && <Tutorial.TutorialBox state={context.tutorialState} setState={context.setTutorialState} />}
+      {!showSplash && (
+        <Tutorial.TutorialBox
+          state={context.tutorialState}
+          setState={(tutorialState) => setAppState(context, A.merge(context, {tutorialState}))}
+        />
+      )}
       <Changelog
         changelog={context.changelog}
         visible={context.changelogShown}

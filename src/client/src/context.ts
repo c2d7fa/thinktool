@@ -27,7 +27,6 @@ export function setAppState(context: Context, app: App): void {
 export interface Context extends App {
   setApp(app: App): void;
   setState(value: State): void;
-  setTutorialState(tutorialState: Tutorial.State): void;
   setTree(value: Tree): void;
   setEditors(editors: App["editors"]): void;
 
