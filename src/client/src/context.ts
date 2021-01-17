@@ -33,7 +33,6 @@ export interface Context extends App {
   storage: Storage;
   server?: Server;
 
-  setLocalState(value: State): void;
   updateLocalState(f: (value: State) => State): void;
 
   drag: DragInfo;

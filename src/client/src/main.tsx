@@ -112,11 +112,6 @@ function useContext({
     },
 
     // [TODO] Do we actually need this?
-    setLocalState(state) {
-      setInnerApp((innerApp) => A.merge(innerApp, {state}));
-    },
-
-    // [TODO] Do we actually need this?
     updateLocalState(update) {
       setInnerApp((innerApp) => {
         const state = update(innerApp.state);
