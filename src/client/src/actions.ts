@@ -164,9 +164,7 @@ const updates = {
   async "new"({app, target}: UpdateArgs) {
     let result = app;
     if (target === null) {
-      let [newState, newTree, _, newId] = T.createChild(app.state, app.tree, T.root(app.tree));
-      newTree = T.focus(newTree, newId);
-      result = A.merge(result, {state: newState, tree: newTree});
+      result = A.createChild(app, T.root(app.tree));
     } else {
       let [newState, newTree, _, newId] = T.createSiblingAfter(app.state, app.tree, target);
       newTree = T.focus(newTree, newId);
@@ -228,11 +226,8 @@ const updates = {
   },
 
   async "new-child"({app, target}: UpdateArgs) {
-    let result = app;
-    const [newState, newTree, _, newId] = T.createChild(result.state, result.tree, require(target));
-    result = A.merge(result, {state: newState, tree: T.focus(newTree, newId)});
-    result = applyActionEvent(result, {action: "created-item"});
-    return {app: result};
+    const result = A.createChild(app, require(target));
+    return {app: applyActionEvent(result, {action: "created-item"})};
   },
 
   async "remove"({app, target}: UpdateArgs) {
