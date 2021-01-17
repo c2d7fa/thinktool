@@ -3,7 +3,7 @@ import * as Misc from "@johv/miscjs";
 
 import * as ChangelogData from "./changes.json";
 
-import {State, diffState} from "./data";
+import {State} from "./data";
 import {Context, DragInfo, setAppState} from "./context";
 import {extractThingFromURL, useThingUrl} from "./url";
 import {useBatched} from "./batched";
@@ -62,10 +62,10 @@ function useContext({
   const context: Context = {
     setApp(app: A.App) {
       // Push changes to server
-      const diff = diffState(innerApp.state, app.state);
-      for (const thing of diff.deleted) {
-        storage.deleteThing(thing);
-      }
+      const effects = Storage.Diff.effects(innerApp.state, app.state);
+      Storage.execute(storage, effects);
+
+      const diff = Storage.Diff.diffState(innerApp.state, app.state);
       for (const thing of diff.changedContent) {
         batched.update(thing, () => {
           storage.setContent(thing, Data.content(app.state, thing));
