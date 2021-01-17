@@ -338,10 +338,6 @@ export function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(even
     },
   });
 
-  function onTransaction(transaction: PS.Transaction<typeof schema>, view: PV.EditorView<typeof schema>) {
-    onEventRef.current!({tag: "edit", editor: fromProseMirror(view.state.apply(transaction))});
-  }
-
   const proseMirrorState = React.useMemo(
     () =>
       toProseMirror(props.editor, {
@@ -351,5 +347,12 @@ export function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(even
       }),
     [props.editor],
   );
-  return <ProseMirror state={proseMirrorState} onTransaction={onTransaction} hasFocus={props.hasFocus} />;
+
+  return (
+    <ProseMirror
+      state={proseMirrorState}
+      onStateUpdated={(state) => onEventRef.current!({tag: "edit", editor: fromProseMirror(state)})}
+      hasFocus={props.hasFocus}
+    />
+  );
 }
