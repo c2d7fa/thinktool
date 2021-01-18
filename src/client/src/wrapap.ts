@@ -20,6 +20,7 @@ export interface Wrapap {
 }
 
 export interface Node {
+  nchildren: number;
   child(index: number): Node | undefined;
   parent(index: number): Node | undefined;
   references: Node[];
@@ -34,9 +35,17 @@ export interface Node {
   edit(editor: E.Editor): Wrapap;
 }
 
+export function of(items: A.ItemGraph): Wrapap {
+  return from(A.of(items));
+}
+
 export function from(app: App): Wrapap {
   function node(ref: T.NodeRef): Node {
     return {
+      get nchildren() {
+        return T.children(app.tree, ref).length;
+      },
+
       child(index: number) {
         const childRef = T.children(app.tree, ref)[index];
         if (childRef === undefined) return undefined;
