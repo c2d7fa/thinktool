@@ -47,7 +47,7 @@ export function references(state: State, thing: string): string[] {
 
   for (const segment of D.content(state, thing)) {
     if (typeof segment.link === "string") {
-      result = [...result, segment.link];
+      if (!result.includes(segment.link)) result = [...result, segment.link];
     }
   }
 
