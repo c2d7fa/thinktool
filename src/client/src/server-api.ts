@@ -1,40 +1,9 @@
-import * as D from "./data";
 import {Communication} from "@thinktool/shared";
 
 export type Server = ReturnType<typeof initialize>;
 
-export function transformFullStateResponseIntoState(response: Communication.FullStateResponse): D.State {
-  // [NOTE] The performance of this function matters. For that reason, we bypass
-  // the Data module's interface, and just construct the objects directly. This
-  // is really not ideal. We should look into libraries like Immutable.js, and
-  // try to make the Data library faster in general. Alternatively, we should
-  // put something like this function in Data.
-  //
-  // See the commit history of this function (spcifically the commit where this
-  // comment was added) for a version that used the Data module interface
-  // properly.
-
-  if (response.things.length === 0) return D.empty;
-
-  let state: D.State = D.empty;
-
-  for (const thing of response.things) {
-    if (!D.exists(state, thing.name)) {
-      state.things[thing.name] = {children: [], content: [], parents: [], isPage: false};
-    }
-    state.things[thing.name]!.content = thing.content;
-    for (const connection of thing.children) {
-      state.connections[connection.name] = {parent: thing.name, child: connection.child};
-      if (state.things[connection.child] === undefined) {
-        state.things[connection.child] = {children: [], content: [], parents: [], isPage: false};
-      }
-      state.things[connection.child]!.parents.push({connectionId: connection.name});
-      state.things[thing.name]!.children.push({connectionId: connection.name});
-    }
-  }
-
-  return state;
-}
+import {transformFullStateResponseIntoState} from "./data";
+export {transformFullStateResponseIntoState};
 
 export function initialize(apiHost: string) {
   async function api(endpoint: string, args?: object) {
