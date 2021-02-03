@@ -1,5 +1,6 @@
 import * as Shared from "@thinktool/shared";
-import * as D from "../data";
+
+import * as D from "./core";
 
 export type Content = Shared.Communication.Content;
 
