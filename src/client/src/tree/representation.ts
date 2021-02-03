@@ -1,27 +1,30 @@
 import * as Misc from "@johv/miscjs";
 import * as D from "../data";
 
+// By convention, fields prefixed with an underscore are "module private". They
+// may not be accessed outside the 'tree' modules.
+
 export interface Node {
-  thing: string;
-  connection?: D.Connection; // undefined for root item (and other non-applicable items)
-  expanded: boolean;
-  children: NodeRef[];
-  backreferences: {expanded: boolean; children: NodeRef[]};
-  otherParents: {expanded: boolean; children: NodeRef[]};
-  openedLinks: {[thing: string]: NodeRef | undefined};
+  _thing: string;
+  _connection?: D.Connection; // undefined for root item (and other non-applicable items)
+  _expanded: boolean;
+  _children: NodeRef[];
+  _backreferences: {expanded: boolean; children: NodeRef[]};
+  _otherParents: {expanded: boolean; children: NodeRef[]};
+  _openedLinks: {[thing: string]: NodeRef | undefined};
+}
+
+export interface Tree {
+  _nextId: number;
+  _root: NodeRef;
+  _nodes: {[id: number]: Node | undefined};
+  _focus: null | NodeRef;
 }
 
 export type NodeRef = {id: number};
 
-export interface Tree {
-  nextId: number;
-  root: NodeRef;
-  nodes: {[id: number]: Node | undefined};
-  focus: null | NodeRef;
-}
-
 function getNode(tree: Tree, node: NodeRef): Node | undefined {
-  return tree.nodes[node.id];
+  return tree._nodes[node.id];
 }
 
 function updateNode(tree: Tree, node: NodeRef, update: (node: Node) => Node): Tree {
@@ -31,33 +34,37 @@ function updateNode(tree: Tree, node: NodeRef, update: (node: Node) => Node): Tr
     return tree;
   }
 
-  return {...tree, nodes: {...tree.nodes, [node.id]: update(data)}};
+  return {...tree, _nodes: {...tree._nodes, [node.id]: update(data)}};
 }
 
 export function fromRoot(thing: string): Tree {
   return {
-    nextId: 1,
-    root: {id: 0},
-    nodes: {
+    _nextId: 1,
+    _root: {id: 0},
+    _nodes: {
       0: {
-        thing,
-        expanded: false,
-        children: [],
-        backreferences: {expanded: false, children: []},
-        otherParents: {expanded: false, children: []},
-        openedLinks: {},
+        _thing: thing,
+        _expanded: false,
+        _children: [],
+        _backreferences: {expanded: false, children: []},
+        _otherParents: {expanded: false, children: []},
+        _openedLinks: {},
       },
     },
-    focus: null,
+    _focus: null,
   };
 }
 
 export function root(tree: Tree): NodeRef {
-  return tree.root;
+  return tree._root;
+}
+
+export function exists(tree: Tree, node: NodeRef): boolean {
+  return node.id in tree._nodes;
 }
 
 export function thing(tree: Tree, node: NodeRef): string {
-  const thing = getNode(tree, node)?.thing;
+  const thing = getNode(tree, node)?._thing;
   if (thing === undefined) {
     alert("A fatal error occurred. Please check the developer console for more information.");
     throw {message: "Could not get item for node", node, tree};
@@ -68,55 +75,55 @@ export function thing(tree: Tree, node: NodeRef): string {
 export function expanded(tree: Tree, node: NodeRef): boolean {
   if (getNode(tree, node) === undefined)
     console.warn("Assuming non-existent node %o in %o is not expanded", node, tree);
-  return getNode(tree, node)?.expanded ?? false;
+  return getNode(tree, node)?._expanded ?? false;
 }
 
 export function focused(tree: Tree): NodeRef | null {
-  return tree.focus;
+  return tree._focus;
 }
 
 export function hasFocus(tree: Tree, node: NodeRef): boolean {
-  return tree.focus?.id === node.id;
+  return tree._focus?.id === node.id;
 }
 
 export function getFocus(tree: Tree): NodeRef | null {
-  return tree.focus;
+  return tree._focus;
 }
 
 export function focus(tree: Tree, node: NodeRef): Tree {
-  return {...tree, focus: node};
+  return {...tree, _focus: node};
 }
 
 export function unfocus(tree: Tree): Tree {
-  return {...tree, focus: null};
+  return {...tree, _focus: null};
 }
 
 export function markExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree {
-  return updateNode(tree, node, (n) => ({...n, expanded}));
+  return updateNode(tree, node, (n) => ({...n, _expanded: expanded}));
 }
 
 export function children(tree: Tree, node: NodeRef): NodeRef[] {
   if (getNode(tree, node) === undefined)
     console.warn("Could not get children of non-existent node %o in %o", node, tree);
-  return getNode(tree, node)?.children ?? [];
+  return getNode(tree, node)?._children ?? [];
 }
 
 export function loadThing(tree: Tree, thing: string, connection?: D.Connection): [NodeRef, Tree] {
   return [
-    {id: tree.nextId},
+    {id: tree._nextId},
     {
       ...tree,
-      nextId: tree.nextId + 1,
-      nodes: {
-        ...tree.nodes,
-        [tree.nextId]: {
-          thing,
-          connection,
-          expanded: false,
-          children: [],
-          backreferences: {expanded: false, children: []},
-          otherParents: {expanded: false, children: []},
-          openedLinks: {},
+      _nextId: tree._nextId + 1,
+      _nodes: {
+        ...tree._nodes,
+        [tree._nextId]: {
+          _thing: thing,
+          _connection: connection,
+          _expanded: false,
+          _children: [],
+          _backreferences: {expanded: false, children: []},
+          _otherParents: {expanded: false, children: []},
+          _openedLinks: {},
         },
       },
     },
@@ -124,31 +131,31 @@ export function loadThing(tree: Tree, thing: string, connection?: D.Connection):
 }
 
 export function* allNodes(tree: Tree): Generator<NodeRef> {
-  for (const id in tree.nodes) {
+  for (const id in tree._nodes) {
     yield {id: +id};
   }
 }
 
 export function updateChildren(tree: Tree, node: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree {
-  return updateNode(tree, node, (n) => ({...n, children: update(n.children)}));
+  return updateNode(tree, node, (n) => ({...n, _children: update(n._children)}));
 }
 
 export function connection(tree: Tree, node: NodeRef): D.Connection | undefined {
-  return tree.nodes[node.id]?.connection;
+  return tree._nodes[node.id]?._connection;
 }
 
 // Backreferences
 
 export function backreferencesExpanded(tree: Tree, node: NodeRef): boolean {
-  return getNode(tree, node)?.backreferences?.expanded ?? false;
+  return getNode(tree, node)?._backreferences?.expanded ?? false;
 }
 
 export function backreferencesChildren(tree: Tree, node: NodeRef): NodeRef[] {
-  return getNode(tree, node)?.backreferences?.children ?? [];
+  return getNode(tree, node)?._backreferences?.children ?? [];
 }
 
 export function markBackreferencesExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree {
-  return updateNode(tree, node, (n) => ({...n, backreferences: {...n.backreferences, expanded}}));
+  return updateNode(tree, node, (n) => ({...n, _backreferences: {...n._backreferences, expanded}}));
 }
 
 export function updateBackreferencesChildren(
@@ -158,22 +165,22 @@ export function updateBackreferencesChildren(
 ): Tree {
   return updateNode(tree, node, (n) => ({
     ...n,
-    backreferences: {...n.backreferences, children: update(n.backreferences.children)},
+    _backreferences: {...n._backreferences, children: update(n._backreferences.children)},
   }));
 }
 
 // Parents as children ("other parents")
 
 export function otherParentsExpanded(tree: Tree, node: NodeRef): boolean {
-  return getNode(tree, node)?.otherParents?.expanded ?? false;
+  return getNode(tree, node)?._otherParents?.expanded ?? false;
 }
 
 export function otherParentsChildren(tree: Tree, node: NodeRef): NodeRef[] {
-  return getNode(tree, node)?.otherParents?.children ?? [];
+  return getNode(tree, node)?._otherParents?.children ?? [];
 }
 
 export function markOtherParentsExpanded(tree: Tree, node: NodeRef, expanded: boolean): Tree {
-  return updateNode(tree, node, (n) => ({...n, otherParents: {...n.otherParents, expanded}}));
+  return updateNode(tree, node, (n) => ({...n, _otherParents: {...n._otherParents, expanded}}));
 }
 
 export function updateOtherParentsChildren(
@@ -183,7 +190,7 @@ export function updateOtherParentsChildren(
 ): Tree {
   return updateNode(tree, node, (n) => ({
     ...n,
-    otherParents: {...n.otherParents, children: update(n.otherParents.children)},
+    _otherParents: {...n._otherParents, children: update(n._otherParents.children)},
   }));
 }
 
@@ -191,21 +198,21 @@ export function updateOtherParentsChildren(
 // (See comment in Tree module)
 
 export function openedLinkNode(tree: Tree, node: NodeRef, link: string): NodeRef | undefined {
-  return getNode(tree, node)?.openedLinks[link];
+  return getNode(tree, node)?._openedLinks[link];
 }
 
 export function setOpenedLinkNode(tree: Tree, node: NodeRef, link: string, linkNode: NodeRef | null) {
   if (linkNode === null) {
-    return updateNode(tree, node, (n) => ({...n, openedLinks: Misc.removeKey(n.openedLinks, link)}));
+    return updateNode(tree, node, (n) => ({...n, _openedLinks: Misc.removeKey(n._openedLinks, link)}));
   } else {
-    return updateNode(tree, node, (n) => ({...n, openedLinks: {...n.openedLinks, [link]: linkNode}}));
+    return updateNode(tree, node, (n) => ({...n, _openedLinks: {...n._openedLinks, [link]: linkNode}}));
   }
 }
 
 export function openedLinksChildren(tree: Tree, node: NodeRef): NodeRef[] {
   const result: NodeRef[] = [];
 
-  for (const n of Object.values(getNode(tree, node)?.openedLinks ?? {})) {
+  for (const n of Object.values(getNode(tree, node)?._openedLinks ?? {})) {
     if (n !== undefined) result.push(n);
   }
 

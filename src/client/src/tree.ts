@@ -40,6 +40,7 @@ export const unfocus = I.unfocus;
 export const children = I.children;
 export const backreferencesExpanded = I.backreferencesExpanded;
 export const backreferencesChildren = I.backreferencesChildren;
+export const exists = I.exists;
 
 function refEq(x: NodeRef, y: NodeRef): boolean {
   return x.id === y.id;
@@ -117,7 +118,7 @@ function nextVisibleItem(tree: Tree, node: NodeRef): NodeRef {
 
   // Recursively traverse tree upwards until we hit a parent with a sibling
   let nparent = node;
-  while (nparent !== tree.root) {
+  while (nparent !== tree._root) {
     const nextSibling_ = nextSibling(tree, nparent);
     if (nextSibling_ !== null) return nextSibling_;
     nparent = parent(tree, nparent)!; // Non-null because nparent !== tree.root
