@@ -1,3 +1,5 @@
+import {BinaryRelation} from "../binary-relation";
+
 import {Content} from "./content";
 
 export type Connection = {connectionId: string};
@@ -21,4 +23,5 @@ export interface ConnectionData {
 export interface State {
   _things: {[id: string]: ThingData | undefined};
   _connections: {[connectionId: string]: ConnectionData | undefined};
+  _links: BinaryRelation<string, string>;
 }

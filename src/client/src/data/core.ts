@@ -1,9 +1,10 @@
 import * as Misc from "@johv/miscjs";
+import * as BinaryRelation from "../binary-relation";
 
 import * as Shared from "@thinktool/shared";
 type FullStateResponse = Shared.Communication.FullStateResponse;
 
-import {Content} from "./content";
+import {Content, linksInContent} from "./content";
 import {State, Connection} from "./representation";
 
 //#region Fundamental operations
@@ -11,6 +12,7 @@ import {State, Connection} from "./representation";
 export const empty: State = {
   _things: {"0": {content: ["Welcome"], children: [], parents: [], isPage: false}},
   _connections: {},
+  _links: BinaryRelation.empty<string, string>(),
 };
 
 export function allThings(state: State): string[] {
@@ -46,7 +48,13 @@ export function content(state: State, thing: string): Content {
 export function setContent(state: State, thing: string, newContent: Content): State {
   if (state._things[thing] === undefined) console.warn("Setting content of non-existent item %o", thing);
   const oldThing = state._things[thing] ?? {content: [], children: [], parents: [], isPage: false};
-  return {...state, _things: {...state._things, [thing]: {...oldThing, content: newContent}}};
+
+  let newLinks = state._links;
+  for (const link of linksInContent(newContent)) {
+    newLinks = newLinks.relate(thing, link);
+  }
+
+  return {...state, _things: {...state._things, [thing]: {...oldThing, content: newContent}}, _links: newLinks};
 }
 
 export function insertChild(

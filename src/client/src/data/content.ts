@@ -1,3 +1,5 @@
+import * as Immutable from "immutable";
+
 import * as Shared from "@thinktool/shared";
 
 import type {State} from "./representation";
@@ -43,23 +45,17 @@ export function contentText(state: State, thing: string): string {
 // with the referenced item embedded where the reference is.
 
 export function references(state: State, thing: string): string[] {
-  let result: string[] = [];
-
-  for (const segment of D.content(state, thing)) {
-    if (typeof segment.link === "string") {
-      if (!result.includes(segment.link)) result = [...result, segment.link];
-    }
-  }
-
-  return result;
+  return state._links.image(thing).toJS();
 }
 
 export function backreferences(state: State, thing: string): string[] {
-  let result: string[] = [];
-  for (const other in state._things) {
-    if (references(state, other).includes(thing)) {
-      result = [...result, other];
-    }
+  return state._links.preimage(thing).toJS();
+}
+
+export function linksInContent(content: Content): Immutable.Set<string> {
+  function isLink(piece: Content[number]): piece is {link: string} {
+    return typeof piece.link === "string";
   }
-  return result;
+
+  return Immutable.Set<string>(content.filter(isLink).map((x) => x.link));
 }
