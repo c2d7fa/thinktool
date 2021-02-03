@@ -22,6 +22,7 @@ export {
   remove,
   otherParents,
   transformFullStateResponseIntoState,
+  diff,
 } from "./data/core";
 
 export {Content, references, backreferences, contentText, contentEq} from "./data/content";

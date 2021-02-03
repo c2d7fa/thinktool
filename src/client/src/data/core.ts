@@ -278,3 +278,45 @@ export function transformFullStateResponseIntoState(response: FullStateResponse)
 
   return state;
 }
+
+export function diff(
+  oldState: State,
+  newState: State,
+): {added: string[]; deleted: string[]; changed: string[]; changedContent: string[]} {
+  const added: string[] = [];
+  const deleted: string[] = [];
+  const changed: string[] = [];
+  const changedContent: string[] = [];
+
+  for (const thing in oldState.things) {
+    if (oldState.things[thing] !== newState.things[thing]) {
+      if (newState.things[thing] === undefined) {
+        deleted.push(thing);
+      } else if (JSON.stringify(oldState.things[thing]) !== JSON.stringify(newState.things[thing])) {
+        if (
+          // [TODO] Can we get better typechecking here?
+          JSON.stringify(Misc.removeKey(oldState.things[thing] as any, "content")) ===
+          JSON.stringify(Misc.removeKey(newState.things[thing] as any, "content"))
+        ) {
+          changedContent.push(thing);
+        } else {
+          changed.push(thing);
+        }
+      }
+    } else {
+      for (const connection of childConnections(oldState, thing)) {
+        if (oldState.connections[connection.connectionId] !== newState.connections[connection.connectionId]) {
+          changed.push(thing);
+        }
+      }
+    }
+  }
+
+  for (const thing in newState.things) {
+    if (oldState.things[thing] === undefined) {
+      added.push(thing);
+    }
+  }
+
+  return {added, deleted, changed, changedContent};
+}
