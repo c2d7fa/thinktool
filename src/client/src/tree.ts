@@ -1,6 +1,6 @@
 import * as Misc from "@johv/miscjs";
 import * as D from "./data";
-import * as I from "./tree-internal";
+import * as I from "./tree/representation";
 
 // The underlying data representation that is stored on the server is like a
 // graph. It is defined in the Data module.

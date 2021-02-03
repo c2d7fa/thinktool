@@ -1,5 +1,5 @@
 import * as Misc from "@johv/miscjs";
-import * as D from "./data";
+import * as D from "../data";
 
 export interface Node {
   thing: string;
