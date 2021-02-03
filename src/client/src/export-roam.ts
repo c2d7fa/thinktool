@@ -9,11 +9,6 @@ function uid(thing: string) {
   return "tt" + thing;
 }
 
-function* bfsFromRoot(state: D.State) {
-  // [TODO] Actually implement this algorithm! :)
-  for (const thing in state.things) yield thing;
-}
-
 function exportData(state: D.State): RoamImport {
   let referencedItems: string[] = []; // Items that have been linked to OR which are the parents of an exported item
   let placedItems: string[] = []; // Items that have a parent in the Roam export

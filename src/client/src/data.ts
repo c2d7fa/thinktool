@@ -1,4 +1,4 @@
-export {State, Connection, ThingData, ConnectionData} from "./data/representation";
+export {State, Connection} from "./data/representation";
 
 export {
   empty,

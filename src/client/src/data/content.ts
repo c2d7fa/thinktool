@@ -56,7 +56,7 @@ export function references(state: State, thing: string): string[] {
 
 export function backreferences(state: State, thing: string): string[] {
   let result: string[] = [];
-  for (const other in state.things) {
+  for (const other in state._things) {
     if (references(state, other).includes(thing)) {
       result = [...result, other];
     }

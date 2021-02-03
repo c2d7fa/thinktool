@@ -9,24 +9,24 @@ import {State, Connection} from "./representation";
 //#region Fundamental operations
 
 export const empty: State = {
-  things: {"0": {content: ["Welcome"], children: [], parents: [], isPage: false}},
-  connections: {},
+  _things: {"0": {content: ["Welcome"], children: [], parents: [], isPage: false}},
+  _connections: {},
 };
 
 export function allThings(state: State): string[] {
-  return Object.keys(state.things);
+  return Object.keys(state._things);
 }
 
 export function connectionParent(state: State, connection: Connection): string | undefined {
-  return state.connections[connection.connectionId]?.parent;
+  return state._connections[connection.connectionId]?.parent;
 }
 
 export function connectionChild(state: State, connection: Connection): string | undefined {
-  return state.connections[connection.connectionId]?.child;
+  return state._connections[connection.connectionId]?.child;
 }
 
 export function childConnections(state: State, thing: string): Connection[] {
-  const data = state.things[thing];
+  const data = state._things[thing];
   if (data === undefined) {
     console.warn("Getting children of non-existent item %o", thing);
     return [];
@@ -35,7 +35,7 @@ export function childConnections(state: State, thing: string): Connection[] {
 }
 
 export function content(state: State, thing: string): Content {
-  const data = state.things[thing];
+  const data = state._things[thing];
   if (data === undefined) {
     console.warn("Getting content of non-existent item %o", thing);
     return [];
@@ -44,9 +44,9 @@ export function content(state: State, thing: string): Content {
 }
 
 export function setContent(state: State, thing: string, newContent: Content): State {
-  if (state.things[thing] === undefined) console.warn("Setting content of non-existent item %o", thing);
-  const oldThing = state.things[thing] ?? {content: [], children: [], parents: [], isPage: false};
-  return {...state, things: {...state.things, [thing]: {...oldThing, content: newContent}}};
+  if (state._things[thing] === undefined) console.warn("Setting content of non-existent item %o", thing);
+  const oldThing = state._things[thing] ?? {content: [], children: [], parents: [], isPage: false};
+  return {...state, _things: {...state._things, [thing]: {...oldThing, content: newContent}}};
 }
 
 export function insertChild(
@@ -56,8 +56,8 @@ export function insertChild(
   index: number,
   customConnectionId?: string,
 ): [State, Connection] {
-  const parentData = state.things[parent];
-  let childData = state.things[child];
+  const parentData = state._things[parent];
+  let childData = state._things[child];
 
   if (parentData === undefined) {
     throw "Tried to insert child into non-existent parent";
@@ -67,7 +67,7 @@ export function insertChild(
   const connectionId = customConnectionId ?? `c.${generateShortId()}`; // 'c.' prefix to tell where the ID came from when debugging.
   result = {
     ...result,
-    connections: {...state.connections, [connectionId]: {parent, child}},
+    _connections: {...state._connections, [connectionId]: {parent, child}},
   };
 
   if (childData === undefined) {
@@ -76,13 +76,13 @@ export function insertChild(
     // when loading a cyclic structure. Thus, we may need to create the child
     // first.
     result = create(result, child)[0];
-    childData = result.things[child]!;
+    childData = result._things[child]!;
   }
 
   result = {
     ...result,
-    things: {
-      ...result.things,
+    _things: {
+      ...result._things,
       [child]: {
         ...childData,
         parents: [{connectionId}, ...childData.parents],
@@ -92,8 +92,8 @@ export function insertChild(
 
   result = {
     ...result,
-    things: {
-      ...result.things,
+    _things: {
+      ...result._things,
       [parent]: {
         ...parentData,
         children: Misc.splice(parentData.children, index, 0, {connectionId}),
@@ -105,7 +105,7 @@ export function insertChild(
 }
 
 export function removeChild(state: State, parent: string, index: number): State {
-  const parentData = state.things[parent];
+  const parentData = state._things[parent];
   if (parentData === undefined) throw "Tried to remove item from non-existent parent";
 
   let result = state;
@@ -114,8 +114,8 @@ export function removeChild(state: State, parent: string, index: number): State 
   const removedConnection = parentData.children[index]; // Connection to remove
   result = {
     ...result,
-    things: {
-      ...result.things,
+    _things: {
+      ...result._things,
       [parent]: {
         ...parentData,
         children: Misc.removeBy(
@@ -139,7 +139,7 @@ export function removeChild(state: State, parent: string, index: number): State 
     );
     return state;
   }
-  const childData = result.things[child];
+  const childData = result._things[child];
   if (childData === undefined) {
     console.error(
       "While removing %o-th child from parent %o with %o, the child was invalid",
@@ -151,8 +151,8 @@ export function removeChild(state: State, parent: string, index: number): State 
   }
   result = {
     ...result,
-    things: {
-      ...result.things,
+    _things: {
+      ...result._things,
       [child]: {
         ...childData,
         parents: Misc.removeBy(childData.parents, removedConnection, (x, y) => x.connectionId === y.connectionId),
@@ -161,7 +161,7 @@ export function removeChild(state: State, parent: string, index: number): State 
   };
 
   // Remove the connection itself.
-  result = {...result, connections: Misc.removeKey(result.connections, removedConnection.connectionId)};
+  result = {...result, _connections: Misc.removeKey(result._connections, removedConnection.connectionId)};
 
   return result;
 }
@@ -169,7 +169,7 @@ export function removeChild(state: State, parent: string, index: number): State 
 export function create(state: State, customId?: string): [State, string] {
   const newId = customId ?? generateShortId();
   return [
-    {...state, things: {...state.things, [newId]: {content: [], children: [], parents: [], isPage: false}}},
+    {...state, _things: {...state._things, [newId]: {content: [], children: [], parents: [], isPage: false}}},
     newId,
   ];
 }
@@ -178,19 +178,19 @@ export function forget(state: State, thing: string): State {
   // It should not be possible to permanently remove the root item.
   if (thing === "0") return state;
 
-  const result = {...state, things: {...state.things}};
-  delete result.things[thing];
+  const result = {...state, _things: {...state._things}};
+  delete result._things[thing];
   return result;
 }
 
 export function exists(state: State, thing: string): boolean {
-  return state.things[thing] !== undefined;
+  return state._things[thing] !== undefined;
 }
 
 export function parents(state: State, child: string): string[] {
   let result: string[] = [];
 
-  for (const parent of state.things[child]?.parents ?? []) {
+  for (const parent of state._things[child]?.parents ?? []) {
     const parentThing = connectionParent(state, parent);
     if (parentThing !== undefined) result.push(parentThing);
   }
@@ -199,13 +199,13 @@ export function parents(state: State, child: string): string[] {
 }
 
 export function isPage(state: State, thing: string): boolean {
-  return state.things[thing]?.isPage ?? false;
+  return state._things[thing]?.isPage ?? false;
 }
 
 export function togglePage(state: State, thing: string): State {
-  const oldThing = state.things[thing];
+  const oldThing = state._things[thing];
   if (oldThing === undefined) return state;
-  return {...state, things: {...state.things, [thing]: {...oldThing, isPage: !oldThing.isPage}}};
+  return {...state, _things: {...state._things, [thing]: {...oldThing, isPage: !oldThing.isPage}}};
 }
 
 //#endregion
@@ -213,7 +213,7 @@ export function togglePage(state: State, thing: string): State {
 export function children(state: State, thing: string): string[] {
   let result: string[] = [];
 
-  for (const child of state.things[thing]?.children ?? []) {
+  for (const child of state._things[thing]?.children ?? []) {
     const childThing = connectionChild(state, child);
     if (childThing !== undefined) result.push(childThing);
   }
@@ -263,16 +263,16 @@ export function transformFullStateResponseIntoState(response: FullStateResponse)
 
   for (const thing of response.things) {
     if (!exists(state, thing.name)) {
-      state.things[thing.name] = {children: [], content: [], parents: [], isPage: false};
+      state._things[thing.name] = {children: [], content: [], parents: [], isPage: false};
     }
-    state.things[thing.name]!.content = thing.content;
+    state._things[thing.name]!.content = thing.content;
     for (const connection of thing.children) {
-      state.connections[connection.name] = {parent: thing.name, child: connection.child};
-      if (state.things[connection.child] === undefined) {
-        state.things[connection.child] = {children: [], content: [], parents: [], isPage: false};
+      state._connections[connection.name] = {parent: thing.name, child: connection.child};
+      if (state._things[connection.child] === undefined) {
+        state._things[connection.child] = {children: [], content: [], parents: [], isPage: false};
       }
-      state.things[connection.child]!.parents.push({connectionId: connection.name});
-      state.things[thing.name]!.children.push({connectionId: connection.name});
+      state._things[connection.child]!.parents.push({connectionId: connection.name});
+      state._things[thing.name]!.children.push({connectionId: connection.name});
     }
   }
 
@@ -288,15 +288,15 @@ export function diff(
   const changed: string[] = [];
   const changedContent: string[] = [];
 
-  for (const thing in oldState.things) {
-    if (oldState.things[thing] !== newState.things[thing]) {
-      if (newState.things[thing] === undefined) {
+  for (const thing in oldState._things) {
+    if (oldState._things[thing] !== newState._things[thing]) {
+      if (newState._things[thing] === undefined) {
         deleted.push(thing);
-      } else if (JSON.stringify(oldState.things[thing]) !== JSON.stringify(newState.things[thing])) {
+      } else if (JSON.stringify(oldState._things[thing]) !== JSON.stringify(newState._things[thing])) {
         if (
           // [TODO] Can we get better typechecking here?
-          JSON.stringify(Misc.removeKey(oldState.things[thing] as any, "content")) ===
-          JSON.stringify(Misc.removeKey(newState.things[thing] as any, "content"))
+          JSON.stringify(Misc.removeKey(oldState._things[thing] as any, "content")) ===
+          JSON.stringify(Misc.removeKey(newState._things[thing] as any, "content"))
         ) {
           changedContent.push(thing);
         } else {
@@ -305,15 +305,15 @@ export function diff(
       }
     } else {
       for (const connection of childConnections(oldState, thing)) {
-        if (oldState.connections[connection.connectionId] !== newState.connections[connection.connectionId]) {
+        if (oldState._connections[connection.connectionId] !== newState._connections[connection.connectionId]) {
           changed.push(thing);
         }
       }
     }
   }
 
-  for (const thing in newState.things) {
-    if (oldState.things[thing] === undefined) {
+  for (const thing in newState._things) {
+    if (oldState._things[thing] === undefined) {
       added.push(thing);
     }
   }
