@@ -1,4 +1,6 @@
 import * as Misc from "@johv/miscjs";
+import * as Immutable from "immutable";
+
 import * as D from "../data";
 
 // By convention, fields prefixed with an underscore are "module private". They
@@ -17,14 +19,14 @@ export interface Node {
 export interface Tree {
   _nextId: number;
   _root: NodeRef;
-  _nodes: {[id: number]: Node | undefined};
+  _nodes: Immutable.Map<number, Node>;
   _focus: null | NodeRef;
 }
 
 export type NodeRef = {id: number};
 
 function getNode(tree: Tree, node: NodeRef): Node | undefined {
-  return tree._nodes[node.id];
+  return tree._nodes.get(node.id);
 }
 
 function updateNode(tree: Tree, node: NodeRef, update: (node: Node) => Node): Tree {
@@ -34,23 +36,26 @@ function updateNode(tree: Tree, node: NodeRef, update: (node: Node) => Node): Tr
     return tree;
   }
 
-  return {...tree, _nodes: {...tree._nodes, [node.id]: update(data)}};
+  return {...tree, _nodes: tree._nodes.set(node.id, update(data))};
 }
 
 export function fromRoot(thing: string): Tree {
   return {
     _nextId: 1,
     _root: {id: 0},
-    _nodes: {
-      0: {
-        _thing: thing,
-        _expanded: false,
-        _children: [],
-        _backreferences: {expanded: false, children: []},
-        _otherParents: {expanded: false, children: []},
-        _openedLinks: {},
-      },
-    },
+    _nodes: Immutable.Map([
+      [
+        0,
+        {
+          _thing: thing,
+          _expanded: false,
+          _children: [],
+          _backreferences: {expanded: false, children: []},
+          _otherParents: {expanded: false, children: []},
+          _openedLinks: {},
+        },
+      ],
+    ]),
     _focus: null,
   };
 }
@@ -60,7 +65,7 @@ export function root(tree: Tree): NodeRef {
 }
 
 export function exists(tree: Tree, node: NodeRef): boolean {
-  return node.id in tree._nodes;
+  return tree._nodes.has(node.id);
 }
 
 export function thing(tree: Tree, node: NodeRef): string {
@@ -114,25 +119,22 @@ export function loadThing(tree: Tree, thing: string, connection?: D.Connection):
     {
       ...tree,
       _nextId: tree._nextId + 1,
-      _nodes: {
-        ...tree._nodes,
-        [tree._nextId]: {
-          _thing: thing,
-          _connection: connection,
-          _expanded: false,
-          _children: [],
-          _backreferences: {expanded: false, children: []},
-          _otherParents: {expanded: false, children: []},
-          _openedLinks: {},
-        },
-      },
+      _nodes: tree._nodes.set(tree._nextId, {
+        _thing: thing,
+        _connection: connection,
+        _expanded: false,
+        _children: [],
+        _backreferences: {expanded: false, children: []},
+        _otherParents: {expanded: false, children: []},
+        _openedLinks: {},
+      }),
     },
   ];
 }
 
 export function* allNodes(tree: Tree): Generator<NodeRef> {
-  for (const id in tree._nodes) {
-    yield {id: +id};
+  for (const id of tree._nodes.keys()) {
+    yield {id};
   }
 }
 
@@ -141,7 +143,7 @@ export function updateChildren(tree: Tree, node: NodeRef, update: (children: Nod
 }
 
 export function connection(tree: Tree, node: NodeRef): D.Connection | undefined {
-  return tree._nodes[node.id]?._connection;
+  return getNode(tree, node)?._connection;
 }
 
 // Backreferences
