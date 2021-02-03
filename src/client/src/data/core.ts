@@ -1,5 +1,8 @@
 import * as Misc from "@johv/miscjs";
 
+import * as Shared from "@thinktool/shared";
+type FullStateResponse = Shared.Communication.FullStateResponse;
+
 import {Content} from "./content";
 import {State, Connection} from "./representation";
 
@@ -251,4 +254,27 @@ export function remove(state: State, removedThing: string): State {
 
 export function otherParents(state: State, child: string, parent?: string): string[] {
   return parents(state, child).filter((p) => p !== parent);
+}
+
+export function transformFullStateResponseIntoState(response: FullStateResponse): State {
+  if (response.things.length === 0) return empty;
+
+  let state: State = empty;
+
+  for (const thing of response.things) {
+    if (!exists(state, thing.name)) {
+      state.things[thing.name] = {children: [], content: [], parents: [], isPage: false};
+    }
+    state.things[thing.name]!.content = thing.content;
+    for (const connection of thing.children) {
+      state.connections[connection.name] = {parent: thing.name, child: connection.child};
+      if (state.things[connection.child] === undefined) {
+        state.things[connection.child] = {children: [], content: [], parents: [], isPage: false};
+      }
+      state.things[connection.child]!.parents.push({connectionId: connection.name});
+      state.things[thing.name]!.children.push({connectionId: connection.name});
+    }
+  }
+
+  return state;
 }
