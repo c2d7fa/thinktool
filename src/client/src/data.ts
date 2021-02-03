@@ -1,8 +1,6 @@
+export {State, Connection, ThingData, ConnectionData} from "./data/representation";
+
 export {
-  State,
-  Connection,
-  ThingData,
-  ConnectionData,
   empty,
   allThings,
   connectionParent,

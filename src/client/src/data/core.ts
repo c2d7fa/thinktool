@@ -1,24 +1,7 @@
 import * as Misc from "@johv/miscjs";
+
 import {Content} from "./content";
-
-export interface State {
-  things: {[id: string]: ThingData | undefined};
-  connections: {[connectionId: string]: ConnectionData | undefined};
-}
-
-export type Connection = {connectionId: string};
-
-export interface ThingData {
-  content: Content;
-  children: Connection[];
-  parents: Connection[];
-  isPage: boolean;
-}
-
-export interface ConnectionData {
-  parent: string;
-  child: string;
-}
+import {State, Connection} from "./representation";
 
 //#region Fundamental operations
 

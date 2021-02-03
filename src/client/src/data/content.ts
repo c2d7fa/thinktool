@@ -1,5 +1,6 @@
 import * as Shared from "@thinktool/shared";
 
+import type {State} from "./representation";
 import * as D from "./core";
 
 export type Content = Shared.Communication.Content;
@@ -15,7 +16,7 @@ export function contentEq(a: Content, b: Content): boolean {
   return true;
 }
 
-export function contentText(state: D.State, thing: string): string {
+export function contentText(state: State, thing: string): string {
   function contentText_(thing: string, seen: string[]): string {
     if (seen.includes(thing)) return "...";
 
@@ -41,7 +42,7 @@ export function contentText(state: D.State, thing: string): string {
 // Items may reference other items in their content. Such items are displayed
 // with the referenced item embedded where the reference is.
 
-export function references(state: D.State, thing: string): string[] {
+export function references(state: State, thing: string): string[] {
   let result: string[] = [];
 
   for (const segment of D.content(state, thing)) {
@@ -53,7 +54,7 @@ export function references(state: D.State, thing: string): string[] {
   return result;
 }
 
-export function backreferences(state: D.State, thing: string): string[] {
+export function backreferences(state: State, thing: string): string[] {
   let result: string[] = [];
   for (const other in state.things) {
     if (references(state, other).includes(thing)) {
