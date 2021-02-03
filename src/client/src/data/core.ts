@@ -273,7 +273,8 @@ export function transformFullStateResponseIntoState(response: FullStateResponse)
     if (!exists(state, thing.name)) {
       state._things[thing.name] = {children: [], content: [], parents: [], isPage: false};
     }
-    state._things[thing.name]!.content = thing.content;
+    state._things[thing.name]!.content = [];
+    state = setContent(state, thing.name, thing.content);
     for (const connection of thing.children) {
       state._connections[connection.name] = {parent: thing.name, child: connection.child};
       if (state._things[connection.child] === undefined) {
