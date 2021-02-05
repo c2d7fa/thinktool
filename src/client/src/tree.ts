@@ -1,6 +1,6 @@
 import * as Misc from "@johv/miscjs";
 import * as D from "./data";
-import * as I from "./tree-internal";
+import * as I from "./tree/representation";
 
 // The underlying data representation that is stored on the server is like a
 // graph. It is defined in the Data module.
@@ -40,37 +40,70 @@ export const unfocus = I.unfocus;
 export const children = I.children;
 export const backreferencesExpanded = I.backreferencesExpanded;
 export const backreferencesChildren = I.backreferencesChildren;
+export const exists = I.exists;
 
 function refEq(x: NodeRef, y: NodeRef): boolean {
   return x.id === y.id;
 }
 
+// Note: This returns undefined in multiple different situations.
+//
+// 1. If the node simply does not exist, it returns undefined and prints a
+//    warning. Don't call this function unless you know that the node exists.
+//
+// 2. If it's the root node, it also returns undefined, even though I.source()
+//    correctly tells us that it's the root node. We should probably update the
+//    interface of this function to include this possibility.
+//
+// 3. If the source that is directly associated with the node does not agree
+//    with its logical parent then it's parent and type is undefined. Instead of
+//    checking this explicitly, we should probably just clean up old nodes, and
+//    stop using I.allNodes() so much.
 function parentAndType(
   tree: Tree,
   child: NodeRef,
 ): [NodeRef, "child" | "opened-link" | "reference" | "parent"] | undefined {
-  for (const node of I.allNodes(tree)) {
-    if (Misc.includesBy(children(tree, node), child, refEq)) return [node, "child"];
+  const source = I.source(tree, child);
+
+  if (source === undefined) {
+    console.warn("Trying to get parent of non-existent node %o", child);
+    return undefined;
   }
-  for (const node of I.allNodes(tree)) {
-    if (I.openedLinkNode(tree, node, thing(tree, child)) !== undefined) return [node, "opened-link"];
+
+  if (source.type === "child") {
+    if (!Misc.includesBy(children(tree, source.parent), child, refEq)) {
+      // This node thinks it's a child, but its parent doesn't agree. It's
+      // probably an old hanging node that hasn't been cleaned up. Effectively
+      // it has no parent.
+      return undefined;
+    }
+    return [source.parent, "child"];
   }
-  for (const node of I.allNodes(tree)) {
-    if (
-      I.backreferencesChildren(tree, node)
-        .map((r) => r.id)
-        .includes(child.id)
-    )
-      return [node, "reference"];
+
+  if (source.type === "reference") {
+    if (!Misc.includesBy(backreferencesChildren(tree, source.parent), child, refEq)) {
+      return undefined; // Hanging node; see above.
+    }
+    return [source.parent, "reference"];
   }
-  for (const node of I.allNodes(tree)) {
-    if (
-      I.otherParentsChildren(tree, node)
-        .map((p) => p.id)
-        .includes(child.id)
-    )
-      return [node, "parent"];
+
+  if (source.type === "opened-link") {
+    if (!Misc.includesBy(openedLinksChildren(tree, source.parent), child, refEq)) {
+      return undefined; // Hanging node; see above.
+    }
+    return [source.parent, "opened-link"];
   }
+
+  if (source.type === "other-parent") {
+    if (!Misc.includesBy(otherParentsChildren(tree, source.parent), child, refEq)) {
+      return undefined;
+    }
+    return [source.parent, "parent"];
+  }
+
+  if (source.type === "root") return undefined;
+
+  console.error("Unexpected case while getting parent and type!");
   return undefined;
 }
 
@@ -117,7 +150,7 @@ function nextVisibleItem(tree: Tree, node: NodeRef): NodeRef {
 
   // Recursively traverse tree upwards until we hit a parent with a sibling
   let nparent = node;
-  while (nparent !== tree.root) {
+  while (nparent !== tree._root) {
     const nextSibling_ = nextSibling(tree, nparent);
     if (nextSibling_ !== null) return nextSibling_;
     nparent = parent(tree, nparent)!; // Non-null because nparent !== tree.root
@@ -140,10 +173,12 @@ function genericRefreshChildren({
   getStateChildren,
   getTreeChildren,
   updateChildren,
+  type,
 }: {
   getStateChildren(state: D.State, thing: string): string[];
   getTreeChildren(tree: Tree, node: NodeRef): NodeRef[];
   updateChildren(tree: Tree, parent: NodeRef, update: (children: NodeRef[]) => NodeRef[]): Tree;
+  type: I.Source["type"];
 }): (state: D.State, tree: Tree, parent: NodeRef) => Tree {
   return (state: D.State, tree: Tree, parent: NodeRef) => {
     if (thing(tree, parent) === undefined) {
@@ -164,11 +199,11 @@ function genericRefreshChildren({
 
       for (let i = 0; i < stateChildren.length; i++) {
         if (getTreeChildren(result, parent)[i] === undefined) {
-          const [newChild, newResult] = load(state, result, stateChildren[i], parent);
+          const [newChild, newResult] = load(state, result, stateChildren[i], {type, parent});
           result = updateChildren(newResult, parent, (cs) => Misc.splice(cs, i, 0, newChild));
         } else {
           if (thing(result, getTreeChildren(result, parent)[i]) === stateChildren[i]) continue;
-          const [newChild, newResult] = load(state, result, stateChildren[i], parent);
+          const [newChild, newResult] = load(state, result, stateChildren[i], {type, parent});
           result = updateChildren(newResult, parent, (cs) =>
             Misc.splice(cs, i, 0, newChild, getTreeChildren(result, parent)[i]),
           );
@@ -186,7 +221,7 @@ function genericRefreshChildren({
       let result = updateChildren(tree, parent, (cs) => []);
 
       for (const childThing of stateChildren) {
-        const [newChild, newResult] = load(state, result, childThing, parent);
+        const [newChild, newResult] = load(state, result, childThing, {type, parent});
         result = updateChildren(newResult, parent, (cs) => [...cs, newChild]);
       }
 
@@ -210,7 +245,7 @@ function refreshChildren(state: D.State, tree: Tree, parent: NodeRef): Tree {
   let result = I.updateChildren(tree, parent, (cs) => []);
 
   for (const connection of D.childConnections(state, thing(tree, parent)!)) {
-    const [newChild, newResult] = loadConnection(state, result, connection, parent);
+    const [newChild, newResult] = loadConnection(state, result, connection, {type: "child", parent});
     result = I.updateChildren(newResult, parent, (cs) => [...cs, newChild]);
   }
 
@@ -259,7 +294,7 @@ export function loadConnection(
   state: D.State,
   tree: Tree,
   connection: D.Connection,
-  parent?: NodeRef,
+  source: I.Source,
 ): [NodeRef, Tree] {
   const childThing = D.connectionChild(state, connection);
 
@@ -267,7 +302,7 @@ export function loadConnection(
     throw "Unable to load connection because connection did not reference a child.";
   }
 
-  let [newNode, newTree] = I.loadThing(tree, childThing, connection);
+  let [newNode, newTree] = I.loadThing(tree, childThing, source, connection);
 
   if (shouldAlwaysBeExpanded(state, newTree, newNode)) {
     newTree = I.markExpanded(newTree, newNode, true);
@@ -276,8 +311,8 @@ export function loadConnection(
   return [newNode, newTree];
 }
 
-export function load(state: D.State, tree: Tree, thing: string, parent?: NodeRef): [NodeRef, Tree] {
-  const [newNode, newTree_] = I.loadThing(tree, thing);
+export function load(state: D.State, tree: Tree, thing: string, source: I.Source): [NodeRef, Tree] {
+  const [newNode, newTree_] = I.loadThing(tree, thing, source);
   let newTree = newTree_;
 
   if (shouldAlwaysBeExpanded(state, newTree, newNode)) {
@@ -383,7 +418,10 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
 
     // Add new nodes
     if (thing(newTree, n) === thing(newTree, destination.parent)) {
-      const [newNode, newTree_] = loadConnection(newState, newTree, newConnection, destination.parent);
+      const [newNode, newTree_] = loadConnection(newState, newTree, newConnection, {
+        type: "child",
+        parent: destination.parent, // [TODO] Shouldn't this be `n`?
+      });
       newTree = newTree_;
       newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, destination.index, 0, newNode));
     }
@@ -463,7 +501,7 @@ export function createSiblingBefore(state: D.State, tree: Tree, node: NodeRef): 
   const [newState2, newConnection] = D.insertChild(newState, parentThing, newThing, index);
   newState = newState2;
 
-  const [newNode, newTree_] = loadConnection(newState, tree, newConnection, parent_);
+  const [newNode, newTree_] = loadConnection(newState, tree, newConnection, {type: "child", parent: parent_});
   let newTree = newTree_;
   newTree = I.updateChildren(newTree, parent_, (children) => Misc.splice(children, index, 0, newNode));
   newTree = focus(newTree, newNode);
@@ -493,7 +531,7 @@ export function createSiblingAfter(state: D.State, tree: Tree, node: NodeRef): [
   const [newState2, newConnection] = D.insertChild(newState, parentThing, newThing, index);
   newState = newState2;
 
-  const [newNode, newTree_] = loadConnection(newState, tree, newConnection, parent_);
+  const [newNode, newTree_] = loadConnection(newState, tree, newConnection, {type: "child", parent: parent_});
   let newTree = newTree_;
   newTree = I.updateChildren(newTree, parent_, (children) => Misc.splice(children, index, 0, newNode));
   newTree = focus(newTree, newNode);
@@ -575,7 +613,7 @@ export function insertChild(
   let newTree = expand(state, tree, node); // Expand parent now; we want to manually add the new node to the tree
 
   // Load node into the tree
-  const [childNode, newTree_] = loadConnection(newState, newTree, newConnection, node);
+  const [childNode, newTree_] = loadConnection(newState, newTree, newConnection, {type: "child", parent: node});
   newTree = newTree_;
   newTree = I.updateChildren(newTree, node, (children) => Misc.splice(children, position, 0, childNode));
   newTree = focus(newTree, childNode);
@@ -583,7 +621,10 @@ export function insertChild(
   // Also refresh parents of this item elsewhere
   for (const n of I.allNodes(newTree)) {
     if (thing(newTree, n) === thing(tree, node) && !refEq(n, node)) {
-      const [otherChildNode, newTree_] = loadConnection(newState, newTree, newConnection, n);
+      const [otherChildNode, newTree_] = loadConnection(newState, newTree, newConnection, {
+        type: "child",
+        parent: n,
+      });
       newTree = newTree_;
       newTree = I.updateChildren(newTree, n, (children) => [...children, otherChildNode]);
     }
@@ -651,6 +692,7 @@ const refreshBackreferencesChildren = (state: D.State, tree: Tree, node: NodeRef
     getStateChildren: D.backreferences,
     getTreeChildren: I.backreferencesChildren,
     updateChildren: I.updateBackreferencesChildren,
+    type: "reference",
   })(state, tree, node);
 
   for (const backreferenceNode of backreferencesChildren(result, node)) {
@@ -686,6 +728,7 @@ function refreshOtherParentsChildren(state: D.State, tree: Tree, node: NodeRef):
     },
     getTreeChildren: I.otherParentsChildren,
     updateChildren: I.updateOtherParentsChildren,
+    type: "other-parent",
   })(state, tree, node);
 }
 
@@ -717,7 +760,7 @@ export function toggleLink(state: D.State, tree: Tree, node: NodeRef, link: stri
   if (isLinkOpen(tree, node, link)) {
     return I.setOpenedLinkNode(tree, node, link, null);
   } else {
-    const [linkNode, result0] = load(state, tree, link);
+    const [linkNode, result0] = load(state, tree, link, {type: "opened-link", parent: node});
     let result = I.setOpenedLinkNode(result0, node, link, linkNode);
 
     // Automatically expand parent item
