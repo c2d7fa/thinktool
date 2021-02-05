@@ -1,5 +1,5 @@
 import * as Misc from "@johv/miscjs";
-import * as BinaryRelation from "../binary-relation";
+import {BinaryRelation} from "@johv/immutable-extras";
 
 import * as Shared from "@thinktool/shared";
 type FullStateResponse = Shared.Communication.FullStateResponse;
@@ -12,7 +12,7 @@ import {State, Connection} from "./representation";
 export const empty: State = {
   _things: {"0": {content: ["Welcome"], children: [], parents: [], isPage: false}},
   _connections: {},
-  _links: BinaryRelation.empty<string, string>(),
+  _links: BinaryRelation<string, string>(),
 };
 
 export function allThings(state: State): string[] {

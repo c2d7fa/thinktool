@@ -1,4 +1,4 @@
-import {BinaryRelation} from "../binary-relation";
+import {BinaryRelation} from "@johv/immutable-extras";
 
 import {Content} from "./content";
 
