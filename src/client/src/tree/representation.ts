@@ -1,5 +1,6 @@
 import * as Misc from "@johv/miscjs";
 import * as Immutable from "immutable";
+import {MapWithPreimage} from "@johv/immutable-extras";
 
 import * as D from "../data";
 
@@ -7,7 +8,6 @@ import * as D from "../data";
 // may not be accessed outside the 'tree' modules.
 
 export interface Node {
-  _thing: string;
   _connection?: D.Connection; // undefined for root item (and other non-applicable items). // [TODO] Is this comment correct?
   _expanded: boolean;
   _source: Source;
@@ -26,6 +26,7 @@ export interface Tree {
   _root: NodeRef;
   _nodes: Immutable.Map<number, Node>;
   _focus: null | NodeRef;
+  _things: MapWithPreimage<number, string>;
 }
 
 export type NodeRef = {id: number};
@@ -52,7 +53,6 @@ export function fromRoot(thing: string): Tree {
       [
         0,
         {
-          _thing: thing,
           _source: {type: "root"},
           _expanded: false,
           _children: [],
@@ -62,6 +62,7 @@ export function fromRoot(thing: string): Tree {
         },
       ],
     ]),
+    _things: MapWithPreimage<number, string>().set(0, thing),
     _focus: null,
   };
 }
@@ -75,7 +76,7 @@ export function exists(tree: Tree, node: NodeRef): boolean {
 }
 
 export function thing(tree: Tree, node: NodeRef): string {
-  const thing = getNode(tree, node)?._thing;
+  const thing = tree._things.get(node.id);
   if (thing === undefined) {
     alert("A fatal error occurred. Please check the developer console for more information.");
     throw {message: "Could not get item for node", node, tree};
@@ -130,7 +131,6 @@ export function loadThing(tree: Tree, thing: string, source: Source, connection?
       ...tree,
       _nextId: tree._nextId + 1,
       _nodes: tree._nodes.set(tree._nextId, {
-        _thing: thing,
         _source: source,
         _connection: connection,
         _expanded: false,
@@ -139,6 +139,7 @@ export function loadThing(tree: Tree, thing: string, source: Source, connection?
         _otherParents: {expanded: false, children: []},
         _openedLinks: {},
       }),
+      _things: tree._things.set(tree._nextId, thing),
     },
   ];
 }
