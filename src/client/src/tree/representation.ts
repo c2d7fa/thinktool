@@ -8,13 +8,18 @@ import * as D from "../data";
 
 export interface Node {
   _thing: string;
-  _connection?: D.Connection; // undefined for root item (and other non-applicable items)
+  _connection?: D.Connection; // undefined for root item (and other non-applicable items). // [TODO] Is this comment correct?
   _expanded: boolean;
+  _source: Source;
   _children: NodeRef[];
   _backreferences: {expanded: boolean; children: NodeRef[]};
   _otherParents: {expanded: boolean; children: NodeRef[]};
   _openedLinks: {[thing: string]: NodeRef | undefined};
 }
+
+export type Source =
+  | {type: "child" | "other-parent" | "reference" | "opened-link"; parent: NodeRef}
+  | {type: "root"};
 
 export interface Tree {
   _nextId: number;
@@ -48,6 +53,7 @@ export function fromRoot(thing: string): Tree {
         0,
         {
           _thing: thing,
+          _source: {type: "root"},
           _expanded: false,
           _children: [],
           _backreferences: {expanded: false, children: []},
@@ -75,6 +81,10 @@ export function thing(tree: Tree, node: NodeRef): string {
     throw {message: "Could not get item for node", node, tree};
   }
   return thing;
+}
+
+export function source(tree: Tree, node: NodeRef): Source | undefined {
+  return getNode(tree, node)?._source;
 }
 
 export function expanded(tree: Tree, node: NodeRef): boolean {
@@ -113,7 +123,7 @@ export function children(tree: Tree, node: NodeRef): NodeRef[] {
   return getNode(tree, node)?._children ?? [];
 }
 
-export function loadThing(tree: Tree, thing: string, connection?: D.Connection): [NodeRef, Tree] {
+export function loadThing(tree: Tree, thing: string, source: Source, connection?: D.Connection): [NodeRef, Tree] {
   return [
     {id: tree._nextId},
     {
@@ -121,6 +131,7 @@ export function loadThing(tree: Tree, thing: string, connection?: D.Connection):
       _nextId: tree._nextId + 1,
       _nodes: tree._nodes.set(tree._nextId, {
         _thing: thing,
+        _source: source,
         _connection: connection,
         _expanded: false,
         _children: [],
