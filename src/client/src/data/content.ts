@@ -1,5 +1,9 @@
+import * as Immutable from "immutable";
+
 import * as Shared from "@thinktool/shared";
-import * as D from "../data";
+
+import type {State} from "./representation";
+import * as D from "./core";
 
 export type Content = Shared.Communication.Content;
 
@@ -14,7 +18,7 @@ export function contentEq(a: Content, b: Content): boolean {
   return true;
 }
 
-export function contentText(state: D.State, thing: string): string {
+export function contentText(state: State, thing: string): string {
   function contentText_(thing: string, seen: string[]): string {
     if (seen.includes(thing)) return "...";
 
@@ -40,24 +44,18 @@ export function contentText(state: D.State, thing: string): string {
 // Items may reference other items in their content. Such items are displayed
 // with the referenced item embedded where the reference is.
 
-export function references(state: D.State, thing: string): string[] {
-  let result: string[] = [];
-
-  for (const segment of D.content(state, thing)) {
-    if (typeof segment.link === "string") {
-      result = [...result, segment.link];
-    }
-  }
-
-  return result;
+export function references(state: State, thing: string): string[] {
+  return state._links.image(thing).toJS();
 }
 
-export function backreferences(state: D.State, thing: string): string[] {
-  let result: string[] = [];
-  for (const other in state.things) {
-    if (references(state, other).includes(thing)) {
-      result = [...result, other];
-    }
+export function backreferences(state: State, thing: string): string[] {
+  return state._links.preimage(thing).toJS();
+}
+
+export function linksInContent(content: Content): Immutable.Set<string> {
+  function isLink(piece: Content[number]): piece is {link: string} {
+    return typeof piece.link === "string";
   }
-  return result;
+
+  return Immutable.Set<string>(content.filter(isLink).map((x) => x.link));
 }

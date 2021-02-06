@@ -1,10 +1,9 @@
-import {Context} from "./context";
 import * as T from "./tree";
 import * as D from "./data";
 import * as Tutorial from "./tutorial";
 import * as S from "./shortcuts";
 import * as Goal from "./goal";
-import {NodeRef} from "./tree-internal";
+import {NodeRef} from "./tree";
 import {App} from "./app";
 import * as A from "./app";
 

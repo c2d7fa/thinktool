@@ -43,7 +43,7 @@ export function of(items: ItemGraph): App {
 }
 
 export function editor(app: App, node: T.NodeRef): E.Editor | null {
-  if (!(node.id in app.tree.nodes)) return null;
+  if (!T.exists(app.tree, node)) return null;
   if (node.id in app.editors) return app.editors[node.id];
   return E.load(app, node);
 }
