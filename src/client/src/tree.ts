@@ -328,6 +328,7 @@ export function refresh(tree: Tree, state: D.State): Tree {
   let result = tree;
   for (const node of I.allNodes(tree)) {
     // If it does not exist, it will be removed from its parents in refreshChildren.
+    // ([TODO] I have no idea what this comment means, or if it's still relevant.)
     if (D.exists(state, thing(tree, node))) {
       result = refreshChildren(state, result, node);
       result = refreshBackreferencesChildren(state, result, node);
@@ -377,6 +378,10 @@ function childIndex(tree: Tree, parent: NodeRef, child: NodeRef): number {
   }
 }
 
+function similar(tree: Tree, node: NodeRef) {
+  return I.instances(tree, I.thing(tree, node));
+}
+
 // [TODO] The index in destination refers to a node, but elsewhere in this
 // module we use it as though it refers to an index inside a thing. This is
 // important when referring to an index inside a parent that has not been
@@ -404,27 +409,19 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
   );
   newState = newState_;
 
-  // Move nodes in tree
+  // Remove old nodes
+  for (const n of similar(newTree, parent_)) {
+    newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, indexInParent(tree, node)!, 1));
+  }
 
-  for (const n of I.allNodes(newTree)) {
-    // Remove old nodes
-
-    // We want to find all nodes that represent the same thing as node inside
-    // the same parent. Then, we want to remove those nodes from their parents.
-
-    if (thing(newTree, n) === thing(tree, parent_)) {
-      newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, indexInParent(tree, node)!, 1));
-    }
-
-    // Add new nodes
-    if (thing(newTree, n) === thing(newTree, destination.parent)) {
-      const [newNode, newTree_] = loadConnection(newState, newTree, newConnection, {
-        type: "child",
-        parent: n,
-      });
-      newTree = newTree_;
-      newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, destination.index, 0, newNode));
-    }
+  // Add new nodes
+  for (const n of similar(newTree, destination.parent)) {
+    const [newNode, newTree_] = loadConnection(newState, newTree, newConnection, {
+      type: "child",
+      parent: n,
+    });
+    newTree = newTree_;
+    newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, destination.index, 0, newNode));
   }
 
   // Keep focus
@@ -507,10 +504,9 @@ export function createSiblingBefore(state: D.State, tree: Tree, node: NodeRef): 
   newTree = focus(newTree, newNode);
 
   // Also update other parents
-  for (const n of I.allNodes(newTree)) {
-    if (thing(newTree, n) === thing(tree, parent_) && !refEq(n, parent_)) {
-      newTree = refreshChildren(newState, newTree, n);
-    }
+  for (const n of similar(newTree, parent_)) {
+    if (refEq(n, parent_)) continue;
+    newTree = refreshChildren(newState, newTree, n);
   }
 
   return [newState, newTree, newThing, newNode];
@@ -537,10 +533,9 @@ export function createSiblingAfter(state: D.State, tree: Tree, node: NodeRef): [
   newTree = focus(newTree, newNode);
 
   // Also update other parents
-  for (const n of I.allNodes(newTree)) {
-    if (thing(newTree, n) === thing(tree, parent_) && !refEq(n, parent_)) {
-      newTree = refreshChildren(newState, newTree, n);
-    }
+  for (const n of similar(newTree, parent_)) {
+    if (refEq(n, parent_)) continue;
+    newTree = refreshChildren(newState, newTree, n);
   }
 
   return [newState, newTree, newThing, newNode];
@@ -584,17 +579,13 @@ export function remove(state: D.State, tree: Tree, node: NodeRef): [D.State, Tre
     let newTree = focus(tree, previousVisibleItem(tree, node));
 
     // Remove nodes from tree to match state
-    for (const n of I.allNodes(tree)) {
-      if (thing(newTree, n) === thing(tree, parent_)) {
-        newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, indexInParent(tree, node)!, 1));
-      }
+    for (const n of similar(newTree, parent_)) {
+      newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, indexInParent(tree, node)!, 1));
     }
 
     // Refresh list of other parents for all nodes representing the removed item
-    for (const n of I.allNodes(newTree)) {
-      if (thing(newTree, n) === thing(newTree, node)) {
-        newTree = refreshOtherParentsChildren(newState, newTree, n);
-      }
+    for (const n of similar(newTree, node)) {
+      newTree = refreshOtherParentsChildren(newState, newTree, n);
     }
 
     return [newState, newTree];
@@ -619,22 +610,19 @@ export function insertChild(
   newTree = focus(newTree, childNode);
 
   // Also refresh parents of this item elsewhere
-  for (const n of I.allNodes(newTree)) {
-    if (thing(newTree, n) === thing(tree, node) && !refEq(n, node)) {
-      const [otherChildNode, newTree_] = loadConnection(newState, newTree, newConnection, {
-        type: "child",
-        parent: n,
-      });
-      newTree = newTree_;
-      newTree = I.updateChildren(newTree, n, (children) => [...children, otherChildNode]);
-    }
+  for (const n of similar(newTree, node)) {
+    if (refEq(n, node)) continue;
+    const [otherChildNode, newTree_] = loadConnection(newState, newTree, newConnection, {
+      type: "child",
+      parent: n,
+    });
+    newTree = newTree_;
+    newTree = I.updateChildren(newTree, n, (children) => [...children, otherChildNode]);
   }
 
   // Refresh list of other parents for all child items
-  for (const n of I.allNodes(newTree)) {
-    if (thing(newTree, n) === thing(newTree, childNode)) {
-      newTree = refreshOtherParentsChildren(newState, newTree, n);
-    }
+  for (const n of similar(newTree, childNode)) {
+    newTree = refreshOtherParentsChildren(newState, newTree, n);
   }
 
   return [newState, newTree, childNode];
@@ -652,17 +640,13 @@ export function insertParent(state: D.State, tree: Tree, node: NodeRef, parent: 
   let newTree = tree;
 
   // Refresh parent list of these nodes
-  for (const n of I.allNodes(newTree)) {
-    if (thing(newTree, n) === thing(newTree, node)) {
-      newTree = refreshOtherParentsChildren(newState, newTree, n);
-    }
+  for (const n of similar(newTree, node)) {
+    newTree = refreshOtherParentsChildren(newState, newTree, n);
   }
 
   // Refresh children of this parent
-  for (const n of I.allNodes(newTree)) {
-    if (thing(newTree, n) === parent) {
-      newTree = refreshChildren(newState, newTree, n);
-    }
+  for (const n of I.instances(newTree, parent)) {
+    newTree = refreshChildren(newState, newTree, n);
   }
 
   return [newState, newTree];
@@ -673,12 +657,10 @@ export function removeThing(state: D.State, tree: Tree, node: NodeRef): [D.State
   let newTree = focus(tree, previousVisibleItem(tree, node));
 
   // Remove nodes from tree to match state
-  for (const n of I.allNodes(tree)) {
-    if (thing(newTree, n) === thing(tree, node)) {
-      const p = parent(tree, n);
-      if (p !== undefined) {
-        newTree = I.updateChildren(newTree, p, (ch) => Misc.splice(ch, indexInParent(newTree, n)!, 1));
-      }
+  for (const n of similar(newTree, node)) {
+    const p = parent(tree, n);
+    if (p !== undefined) {
+      newTree = I.updateChildren(newTree, p, (ch) => Misc.splice(ch, indexInParent(newTree, n)!, 1));
     }
   }
 

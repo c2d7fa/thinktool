@@ -84,6 +84,10 @@ export function thing(tree: Tree, node: NodeRef): string {
   return thing;
 }
 
+export function instances(tree: Tree, thing: string): Immutable.Set<NodeRef> {
+  return tree._things.preimage(thing).map((id) => ({id}));
+}
+
 export function source(tree: Tree, node: NodeRef): Source | undefined {
   return getNode(tree, node)?._source;
 }
