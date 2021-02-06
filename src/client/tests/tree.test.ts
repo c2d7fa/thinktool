@@ -408,5 +408,10 @@ describe("moving a node", () => {
       expect(childrenThings(tree_, 0)).toEqual(["moving"]);
       expect(childrenThings(tree_, 1)).toEqual(["moving"]);
     });
+
+    test("the parent of each new node is the local parent in the tree", () => {
+      expect(T.parent(tree_, childPath(tree_, 0, 0))).toEqual(childPath(tree_, 0));
+      expect(T.parent(tree_, childPath(tree_, 1, 0))).toEqual(childPath(tree_, 1));
+    });
   });
 });

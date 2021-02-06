@@ -420,7 +420,7 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
     if (thing(newTree, n) === thing(newTree, destination.parent)) {
       const [newNode, newTree_] = loadConnection(newState, newTree, newConnection, {
         type: "child",
-        parent: destination.parent, // [TODO] Shouldn't this be `n`?
+        parent: n,
       });
       newTree = newTree_;
       newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, destination.index, 0, newNode));
