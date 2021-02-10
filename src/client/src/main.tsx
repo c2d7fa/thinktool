@@ -386,9 +386,26 @@ function App_({
   );
 }
 
+// [TODO] This hook is duplicated in multiple places.
+function usePropRef<T>(prop: T): React.RefObject<T> {
+  const ref = React.useRef(prop);
+  React.useEffect(() => {
+    ref.current = prop;
+  }, [prop]);
+  return ref;
+}
+
 function ThingOverview(p: {context: Context}) {
   const hasReferences =
     Data.backreferences(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))).length > 0;
+
+  const contextRef = usePropRef(p.context);
+  const treeRef = usePropRef(p.context.tree);
+
+  const onEvent = React.useMemo(
+    () => (ev: Editor.Event) => handlingEditorEvent(contextRef.current!, T.root(treeRef.current!))(ev),
+    [],
+  );
 
   return (
     <div className="overview">
@@ -397,7 +414,7 @@ function ThingOverview(p: {context: Context}) {
         <Editor.Editor
           editor={A.editor(p.context, T.root(p.context.tree))!}
           hasFocus={T.hasFocus(p.context.tree, T.root(p.context.tree))}
-          onEvent={handlingEditorEvent(p.context, T.root(p.context.tree))}
+          onEvent={onEvent}
         />
         <div className="children">
           <Outline context={p.context} />
@@ -515,11 +532,18 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
+  const contextRef = usePropRef(props.context);
+
+  const onEvent = React.useMemo(
+    () => (ev: Editor.Event) => handlingEditorEvent(contextRef.current!, props.node)(ev),
+    [props.node],
+  );
+
   const content = (
     <Editor.Editor
       editor={A.editor(props.context, props.node)!}
       hasFocus={T.hasFocus(props.context.tree, props.node)}
-      onEvent={handlingEditorEvent(props.context, props.node)}
+      onEvent={onEvent}
     />
   );
 
