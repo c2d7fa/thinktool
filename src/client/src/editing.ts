@@ -11,6 +11,10 @@ export type EditorContent = ContentElement[];
 export type ContentElement = string | {link: string; title: string | null};
 export type Range = {from: number; to: number};
 
+export function editorEq(a: Editor, b: Editor): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 export function load(app: A.App, node: T.NodeRef): Editor {
   const content = D.content(app.state, T.thing(app.tree, node));
   const state = app.state;

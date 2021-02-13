@@ -387,6 +387,10 @@
     {
       "date": "2021-02-06",
       "title": "Improved performance, especially for large outlines."
+    },
+    {
+      "date": "2021-02-13",
+      "title": "Continued working on performance improvements, especially around editing."
     }
   ]
 }
