@@ -391,6 +391,10 @@
     {
       "date": "2021-02-13",
       "title": "Continued working on performance improvements, especially around editing."
+    },
+    {
+      "date": "2021-02-13",
+      "title": "Added 'Unfold' button to toolbar. It recursively shows all children of the focused item. This is currently quite slow when there are lots of children."
     }
   ]
 }
