@@ -2,7 +2,7 @@ import * as React from "react";
 
 import type {ItemStatus} from "./Item";
 
-export default function Bullet(props: {
+export default React.memo(function Bullet(props: {
   status: ItemStatus;
   toggle: () => void;
   beginDrag: (ev?: React.MouseEvent<never>) => void;
@@ -57,4 +57,4 @@ export default function Bullet(props: {
       )}
     </svg>
   );
-}
+});

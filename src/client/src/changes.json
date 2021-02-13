@@ -395,6 +395,10 @@
     {
       "date": "2021-02-13",
       "title": "Added 'Unfold' button to toolbar. It recursively shows all children of the focused item. This is currently quite slow when there are lots of children."
+    },
+    {
+      "date": "2021-02-14",
+      "title": "Various minor optimizations to avoid unnecessary rerenders and speed up editing."
     }
   ]
 }

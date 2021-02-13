@@ -13,24 +13,9 @@ import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
 import {App, merge} from "../app";
 import * as A from "../app";
+import {usePropRef} from "../react-utils";
 
 import Bullet from "./Bullet";
-
-// Sometimes we want to pass a callback to some function that doesn't know about
-// React, but which should still have access to the latest value of a prop
-// passed to a component.
-//
-// This function lets us make the latest value of a prop available as a ref,
-// which we can then dereference from inside such a callback.
-//
-// We use this when integrating with ProseMirror.
-function usePropRef<T>(prop: T): React.RefObject<T> {
-  const ref = React.useRef(prop);
-  React.useEffect(() => {
-    ref.current = prop;
-  }, [prop]);
-  return ref;
-}
 
 function buildInternalLink(args: {
   jump(): void;
@@ -206,23 +191,6 @@ function fromProseMirror(proseMirrorEditorState: PS.EditorState<typeof schema>):
   const selection = {from: proseMirrorEditorState.selection.anchor, to: proseMirrorEditorState.selection.head};
 
   return {content, selection};
-}
-
-function contentEq(a: E.EditorContent, b: E.EditorContent): boolean {
-  if (a.length !== b.length) return false;
-
-  for (let i = 0; i < a.length; ++i) {
-    if (typeof a[i] === "string" && a[i] !== b[i]) return false;
-    if (
-      typeof a[i] !== "string" &&
-      (typeof b[i] === "string" ||
-        a[i].link !== b[i].link ||
-        (a[i] as {link: string; title: string}).title !== (b[i] as {link: string; title: string}).title)
-    )
-      return false;
-  }
-
-  return true;
 }
 
 export function onPastedParagraphs(app: App, node: T.NodeRef, paragraphs: string[]) {

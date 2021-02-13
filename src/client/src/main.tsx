@@ -23,17 +23,17 @@ import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLink, ExternalLinkType} from "./ui/ExternalLink";
-import Bullet from "./ui/Bullet";
 import * as Item from "./ui/Item";
 import UserPage from "./ui/UserPage";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
+import {OtherParents, useOtherParents} from "./ui/OtherParents";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
-import {EditorState} from "prosemirror-state";
+import {usePropRef} from "./react-utils";
 
 function useContext({
   initialState,
@@ -386,36 +386,17 @@ function App_({
   );
 }
 
-// [TODO] This hook is duplicated in multiple places.
-function usePropRef<T>(prop: T): React.RefObject<T> {
-  const ref = React.useRef(prop);
-  React.useEffect(() => {
-    ref.current = prop;
-  }, [prop]);
-  return ref;
-}
-
 function ThingOverview(p: {context: Context}) {
   const hasReferences =
     Data.backreferences(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))).length > 0;
 
-  const contextRef = usePropRef(p.context);
-  const treeRef = usePropRef(p.context.tree);
-
-  const onEvent = React.useMemo(
-    () => (ev: Editor.Event) => handlingEditorEvent(contextRef.current!, T.root(treeRef.current!))(ev),
-    [],
-  );
+  const editor = useEditor(p.context, T.root(p.context.tree));
 
   return (
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        <Editor.Editor
-          editor={A.editor(p.context, T.root(p.context.tree))!}
-          hasFocus={T.hasFocus(p.context.tree, T.root(p.context.tree))}
-          onEvent={onEvent}
-        />
+        {editor}
         <div className="children">
           <Outline context={p.context} />
         </div>
@@ -495,68 +476,64 @@ const handlingEditorEvent = (context: Context, node: T.NodeRef) => (event: Edito
   }
 };
 
+function useEditor(context: Context, node: T.NodeRef) {
+  // We don't want to update all editors each time context changes. Editor will
+  // not update if none of its props have changed. To ensure that this condition
+  // is met, we always pass the same callback.
+
+  const contextRef = usePropRef(context);
+  const onEvent = React.useMemo(() => (ev: Editor.Event) => handlingEditorEvent(contextRef.current!, node)(ev), [
+    node,
+  ]);
+
+  return (
+    <Editor.Editor editor={A.editor(context, node)!} hasFocus={T.hasFocus(context.tree, node)} onEvent={onEvent} />
+  );
+}
+
+function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
+  // Speculative optimization. I haven't tested the impact of this.
+  const contextRef = usePropRef(context);
+  const updateApp = React.useMemo(
+    () => (f: (app: A.App) => A.App) => setAppState(contextRef.current!, f(contextRef.current!)),
+    [],
+  );
+  return updateApp;
+}
+
 function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.NodeRef}) {
-  function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
-    const otherParents = Data.otherParents(
-      props.context.state,
-      T.thing(props.context.tree, props.child),
-      props.parent && T.thing(props.context.tree, props.parent),
-    );
+  const updateApp = useUpdateApp(props.context);
 
-    const listItems = otherParents.map((otherParentThing, index) => {
-      return (
-        <li key={index}>
-          <span
-            className="other-parent-small"
-            onClick={() => {
-              setAppState(props.context, A.jump(props.context, otherParentThing));
-            }}
-            title={Data.contentText(props.context.state, otherParentThing)}
-          >
-            <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
-            &nbsp;
-            {Misc.truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
-          </span>
-        </li>
-      );
-    });
+  const otherParents = useOtherParents({app: props.context, updateApp, node: props.node, parent: props.parent});
 
-    return <ul className="other-parents-small">{listItems}</ul>;
-  }
-
-  function beginDrag() {
-    props.context.setDrag({current: props.node, target: null, finished: false});
-  }
-
-  const otherParents = <OtherParentsSmall context={props.context} child={props.node} parent={props.parent} />;
+  // Avoid changing callbacks to <Bullet> between rerenders so we can avoid
+  // rerendering bullet:
+  const contextRef = usePropRef(props.context);
+  const beginDrag = React.useCallback(
+    () => contextRef.current!.setDrag({current: props.node, target: null, finished: false}),
+    [props.node],
+  );
+  const onBulletClick = React.useCallback(() => {
+    updateApp((app) => Item.click(app, props.node));
+  }, [props.node]);
+  const onBulletAltClick = React.useCallback(() => {
+    updateApp((app) => Item.altClick(app, props.node));
+  }, [props.node]);
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
-  const contextRef = usePropRef(props.context);
-
-  const onEvent = React.useMemo(
-    () => (ev: Editor.Event) => handlingEditorEvent(contextRef.current!, props.node)(ev),
-    [props.node],
-  );
-
-  const content = (
-    <Editor.Editor
-      editor={A.editor(props.context, props.node)!}
-      hasFocus={T.hasFocus(props.context.tree, props.node)}
-      onEvent={onEvent}
-    />
-  );
+  const content = useEditor(props.context, props.node);
 
   return (
     <Item.Item
       dragState={Item.dragState(props.context.drag, props.node)}
       status={Item.status(props.context.tree, props.node)}
-      onBulletClick={() => setAppState(props.context, Item.click(props.context, props.node))}
-      onBulletAltClick={() => setAppState(props.context, Item.altClick(props.context, props.node))}
+      onBulletClick={onBulletClick}
+      onBulletAltClick={onBulletAltClick}
       id={props.node.id}
       beginDrag={beginDrag}
       kind={Item.kind(props.context.tree, props.node)}
-      otherParents={otherParents}
+      otherParents={<OtherParents {...otherParents} />}
       subtree={subtree}
       content={content}
     />
