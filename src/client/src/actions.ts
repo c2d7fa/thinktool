@@ -31,7 +31,8 @@ export type ActionName =
   | "toggle-type" // [TODO] We no longer need this
   | "toggle"
   | "home"
-  | "forum";
+  | "forum"
+  | "unfold";
 
 // Some actions can only be executed under some circumstances, for example if an
 // item is selected.
@@ -59,6 +60,7 @@ export function enabled(state: App, action: ActionName): boolean {
     "focus-up",
     "focus-down",
     "toggle",
+    "unfold",
   ];
 
   if (alwaysEnabled.includes(action)) {
@@ -140,6 +142,10 @@ type UpdateArgs = UpdateConfig & {
 };
 
 const updates = {
+  async "unfold"({target, app}: UpdateArgs) {
+    return {app: A.unfold(app, require(target))};
+  },
+
   async "insert-sibling"({target, input}: UpdateArgs) {
     let [result, selection] = await input();
     const [newState, newTree] = T.insertSiblingAfter(result.state, result.tree, require(target), selection);

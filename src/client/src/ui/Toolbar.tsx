@@ -95,6 +95,7 @@ export default function Toolbar(props: {
     "forum": {description: "Open the subreddit.", icon: "reddit", label: "Forum"},
     "tutorial": {description: "Go through the tutorial again.", icon: "info", label: "Tutorial"},
     "changelog": {description: "Show list of updates to Thinktool.", icon: "list", label: "Updates"},
+    "unfold": {description: "Recursively show all children of selected item.", icon: "stream", label: "Unfold"},
   }
 
   function lookup(action: keyof typeof knownActions) {
@@ -114,6 +115,7 @@ export default function Toolbar(props: {
           <ToolbarButton {...lookup("home")}/>
           <ToolbarButton {...lookup("find")}/>
           <ToolbarButton {...lookup("zoom")}/>
+          <ToolbarButton {...lookup("unfold")}/>
       </ToolbarGroup>
       <ToolbarGroup title="Item">
           <ToolbarButton {...lookup("new")}/>

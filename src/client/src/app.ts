@@ -101,3 +101,21 @@ export function createChild(app: App, node: T.NodeRef): App {
   const [state, tree] = T.createChild(app.state, app.tree, node);
   return merge(app, {state, tree});
 }
+
+export function unfold(app: App, node: T.NodeRef): App {
+  function unfold_(app: App, node: T.NodeRef, seen: string[]): App {
+    if (!D.hasChildren(app.state, T.thing(app.tree, node))) {
+      return app;
+    } else {
+      let result = merge(app, {tree: T.expand(app.state, app.tree, node)});
+      for (let i = 0; i < T.children(result.tree, node).length; ++i) {
+        const child = T.children(result.tree, node)[i];
+        if (seen.includes(T.thing(result.tree, child))) continue;
+        result = unfold_(result, child, [...seen, T.thing(result.tree, child)]);
+      }
+      return result;
+    }
+  }
+
+  return unfold_(app, node, [T.thing(app.tree, node)]);
+}

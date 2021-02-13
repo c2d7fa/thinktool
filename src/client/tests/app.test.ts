@@ -163,3 +163,73 @@ describe("after creating a new child", () => {
     expect(T.hasFocus(after.tree, child)).toBe(true);
   });
 });
+
+describe("unfolding an item", () => {
+  describe("when the item has no children", () => {
+    const before = W.of({
+      "0": {content: []},
+    });
+
+    const after = before.map((app) => A.unfold(app, before.root.ref));
+
+    it("doesn't add any new children", () => {
+      expect(before.root.expanded && before.root.nchildren).toBe(0);
+      expect(after.root.expanded && after.root.nchildren).toBe(0);
+    });
+  });
+
+  describe("when the outline is strictly a tree", () => {
+    it("expands the parent", () => {
+      const before = W.of({
+        "0": {content: [], children: ["1"]},
+        "1": {content: [], children: ["2"]},
+        "2": {content: []},
+      });
+
+      const after = before.map((app) => A.unfold(app, before.root.child(0).ref));
+
+      expect(before.root.child(0).expanded).toBe(false);
+      expect(after.root.child(0).expanded).toBe(true);
+    });
+
+    it("expands each of the children", () => {
+      const before = W.of({
+        "0": {content: [], children: ["1"]},
+        "1": {content: [], children: ["2", "3"]},
+        "2": {content: [], children: ["4"]},
+        "3": {content: [], children: ["5"]},
+        "4": {content: []},
+        "5": {content: []},
+      });
+
+      const after = before.map((app) => A.unfold(app, before.root.child(0).ref));
+
+      const node = after.root.child(0);
+
+      expect(node.thing).toBe("1");
+      expect(node.child(0).thing).toBe("2");
+      expect(node.child(0).child(0).thing).toBe("4");
+      expect(node.child(1).thing).toBe("3");
+      expect(node.child(1).child(0).thing).toBe("5");
+    });
+  });
+
+  describe("when the outline contains loops", () => {
+    const before = W.of({
+      "0": {content: [], children: ["1"]},
+      "1": {content: [], children: ["2"]},
+      "2": {content: [], children: ["0"]},
+    });
+
+    it("doesn't unfold the past the root", () => {
+      const after = before.map((app) => A.unfold(app, before.root.child(0).ref));
+      const node = after.root.child(0);
+
+      expect(node.thing).toBe("1");
+      expect(node.child(0).thing).toBe("2");
+      expect(node.child(0).child(0).thing).toBe("0");
+      expect(node.child(0).child(0).child(0).thing).toBe("1");
+      expect(node.child(0).child(0).child(0).expanded).toBe(false);
+    });
+  });
+});
