@@ -93,16 +93,14 @@ export async function execute(
   }
 
   const result = await update(app, action, config);
-  if (result.undo) console.warn("Undo is currently broken. Ignoring."); // [TODO]
-  if (result.openUrl) config.openUrl(result.openUrl);
-  return result.app ?? app;
+
+  if ("undo" in result) console.warn("Undo is currently broken. Ignoring."); // [TODO]
+  if ("openUrl" in result) config.openUrl(result.openUrl);
+  if ("app" in result) return result.app;
+  return app;
 }
 
-interface UpdateResult {
-  app?: App;
-  openUrl?: string;
-  undo?: boolean;
-}
+type UpdateResult = {app: App} | {openUrl: string} | {undo: boolean};
 
 export async function update(app: App, action: keyof typeof updates, config: UpdateConfig): Promise<UpdateResult> {
   if (!enabled(app, action)) {
