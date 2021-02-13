@@ -390,23 +390,13 @@ function ThingOverview(p: {context: Context}) {
   const hasReferences =
     Data.backreferences(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))).length > 0;
 
-  const contextRef = usePropRef(p.context);
-  const treeRef = usePropRef(p.context.tree);
-
-  const onEvent = React.useMemo(
-    () => (ev: Editor.Event) => handlingEditorEvent(contextRef.current!, T.root(treeRef.current!))(ev),
-    [],
-  );
+  const editor = useEditor(p.context, T.root(p.context.tree));
 
   return (
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        <Editor.Editor
-          editor={A.editor(p.context, T.root(p.context.tree))!}
-          hasFocus={T.hasFocus(p.context.tree, T.root(p.context.tree))}
-          onEvent={onEvent}
-        />
+        {editor}
         <div className="children">
           <Outline context={p.context} />
         </div>
@@ -486,6 +476,21 @@ const handlingEditorEvent = (context: Context, node: T.NodeRef) => (event: Edito
   }
 };
 
+function useEditor(context: Context, node: T.NodeRef) {
+  // We don't want to update all editors each time context changes. Editor will
+  // not update if none of its props have changed. To ensure that this condition
+  // is met, we always pass the same callback.
+
+  const contextRef = usePropRef(context);
+  const onEvent = React.useMemo(() => (ev: Editor.Event) => handlingEditorEvent(contextRef.current!, node)(ev), [
+    node,
+  ]);
+
+  return (
+    <Editor.Editor editor={A.editor(context, node)!} hasFocus={T.hasFocus(context.tree, node)} onEvent={onEvent} />
+  );
+}
+
 function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.NodeRef}) {
   function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
     const otherParents = Data.otherParents(
@@ -523,20 +528,7 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
-  const contextRef = usePropRef(props.context);
-
-  const onEvent = React.useMemo(
-    () => (ev: Editor.Event) => handlingEditorEvent(contextRef.current!, props.node)(ev),
-    [props.node],
-  );
-
-  const content = (
-    <Editor.Editor
-      editor={A.editor(props.context, props.node)!}
-      hasFocus={T.hasFocus(props.context.tree, props.node)}
-      onEvent={onEvent}
-    />
-  );
+  const content = useEditor(props.context, props.node);
 
   return (
     <Item.Item
