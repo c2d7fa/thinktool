@@ -193,23 +193,6 @@ function fromProseMirror(proseMirrorEditorState: PS.EditorState<typeof schema>):
   return {content, selection};
 }
 
-function contentEq(a: E.EditorContent, b: E.EditorContent): boolean {
-  if (a.length !== b.length) return false;
-
-  for (let i = 0; i < a.length; ++i) {
-    if (typeof a[i] === "string" && a[i] !== b[i]) return false;
-    if (
-      typeof a[i] !== "string" &&
-      (typeof b[i] === "string" ||
-        a[i].link !== b[i].link ||
-        (a[i] as {link: string; title: string}).title !== (b[i] as {link: string; title: string}).title)
-    )
-      return false;
-  }
-
-  return true;
-}
-
 export function onPastedParagraphs(app: App, node: T.NodeRef, paragraphs: string[]) {
   let [state, tree] = [app.state, app.tree];
   let lastNode = node;
