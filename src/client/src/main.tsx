@@ -503,11 +503,22 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
 
 function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.NodeRef}) {
   const updateApp = useUpdateApp(props.context);
+
   const otherParents = useOtherParents({app: props.context, updateApp, node: props.node, parent: props.parent});
 
-  function beginDrag() {
-    props.context.setDrag({current: props.node, target: null, finished: false});
-  }
+  // Avoid changing callbacks to <Bullet> between rerenders so we can avoid
+  // rerendering bullet:
+  const contextRef = usePropRef(props.context);
+  const beginDrag = React.useCallback(
+    () => contextRef.current!.setDrag({current: props.node, target: null, finished: false}),
+    [props.node],
+  );
+  const onBulletClick = React.useCallback(() => {
+    updateApp((app) => Item.click(app, props.node));
+  }, [props.node]);
+  const onBulletAltClick = React.useCallback(() => {
+    updateApp((app) => Item.altClick(app, props.node));
+  }, [props.node]);
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
@@ -517,8 +528,8 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
     <Item.Item
       dragState={Item.dragState(props.context.drag, props.node)}
       status={Item.status(props.context.tree, props.node)}
-      onBulletClick={() => setAppState(props.context, Item.click(props.context, props.node))}
-      onBulletAltClick={() => setAppState(props.context, Item.altClick(props.context, props.node))}
+      onBulletClick={onBulletClick}
+      onBulletAltClick={onBulletAltClick}
       id={props.node.id}
       beginDrag={beginDrag}
       kind={Item.kind(props.context.tree, props.node)}
