@@ -23,10 +23,10 @@ import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLink, ExternalLinkType} from "./ui/ExternalLink";
-import Bullet from "./ui/Bullet";
 import * as Item from "./ui/Item";
 import UserPage from "./ui/UserPage";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
+import {OtherParents, useOtherParents} from "./ui/OtherParents";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -491,40 +491,23 @@ function useEditor(context: Context, node: T.NodeRef) {
   );
 }
 
+function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
+  // Speculative optimization. I haven't tested the impact of this.
+  const contextRef = usePropRef(context);
+  const updateApp = React.useMemo(
+    () => (f: (app: A.App) => A.App) => setAppState(contextRef.current!, f(contextRef.current!)),
+    [],
+  );
+  return updateApp;
+}
+
 function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.NodeRef}) {
-  function OtherParentsSmall(props: {context: Context; child: T.NodeRef; parent?: T.NodeRef}) {
-    const otherParents = Data.otherParents(
-      props.context.state,
-      T.thing(props.context.tree, props.child),
-      props.parent && T.thing(props.context.tree, props.parent),
-    );
-
-    const listItems = otherParents.map((otherParentThing, index) => {
-      return (
-        <li key={index}>
-          <span
-            className="other-parent-small"
-            onClick={() => {
-              setAppState(props.context, A.jump(props.context, otherParentThing));
-            }}
-            title={Data.contentText(props.context.state, otherParentThing)}
-          >
-            <Bullet specialType="parent" beginDrag={() => {}} status="collapsed" toggle={() => {}} />
-            &nbsp;
-            {Misc.truncateEllipsis(Data.contentText(props.context.state, otherParentThing), 30)}
-          </span>
-        </li>
-      );
-    });
-
-    return <ul className="other-parents-small">{listItems}</ul>;
-  }
+  const updateApp = useUpdateApp(props.context);
+  const otherParents = useOtherParents({app: props.context, updateApp, node: props.node, parent: props.parent});
 
   function beginDrag() {
     props.context.setDrag({current: props.node, target: null, finished: false});
   }
-
-  const otherParents = <OtherParentsSmall context={props.context} child={props.node} parent={props.parent} />;
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
@@ -539,7 +522,7 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
       id={props.node.id}
       beginDrag={beginDrag}
       kind={Item.kind(props.context.tree, props.node)}
-      otherParents={otherParents}
+      otherParents={<OtherParents {...otherParents} />}
       subtree={subtree}
       content={content}
     />
