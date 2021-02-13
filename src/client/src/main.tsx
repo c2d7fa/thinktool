@@ -33,7 +33,7 @@ import * as ReactDOM from "react-dom";
 
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
-import {EditorState} from "prosemirror-state";
+import {usePropRef} from "./react-utils";
 
 function useContext({
   initialState,
@@ -384,15 +384,6 @@ function App_({
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );
-}
-
-// [TODO] This hook is duplicated in multiple places.
-function usePropRef<T>(prop: T): React.RefObject<T> {
-  const ref = React.useRef(prop);
-  React.useEffect(() => {
-    ref.current = prop;
-  }, [prop]);
-  return ref;
 }
 
 function ThingOverview(p: {context: Context}) {
