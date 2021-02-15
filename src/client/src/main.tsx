@@ -1,5 +1,4 @@
 import {Communication} from "@thinktool/shared";
-import * as Misc from "@johv/miscjs";
 
 import * as ChangelogData from "./changes.json";
 
@@ -390,7 +389,8 @@ function ThingOverview(p: {context: Context}) {
   const hasReferences =
     Data.backreferences(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))).length > 0;
 
-  const editor = useEditor(p.context, T.root(p.context.tree));
+  const onEditEvent = useOnEditEvent(p.context, T.root(p.context.tree));
+  const editor = <Editor.Editor onEvent={onEditEvent} {...Editor.forNode(p.context, T.root(p.context.tree))} />;
 
   return (
     <div className="overview">
@@ -462,7 +462,7 @@ function Outline(p: {context: Context}) {
   );
 }
 
-const handlingEditorEvent = (context: Context, node: T.NodeRef) => (event: Editor.Event): void => {
+function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Event) {
   const result = Editor.handling(context, node)(event);
 
   if (result.handled) {
@@ -474,21 +474,14 @@ const handlingEditorEvent = (context: Context, node: T.NodeRef) => (event: Edito
   } else {
     console.error("Unhandled event from editor: %o", event);
   }
-};
+}
 
-function useEditor(context: Context, node: T.NodeRef) {
+function useOnEditEvent(context: Context, node: T.NodeRef): (ev: Editor.Event) => void {
   // We don't want to update all editors each time context changes. Editor will
   // not update if none of its props have changed. To ensure that this condition
   // is met, we always pass the same callback.
-
   const contextRef = usePropRef(context);
-  const onEvent = React.useMemo(() => (ev: Editor.Event) => handlingEditorEvent(contextRef.current!, node)(ev), [
-    node,
-  ]);
-
-  return (
-    <Editor.Editor editor={A.editor(context, node)!} hasFocus={T.hasFocus(context.tree, node)} onEvent={onEvent} />
-  );
+  return React.useCallback((ev: Editor.Event) => handleEditorEvent(contextRef.current!, node, ev), [node]);
 }
 
 function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
@@ -522,7 +515,8 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
-  const content = useEditor(props.context, props.node);
+  const onEditEvent = useOnEditEvent(props.context, props.node);
+  const content = <Editor.Editor {...Editor.forNode(props.context, props.node)} onEvent={onEditEvent} />;
 
   return (
     <Item.Item

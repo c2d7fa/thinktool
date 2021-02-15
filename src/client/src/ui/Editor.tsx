@@ -243,6 +243,18 @@ export function handling(app: App, node: T.NodeRef) {
   };
 }
 
+export function forNode(app: App, node: T.NodeRef): {editor: E.Editor; hasFocus: boolean} {
+  function require<T>(x: T | null): T {
+    if (x === null) throw "unexpected null";
+    return x;
+  }
+
+  return {
+    editor: require(A.editor(app, node)),
+    hasFocus: T.hasFocus(app.tree, node),
+  };
+}
+
 export const Editor = React.memo(
   function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(event: Event): void}) {
     const onEventRef = usePropRef(props.onEvent);
