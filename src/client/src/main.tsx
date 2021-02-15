@@ -33,7 +33,7 @@ import * as ReactDOM from "react-dom";
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
 import {usePropRef} from "./react-utils";
-import {SelectedItem} from "./ui/SelectedItem";
+import * as SelectedItem from "./ui/SelectedItem";
 
 function useContext({
   initialState,
@@ -397,7 +397,11 @@ function ThingOverview(p: {context: Context}) {
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        <SelectedItem onEditEvent={onEditEvent} {...Editor.forNode(p.context, node)} />
+        <SelectedItem.SelectedItem
+          onEditEvent={onEditEvent}
+          {...SelectedItem.useUnfold(p.context, useUpdateApp(p.context))}
+          {...Editor.forNode(p.context, node)}
+        />
         <div className="children">
           <Outline context={p.context} />
         </div>

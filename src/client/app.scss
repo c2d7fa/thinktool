@@ -71,9 +71,30 @@ body {
   max-width: $outline-width;
   width: 100%;
 
-  & > .content:first-child {
-    font-size: 1.2em;
-    font-weight: bold;
+  .root {
+    display: flex;
+    flex-direction: row;
+    position: relative;
+
+    .content {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+
+    .unfold-root {
+      font-size: 1.2em;
+
+      align-self: center;
+
+      position: absolute;
+      left: -2em;
+      color: hsl(0, 0%, 80%);
+      @include base.subtle-button(hsl(0, 0%, 80%));
+
+      &:disabled {
+        opacity: 0%;
+      }
+    }
   }
 }
 
