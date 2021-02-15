@@ -1,5 +1,4 @@
 import {Communication} from "@thinktool/shared";
-import * as Misc from "@johv/miscjs";
 
 import * as ChangelogData from "./changes.json";
 
@@ -34,6 +33,7 @@ import * as ReactDOM from "react-dom";
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
 import {usePropRef} from "./react-utils";
+import * as SelectedItem from "./ui/SelectedItem";
 
 function useContext({
   initialState,
@@ -387,16 +387,21 @@ function App_({
 }
 
 function ThingOverview(p: {context: Context}) {
-  const hasReferences =
-    Data.backreferences(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))).length > 0;
+  const node = T.root(p.context.tree);
 
-  const editor = useEditor(p.context, T.root(p.context.tree));
+  const hasReferences = Data.backreferences(p.context.state, T.thing(p.context.tree, node)).length > 0;
+
+  const onEditEvent = useOnEditEvent(p.context, node);
 
   return (
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        {editor}
+        <SelectedItem.SelectedItem
+          onEditEvent={onEditEvent}
+          {...SelectedItem.useUnfold(p.context, useUpdateApp(p.context))}
+          {...Editor.forNode(p.context, node)}
+        />
         <div className="children">
           <Outline context={p.context} />
         </div>
@@ -462,7 +467,7 @@ function Outline(p: {context: Context}) {
   );
 }
 
-const handlingEditorEvent = (context: Context, node: T.NodeRef) => (event: Editor.Event): void => {
+function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Event) {
   const result = Editor.handling(context, node)(event);
 
   if (result.handled) {
@@ -474,21 +479,14 @@ const handlingEditorEvent = (context: Context, node: T.NodeRef) => (event: Edito
   } else {
     console.error("Unhandled event from editor: %o", event);
   }
-};
+}
 
-function useEditor(context: Context, node: T.NodeRef) {
+function useOnEditEvent(context: Context, node: T.NodeRef): (ev: Editor.Event) => void {
   // We don't want to update all editors each time context changes. Editor will
   // not update if none of its props have changed. To ensure that this condition
   // is met, we always pass the same callback.
-
   const contextRef = usePropRef(context);
-  const onEvent = React.useMemo(() => (ev: Editor.Event) => handlingEditorEvent(contextRef.current!, node)(ev), [
-    node,
-  ]);
-
-  return (
-    <Editor.Editor editor={A.editor(context, node)!} hasFocus={T.hasFocus(context.tree, node)} onEvent={onEvent} />
-  );
+  return React.useCallback((ev: Editor.Event) => handleEditorEvent(contextRef.current!, node, ev), [node]);
 }
 
 function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
@@ -522,7 +520,8 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
-  const content = useEditor(props.context, props.node);
+  const onEditEvent = useOnEditEvent(props.context, props.node);
+  const content = <Editor.Editor {...Editor.forNode(props.context, props.node)} onEvent={onEditEvent} />;
 
   return (
     <Item.Item

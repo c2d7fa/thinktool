@@ -399,6 +399,10 @@
     {
       "date": "2021-02-14",
       "title": "Various minor optimizations to avoid unnecessary rerenders and speed up editing."
+    },
+    {
+      "date": "2021-02-15",
+      "title": "Added a button next to the currently focused item that unfolds all child items recursively."
     }
   ]
 }
