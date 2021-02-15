@@ -33,6 +33,7 @@ import * as ReactDOM from "react-dom";
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
 import {usePropRef} from "./react-utils";
+import {SelectedItem} from "./ui/SelectedItem";
 
 function useContext({
   initialState,
@@ -386,17 +387,17 @@ function App_({
 }
 
 function ThingOverview(p: {context: Context}) {
-  const hasReferences =
-    Data.backreferences(p.context.state, T.thing(p.context.tree, T.root(p.context.tree))).length > 0;
+  const node = T.root(p.context.tree);
 
-  const onEditEvent = useOnEditEvent(p.context, T.root(p.context.tree));
-  const editor = <Editor.Editor onEvent={onEditEvent} {...Editor.forNode(p.context, T.root(p.context.tree))} />;
+  const hasReferences = Data.backreferences(p.context.state, T.thing(p.context.tree, node)).length > 0;
+
+  const onEditEvent = useOnEditEvent(p.context, node);
 
   return (
     <div className="overview">
       <ParentsOutline context={p.context} />
       <div className="overview-main">
-        {editor}
+        <SelectedItem onEditEvent={onEditEvent} {...Editor.forNode(p.context, node)} />
         <div className="children">
           <Outline context={p.context} />
         </div>
