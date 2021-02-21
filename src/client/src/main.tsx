@@ -147,6 +147,35 @@ function useGlobalShortcuts(sendEvent: Context["send"]) {
   }, [sendEvent]);
 }
 
+function useExecuteActionEvents(
+  app: A.App,
+  setApp: (app: A.App) => void,
+  receiver: Receiver<Message>,
+  config: {
+    openUrl(url: string): void;
+    input(seedText?: string): Promise<[A.App, string]>;
+  },
+) {
+  const configRef = usePropRef(config);
+  const appRef = usePropRef(app);
+  const setAppRef = usePropRef(setApp);
+  React.useEffect(() => {
+    receiver.subscribe("action", async (ev) => {
+      // [TODO] The fact that Actions.execute is async here is a problem, since
+      // we could be applying the result to an outdated App state by the time
+      // that it's done executing.
+      //
+      // In practice we work around this elsewhere, but it's a hack. I think the
+      // problem here is the Actions module, which is quite hacky in general,
+      // but I'm not sure how to solve it.
+      setAppRef.current!(await Actions.execute(appRef.current!, ev.action, configRef.current!));
+    });
+    return () => {
+      console.warn("Global event receiver was changed. This should not happen.");
+    };
+  }, [receiver]);
+}
+
 function App_({
   initialState,
   initialTutorialFinished,
@@ -162,37 +191,23 @@ function App_({
   server?: API.Server;
   openExternalUrl(url: string): void;
 }) {
-  const receiver = React.useRef(createReceiver<Message>());
-
-  React.useEffect(() => {
-    receiver.current.subscribe("action", async (ev) => {
-      setAppState(
-        contextRef.current,
-        await Actions.execute(contextRef.current, ev.action, {
-          input: popup.input,
-          openUrl: context.openExternalUrl,
-        }),
-      );
-    });
-  }, []);
-
-  const send = receiver.current.send;
-
+  const receiver = React.useMemo(() => createReceiver<Message>(), []);
   const context = useContext({
     initialState,
     initialTutorialFinished,
     storage,
     server,
     openExternalUrl,
-    receiver: receiver.current,
+    receiver,
   });
 
   const popup = usePopup(context);
+  useExecuteActionEvents(context, context.setApp, receiver, {
+    input: popup.input,
+    openUrl: context.openExternalUrl,
+  });
 
-  const contextRef = React.useRef(context);
-  React.useEffect(() => {
-    contextRef.current = context;
-  }, [context]);
+  const send = receiver.send;
 
   // If the same user is connected through multiple clients, we want to be able
   // to see changes from other clients on this one.
