@@ -219,6 +219,75 @@ function useServerChanges(server: API.Server | null, update: (f: (state: Data.St
   }, []);
 }
 
+function useDragAndDrop({
+  drag,
+  setDrag,
+  onFinished,
+}: {
+  drag: DragInfo;
+  setDrag(drag: DragInfo): void;
+  onFinished(dragged: T.NodeRef, dropped: T.NodeRef, type: "move" | "copy"): void;
+}) {
+  React.useEffect(() => {
+    if (drag.current === null) return;
+
+    function mousemove(ev: MouseEvent): void {
+      const [x, y] = [ev.clientX, ev.clientY];
+
+      let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
+      while (element && !element.classList.contains("item")) {
+        element = element?.parentElement;
+      }
+
+      if (element != null) {
+        const targetId = +element.dataset.id!;
+        if (targetId !== drag.target?.id)
+          setDrag({current: drag.current, target: {id: targetId}, finished: false});
+      }
+    }
+
+    function touchmove(ev: TouchEvent): void {
+      const [x, y] = [ev.changedTouches[0].clientX, ev.changedTouches[0].clientY];
+
+      let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
+      while (element && !element.classList.contains("item")) {
+        element = element?.parentElement;
+      }
+
+      if (element != null) {
+        const targetId = +element.dataset.id!;
+        if (targetId !== drag.target?.id)
+          setDrag({current: drag.current, target: {id: targetId}, finished: false});
+      }
+    }
+
+    window.addEventListener("mousemove", mousemove);
+    window.addEventListener("touchmove", touchmove);
+
+    function mouseup(ev: MouseEvent | TouchEvent): void {
+      setDrag({...drag, finished: ev.ctrlKey ? "copy" : true});
+    }
+
+    window.addEventListener("mouseup", mouseup);
+    window.addEventListener("touchend", mouseup);
+
+    return () => {
+      window.removeEventListener("mousemove", mousemove);
+      window.removeEventListener("touchmove", touchmove);
+      window.removeEventListener("mouseup", mouseup);
+      window.removeEventListener("touchend", mouseup);
+    };
+  }, [drag, setDrag]);
+
+  React.useEffect(() => {
+    if (drag.finished) {
+      if (drag.current !== null && drag.target !== null && drag.current.id !== null)
+        onFinished(drag.current, drag.target, drag.finished === "copy" ? "copy" : "move");
+      setDrag({current: null, target: null, finished: false});
+    }
+  }, [drag, setDrag, onFinished]);
+}
+
 function App_({
   initialState,
   initialTutorialFinished,
@@ -253,84 +322,21 @@ function App_({
   useServerChanges(server ?? null, context.updateLocalState);
   useGlobalShortcuts(receiver.send);
 
-  React.useEffect(() => {
-    if (context.drag.current === null) return;
-
-    function mousemove(ev: MouseEvent): void {
-      const [x, y] = [ev.clientX, ev.clientY];
-
-      let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("item")) {
-        element = element?.parentElement;
+  useDragAndDrop({
+    drag: context.drag,
+    setDrag: context.setDrag,
+    onFinished(dragged, dropped, type) {
+      if (type === "copy") {
+        const [newState, newTree, newId] = T.copyToAbove(context.state, context.tree, dragged, dropped);
+        context.setState(newState);
+        context.setTree(T.focus(newTree, newId));
+      } else if (type === "move") {
+        const [newState, newTree] = T.moveToAbove(context.state, context.tree, dragged, dropped);
+        context.setState(newState);
+        context.setTree(newTree);
       }
-
-      if (element != null) {
-        const targetId = +element.dataset.id!;
-        if (targetId !== context.drag.target?.id)
-          context.setDrag({current: context.drag.current, target: {id: targetId}, finished: false});
-      }
-    }
-
-    function touchmove(ev: TouchEvent): void {
-      const [x, y] = [ev.changedTouches[0].clientX, ev.changedTouches[0].clientY];
-
-      let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("item")) {
-        element = element?.parentElement;
-      }
-
-      if (element != null) {
-        const targetId = +element.dataset.id!;
-        if (targetId !== context.drag.target?.id)
-          context.setDrag({current: context.drag.current, target: {id: targetId}, finished: false});
-      }
-    }
-
-    window.addEventListener("mousemove", mousemove);
-    window.addEventListener("touchmove", touchmove);
-
-    function mouseup(ev: MouseEvent | TouchEvent): void {
-      context.setDrag({...context.drag, finished: ev.ctrlKey ? "copy" : true});
-    }
-
-    window.addEventListener("mouseup", mouseup);
-    window.addEventListener("touchend", mouseup);
-
-    return () => {
-      window.removeEventListener("mousemove", mousemove);
-      window.removeEventListener("touchmove", touchmove);
-      window.removeEventListener("mouseup", mouseup);
-      window.removeEventListener("touchend", mouseup);
-    };
-  }, [context.drag]);
-
-  React.useEffect(() => {
-    if (context.drag.finished) {
-      if (context.drag.current !== null && context.drag.target !== null && context.drag.current.id !== null) {
-        if (context.drag.finished === "copy") {
-          const [newState, newTree, newId] = T.copyToAbove(
-            context.state,
-            context.tree,
-            context.drag.current,
-            context.drag.target,
-          );
-          context.setState(newState);
-          context.setTree(T.focus(newTree, newId));
-        } else {
-          const [newState, newTree] = T.moveToAbove(
-            context.state,
-            context.tree,
-            context.drag.current,
-            context.drag.target,
-          );
-          context.setState(newState);
-          context.setTree(newTree);
-        }
-      }
-
-      context.setDrag({current: null, target: null, finished: false});
-    }
-  }, [context.drag]);
+    },
+  });
 
   const [toolbarShown, setToolbarShown] = React.useState<boolean>(true);
 
