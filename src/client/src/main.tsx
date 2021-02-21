@@ -500,42 +500,39 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
   return updateApp;
 }
 
+function useBulletProps(context: Context, node: T.NodeRef, updateApp: ReturnType<typeof useUpdateApp>) {
+  const contextRef = usePropRef(context);
+  const beginDrag = React.useCallback(
+    () => contextRef.current!.setDrag({current: node, target: null, finished: false}),
+    [node],
+  );
+  const onBulletClick = React.useCallback(() => updateApp((app) => Item.click(app, node)), [node]);
+  const onBulletAltClick = React.useCallback(() => updateApp((app) => Item.altClick(app, node)), [node]);
+  return {beginDrag, onBulletClick, onBulletAltClick};
+}
+
 function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.NodeRef}) {
   const updateApp = useUpdateApp(props.context);
 
   const otherParents = useOtherParents({app: props.context, updateApp, node: props.node, parent: props.parent});
 
-  // Avoid changing callbacks to <Bullet> between rerenders so we can avoid
-  // rerendering bullet:
-  const contextRef = usePropRef(props.context);
-  const beginDrag = React.useCallback(
-    () => contextRef.current!.setDrag({current: props.node, target: null, finished: false}),
-    [props.node],
-  );
-  const onBulletClick = React.useCallback(() => {
-    updateApp((app) => Item.click(app, props.node));
-  }, [props.node]);
-  const onBulletAltClick = React.useCallback(() => {
-    updateApp((app) => Item.altClick(app, props.node));
-  }, [props.node]);
+  const bulletProps = useBulletProps(props.context, props.node, updateApp);
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
   const onEditEvent = useOnEditEvent(props.context, props.node);
+  const editorProps = {...Editor.forNode(props.context, props.node), onEditEvent};
 
   return (
     <Item.Item
       dragState={Item.dragState(props.context.drag, props.node)}
       status={Item.status(props.context.tree, props.node)}
-      onBulletClick={onBulletClick}
-      onBulletAltClick={onBulletAltClick}
       id={props.node.id}
-      beginDrag={beginDrag}
       kind={Item.kind(props.context.tree, props.node)}
       otherParents={<OtherParents {...otherParents} />}
       subtree={subtree}
-      {...Editor.forNode(props.context, props.node)}
-      onEditEvent={onEditEvent}
+      {...bulletProps}
+      {...editorProps}
     />
   );
 }
