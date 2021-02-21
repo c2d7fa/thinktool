@@ -1,7 +1,6 @@
 import {State} from "./data";
 import * as T from "./tree";
 import {Tree} from "./tree";
-import * as Tutorial from "./tutorial";
 import {Server} from "./server-api";
 import {Storage} from "./storage";
 import type {Receiver} from "./receiver";
@@ -28,7 +27,6 @@ export interface Context extends App {
   setApp(app: App): void;
   setState(value: State): void;
   setTree(value: Tree): void;
-  setEditors(editors: App["editors"]): void;
 
   storage: Storage;
   server?: Server;

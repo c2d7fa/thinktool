@@ -116,10 +116,6 @@ function useContext({
     setState(state) {
       context.setApp(A.merge(context, {state}));
     },
-
-    setEditors(editors) {
-      context.setApp(A.merge(context, editors));
-    },
   };
 
   useThingUrl({
