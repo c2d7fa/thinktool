@@ -128,6 +128,25 @@ function useContext({
   return context;
 }
 
+function useGlobalShortcuts(sendEvent: Context["send"]) {
+  React.useEffect(() => {
+    function onTopLevelKeyDown(ev: KeyboardEvent) {
+      if (Sh.matches(ev, Actions.shortcut("undo"))) {
+        sendEvent("action", {action: "undo"});
+        ev.preventDefault();
+      } else if (Sh.matches(ev, Actions.shortcut("find"))) {
+        sendEvent("action", {action: "find"});
+        ev.preventDefault();
+      }
+    }
+    document.addEventListener("keydown", onTopLevelKeyDown);
+    return () => {
+      console.warn("Unregistering global 'keydown' event listener. This should not normally happen.");
+      document.removeEventListener("keydown", onTopLevelKeyDown);
+    };
+  }, [sendEvent]);
+}
+
 function App_({
   initialState,
   initialTutorialFinished,
@@ -226,15 +245,7 @@ function App_({
     });
   }, []);
 
-  document.onkeydown = (ev) => {
-    if (Sh.matches(ev, Actions.shortcut("undo"))) {
-      context.send("action", {action: "undo"});
-      ev.preventDefault();
-    } else if (Sh.matches(ev, Actions.shortcut("find"))) {
-      context.send("action", {action: "find"});
-      ev.preventDefault();
-    }
-  };
+  useGlobalShortcuts(send);
 
   React.useEffect(() => {
     if (context.drag.current === null) return;
