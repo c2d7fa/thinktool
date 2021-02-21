@@ -465,15 +465,7 @@ function ReferencesOutline(p: {context: Context}) {
 }
 
 function Outline(p: {context: Context}) {
-  return (
-    <Subtree context={p.context} parent={T.root(p.context.tree)} omitReferences={true}>
-      {PlaceholderItem.isVisible(p.context) && (
-        <PlaceholderItem.PlaceholderItem
-          onCreate={() => setAppState(p.context, PlaceholderItem.create(p.context))}
-        />
-      )}
-    </Subtree>
-  );
+  return <Subtree context={p.context} parent={T.root(p.context.tree)} omitReferences={true} />;
 }
 
 function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Event) {
@@ -577,13 +569,7 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
   );
 }
 
-function Subtree(p: {
-  context: Context;
-  parent: T.NodeRef;
-  grandparent?: T.NodeRef;
-  children?: React.ReactNode[] | React.ReactNode;
-  omitReferences?: boolean;
-}) {
+function Subtree(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef; omitReferences?: boolean}) {
   const children = T.children(p.context.tree, p.parent).map((child) => {
     return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
   });
@@ -596,7 +582,11 @@ function Subtree(p: {
     <ul className="subtree">
       {openedLinksChildren}
       {children}
-      {p.children}
+      {PlaceholderItem.isVisible(p.context) && (
+        <PlaceholderItem.PlaceholderItem
+          onCreate={() => setAppState(p.context, PlaceholderItem.create(p.context))}
+        />
+      )}
       {!p.omitReferences && <BackreferencesItem key="backreferences" parent={p.parent} context={p.context} />}
     </ul>
   );
