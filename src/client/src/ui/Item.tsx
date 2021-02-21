@@ -10,6 +10,7 @@ import Bullet from "./Bullet";
 
 import * as Editor from "./Editor";
 import * as E from "../editing";
+import {OtherParents} from "./OtherParents";
 
 export type ItemKind = "child" | "reference" | "opened-link" | "parent";
 export type ItemStatus = "expanded" | "collapsed" | "terminal";
@@ -101,8 +102,11 @@ export function Item(props: {
   onBulletClick(): void;
   onBulletAltClick(): void;
 
-  otherParents: React.ReactNode;
   subtree: React.ReactNode;
+
+  otherParents: {id: string; text: string}[];
+  onOtherParentClick(id: string): void;
+  onOtherParentAltClick(id: string): void;
 
   editor: E.Editor;
   hasFocus: boolean;
@@ -119,7 +123,11 @@ export function Item(props: {
     <li className="subtree-container">
       {/* data-id is used for drag and drop. */}
       <div className={className} data-id={props.id}>
-        {props.otherParents}
+        <OtherParents
+          otherParents={props.otherParents}
+          click={props.onOtherParentClick}
+          altClick={props.onOtherParentAltClick}
+        />
         <Bullet
           specialType={props.kind === "child" ? undefined : props.kind}
           beginDrag={props.beginDrag}

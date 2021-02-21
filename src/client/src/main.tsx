@@ -514,7 +514,12 @@ function useBulletProps(context: Context, node: T.NodeRef, updateApp: ReturnType
 function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.NodeRef}) {
   const updateApp = useUpdateApp(props.context);
 
-  const otherParents = useOtherParents({app: props.context, updateApp, node: props.node, parent: props.parent});
+  const {otherParents, click: onOtherParentClick, altClick: onOtherParentAltClick} = useOtherParents({
+    app: props.context,
+    updateApp,
+    node: props.node,
+    parent: props.parent,
+  });
 
   const bulletProps = useBulletProps(props.context, props.node, updateApp);
 
@@ -529,7 +534,7 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
       status={Item.status(props.context.tree, props.node)}
       id={props.node.id}
       kind={Item.kind(props.context.tree, props.node)}
-      otherParents={<OtherParents {...otherParents} />}
+      {...{otherParents, onOtherParentClick, onOtherParentAltClick}}
       subtree={subtree}
       {...bulletProps}
       {...editorProps}
