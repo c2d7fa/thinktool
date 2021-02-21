@@ -176,63 +176,21 @@ function useExecuteActionEvents(
   }, [receiver]);
 }
 
-function App_({
-  initialState,
-  initialTutorialFinished,
-  username,
-  storage,
-  server,
-  openExternalUrl,
-}: {
-  initialState: State;
-  initialTutorialFinished: boolean;
-  username?: string;
-  storage: Storage.Storage;
-  server?: API.Server;
-  openExternalUrl(url: string): void;
-}) {
-  const receiver = React.useMemo(() => createReceiver<Message>(), []);
-  const context = useContext({
-    initialState,
-    initialTutorialFinished,
-    storage,
-    server,
-    openExternalUrl,
-    receiver,
-  });
-
-  const popup = usePopup(context);
-  useExecuteActionEvents(context, context.setApp, receiver, {
-    input: popup.input,
-    openUrl: context.openExternalUrl,
-  });
-
-  const send = receiver.send;
-
-  // If the same user is connected through multiple clients, we want to be able
-  // to see changes from other clients on this one.
-  //
-  // The server makes a websocket available on /api/changes, which notifies us
-  // when there are pending changes from another client.
-
-  // [TODO] Theoretically, this should be rerun when context.updateLocalState
-  // changes, but for some reason just putting context.updateLocalState in the
-  // dependencies makes it reconnect every time any change is made to the state
-  // (e.g. editing the content of an item).
+function useServerChanges(server: API.Server | null, update: (f: (state: Data.State) => Data.State) => void) {
   React.useEffect(() => {
-    if (context.server === undefined) return;
+    if (server === null) return;
 
-    return context.server.onChanges(async (changes) => {
+    return server.onChanges(async (changes) => {
       for (const changedThing of changes) {
-        const thingData = await context.server!.getThingData(changedThing);
+        const thingData = await server.getThingData(changedThing);
 
         if (thingData === null) {
           // Thing was deleted
-          context.updateLocalState((state) => Data.remove(state, changedThing));
+          update((state) => Data.remove(state, changedThing));
           continue;
         }
 
-        context.updateLocalState((state) => {
+        update((state) => {
           let newState = state;
 
           if (!Data.exists(newState, changedThing)) {
@@ -259,8 +217,41 @@ function App_({
       }
     });
   }, []);
+}
 
-  useGlobalShortcuts(send);
+function App_({
+  initialState,
+  initialTutorialFinished,
+  username,
+  storage,
+  server,
+  openExternalUrl,
+}: {
+  initialState: State;
+  initialTutorialFinished: boolean;
+  username?: string;
+  storage: Storage.Storage;
+  server?: API.Server;
+  openExternalUrl(url: string): void;
+}) {
+  const receiver = React.useMemo(() => createReceiver<Message>(), []);
+  const context = useContext({
+    initialState,
+    initialTutorialFinished,
+    storage,
+    server,
+    openExternalUrl,
+    receiver,
+  });
+
+  const popup = usePopup(context);
+
+  useExecuteActionEvents(context, context.setApp, receiver, {
+    input: popup.input,
+    openUrl: context.openExternalUrl,
+  });
+  useServerChanges(server ?? null, context.updateLocalState);
+  useGlobalShortcuts(receiver.send);
 
   React.useEffect(() => {
     if (context.drag.current === null) return;
@@ -385,7 +376,7 @@ function App_({
       </div>
       {toolbarShown ? (
         <Toolbar
-          executeAction={(action) => send("action", {action})}
+          executeAction={(action) => receiver.send("action", {action})}
           isEnabled={(action) => Actions.enabled(context, action)}
           isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
           isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
