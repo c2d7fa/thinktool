@@ -5,14 +5,11 @@ import {Server} from "./server-api";
 import {Storage} from "./storage";
 import type {Receiver} from "./receiver";
 import type {Message} from "./messages";
+import type {Drag} from "./drag";
 
 import {App} from "./app";
 
-export interface DragInfo {
-  current: T.NodeRef | null;
-  target: T.NodeRef | null;
-  finished: boolean | "copy";
-}
+export type DragInfo = Drag;
 
 export interface ActiveEditor {
   selection: string;

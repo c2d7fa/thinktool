@@ -15,6 +15,7 @@ import * as Storage from "./storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
+import * as Drag from "./drag";
 
 import * as Editor from "./ui/Editor";
 import {usePopup} from "./ui/ThingSelectPopup";
@@ -55,7 +56,7 @@ function useContext({
       tutorialFinished: initialTutorialFinished,
     }),
   );
-  const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
+  const [drag, setDrag] = React.useState(Drag.empty);
 
   const batched = useBatched(200);
 
@@ -226,46 +227,36 @@ function useDragAndDrop({
 }: {
   drag: DragInfo;
   setDrag(drag: DragInfo): void;
-  onFinished(dragged: T.NodeRef, dropped: T.NodeRef, type: "move" | "copy"): void;
+  onFinished(result: {dragged: T.NodeRef; dropped: T.NodeRef; type: "move" | "copy"}): void;
 }) {
   React.useEffect(() => {
-    if (drag.current === null) return;
+    if (!Drag.isDragging(drag)) return;
 
-    function mousemove(ev: MouseEvent): void {
-      const [x, y] = [ev.clientX, ev.clientY];
-
+    function findNodeAt({x, y}: {x: number; y: number}): {id: number} | null {
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
       while (element && !element.classList.contains("item")) {
         element = element?.parentElement;
       }
+      if (element === null) return null;
+      if (!element.dataset.id) return null;
+      return {id: +element.dataset.id};
+    }
 
-      if (element != null) {
-        const targetId = +element.dataset.id!;
-        if (targetId !== drag.target?.id)
-          setDrag({current: drag.current, target: {id: targetId}, finished: false});
-      }
+    function mousemove(ev: MouseEvent): void {
+      const {clientX: x, clientY: y} = ev;
+      setDrag(Drag.hover(drag, findNodeAt({x, y})));
     }
 
     function touchmove(ev: TouchEvent): void {
-      const [x, y] = [ev.changedTouches[0].clientX, ev.changedTouches[0].clientY];
-
-      let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("item")) {
-        element = element?.parentElement;
-      }
-
-      if (element != null) {
-        const targetId = +element.dataset.id!;
-        if (targetId !== drag.target?.id)
-          setDrag({current: drag.current, target: {id: targetId}, finished: false});
-      }
+      const {clientX: x, clientY: y} = ev.changedTouches[0];
+      setDrag(Drag.hover(drag, findNodeAt({x, y})));
     }
 
     window.addEventListener("mousemove", mousemove);
     window.addEventListener("touchmove", touchmove);
 
     function mouseup(ev: MouseEvent | TouchEvent): void {
-      setDrag({...drag, finished: ev.ctrlKey ? "copy" : true});
+      setDrag(Drag.end(drag, {copy: ev.ctrlKey}));
     }
 
     window.addEventListener("mouseup", mouseup);
@@ -280,11 +271,10 @@ function useDragAndDrop({
   }, [drag, setDrag]);
 
   React.useEffect(() => {
-    if (drag.finished) {
-      if (drag.current !== null && drag.target !== null && drag.current.id !== null)
-        onFinished(drag.current, drag.target, drag.finished === "copy" ? "copy" : "move");
-      setDrag({current: null, target: null, finished: false});
-    }
+    const result = Drag.result(drag);
+    if (result === null) return;
+    if (result !== "cancel") onFinished(result);
+    setDrag(Drag.empty);
   }, [drag, setDrag, onFinished]);
 }
 
@@ -325,7 +315,7 @@ function App_({
   useDragAndDrop({
     drag: context.drag,
     setDrag: context.setDrag,
-    onFinished(dragged, dropped, type) {
+    onFinished({dragged, dropped, type}) {
       if (type === "copy") {
         const [newState, newTree, newId] = T.copyToAbove(context.state, context.tree, dragged, dropped);
         context.setState(newState);
