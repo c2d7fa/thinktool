@@ -530,7 +530,6 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
   const onEditEvent = useOnEditEvent(props.context, props.node);
-  const content = <Editor.Editor {...Editor.forNode(props.context, props.node)} onEvent={onEditEvent} />;
 
   return (
     <Item.Item
@@ -543,7 +542,8 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
       kind={Item.kind(props.context.tree, props.node)}
       otherParents={<OtherParents {...otherParents} />}
       subtree={subtree}
-      content={content}
+      {...Editor.forNode(props.context, props.node)}
+      onEditEvent={onEditEvent}
     />
   );
 }

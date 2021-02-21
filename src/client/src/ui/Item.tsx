@@ -8,6 +8,9 @@ import {App, merge, jump} from "../app";
 
 import Bullet from "./Bullet";
 
+import * as Editor from "./Editor";
+import * as E from "../editing";
+
 export type ItemKind = "child" | "reference" | "opened-link" | "parent";
 export type ItemStatus = "expanded" | "collapsed" | "terminal";
 
@@ -100,7 +103,10 @@ export function Item(props: {
 
   otherParents: React.ReactNode;
   subtree: React.ReactNode;
-  content: React.ReactNode;
+
+  editor: E.Editor;
+  hasFocus: boolean;
+  onEditEvent(event: Editor.Event): void;
 }) {
   const className = Misc.classes({
     "item": true,
@@ -121,7 +127,7 @@ export function Item(props: {
           toggle={props.onBulletClick}
           onMiddleClick={props.onBulletAltClick}
         />
-        {props.content}
+        <Editor.Editor editor={props.editor} hasFocus={props.hasFocus} onEvent={props.onEditEvent} />
       </div>
       {props.status === "expanded" && props.subtree}
     </li>
