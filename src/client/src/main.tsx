@@ -15,6 +15,7 @@ import * as Storage from "./storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
+import * as Drag from "./drag";
 
 import * as Editor from "./ui/Editor";
 import {usePopup} from "./ui/ThingSelectPopup";
@@ -55,7 +56,7 @@ function useContext({
       tutorialFinished: initialTutorialFinished,
     }),
   );
-  const [drag, setDrag] = React.useState({current: null, target: null} as DragInfo);
+  const [drag, setDrag] = React.useState(Drag.empty);
 
   const batched = useBatched(200);
 
@@ -116,10 +117,6 @@ function useContext({
     setState(state) {
       context.setApp(A.merge(context, {state}));
     },
-
-    setEditors(editors) {
-      context.setApp(A.merge(context, editors));
-    },
   };
 
   useThingUrl({
@@ -132,77 +129,69 @@ function useContext({
   return context;
 }
 
-function App_({
-  initialState,
-  initialTutorialFinished,
-  username,
-  storage,
-  server,
-  openExternalUrl,
-}: {
-  initialState: State;
-  initialTutorialFinished: boolean;
-  username?: string;
-  storage: Storage.Storage;
-  server?: API.Server;
-  openExternalUrl(url: string): void;
-}) {
-  const receiver = React.useRef(createReceiver<Message>());
-
+function useGlobalShortcuts(sendEvent: Context["send"]) {
   React.useEffect(() => {
-    receiver.current.subscribe("action", async (ev) => {
-      setAppState(
-        contextRef.current,
-        await Actions.execute(contextRef.current, ev.action, {
-          input: popup.input,
-          openUrl: context.openExternalUrl,
-        }),
-      );
+    function onTopLevelKeyDown(ev: KeyboardEvent) {
+      if (Sh.matches(ev, Actions.shortcut("undo"))) {
+        sendEvent("action", {action: "undo"});
+        ev.preventDefault();
+      } else if (Sh.matches(ev, Actions.shortcut("find"))) {
+        sendEvent("action", {action: "find"});
+        ev.preventDefault();
+      }
+    }
+    document.addEventListener("keydown", onTopLevelKeyDown);
+    return () => {
+      console.warn("Unregistering global 'keydown' event listener. This should not normally happen.");
+      document.removeEventListener("keydown", onTopLevelKeyDown);
+    };
+  }, [sendEvent]);
+}
+
+function useExecuteActionEvents(
+  app: A.App,
+  setApp: (app: A.App) => void,
+  receiver: Receiver<Message>,
+  config: {
+    openUrl(url: string): void;
+    input(seedText?: string): Promise<[A.App, string]>;
+  },
+) {
+  const configRef = usePropRef(config);
+  const appRef = usePropRef(app);
+  const setAppRef = usePropRef(setApp);
+  React.useEffect(() => {
+    receiver.subscribe("action", async (ev) => {
+      // [TODO] The fact that Actions.execute is async here is a problem, since
+      // we could be applying the result to an outdated App state by the time
+      // that it's done executing.
+      //
+      // In practice we work around this elsewhere, but it's a hack. I think the
+      // problem here is the Actions module, which is quite hacky in general,
+      // but I'm not sure how to solve it.
+      setAppRef.current!(await Actions.execute(appRef.current!, ev.action, configRef.current!));
     });
-  }, []);
+    return () => {
+      console.warn("Global event receiver was changed. This should not happen.");
+    };
+  }, [receiver]);
+}
 
-  const send = receiver.current.send;
-
-  const context = useContext({
-    initialState,
-    initialTutorialFinished,
-    storage,
-    server,
-    openExternalUrl,
-    receiver: receiver.current,
-  });
-
-  const popup = usePopup(context);
-
-  const contextRef = React.useRef(context);
+function useServerChanges(server: API.Server | null, update: (f: (state: Data.State) => Data.State) => void) {
   React.useEffect(() => {
-    contextRef.current = context;
-  }, [context]);
+    if (server === null) return;
 
-  // If the same user is connected through multiple clients, we want to be able
-  // to see changes from other clients on this one.
-  //
-  // The server makes a websocket available on /api/changes, which notifies us
-  // when there are pending changes from another client.
-
-  // [TODO] Theoretically, this should be rerun when context.updateLocalState
-  // changes, but for some reason just putting context.updateLocalState in the
-  // dependencies makes it reconnect every time any change is made to the state
-  // (e.g. editing the content of an item).
-  React.useEffect(() => {
-    if (context.server === undefined) return;
-
-    return context.server.onChanges(async (changes) => {
+    return server.onChanges(async (changes) => {
       for (const changedThing of changes) {
-        const thingData = await context.server!.getThingData(changedThing);
+        const thingData = await server.getThingData(changedThing);
 
         if (thingData === null) {
           // Thing was deleted
-          context.updateLocalState((state) => Data.remove(state, changedThing));
+          update((state) => Data.remove(state, changedThing));
           continue;
         }
 
-        context.updateLocalState((state) => {
+        update((state) => {
           let newState = state;
 
           if (!Data.exists(newState, changedThing)) {
@@ -229,55 +218,45 @@ function App_({
       }
     });
   }, []);
+}
 
-  document.onkeydown = (ev) => {
-    if (Sh.matches(ev, Actions.shortcut("undo"))) {
-      context.send("action", {action: "undo"});
-      ev.preventDefault();
-    } else if (Sh.matches(ev, Actions.shortcut("find"))) {
-      context.send("action", {action: "find"});
-      ev.preventDefault();
-    }
-  };
-
+function useDragAndDrop({
+  drag,
+  setDrag,
+  onFinished,
+}: {
+  drag: DragInfo;
+  setDrag(drag: DragInfo): void;
+  onFinished(result: {dragged: T.NodeRef; dropped: T.NodeRef; type: "move" | "copy"}): void;
+}) {
   React.useEffect(() => {
-    if (context.drag.current === null) return;
+    if (!Drag.isDragging(drag)) return;
 
-    function mousemove(ev: MouseEvent): void {
-      const [x, y] = [ev.clientX, ev.clientY];
-
+    function findNodeAt({x, y}: {x: number; y: number}): {id: number} | null {
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
       while (element && !element.classList.contains("item")) {
         element = element?.parentElement;
       }
+      if (element === null) return null;
+      if (!element.dataset.id) return null;
+      return {id: +element.dataset.id};
+    }
 
-      if (element != null) {
-        const targetId = +element.dataset.id!;
-        if (targetId !== context.drag.target?.id)
-          context.setDrag({current: context.drag.current, target: {id: targetId}, finished: false});
-      }
+    function mousemove(ev: MouseEvent): void {
+      const {clientX: x, clientY: y} = ev;
+      setDrag(Drag.hover(drag, findNodeAt({x, y})));
     }
 
     function touchmove(ev: TouchEvent): void {
-      const [x, y] = [ev.changedTouches[0].clientX, ev.changedTouches[0].clientY];
-
-      let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("item")) {
-        element = element?.parentElement;
-      }
-
-      if (element != null) {
-        const targetId = +element.dataset.id!;
-        if (targetId !== context.drag.target?.id)
-          context.setDrag({current: context.drag.current, target: {id: targetId}, finished: false});
-      }
+      const {clientX: x, clientY: y} = ev.changedTouches[0];
+      setDrag(Drag.hover(drag, findNodeAt({x, y})));
     }
 
     window.addEventListener("mousemove", mousemove);
     window.addEventListener("touchmove", touchmove);
 
     function mouseup(ev: MouseEvent | TouchEvent): void {
-      context.setDrag({...context.drag, finished: ev.ctrlKey ? "copy" : true});
+      setDrag(Drag.end(drag, {copy: ev.ctrlKey}));
     }
 
     window.addEventListener("mouseup", mouseup);
@@ -289,35 +268,65 @@ function App_({
       window.removeEventListener("mouseup", mouseup);
       window.removeEventListener("touchend", mouseup);
     };
-  }, [context.drag]);
+  }, [drag, setDrag]);
 
   React.useEffect(() => {
-    if (context.drag.finished) {
-      if (context.drag.current !== null && context.drag.target !== null && context.drag.current.id !== null) {
-        if (context.drag.finished === "copy") {
-          const [newState, newTree, newId] = T.copyToAbove(
-            context.state,
-            context.tree,
-            context.drag.current,
-            context.drag.target,
-          );
-          context.setState(newState);
-          context.setTree(T.focus(newTree, newId));
-        } else {
-          const [newState, newTree] = T.moveToAbove(
-            context.state,
-            context.tree,
-            context.drag.current,
-            context.drag.target,
-          );
-          context.setState(newState);
-          context.setTree(newTree);
-        }
-      }
+    const result = Drag.result(drag);
+    if (result === null) return;
+    if (result !== "cancel") onFinished(result);
+    setDrag(Drag.empty);
+  }, [drag, setDrag, onFinished]);
+}
 
-      context.setDrag({current: null, target: null, finished: false});
-    }
-  }, [context.drag]);
+function App_({
+  initialState,
+  initialTutorialFinished,
+  username,
+  storage,
+  server,
+  openExternalUrl,
+}: {
+  initialState: State;
+  initialTutorialFinished: boolean;
+  username?: string;
+  storage: Storage.Storage;
+  server?: API.Server;
+  openExternalUrl(url: string): void;
+}) {
+  const receiver = React.useMemo(() => createReceiver<Message>(), []);
+  const context = useContext({
+    initialState,
+    initialTutorialFinished,
+    storage,
+    server,
+    openExternalUrl,
+    receiver,
+  });
+
+  const popup = usePopup(context);
+
+  useExecuteActionEvents(context, context.setApp, receiver, {
+    input: popup.input,
+    openUrl: context.openExternalUrl,
+  });
+  useServerChanges(server ?? null, context.updateLocalState);
+  useGlobalShortcuts(receiver.send);
+
+  useDragAndDrop({
+    drag: context.drag,
+    setDrag: context.setDrag,
+    onFinished({dragged, dropped, type}) {
+      if (type === "copy") {
+        const [newState, newTree, newId] = T.copyToAbove(context.state, context.tree, dragged, dropped);
+        context.setState(newState);
+        context.setTree(T.focus(newTree, newId));
+      } else if (type === "move") {
+        const [newState, newTree] = T.moveToAbove(context.state, context.tree, dragged, dropped);
+        context.setState(newState);
+        context.setTree(newTree);
+      }
+    },
+  });
 
   const [toolbarShown, setToolbarShown] = React.useState<boolean>(true);
 
@@ -363,7 +372,7 @@ function App_({
       </div>
       {toolbarShown ? (
         <Toolbar
-          executeAction={(action) => send("action", {action})}
+          executeAction={(action) => receiver.send("action", {action})}
           isEnabled={(action) => Actions.enabled(context, action)}
           isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
           isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
@@ -456,15 +465,7 @@ function ReferencesOutline(p: {context: Context}) {
 }
 
 function Outline(p: {context: Context}) {
-  return (
-    <Subtree context={p.context} parent={T.root(p.context.tree)} omitReferences={true}>
-      {PlaceholderItem.isVisible(p.context) && (
-        <PlaceholderItem.PlaceholderItem
-          onCreate={() => setAppState(p.context, PlaceholderItem.create(p.context))}
-        />
-      )}
-    </Subtree>
-  );
+  return <Subtree context={p.context} parent={T.root(p.context.tree)} omitReferences={true} />;
 }
 
 function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Event) {
@@ -499,42 +500,44 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
   return updateApp;
 }
 
+function useBulletProps(context: Context, node: T.NodeRef, updateApp: ReturnType<typeof useUpdateApp>) {
+  const contextRef = usePropRef(context);
+  const beginDrag = React.useCallback(
+    () => contextRef.current!.setDrag({current: node, target: null, finished: false}),
+    [node],
+  );
+  const onBulletClick = React.useCallback(() => updateApp((app) => Item.click(app, node)), [node]);
+  const onBulletAltClick = React.useCallback(() => updateApp((app) => Item.altClick(app, node)), [node]);
+  return {beginDrag, onBulletClick, onBulletAltClick};
+}
+
 function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.NodeRef}) {
   const updateApp = useUpdateApp(props.context);
 
-  const otherParents = useOtherParents({app: props.context, updateApp, node: props.node, parent: props.parent});
+  const {otherParents, click: onOtherParentClick, altClick: onOtherParentAltClick} = useOtherParents({
+    app: props.context,
+    updateApp,
+    node: props.node,
+    parent: props.parent,
+  });
 
-  // Avoid changing callbacks to <Bullet> between rerenders so we can avoid
-  // rerendering bullet:
-  const contextRef = usePropRef(props.context);
-  const beginDrag = React.useCallback(
-    () => contextRef.current!.setDrag({current: props.node, target: null, finished: false}),
-    [props.node],
-  );
-  const onBulletClick = React.useCallback(() => {
-    updateApp((app) => Item.click(app, props.node));
-  }, [props.node]);
-  const onBulletAltClick = React.useCallback(() => {
-    updateApp((app) => Item.altClick(app, props.node));
-  }, [props.node]);
+  const bulletProps = useBulletProps(props.context, props.node, updateApp);
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
   const onEditEvent = useOnEditEvent(props.context, props.node);
-  const content = <Editor.Editor {...Editor.forNode(props.context, props.node)} onEvent={onEditEvent} />;
+  const editorProps = {...Editor.forNode(props.context, props.node), onEditEvent};
 
   return (
     <Item.Item
       dragState={Item.dragState(props.context.drag, props.node)}
       status={Item.status(props.context.tree, props.node)}
-      onBulletClick={onBulletClick}
-      onBulletAltClick={onBulletAltClick}
       id={props.node.id}
-      beginDrag={beginDrag}
       kind={Item.kind(props.context.tree, props.node)}
-      otherParents={<OtherParents {...otherParents} />}
+      {...{otherParents, onOtherParentClick, onOtherParentAltClick}}
       subtree={subtree}
-      content={content}
+      {...bulletProps}
+      {...editorProps}
     />
   );
 }
@@ -568,13 +571,7 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
   );
 }
 
-function Subtree(p: {
-  context: Context;
-  parent: T.NodeRef;
-  grandparent?: T.NodeRef;
-  children?: React.ReactNode[] | React.ReactNode;
-  omitReferences?: boolean;
-}) {
+function Subtree(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef; omitReferences?: boolean}) {
   const children = T.children(p.context.tree, p.parent).map((child) => {
     return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
   });
@@ -587,7 +584,11 @@ function Subtree(p: {
     <ul className="subtree">
       {openedLinksChildren}
       {children}
-      {p.children}
+      {PlaceholderItem.isVisible(p.context) && (
+        <PlaceholderItem.PlaceholderItem
+          onCreate={() => setAppState(p.context, PlaceholderItem.create(p.context))}
+        />
+      )}
       {!p.omitReferences && <BackreferencesItem key="backreferences" parent={p.parent} context={p.context} />}
     </ul>
   );

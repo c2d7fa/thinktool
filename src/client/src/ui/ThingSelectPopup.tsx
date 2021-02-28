@@ -8,6 +8,7 @@ import {App, merge} from "../app";
 
 import * as D from "../data";
 import Search from "../search";
+import {usePropRef} from "../react-utils";
 
 function useFocusInputRef(): React.RefObject<HTMLInputElement> {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -140,10 +141,7 @@ function Popup(props: {
 export function usePopup(app: App) {
   const [isPopupVisible, setIsPopupVisible] = React.useState(false);
 
-  const appRef = React.useRef(app);
-  React.useEffect(() => {
-    appRef.current = app;
-  }, [app]);
+  const appRef = usePropRef(app);
 
   const [onCreate, setOnCreate] = React.useState(() => (content: string) => {
     console.error("onCreate callback not set!");

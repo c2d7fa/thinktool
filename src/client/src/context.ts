@@ -1,19 +1,15 @@
 import {State} from "./data";
 import * as T from "./tree";
 import {Tree} from "./tree";
-import * as Tutorial from "./tutorial";
 import {Server} from "./server-api";
 import {Storage} from "./storage";
 import type {Receiver} from "./receiver";
 import type {Message} from "./messages";
+import type {Drag} from "./drag";
 
 import {App} from "./app";
 
-export interface DragInfo {
-  current: T.NodeRef | null;
-  target: T.NodeRef | null;
-  finished: boolean | "copy";
-}
+export type DragInfo = Drag;
 
 export interface ActiveEditor {
   selection: string;
@@ -28,7 +24,6 @@ export interface Context extends App {
   setApp(app: App): void;
   setState(value: State): void;
   setTree(value: Tree): void;
-  setEditors(editors: App["editors"]): void;
 
   storage: Storage;
   server?: Server;
