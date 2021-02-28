@@ -465,15 +465,7 @@ function ReferencesOutline(p: {context: Context}) {
 }
 
 function Outline(p: {context: Context}) {
-  return (
-    <Subtree context={p.context} parent={T.root(p.context.tree)} omitReferences={true}>
-      {PlaceholderItem.isVisible(p.context) && (
-        <PlaceholderItem.PlaceholderItem
-          onCreate={() => setAppState(p.context, PlaceholderItem.create(p.context))}
-        />
-      )}
-    </Subtree>
-  );
+  return <Subtree context={p.context} parent={T.root(p.context.tree)} omitReferences={true} />;
 }
 
 function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Event) {
@@ -508,42 +500,44 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
   return updateApp;
 }
 
+function useBulletProps(context: Context, node: T.NodeRef, updateApp: ReturnType<typeof useUpdateApp>) {
+  const contextRef = usePropRef(context);
+  const beginDrag = React.useCallback(
+    () => contextRef.current!.setDrag({current: node, target: null, finished: false}),
+    [node],
+  );
+  const onBulletClick = React.useCallback(() => updateApp((app) => Item.click(app, node)), [node]);
+  const onBulletAltClick = React.useCallback(() => updateApp((app) => Item.altClick(app, node)), [node]);
+  return {beginDrag, onBulletClick, onBulletAltClick};
+}
+
 function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.NodeRef}) {
   const updateApp = useUpdateApp(props.context);
 
-  const otherParents = useOtherParents({app: props.context, updateApp, node: props.node, parent: props.parent});
+  const {otherParents, click: onOtherParentClick, altClick: onOtherParentAltClick} = useOtherParents({
+    app: props.context,
+    updateApp,
+    node: props.node,
+    parent: props.parent,
+  });
 
-  // Avoid changing callbacks to <Bullet> between rerenders so we can avoid
-  // rerendering bullet:
-  const contextRef = usePropRef(props.context);
-  const beginDrag = React.useCallback(
-    () => contextRef.current!.setDrag({current: props.node, target: null, finished: false}),
-    [props.node],
-  );
-  const onBulletClick = React.useCallback(() => {
-    updateApp((app) => Item.click(app, props.node));
-  }, [props.node]);
-  const onBulletAltClick = React.useCallback(() => {
-    updateApp((app) => Item.altClick(app, props.node));
-  }, [props.node]);
+  const bulletProps = useBulletProps(props.context, props.node, updateApp);
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
   const onEditEvent = useOnEditEvent(props.context, props.node);
-  const content = <Editor.Editor {...Editor.forNode(props.context, props.node)} onEvent={onEditEvent} />;
+  const editorProps = {...Editor.forNode(props.context, props.node), onEditEvent};
 
   return (
     <Item.Item
       dragState={Item.dragState(props.context.drag, props.node)}
       status={Item.status(props.context.tree, props.node)}
-      onBulletClick={onBulletClick}
-      onBulletAltClick={onBulletAltClick}
       id={props.node.id}
-      beginDrag={beginDrag}
       kind={Item.kind(props.context.tree, props.node)}
-      otherParents={<OtherParents {...otherParents} />}
+      {...{otherParents, onOtherParentClick, onOtherParentAltClick}}
       subtree={subtree}
-      content={content}
+      {...bulletProps}
+      {...editorProps}
     />
   );
 }
@@ -577,13 +571,7 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
   );
 }
 
-function Subtree(p: {
-  context: Context;
-  parent: T.NodeRef;
-  grandparent?: T.NodeRef;
-  children?: React.ReactNode[] | React.ReactNode;
-  omitReferences?: boolean;
-}) {
+function Subtree(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef; omitReferences?: boolean}) {
   const children = T.children(p.context.tree, p.parent).map((child) => {
     return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
   });
@@ -596,7 +584,11 @@ function Subtree(p: {
     <ul className="subtree">
       {openedLinksChildren}
       {children}
-      {p.children}
+      {PlaceholderItem.isVisible(p.context) && (
+        <PlaceholderItem.PlaceholderItem
+          onCreate={() => setAppState(p.context, PlaceholderItem.create(p.context))}
+        />
+      )}
       {!p.omitReferences && <BackreferencesItem key="backreferences" parent={p.parent} context={p.context} />}
     </ul>
   );
