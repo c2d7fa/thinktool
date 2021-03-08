@@ -35,6 +35,7 @@ import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
 import {usePropRef} from "./react-utils";
 import * as SelectedItem from "./ui/SelectedItem";
+import {OrphanList, useOrphanListPropsFromState} from "./orphans/ui";
 
 function useContext({
   initialState,
@@ -334,6 +335,8 @@ function App_({
 
   const [showSplash, setShowSplash] = React.useState<boolean>(Tutorial.isActive(context.tutorialState));
 
+  const orphanListProps = useOrphanListPropsFromState(context.state);
+
   return (
     <div
       ref={appRef}
@@ -378,6 +381,7 @@ function App_({
           isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
         />
       ) : null}
+      <OrphanList {...orphanListProps} />
       {!showSplash && (
         <Tutorial.TutorialBox
           state={context.tutorialState}
