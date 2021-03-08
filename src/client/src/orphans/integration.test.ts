@@ -4,8 +4,8 @@ import * as Immutable from "immutable";
 import * as D from "../data";
 import * as I from "./integration";
 
-describe("an empty graph", () => {
-  const graph = I.graph(D.empty);
+describe("a graph that is empty except for the root node", () => {
+  const graph = I.fromState(D.setContent(D.empty, "0", ["Root Item"]));
 
   it("has a root item with no connections", () => {
     const root = graph.root();
@@ -17,5 +17,9 @@ describe("an empty graph", () => {
 
   it("has no other items", () => {
     expect(graph.all()).toEqual(Immutable.Set([graph.root()]));
+  });
+
+  it("gets its content from the state", () => {
+    expect(graph.textContent(graph.root())).toBe("Root Item");
   });
 });

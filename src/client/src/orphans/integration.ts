@@ -2,7 +2,9 @@ import * as Immutable from "immutable";
 import {Graph, Id} from "./core";
 import * as D from "../data";
 
-export function graph(state: D.State): Graph {
+export type StateGraph = Graph & {textContent(id: Id): string};
+
+export function fromState(state: D.State): StateGraph {
   return {
     all() {
       return Immutable.Set(["0"]);
@@ -26,6 +28,10 @@ export function graph(state: D.State): Graph {
 
     references(item: Id) {
       return Immutable.Set();
+    },
+
+    textContent(item: Id) {
+      return D.contentText(state, item);
     },
   };
 }
