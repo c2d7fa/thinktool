@@ -12,8 +12,21 @@ export interface Graph {
   references(item: Id): Immutable.Set<Id>;
 }
 
+// We store the result of scanning for orphans in this indirect data structure.
+// The reason is that we will probably want to introduce some state later. For
+// example, instead of doing a full rescan when a child connection is created,
+// we could just incrementally update the state with this new connection.
+
+const _ids = Symbol("ids");
+
+export type Orphans = {[_ids]: Immutable.Set<Id>};
+
 // Find items not reacable from the root by following children, parents, links
 // and references.
-export function scan(graph: Graph): Immutable.Set<Id> {
-  return graph.all().subtract(Immutable.Set(graph.root()));
+export function scan(graph: Graph): Orphans {
+  return {[_ids]: graph.all().subtract(Immutable.Set(graph.root()))};
+}
+
+export function ids(orphans: Orphans): Immutable.Set<Id> {
+  return orphans[_ids];
 }

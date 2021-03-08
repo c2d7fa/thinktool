@@ -36,7 +36,7 @@ describe("when the root isn't connected to any items", () => {
     const graph = build([]);
 
     test("there are no orphans", () => {
-      expect(O.scan(graph)).toEqual(Immutable.Set());
+      expect(O.ids(O.scan(graph))).toEqual(Immutable.Set());
     });
   });
 
@@ -48,7 +48,7 @@ describe("when the root isn't connected to any items", () => {
     ]);
 
     test("all non-root items are orphans", () => {
-      expect(O.scan(graph)).toEqual(Immutable.Set(["1", "2"]));
+      expect(O.ids(O.scan(graph))).toEqual(Immutable.Set(["1", "2"]));
     });
   });
 });
