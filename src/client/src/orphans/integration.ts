@@ -7,7 +7,7 @@ export type StateGraph = Graph & {textContent(id: Id): string};
 export function fromState(state: D.State): StateGraph {
   return {
     all() {
-      return Immutable.Set(["0"]);
+      return Immutable.Set(D.allThings(state));
     },
 
     root() {
@@ -15,19 +15,19 @@ export function fromState(state: D.State): StateGraph {
     },
 
     children(item: Id) {
-      return Immutable.Set();
+      return Immutable.Set(D.children(state, item));
     },
 
     parents(item: Id) {
-      return Immutable.Set();
+      return Immutable.Set(D.parents(state, item));
     },
 
     links(item: Id) {
-      return Immutable.Set();
+      return Immutable.Set(D.references(state, item));
     },
 
     references(item: Id) {
-      return Immutable.Set();
+      return Immutable.Set(D.backreferences(state, item));
     },
 
     textContent(item: Id) {
