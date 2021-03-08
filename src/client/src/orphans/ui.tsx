@@ -2,7 +2,8 @@ import * as React from "react";
 
 import * as D from "../data";
 
-import * as O from "./core";
+import * as OC from "./core";
+import * as OI from "./integration";
 
 export type OrphanListItem = {title: string};
 
@@ -10,7 +11,13 @@ export function useOrphanListPropsFromState(state: D.State): Parameters<typeof O
   const [items, setItems] = React.useState<OrphanListItem[]>([]);
 
   function rescan() {
-    setItems((items) => [...items, {title: "Item " + Math.floor(Math.random() * 10000)}]);
+    const graph = OI.fromState(state);
+    const orphans = OC.scan(graph);
+    setItems(
+      OC.ids(orphans)
+        .map((id) => ({title: graph.textContent(id)}))
+        .toArray(),
+    );
   }
 
   return {items, rescan};
