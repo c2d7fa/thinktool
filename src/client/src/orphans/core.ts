@@ -24,7 +24,11 @@ export type Orphans = {[_ids]: Immutable.Set<Id>};
 // Find items not reacable from the root by following children, parents, links
 // and references.
 export function scan(graph: Graph): Orphans {
-  return {[_ids]: graph.all().subtract(Immutable.Set(graph.root()))};
+  function reachable(root: Id): Immutable.Set<Id> {
+    return Immutable.Set([root]).union(graph.children(root).flatMap(reachable));
+  }
+
+  return {[_ids]: graph.all().subtract(reachable(graph.root()))};
 }
 
 export function ids(orphans: Orphans): Immutable.Set<Id> {

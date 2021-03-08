@@ -3,7 +3,7 @@
 import * as Immutable from "immutable";
 import * as O from "./core";
 
-function build(items: [O.Id, {}][]): O.Graph {
+function build(items: [O.Id, {children?: O.Id[]}][]): O.Graph {
   return {
     all() {
       return Immutable.Set<O.Id>(items.map((item) => item[0]));
@@ -13,8 +13,10 @@ function build(items: [O.Id, {}][]): O.Graph {
       return "0";
     },
 
-    children(item: O.Id) {
-      return Immutable.Set<O.Id>();
+    children(id: O.Id) {
+      const item = items.find((item) => item[0] === id);
+      if (item === undefined || item[1].children === undefined) return Immutable.Set<O.Id>();
+      return Immutable.Set<O.Id>(item[1].children);
     },
 
     links(item: O.Id) {
@@ -50,5 +52,25 @@ describe("when the root isn't connected to any items", () => {
     test("all non-root items are orphans", () => {
       expect(O.ids(O.scan(graph))).toEqual(Immutable.Set(["1", "2"]));
     });
+  });
+});
+
+describe("in a graph that consists of two disconnected trees", () => {
+  const graph = build([
+    ["0", {children: ["1", "2"]}],
+    ["1", {children: ["3"]}],
+    ["2", {children: ["4"]}],
+    ["3", {}],
+    ["4", {}],
+
+    ["b0", {children: ["b1", "b2"]}],
+    ["b1", {children: ["b3"]}],
+    ["b2", {children: ["b4"]}],
+    ["b3", {}],
+    ["b4", {}],
+  ]);
+
+  test("the orphans are exactly the items in the unrooted tree", () => {
+    expect(O.ids(O.scan(graph))).toEqual(Immutable.Set(["b0", "b1", "b2", "b3", "b4"]));
   });
 });
