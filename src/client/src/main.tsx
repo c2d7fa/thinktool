@@ -553,14 +553,18 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
     return <ExpandableItem key={child.id} node={child} context={p.context} />;
   });
 
+  const updateApp = useUpdateApp(p.context);
+
+  const toggle = React.useCallback(
+    () => updateApp((app) => A.merge(app, {tree: T.toggleBackreferences(app.state, app.tree, p.parent)})),
+    [p.parent],
+  );
+
   return (
     <>
       <li className="item">
         <div>
-          <button
-            onClick={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
-            className="backreferences-text"
-          >
+          <button onClick={toggle} className="backreferences-text">
             {backreferences.length} References
             {!T.backreferencesExpanded(p.context.tree, p.parent) && "..."}
           </button>
