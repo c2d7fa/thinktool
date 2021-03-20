@@ -201,10 +201,6 @@ function useServerChanges(server: API.Server | null, update: (f: (state: Data.St
 
           newState = Data.setContent(newState, changedThing, thingData.content);
 
-          if (Data.isPage(newState, changedThing) !== thingData.isPage) {
-            newState = Data.togglePage(newState, changedThing);
-          }
-
           const nChildren = Data.children(newState, changedThing).length;
           for (let i = 0; i < nChildren; ++i) {
             newState = Data.removeChild(newState, changedThing, 0);

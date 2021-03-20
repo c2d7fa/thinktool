@@ -28,7 +28,6 @@ export type ActionName =
   | "tutorial"
   | "changelog"
   | "undo"
-  | "toggle-type" // [TODO] We no longer need this
   | "toggle"
   | "home"
   | "forum"
@@ -55,7 +54,6 @@ export function enabled(state: App, action: ActionName): boolean {
     "insert-sibling",
     "insert-parent",
     "insert-link",
-    "toggle-type",
     "new-before",
     "focus-up",
     "focus-down",
@@ -259,13 +257,6 @@ const updates = {
     return {app: A.merge(app, {changelogShown: !app.changelogShown})};
   },
 
-  async "toggle-type"({app, target}: UpdateArgs) {
-    let result = app;
-    const newState = D.togglePage(result.state, T.thing(result.tree, require(target)));
-    result = A.merge(result, {state: newState});
-    return {app: result};
-  },
-
   async "toggle"({app, target}: UpdateArgs) {
     let result = app;
     const newTree = T.toggle(result.state, result.tree, require(target));
@@ -332,8 +323,6 @@ export function shortcut(action: ActionName): S.Shortcut {
       return {mod: true, key: "s"};
     case "insert-link":
       return {mod: true, key: "l"};
-    case "toggle-type":
-      return {mod: true, key: "t"};
     case "toggle":
       return {key: "Tab"};
     case "undo":
@@ -370,5 +359,4 @@ export const allActionsWithShortcuts: ActionName[] = [
   "insert-sibling",
   "insert-parent",
   "insert-link",
-  "toggle-type",
 ];
