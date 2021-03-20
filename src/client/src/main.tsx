@@ -293,10 +293,12 @@ function App_({
   server?: API.Server;
   openExternalUrl(url: string): void;
 }) {
+  const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
+
   const receiver = React.useMemo(() => createReceiver<Message>(), []);
   const context = useContext({
     initialState,
-    initialTutorialFinished,
+    initialTutorialFinished: isDevelopment || initialTutorialFinished,
     storage,
     server,
     openExternalUrl,
@@ -332,7 +334,9 @@ function App_({
 
   const appRef = React.useRef<HTMLDivElement>(null);
 
-  const [showSplash, setShowSplash] = React.useState<boolean>(Tutorial.isActive(context.tutorialState));
+  const [showSplash, setShowSplash] = React.useState<boolean>(
+    !isDevelopment && Tutorial.isActive(context.tutorialState),
+  );
 
   return (
     <div
