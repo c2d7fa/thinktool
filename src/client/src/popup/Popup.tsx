@@ -72,21 +72,21 @@ function useSelection(results: number) {
 
 function Popup(props: {
   query: string;
-  onSearch(query: string, maxResults: number): void;
   results: Result[];
   onCreate(): void;
   onSelect(thing: string): void;
   onAbort(): void;
+  loadMoreResults(): void;
+  setQuery(query: string): void;
 }) {
   // This element should always be focused when it exists. We expect the parent
   // to remove us from the DOM when we're not needed.
   const inputRef = useFocusInputRef();
 
-  const search = useSearch({query: props.query, onSearch: props.onSearch});
   function onScroll(ev: React.UIEvent) {
     const el = ev.target as HTMLUListElement;
     if (el.scrollTop + el.clientHeight + 500 > el.scrollHeight) {
-      search.loadMoreResults();
+      props.loadMoreResults();
     }
   }
 
@@ -117,7 +117,7 @@ function Popup(props: {
         type="text"
         value={props.query}
         onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
-          search.setQuery(ev.target.value);
+          props.setQuery(ev.target.value);
         }}
         onBlur={() => props.onAbort()}
         onKeyDown={onKeyDown}
@@ -187,6 +187,8 @@ export function usePopup(app: App) {
     );
   }
 
+  const {setQuery, loadMoreResults} = useSearch({query: P.query(state), onSearch});
+
   React.useEffect(() => {
     if (!P.isOpen(state)) {
       onSearch("", 50);
@@ -209,7 +211,8 @@ export function usePopup(app: App) {
           setState(P.close);
         }}
         results={P.results(state)}
-        onSearch={onSearch}
+        setQuery={setQuery}
+        loadMoreResults={loadMoreResults}
       />
     );
   })();
