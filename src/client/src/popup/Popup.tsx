@@ -155,7 +155,6 @@ export function usePopup(app: App) {
 
   function input(seedText?: string): Promise<[App, string]> {
     return new Promise((resolve, reject) => {
-      setQuery(seedText ?? "");
       setOnCreate(() => (content: string) => {
         let [state, selection] = D.create(appRef.current!.state);
         state = D.setContent(state, selection, [content]);
@@ -164,16 +163,15 @@ export function usePopup(app: App) {
       setOnSelect(() => (selection: string) => {
         resolve([appRef.current!, selection]);
       });
-      setState(P.open);
+      setState((state) => P.open(state, {query: seedText ?? ""}));
     });
   }
 
-  const [query, setQuery] = React.useState("");
   const [results, setResults] = React.useState<{thing: string; content: string}[]>([]);
   const search = React.useMemo<Search>(() => new Search(app.state), [app.state]);
 
   function onSearch(query: string, maxResults: number) {
-    setQuery(query);
+    setState((state) => P.replaceQuery(state, query));
     if (query === "") {
       setResults([]);
     } else {
@@ -195,14 +193,14 @@ export function usePopup(app: App) {
 
     return (
       <Popup
-        query={query}
+        query={P.query(state)}
         onAbort={() => setTimeout(() => setState(P.close))} // [TODO] I don't remember why we setTimeout. Do we need it?
         onSelect={(thing) => {
           onSelect(thing);
           setState(P.close);
         }}
         onCreate={() => {
-          onCreate(query);
+          onCreate(P.query(state));
           setState(P.close);
         }}
         results={results}
