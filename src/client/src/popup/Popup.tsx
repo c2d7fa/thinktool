@@ -2,6 +2,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {choose} from "@johv/miscjs";
 
+import * as P from ".";
+
 import type {Result} from "../search";
 
 import {App, merge} from "../app";
@@ -139,7 +141,7 @@ function Popup(props: {
 }
 
 export function usePopup(app: App) {
-  const [isPopupVisible, setIsPopupVisible] = React.useState(false);
+  const [state, setState] = React.useState<P.State>(P.initial);
 
   const appRef = usePropRef(app);
 
@@ -162,7 +164,7 @@ export function usePopup(app: App) {
       setOnSelect(() => (selection: string) => {
         resolve([appRef.current!, selection]);
       });
-      setIsPopupVisible(true);
+      setState(P.open);
     });
   }
 
@@ -183,25 +185,25 @@ export function usePopup(app: App) {
   }
 
   React.useEffect(() => {
-    if (!isPopupVisible) {
+    if (!P.isOpen(state)) {
       onSearch("", 50);
     }
-  }, [isPopupVisible]);
+  }, [state]);
 
   const component = (() => {
-    if (!isPopupVisible) return null;
+    if (!P.isOpen(state)) return null;
 
     return (
       <Popup
         query={query}
-        onAbort={() => setTimeout(() => setIsPopupVisible(false))} // [TODO] I don't remember why we setTimeout. Do we need it?
+        onAbort={() => setTimeout(() => setState(P.close))} // [TODO] I don't remember why we setTimeout. Do we need it?
         onSelect={(thing) => {
           onSelect(thing);
-          setIsPopupVisible(false);
+          setState(P.close);
         }}
         onCreate={() => {
           onCreate(query);
-          setIsPopupVisible(false);
+          setState(P.close);
         }}
         results={results}
         onSearch={onSearch}
