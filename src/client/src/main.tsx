@@ -18,7 +18,7 @@ import * as A from "./app";
 import * as Drag from "./drag";
 
 import * as Editor from "./ui/Editor";
-import {usePopup} from "./ui/ThingSelectPopup";
+import {usePopup} from "./popup/Popup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
