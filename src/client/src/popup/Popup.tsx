@@ -167,19 +167,24 @@ export function usePopup(app: App) {
     });
   }
 
-  const [results, setResults] = React.useState<{thing: string; content: string}[]>([]);
   const search = React.useMemo<Search>(() => new Search(app.state), [app.state]);
 
   function onSearch(query: string, maxResults: number) {
-    setState((state) => P.replaceQuery(state, query));
-    if (query === "") {
-      setResults([]);
-    } else {
-      // [TODO] This is slow for long text. Consider adding a debounce for long
-      // text as a workaround.
-      const results = search.query(query, maxResults);
-      setResults(results);
-    }
+    setState((state) =>
+      P.search(
+        state,
+        query,
+        (function results() {
+          if (query === "") {
+            return [];
+          } else {
+            // [TODO] This is slow for long text. Consider adding a debounce for long
+            // text as a workaround.
+            return search.query(query, maxResults);
+          }
+        })(),
+      ),
+    );
   }
 
   React.useEffect(() => {
@@ -203,7 +208,7 @@ export function usePopup(app: App) {
           onCreate(P.query(state));
           setState(P.close);
         }}
-        results={results}
+        results={P.results(state)}
         onSearch={onSearch}
       />
     );
