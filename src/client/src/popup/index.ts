@@ -1,7 +1,8 @@
-import {Result} from "../search";
+import Search, {Result} from "../search";
 
 const _isOpen = Symbol("active");
-const _query = Symbol("active");
+const _query = Symbol("query");
+const _search = Symbol("search");
 const _results = Symbol("results");
 
 export type State =
@@ -9,6 +10,7 @@ export type State =
   | {
       [_isOpen]: true;
       [_query]: string;
+      [_search]: Search;
       [_results]: Result[];
     };
 
@@ -16,8 +18,11 @@ export type Selection = {thing: string} | {content: string};
 
 export const initial: State = {[_isOpen]: false};
 
-export function open(state: State, args: {query: string; select(selection: Selection): void}): State {
-  return {...state, [_isOpen]: true, [_query]: args.query, [_results]: []};
+export function open(
+  state: State,
+  args: {query: string; search: Search; select(selection: Selection): void},
+): State {
+  return {...state, [_isOpen]: true, [_query]: args.query, [_search]: args.search, [_results]: []};
 }
 
 export function close(state: State): State {
@@ -28,12 +33,12 @@ export function isOpen(state: State): state is State & {[_isOpen]: true} {
   return state[_isOpen];
 }
 
-// [TODO] We should be able to find results ourselves.
-export function search(state: State, query: string, results: Result[]): State {
+export function search(state: State, query: string): State {
   if (!isOpen(state)) {
     console.warn("Tried to set query, but popup isn't open.");
     return state;
   }
+  const results = state[_search].query(query, 50);
   return {...state, [_query]: query, [_results]: results};
 }
 

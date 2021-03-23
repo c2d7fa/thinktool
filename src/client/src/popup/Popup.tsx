@@ -4,7 +4,7 @@ import {choose} from "@johv/miscjs";
 
 import * as P from ".";
 
-import type {Result} from "../search";
+import Search, {Result} from "../search";
 
 import {App, merge} from "../app";
 
@@ -39,14 +39,15 @@ function Popup(props: {
   setQuery(query: string): void;
 
   loadMoreResults(): void;
-  results: {id: number; thing: string; content: string; isActive: boolean}[];
+  results: Result[];
 
   selectActive(): void;
-  selectId(id: number): void;
+  selectThing(thing: string): void;
   selectNewItem(): void;
   abort(): void;
 
   isNewItemActive: boolean;
+  isThingActive(thing: string): boolean;
   up(): void;
   down(): void;
 }) {
@@ -91,9 +92,9 @@ function Popup(props: {
           {props.results.map((result) => (
             <ResultListItem
               key={result.thing}
-              selected={result.isActive}
+              selected={props.isThingActive(result.thing)}
               result={result}
-              onSelect={() => props.selectId(result.id)}
+              onSelect={() => props.selectThing(result.thing)}
             />
           ))}
         </ul>
@@ -113,6 +114,7 @@ export function usePopup(app: App) {
       setState((state) =>
         P.open(state, {
           query: seedText ?? "",
+          search: new Search(appRef.current!.state),
           select(selection) {
             if ("thing" in selection) {
               resolve([appRef.current!, selection.thing]);
@@ -133,14 +135,15 @@ export function usePopup(app: App) {
     return (
       <Popup
         query={P.query(state)}
-        setQuery={() => {}}
-        results={[]}
+        setQuery={(query) => setState((state) => P.search(state, query))}
+        results={P.results(state)}
         loadMoreResults={() => {}}
         selectActive={() => {}}
-        selectId={() => {}}
+        selectThing={() => {}}
         selectNewItem={() => {}}
         abort={() => setState(P.close)}
         isNewItemActive={false}
+        isThingActive={() => false}
         up={() => {}}
         down={() => {}}
       />
