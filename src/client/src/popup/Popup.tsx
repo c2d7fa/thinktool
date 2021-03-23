@@ -9,7 +9,6 @@ import type {Result} from "../search";
 import {App, merge} from "../app";
 
 import * as D from "../data";
-import Search from "../search";
 import {usePropRef} from "../react-utils";
 
 function useFocusInputRef(): React.RefObject<HTMLInputElement> {
@@ -33,23 +32,6 @@ function ResultListItem(props: {result: Result; selected: boolean; onSelect: () 
       </span>
     </li>
   );
-}
-
-function useSearch(args: {query: string; onSearch(query: string, maxResults: number): void}) {
-  const [maxResults, setMaxResults] = React.useState(50);
-
-  function loadMoreResults() {
-    const newMaxResults = maxResults + 50;
-    args.onSearch(args.query, newMaxResults);
-    setMaxResults(newMaxResults);
-  }
-
-  function setQuery(newQuery: string) {
-    setMaxResults(50);
-    args.onSearch(newQuery, 50);
-  }
-
-  return {setQuery, loadMoreResults};
 }
 
 function Popup(props: {
@@ -126,55 +108,24 @@ export function usePopup(app: App) {
 
   const appRef = usePropRef(app);
 
-  const [onCreate, setOnCreate] = React.useState(() => (content: string) => {
-    console.error("onCreate callback not set!");
-  });
-
-  const [onSelect, setOnSelect] = React.useState(() => (selection: string) => {
-    console.error("onSelect callback not set!");
-  });
-
   function input(seedText?: string): Promise<[App, string]> {
     return new Promise((resolve, reject) => {
-      setOnCreate(() => (content: string) => {
-        let [state, selection] = D.create(appRef.current!.state);
-        state = D.setContent(state, selection, [content]);
-        resolve([merge(appRef.current!, {state}), selection]);
-      });
-      setOnSelect(() => (selection: string) => {
-        resolve([appRef.current!, selection]);
-      });
-      setState((state) => P.open(state, {query: seedText ?? ""}));
+      setState((state) =>
+        P.open(state, {
+          query: seedText ?? "",
+          select(selection) {
+            if ("thing" in selection) {
+              resolve([appRef.current!, selection.thing]);
+            } else {
+              let [state, newItem] = D.create(appRef.current!.state);
+              state = D.setContent(state, newItem, [selection.content]);
+              resolve([merge(appRef.current!, {state}), newItem]);
+            }
+          },
+        }),
+      );
     });
   }
-
-  const search = React.useMemo<Search>(() => new Search(app.state), [app.state]);
-
-  function onSearch(query: string, maxResults: number) {
-    setState((state) =>
-      P.search(
-        state,
-        query,
-        (function results() {
-          if (query === "") {
-            return [];
-          } else {
-            // [TODO] This is slow for long text. Consider adding a debounce for long
-            // text as a workaround.
-            return search.query(query, maxResults);
-          }
-        })(),
-      ),
-    );
-  }
-
-  const {setQuery, loadMoreResults} = useSearch({query: P.query(state), onSearch});
-
-  React.useEffect(() => {
-    if (!P.isOpen(state)) {
-      onSearch("", 50);
-    }
-  }, [state]);
 
   const component = (() => {
     if (!P.isOpen(state)) return null;
@@ -182,9 +133,9 @@ export function usePopup(app: App) {
     return (
       <Popup
         query={P.query(state)}
-        setQuery={setQuery}
+        setQuery={() => {}}
         results={[]}
-        loadMoreResults={loadMoreResults}
+        loadMoreResults={() => {}}
         selectActive={() => {}}
         selectId={() => {}}
         selectNewItem={() => {}}

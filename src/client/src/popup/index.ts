@@ -12,9 +12,11 @@ export type State =
       [_results]: Result[];
     };
 
+export type Selection = {thing: string} | {content: string};
+
 export const initial: State = {[_isOpen]: false};
 
-export function open(state: State, args: {query: string}): State {
+export function open(state: State, args: {query: string; select(selection: Selection): void}): State {
   return {...state, [_isOpen]: true, [_query]: args.query, [_results]: []};
 }
 
