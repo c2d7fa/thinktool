@@ -66,8 +66,8 @@ function Popup(props: {
     const {found} = choose(ev.key, {
       Enter: props.selectActive,
       Escape: props.abort,
-      ArrowDown: props.up,
-      ArrowUp: props.down,
+      ArrowDown: props.down,
+      ArrowUp: props.up,
     });
     if (found) ev.preventDefault();
   }
@@ -143,9 +143,9 @@ export function usePopup(app: App) {
         selectNewItem={() => {}}
         abort={() => setState(P.close)}
         isNewItemActive={false}
-        isThingActive={() => false}
-        up={() => {}}
-        down={() => {}}
+        isThingActive={(thing) => P.isThingActive(state, thing)}
+        up={() => setState(P.activatePrevious)}
+        down={() => setState(P.activateNext)}
       />
     );
   })();

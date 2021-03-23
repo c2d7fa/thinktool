@@ -4,6 +4,7 @@ const _isOpen = Symbol("active");
 const _query = Symbol("query");
 const _search = Symbol("search");
 const _results = Symbol("results");
+const _activeIndex = Symbol("activeIndex");
 
 export type State =
   | {[_isOpen]: false}
@@ -12,6 +13,7 @@ export type State =
       [_query]: string;
       [_search]: Search;
       [_results]: Result[];
+      [_activeIndex]: number | null;
     };
 
 export type Selection = {thing: string} | {content: string};
@@ -22,7 +24,14 @@ export function open(
   state: State,
   args: {query: string; search: Search; select(selection: Selection): void},
 ): State {
-  return {...state, [_isOpen]: true, [_query]: args.query, [_search]: args.search, [_results]: []};
+  return {
+    ...state,
+    [_isOpen]: true,
+    [_query]: args.query,
+    [_search]: args.search,
+    [_results]: [],
+    [_activeIndex]: null,
+  };
 }
 
 export function close(state: State): State {
@@ -56,4 +65,33 @@ export function query(state: State): string {
     return "";
   }
   return state[_query];
+}
+
+export function isThingActive(state: State, thing: string): boolean {
+  if (!isOpen(state)) {
+    console.warn("Tried to get selection, but poup isn't open.");
+    return false;
+  }
+  if (state[_activeIndex] === null) return false;
+  return state[_results][state[_activeIndex]!].thing === thing;
+}
+
+export function activatePrevious(state: State): State {
+  if (!isOpen(state)) {
+    console.warn("Tried to modify selection, but poup isn't open.");
+    return state;
+  }
+  if (state[_activeIndex] === null) return state;
+  else if (state[_activeIndex] === 0) return {...state, [_activeIndex]: null};
+  else return {...state, [_activeIndex]: state[_activeIndex]! - 1};
+}
+
+export function activateNext(state: State): State {
+  if (!isOpen(state)) {
+    console.warn("Tried to modify selection, but poup isn't open.");
+    return state;
+  }
+  if (state[_activeIndex] === null) return {...state, [_activeIndex]: 0};
+  else if (state[_activeIndex]! >= state[_results].length - 1) return state;
+  else return {...state, [_activeIndex]: state[_activeIndex]! + 1};
 }
