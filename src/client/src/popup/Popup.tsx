@@ -52,32 +52,21 @@ function useSearch(args: {query: string; onSearch(query: string, maxResults: num
   return {setQuery, loadMoreResults};
 }
 
-function useSelection(results: number) {
-  const [index, setIndex] = React.useState<number>(0);
-
-  function selectPrevious() {
-    setIndex((i) => Math.min(results, i + 1));
-  }
-
-  function selectNext() {
-    setIndex((i) => Math.max(-1, i - 1));
-  }
-
-  function isCreateItem() {
-    return index === -1;
-  }
-
-  return {index, selectPrevious, selectNext, isCreateItem};
-}
-
 function Popup(props: {
   query: string;
-  results: Result[];
-  onCreate(): void;
-  onSelect(thing: string): void;
-  onAbort(): void;
-  loadMoreResults(): void;
   setQuery(query: string): void;
+
+  loadMoreResults(): void;
+  results: {id: number; thing: string; content: string; isActive: boolean}[];
+
+  selectActive(): void;
+  selectId(id: number): void;
+  selectNewItem(): void;
+  abort(): void;
+
+  isNewItemActive: boolean;
+  up(): void;
+  down(): void;
 }) {
   // This element should always be focused when it exists. We expect the parent
   // to remove us from the DOM when we're not needed.
@@ -90,20 +79,12 @@ function Popup(props: {
     }
   }
 
-  const selection = useSelection(props.results.length);
-
   function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
     const {found} = choose(ev.key, {
-      Enter() {
-        if (selection.isCreateItem()) {
-          props.onCreate();
-        } else {
-          props.onSelect(props.results[selection.index].thing);
-        }
-      },
-      Escape: props.onAbort,
-      ArrowDown: selection.selectPrevious,
-      ArrowUp: selection.selectNext,
+      Enter: props.selectActive,
+      Escape: props.abort,
+      ArrowDown: props.up,
+      ArrowUp: props.down,
     });
     if (found) ev.preventDefault();
   }
@@ -111,26 +92,26 @@ function Popup(props: {
   return ReactDOM.createPortal(
     <div className="link-autocomplete-popup">
       <input
-        onPointerDown={() => props.onCreate()}
-        className={selection.isCreateItem() ? " selected-result" : ""}
+        onPointerDown={props.selectNewItem}
+        className={props.isNewItemActive ? " selected-result" : ""}
         ref={inputRef}
         type="text"
         value={props.query}
         onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
           props.setQuery(ev.target.value);
         }}
-        onBlur={() => props.onAbort()}
+        onBlur={props.abort}
         onKeyDown={onKeyDown}
       />
       <span className="create-label">Create new item</span>
       {props.query !== "" && (
         <ul className="link-autocomplete-popup-results" onScroll={onScroll}>
-          {props.results.map((result, i) => (
+          {props.results.map((result) => (
             <ResultListItem
               key={result.thing}
-              selected={i === selection.index}
+              selected={result.isActive}
               result={result}
-              onSelect={() => props.onSelect(result.thing)}
+              onSelect={() => props.selectId(result.id)}
             />
           ))}
         </ul>
@@ -201,18 +182,16 @@ export function usePopup(app: App) {
     return (
       <Popup
         query={P.query(state)}
-        onAbort={() => setTimeout(() => setState(P.close))} // [TODO] I don't remember why we setTimeout. Do we need it?
-        onSelect={(thing) => {
-          onSelect(thing);
-          setState(P.close);
-        }}
-        onCreate={() => {
-          onCreate(P.query(state));
-          setState(P.close);
-        }}
-        results={P.results(state)}
         setQuery={setQuery}
+        results={[]}
         loadMoreResults={loadMoreResults}
+        selectActive={() => {}}
+        selectId={() => {}}
+        selectNewItem={() => {}}
+        abort={() => setState(P.close)}
+        isNewItemActive={false}
+        up={() => {}}
+        down={() => {}}
       />
     );
   })();
