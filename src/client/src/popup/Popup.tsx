@@ -142,7 +142,7 @@ export function usePopup(app: App) {
         selectThing={() => {}}
         selectNewItem={() => {}}
         abort={() => setState(P.close)}
-        isNewItemActive={false}
+        isNewItemActive={P.isThingActive(state, null)}
         isThingActive={(thing) => P.isThingActive(state, thing)}
         up={() => setState(P.activatePrevious)}
         down={() => setState(P.activateNext)}

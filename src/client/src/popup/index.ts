@@ -32,7 +32,7 @@ export function open(
     [_query]: args.query,
     [_search]: args.search,
     [_results]: [],
-    [_activeIndex]: null,
+    [_activeIndex]: 0,
     [_select]: args.select,
   };
 }
@@ -70,13 +70,13 @@ export function query(state: State): string {
   return state[_query];
 }
 
-export function isThingActive(state: State, thing: string): boolean {
+export function isThingActive(state: State, thing: string | null): boolean {
   if (!isOpen(state)) {
     console.warn("Tried to get selection, but poup isn't open.");
     return false;
   }
-  if (state[_activeIndex] === null) return false;
-  return state[_results][state[_activeIndex]!].thing === thing;
+  if (state[_activeIndex] === null) return thing === null;
+  return state[_results][state[_activeIndex]!]?.thing === thing;
 }
 
 export function activatePrevious(state: State): State {
@@ -107,7 +107,8 @@ export function selectActive(state: State): State {
   if (state[_activeIndex] === null) {
     state[_select]({content: state[_query]});
   } else {
-    state[_select]({thing: state[_results][state[_activeIndex]!].thing});
+    const thing = state[_results][state[_activeIndex]!].thing;
+    if (thing !== undefined) state[_select]({thing});
   }
   return close(state);
 }
