@@ -5,6 +5,7 @@ const _query = Symbol("query");
 const _search = Symbol("search");
 const _results = Symbol("results");
 const _activeIndex = Symbol("activeIndex");
+const _select = Symbol("activeIndex");
 
 export type State =
   | {[_isOpen]: false}
@@ -14,6 +15,7 @@ export type State =
       [_search]: Search;
       [_results]: Result[];
       [_activeIndex]: number | null;
+      [_select]: (selection: Selection) => void;
     };
 
 export type Selection = {thing: string} | {content: string};
@@ -31,11 +33,12 @@ export function open(
     [_search]: args.search,
     [_results]: [],
     [_activeIndex]: null,
+    [_select]: args.select,
   };
 }
 
 export function close(state: State): State {
-  return {...state, [_isOpen]: false};
+  return {[_isOpen]: false};
 }
 
 export function isOpen(state: State): state is State & {[_isOpen]: true} {
@@ -78,7 +81,7 @@ export function isThingActive(state: State, thing: string): boolean {
 
 export function activatePrevious(state: State): State {
   if (!isOpen(state)) {
-    console.warn("Tried to modify selection, but poup isn't open.");
+    console.warn("Tried to modify selection, but popup isn't open.");
     return state;
   }
   if (state[_activeIndex] === null) return state;
@@ -88,10 +91,23 @@ export function activatePrevious(state: State): State {
 
 export function activateNext(state: State): State {
   if (!isOpen(state)) {
-    console.warn("Tried to modify selection, but poup isn't open.");
+    console.warn("Tried to modify selection, but popup isn't open.");
     return state;
   }
   if (state[_activeIndex] === null) return {...state, [_activeIndex]: 0};
   else if (state[_activeIndex]! >= state[_results].length - 1) return state;
   else return {...state, [_activeIndex]: state[_activeIndex]! + 1};
+}
+
+export function selectActive(state: State): State {
+  if (!isOpen(state)) {
+    console.warn("Tried to select item, but popup isn't open.");
+    return close(state);
+  }
+  if (state[_activeIndex] === null) {
+    state[_select]({content: state[_query]});
+  } else {
+    state[_select]({thing: state[_results][state[_activeIndex]!].thing});
+  }
+  return close(state);
 }

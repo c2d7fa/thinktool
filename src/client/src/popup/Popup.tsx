@@ -138,7 +138,7 @@ export function usePopup(app: App) {
         setQuery={(query) => setState((state) => P.search(state, query))}
         results={P.results(state)}
         loadMoreResults={() => {}}
-        selectActive={() => {}}
+        selectActive={() => setState((state) => P.selectActive(state))}
         selectThing={() => {}}
         selectNewItem={() => {}}
         abort={() => setState(P.close)}
