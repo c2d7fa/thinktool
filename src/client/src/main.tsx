@@ -61,6 +61,8 @@ function useContext({
   const batched = useBatched(200);
 
   const context: Context = {
+    ...innerApp,
+
     setApp(app: A.App) {
       // Push changes to server
       const effects = Storage.Diff.effects(innerApp, app);
@@ -301,7 +303,8 @@ function App_({
     receiver,
   });
 
-  const popup = usePopup(context);
+  const updateApp = useUpdateApp(context);
+  const popup = usePopup(context, updateApp);
 
   useExecuteActionEvents(context, context.setApp, receiver, {
     input: popup.input,
