@@ -105,10 +105,23 @@ export function selectActive(state: State): State {
     return close(state);
   }
   if (state[_activeIndex] === null) {
-    state[_select]({content: state[_query]});
+    return selectThing(state, null);
   } else {
     const thing = state[_results][state[_activeIndex]!].thing;
-    if (thing !== undefined) state[_select]({thing});
+    if (thing !== undefined) {
+      return selectThing(state, thing);
+    } else {
+      return state;
+    }
   }
+}
+
+export function selectThing(state: State, thing: string | null): State {
+  if (!isOpen(state)) {
+    console.warn("Tried to select item, but popup isn't open.");
+    return close(state);
+  }
+  if (thing === null) state[_select]({content: state[_query]});
+  else state[_select]({thing});
   return close(state);
 }

@@ -139,8 +139,8 @@ export function usePopup(app: App) {
         results={P.results(state)}
         loadMoreResults={() => {}}
         selectActive={() => setState((state) => P.selectActive(state))}
-        selectThing={() => {}}
-        selectNewItem={() => {}}
+        selectThing={(thing) => setState((state) => P.selectThing(state, thing))}
+        selectNewItem={() => setState((state) => P.selectThing(state, null))}
         abort={() => setState(P.close)}
         isNewItemActive={P.isThingActive(state, null)}
         isThingActive={(thing) => P.isThingActive(state, thing)}
