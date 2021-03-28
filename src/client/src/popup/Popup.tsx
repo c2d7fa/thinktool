@@ -107,16 +107,6 @@ export function usePopup(app: App, updateApp: (f: (app: App) => App) => void) {
     updateApp((app) => merge(app, {popup: f(app.popup)}));
   }
 
-  function input(seedText: string, useSelection: (app: A.App, thing: string) => A.App): A.App {
-    return merge(app, {
-      popup: P.open(app.popup, {
-        query: seedText ?? "",
-        search: new Search(app.state),
-        select: useSelection,
-      }),
-    });
-  }
-
   const component = (() => {
     if (!P.isOpen(app.popup)) return null;
 
@@ -138,5 +128,5 @@ export function usePopup(app: App, updateApp: (f: (app: App) => App) => void) {
     );
   })();
 
-  return {component, input};
+  return component;
 }

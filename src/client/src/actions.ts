@@ -1,8 +1,10 @@
 import * as T from "./tree";
 import * as D from "./data";
+import * as P from "./popup";
 import * as Tutorial from "./tutorial";
 import * as S from "./shortcuts";
 import * as Goal from "./goal";
+import Search from "./search";
 import {NodeRef} from "./tree";
 import {App} from "./app";
 import * as A from "./app";
@@ -75,7 +77,6 @@ export function enabled(state: App, action: ActionName): boolean {
 
 interface UpdateConfig {
   openUrl(url: string): void;
-  input(seedText: string, useSelection: (app: App, thing: string) => App): App;
 }
 
 export function execute(app: App, action: ActionName, config: UpdateConfig): App {
@@ -84,7 +85,7 @@ export function execute(app: App, action: ActionName, config: UpdateConfig): App
     return app;
   }
 
-  const result = update(app, action, config);
+  const result = update(app, action);
 
   if ("undo" in result) console.warn("Undo is currently broken. Ignoring."); // [TODO]
   if ("openUrl" in result) config.openUrl(result.openUrl);
@@ -94,25 +95,20 @@ export function execute(app: App, action: ActionName, config: UpdateConfig): App
 
 type UpdateResult = {app: App} | {openUrl: string} | {undo: boolean};
 
-export function update(app: App, action: keyof typeof updates, config: UpdateConfig): UpdateResult {
+export function update(app: App, action: keyof typeof updates): UpdateResult {
   if (!enabled(app, action)) {
     console.error("The action %o should not be enabled! Continuing anyway...", action);
   }
 
-  return updateOn(app, action, T.focused(app.tree), config);
+  return updateOn(app, action, T.focused(app.tree));
 }
 
-function updateOn(
-  app: App,
-  action: keyof typeof updates,
-  target: NodeRef | null,
-  config: UpdateConfig,
-): UpdateResult {
+function updateOn(app: App, action: keyof typeof updates, target: NodeRef | null): UpdateResult {
   if (!enabled(app, action)) {
     console.warn("The action %o appears not to be enabled.", action);
   }
 
-  return updates[action]({app, target, ...config});
+  return updates[action]({app, target});
 }
 
 function require<T>(x: T | null): T {
@@ -126,48 +122,54 @@ function applyActionEvent(app: App, event: Goal.ActionEvent): App {
   return A.merge(app, {tutorialState: Tutorial.action(app.tutorialState, event)});
 }
 
-type UpdateArgs = UpdateConfig & {
+type UpdateArgs = {
   app: App;
   target: NodeRef | null;
 };
+
+function withPopup(app: A.App, useSelection: (app: A.App, thing: string) => A.App): {app: A.App} {
+  return {
+    app: A.merge(app, {
+      popup: P.open(app.popup, {
+        query: A.selectedText(app),
+        search: new Search(app.state),
+        select: useSelection,
+      }),
+    }),
+  };
+}
 
 const updates = {
   "unfold"({target, app}: UpdateArgs) {
     return {app: A.unfold(app, require(target))};
   },
 
-  "insert-sibling"({target, input}: UpdateArgs) {
-    return {
-      app: input("", (result, selection) => {
-        const [newState, newTree] = T.insertSiblingAfter(result.state, result.tree, require(target), selection);
-        return A.merge(result, {state: newState, tree: newTree});
-      }),
-    };
+  "insert-sibling"({app, target}: UpdateArgs) {
+    return withPopup(app, (result, selection) => {
+      const [newState, newTree] = T.insertSiblingAfter(result.state, result.tree, require(target), selection);
+      return A.merge(result, {state: newState, tree: newTree});
+    });
   },
 
-  "insert-child"({target, input}: UpdateArgs) {
-    return {
-      app: input("", (result, selection) => {
-        const [newState, newTree] = T.insertChild(result.state, result.tree, require(target), selection, 0);
-        return A.merge(result, {state: newState, tree: newTree});
-      }),
-    };
+  "insert-child"({app, target}: UpdateArgs) {
+    return withPopup(app, (result, selection) => {
+      const [newState, newTree] = T.insertChild(result.state, result.tree, require(target), selection, 0);
+      return A.merge(result, {state: newState, tree: newTree});
+    });
   },
 
-  "insert-parent"({target, input}: UpdateArgs) {
-    return {
-      app: input("", (result, selection) => {
-        const [newState, newTree] = T.insertParent(result.state, result.tree, require(target), selection);
-        result = A.merge(result, {state: newState, tree: newTree});
-        result = applyActionEvent(result, {
-          action: "inserted-parent",
-          childNode: require(target),
-          newState,
-          newTree,
-        });
-        return result;
-      }),
-    };
+  "insert-parent"({app, target}: UpdateArgs) {
+    return withPopup(app, (result, selection) => {
+      const [newState, newTree] = T.insertParent(result.state, result.tree, require(target), selection);
+      result = A.merge(result, {state: newState, tree: newTree});
+      result = applyActionEvent(result, {
+        action: "inserted-parent",
+        childNode: require(target),
+        newState,
+        newTree,
+      });
+      return result;
+    });
   },
 
   "new"({app, target}: UpdateArgs) {
@@ -281,25 +283,21 @@ const updates = {
     return {app: result};
   },
 
-  "find"({app, input}: UpdateArgs) {
+  "find"({app}: UpdateArgs) {
     const previouslyFocused = T.thing(app.tree, T.root(app.tree));
-    return {
-      app: input("", (result, selection) => {
-        result = A.jump(result, selection);
-        result = applyActionEvent(result, {action: "found", previouslyFocused, thing: selection});
-        return result;
-      }),
-    };
+    return withPopup(app, (result, selection) => {
+      result = A.jump(result, selection);
+      result = applyActionEvent(result, {action: "found", previouslyFocused, thing: selection});
+      return result;
+    });
   },
 
-  "insert-link"({input, target}: UpdateArgs) {
-    return {
-      app: input("", (result, selection) => {
-        result = applyActionEvent(result, {action: "link-inserted"});
-        result = A.editInsertLink(result, require(target), selection);
-        return result;
-      }),
-    };
+  "insert-link"({app, target}: UpdateArgs) {
+    return withPopup(app, (result, selection) => {
+      result = applyActionEvent(result, {action: "link-inserted"});
+      result = A.editInsertLink(result, require(target), selection);
+      return result;
+    });
   },
 
   "undo"({}: UpdateArgs) {

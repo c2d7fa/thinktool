@@ -156,7 +156,6 @@ function useExecuteActionEvents(
   receiver: Receiver<Message>,
   config: {
     openUrl(url: string): void;
-    input(seedText: string, useSelection: (app: A.App, thing: string) => A.App): A.App;
   },
 ) {
   const configRef = usePropRef(config);
@@ -307,7 +306,6 @@ function App_({
   const popup = usePopup(context, updateApp);
 
   useExecuteActionEvents(context, context.setApp, receiver, {
-    input: popup.input,
     openUrl: context.openExternalUrl,
   });
   useServerChanges(server ?? null, context.updateLocalState);
@@ -351,7 +349,7 @@ function App_({
       tabIndex={-1}
       className="app"
     >
-      {popup.component}
+      {popup}
       <div className="top-bar">
         <ExternalLink className="logo" href="/">
           Thinktool
