@@ -150,34 +150,6 @@ function useGlobalShortcuts(sendEvent: Context["send"]) {
   }, [sendEvent]);
 }
 
-function useExecuteActionEvents(
-  app: A.App,
-  setApp: (app: A.App) => void,
-  receiver: Receiver<Message>,
-  config: {
-    openUrl(url: string): void;
-  },
-) {
-  const configRef = usePropRef(config);
-  const appRef = usePropRef(app);
-  const setAppRef = usePropRef(setApp);
-  React.useEffect(() => {
-    receiver.subscribe("action", async (ev) => {
-      // [TODO] The fact that Actions.execute is async here is a problem, since
-      // we could be applying the result to an outdated App state by the time
-      // that it's done executing.
-      //
-      // In practice we work around this elsewhere, but it's a hack. I think the
-      // problem here is the Actions module, which is quite hacky in general,
-      // but I'm not sure how to solve it.
-      setAppRef.current!(await Actions.execute(appRef.current!, ev.action, configRef.current!));
-    });
-    return () => {
-      console.warn("Global event receiver was changed. This should not happen.");
-    };
-  }, [receiver]);
-}
-
 function useServerChanges(server: API.Server | null, update: (f: (state: Data.State) => Data.State) => void) {
   React.useEffect(() => {
     if (server === null) return;
@@ -305,9 +277,17 @@ function App_({
   const updateApp = useUpdateApp(context);
   const popup = usePopup(context, updateApp);
 
-  useExecuteActionEvents(context, context.setApp, receiver, {
-    openUrl: context.openExternalUrl,
-  });
+  React.useEffect(() => {
+    receiver.subscribe("action", (ev) => {
+      updateApp((app) => {
+        const result = Actions.update(app, ev.action);
+        if (result.undo) console.warn("Undo isn't currently supported.");
+        if (result.url) context.openExternalUrl(result.url);
+        return result.app;
+      });
+    });
+  }, []);
+
   useServerChanges(server ?? null, context.updateLocalState);
   useGlobalShortcuts(receiver.send);
 

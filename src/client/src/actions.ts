@@ -75,25 +75,11 @@ export function enabled(state: App, action: ActionName): boolean {
   }
 }
 
-interface UpdateConfig {
-  openUrl(url: string): void;
+export interface UpdateResult {
+  app: App;
+  url?: string;
+  undo?: boolean;
 }
-
-export function execute(app: App, action: ActionName, config: UpdateConfig): App {
-  if (!enabled(app, action)) {
-    console.error("The action %o is not enabled! Ignoring.", action);
-    return app;
-  }
-
-  const result = update(app, action);
-
-  if ("undo" in result) console.warn("Undo is currently broken. Ignoring."); // [TODO]
-  if ("openUrl" in result) config.openUrl(result.openUrl);
-  if ("app" in result) return result.app;
-  return app;
-}
-
-type UpdateResult = {app: App} | {openUrl: string} | {undo: boolean};
 
 export function update(app: App, action: keyof typeof updates): UpdateResult {
   if (!enabled(app, action)) {
@@ -300,12 +286,12 @@ const updates = {
     });
   },
 
-  "undo"({}: UpdateArgs) {
-    return {undo: true};
+  "undo"({app}: UpdateArgs) {
+    return {app, undo: true};
   },
 
-  "forum"({}: UpdateArgs) {
-    return {openUrl: "https://old.reddit.com/r/thinktool/"};
+  "forum"({app}: UpdateArgs) {
+    return {app, url: "https://old.reddit.com/r/thinktool/"};
   },
 };
 
