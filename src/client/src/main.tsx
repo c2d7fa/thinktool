@@ -454,8 +454,6 @@ function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Even
 
   if (result.handled) {
     setAppState(context, result.app);
-  } else if (event.tag === "action") {
-    context.send("action", {action: event.action});
   } else if (event.tag === "openUrl") {
     context.openExternalUrl(event.url);
   } else {
