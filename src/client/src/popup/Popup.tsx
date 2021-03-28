@@ -6,10 +6,8 @@ import * as P from ".";
 
 import Search, {Result} from "../search";
 
+import * as A from "../app";
 import {App, merge} from "../app";
-
-import * as D from "../data";
-import {usePropRef} from "../react-utils";
 
 function useFocusInputRef(): React.RefObject<HTMLInputElement> {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -104,51 +102,31 @@ function Popup(props: {
   );
 }
 
-export function usePopup(app: App) {
-  const [state, setState] = React.useState<P.State>(P.initial);
-
-  const appRef = usePropRef(app);
-
-  function input(seedText?: string): Promise<[App, string]> {
-    return new Promise((resolve, reject) => {
-      setState((state) =>
-        P.open(state, {
-          query: seedText ?? "",
-          search: new Search(appRef.current!.state),
-          select(selection) {
-            if ("thing" in selection) {
-              resolve([appRef.current!, selection.thing]);
-            } else {
-              let [state, newItem] = D.create(appRef.current!.state);
-              state = D.setContent(state, newItem, [selection.content]);
-              resolve([merge(appRef.current!, {state}), newItem]);
-            }
-          },
-        }),
-      );
-    });
+export function usePopup(app: App, updateApp: (f: (app: App) => App) => void) {
+  function updateState(f: (state: P.State) => P.State): void {
+    updateApp((app) => merge(app, {popup: f(app.popup)}));
   }
 
   const component = (() => {
-    if (!P.isOpen(state)) return null;
+    if (!P.isOpen(app.popup)) return null;
 
     return (
       <Popup
-        query={P.query(state)}
-        setQuery={(query) => setState((state) => P.search(state, query))}
-        results={P.results(state)}
+        query={P.query(app.popup)}
+        setQuery={(query) => updateState((state) => P.search(state, query))}
+        results={P.results(app.popup)}
         loadMoreResults={() => {}}
-        selectActive={() => setState((state) => P.selectActive(state))}
-        selectThing={(thing) => setState((state) => P.selectThing(state, thing))}
-        selectNewItem={() => setState((state) => P.selectThing(state, null))}
-        abort={() => setState(P.close)}
-        isNewItemActive={P.isThingActive(state, null)}
-        isThingActive={(thing) => P.isThingActive(state, thing)}
-        up={() => setState(P.activatePrevious)}
-        down={() => setState(P.activateNext)}
+        selectActive={() => updateApp((app) => P.selectActive(app))}
+        selectThing={(thing) => updateApp((app) => P.selectThing(app, thing))}
+        selectNewItem={() => updateApp((app) => P.selectThing(app, null))}
+        abort={() => updateState(P.close)}
+        isNewItemActive={P.isThingActive(app.popup, null)}
+        isThingActive={(thing) => P.isThingActive(app.popup, thing)}
+        up={() => updateState(P.activatePrevious)}
+        down={() => updateState(P.activateNext)}
       />
     );
   })();
 
-  return {component, input};
+  return component;
 }
