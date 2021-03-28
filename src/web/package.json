@@ -13,7 +13,7 @@
     "build": "npm run build-static && next build && next export"
   },
   "dependencies": {
-    "@thinktool/client": "^3.6.2",
+    "@thinktool/client": "^3.6.3",
     "next": "^10.0.5",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
