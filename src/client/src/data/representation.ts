@@ -8,7 +8,6 @@ export interface ThingData {
   content: Content;
   children: Connection[];
   parents: Connection[];
-  isPage: boolean;
 }
 
 export interface ConnectionData {

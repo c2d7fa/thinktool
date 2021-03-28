@@ -8,7 +8,12 @@ set -eux -o pipefail
 
 cd src/client
 npm ci
+sudo npm link
+cd node_modules/react
+sudo npm link
+cd ../react-dom
+sudo npm link
 
-cd ../web
+cd ../../../web
 npm ci
-npm run link-client
+npm link @thinktool/client react react-dom

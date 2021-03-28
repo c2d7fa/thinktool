@@ -1,5 +1,5 @@
 /conf/
-*.envrc
+/.env
 .cache/
 build/
 dist/
