@@ -156,7 +156,7 @@ function useExecuteActionEvents(
   receiver: Receiver<Message>,
   config: {
     openUrl(url: string): void;
-    input(seedText?: string): Promise<[A.App, string]>;
+    input(seedText: string, useSelection: (app: A.App, thing: string) => A.App): A.App;
   },
 ) {
   const configRef = usePropRef(config);

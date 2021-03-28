@@ -9,9 +9,6 @@ import Search, {Result} from "../search";
 import * as A from "../app";
 import {App, merge} from "../app";
 
-import * as D from "../data";
-import {usePropRef} from "../react-utils";
-
 function useFocusInputRef(): React.RefObject<HTMLInputElement> {
   const inputRef = React.useRef<HTMLInputElement>(null);
   React.useEffect(() => {
@@ -110,35 +107,13 @@ export function usePopup(app: App, updateApp: (f: (app: App) => App) => void) {
     updateApp((app) => merge(app, {popup: f(app.popup)}));
   }
 
-  const appRef = usePropRef(app);
-
-  function input(seedText?: string): Promise<[App, string]> {
-    return new Promise((resolve, reject) => {
-      updateState((state) =>
-        P.open(state, {
-          query: seedText ?? "",
-          search: new Search(appRef.current!.state),
-          select(selection) {
-            // [TODO] This is a hack. To avoid clashes between this callback and
-            // the callback that closes the popup, we delay this one a little
-            // bit. Instead, we should merge the two updates, so they're handled
-            // in a single atomic transaction. In particular, we don't want this
-            // callback here; rather we should call it below together with the
-            // 'updateState's related to 'selectActive', 'selectThing' and so
-            // on. The popup module shouldn't necessarily know about this
-            // callback.
-            setTimeout(() => {
-              if ("thing" in selection) {
-                resolve([appRef.current!, selection.thing]);
-              } else {
-                let [state, newItem] = D.create(appRef.current!.state);
-                state = D.setContent(state, newItem, [selection.content]);
-                resolve([merge(appRef.current!, {state}), newItem]);
-              }
-            }, 50);
-          },
-        }),
-      );
+  function input(seedText: string, useSelection: (app: A.App, thing: string) => A.App): A.App {
+    return merge(app, {
+      popup: P.open(app.popup, {
+        query: seedText ?? "",
+        search: new Search(app.state),
+        select: useSelection,
+      }),
     });
   }
 
@@ -151,9 +126,9 @@ export function usePopup(app: App, updateApp: (f: (app: App) => App) => void) {
         setQuery={(query) => updateState((state) => P.search(state, query))}
         results={P.results(app.popup)}
         loadMoreResults={() => {}}
-        selectActive={() => updateState((state) => P.selectActive(state))}
-        selectThing={(thing) => updateState((state) => P.selectThing(state, thing))}
-        selectNewItem={() => updateState((state) => P.selectThing(state, null))}
+        selectActive={() => updateApp((app) => P.selectActive(app))}
+        selectThing={(thing) => updateApp((app) => P.selectThing(app, thing))}
+        selectNewItem={() => updateApp((app) => P.selectThing(app, null))}
         abort={() => updateState(P.close)}
         isNewItemActive={P.isThingActive(app.popup, null)}
         isThingActive={(thing) => P.isThingActive(app.popup, thing)}
