@@ -407,6 +407,10 @@
     {
       "date": "2021-03-28",
       "title": "Published new version with a large number of behind-the-scenes code changes. No new features, hopefully no new bugs either."
+    },
+    {
+      "date": "2021-03-30",
+      "title": "Added 'sticky' drag-and-drop behavior to avoid accidental drags when you meant to click on the bullet."
     }
   ]
 }

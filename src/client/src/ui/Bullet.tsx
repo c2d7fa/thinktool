@@ -2,6 +2,30 @@ import * as React from "react";
 
 import type {ItemStatus} from "./Item";
 
+function useStickyDrag(beginDrag: (ev?: React.MouseEvent<never>) => void) {
+  const [down, setDown] = React.useState<boolean>(false);
+
+  return {
+    beginDrag(ev?: React.MouseEvent<never>) {
+      if (ev === undefined) {
+        // Touch event. We don't do anything special for those right now.
+        console.log("touch drag");
+        beginDrag(ev);
+      } else {
+        setDown(true);
+      }
+    },
+
+    up(ev: React.MouseEvent<never>) {
+      setDown(false);
+    },
+
+    leave(ev: React.MouseEvent<never>) {
+      if (down) beginDrag(ev);
+    },
+  };
+}
+
 export default React.memo(function Bullet(props: {
   status: ItemStatus;
   toggle: () => void;
@@ -9,6 +33,8 @@ export default React.memo(function Bullet(props: {
   onMiddleClick?(): void;
   specialType?: "parent" | "reference" | "opened-link" | "link";
 }) {
+  const stickyDrag = useStickyDrag(props.beginDrag);
+
   function onClick(ev: React.MouseEvent<never>): void {
     // Shift-click acts like middle click.
     if (ev.shiftKey && props.onMiddleClick !== undefined) {
@@ -35,8 +61,10 @@ export default React.memo(function Bullet(props: {
         ? " link-bullet"
         : ""
     }`,
-    onMouseDown: (ev: React.MouseEvent<never>) => props.beginDrag(ev),
-    onTouchStart: (ev: React.TouchEvent<never>) => props.beginDrag(),
+    onMouseLeave: stickyDrag.leave,
+    onMouseDown: (ev: React.MouseEvent<never>) => stickyDrag.beginDrag(ev),
+    onMouseUp: stickyDrag.up,
+    onTouchStart: (ev: React.TouchEvent<never>) => stickyDrag.beginDrag(),
     onClick: onClick,
     onAuxClick: onAuxClick,
   };
