@@ -30,9 +30,6 @@ export interface Context extends App {
 
   updateLocalState(f: (value: State) => State): void;
 
-  drag: DragInfo;
-  setDrag(value: DragInfo): void;
-
   openExternalUrl(url: string): void;
 
   send: Receiver<Message>["send"];

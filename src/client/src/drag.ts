@@ -1,33 +1,41 @@
 import * as T from "./tree";
+import * as A from "./app";
 
-export interface Drag {
-  current: T.NodeRef | null;
-  target: T.NodeRef | null;
-  finished: boolean | "copy";
-}
+export type Drag = {active: false} | {active: true; dragging: T.NodeRef; hovering: T.NodeRef | null};
 
-export const empty: Drag = {current: null, target: null, finished: false};
+export const empty: Drag = {active: false};
 
-export function result(
-  drag: Drag,
-): null | "cancel" | {dragged: T.NodeRef; dropped: T.NodeRef; type: "move" | "copy"} {
-  if (!drag.finished) return null;
-  if (drag.current === null || drag.target === null || drag.current.id === null) {
-    // Q: Why do we have the last check here?
-    return "cancel";
-  }
-  return {dragged: drag.current, dropped: drag.target, type: drag.finished === "copy" ? "copy" : "move"};
+export function drag(node: {id: number}): Drag {
+  return {active: true, dragging: node, hovering: null};
 }
 
 export function hover(drag: Drag, node: {id: number} | null): Drag {
   if (node === null) return drag;
-  return {...drag, target: node};
+  if (!drag.active) return drag;
+  return {...drag, hovering: node};
 }
 
-export function end(drag: Drag, opts: {copy: boolean}): Drag {
-  return {...drag, finished: opts.copy ? "copy" : true};
+export function node(drag: Drag, node: T.NodeRef): null | "source" | "target" {
+  if (!drag.active) return null;
+  if (drag.hovering?.id === node.id) return "target";
+  if (drag.dragging?.id === node.id) return "source";
+  return null;
 }
 
-export function isDragging(drag: Drag): boolean {
-  return drag.current !== null;
+export function isActive(drag: Drag): drag is {active: true; dragging: T.NodeRef; hovering: T.NodeRef | null} {
+  return drag.active;
+}
+
+export function drop(app: A.App, type: "move" | "copy"): A.App {
+  if (!isActive(app.drag) || app.drag.hovering === null) return A.merge(app, {drag: empty});
+
+  if (type === "copy") {
+    const [state, tree, node] = T.copyToAbove(app.state, app.tree, app.drag.dragging, app.drag.hovering);
+    return A.merge(app, {drag: empty, state: state, tree: T.focus(tree, node)});
+  } else if (type === "move") {
+    const [state, tree] = T.moveToAbove(app.state, app.tree, app.drag.dragging, app.drag.hovering);
+    return A.merge(app, {drag: empty, state: state, tree});
+  } else {
+    throw "logic error";
+  }
 }
