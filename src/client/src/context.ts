@@ -1,6 +1,4 @@
 import {State} from "./data";
-import * as T from "./tree";
-import {Tree} from "./tree";
 import {Server} from "./server-api";
 import {Storage} from "./storage";
 import type {Receiver} from "./receiver";
@@ -22,8 +20,6 @@ export function setAppState(context: Context, app: App): void {
 
 export interface Context extends App {
   setApp(app: App): void;
-  setState(value: State): void;
-  setTree(value: Tree): void;
 
   storage: Storage;
   server?: Server;

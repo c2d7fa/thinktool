@@ -107,20 +107,12 @@ function useContext({
     server,
     openExternalUrl,
     send: receiver.send,
-
-    setTree(tree) {
-      context.setApp(A.merge(context, {tree}));
-    },
-
-    setState(state) {
-      context.setApp(A.merge(context, {state}));
-    },
   };
 
   useThingUrl({
     current: T.thing(context.tree, T.root(context.tree)),
     jump(thing: string) {
-      context.setTree(T.fromRoot(context.state, thing));
+      setInnerApp(A.merge(context, {tree: T.fromRoot(context.state, thing)}));
     },
   });
 
@@ -294,20 +286,18 @@ function App_({
     !isDevelopment && Tutorial.isActive(context.tutorialState),
   );
 
+  const onFocusApp = React.useCallback(
+    (ev: React.FocusEvent) => {
+      if (ev.target === appRef.current) {
+        console.log("Unfocusing item due to click on background");
+        updateApp((app) => A.merge(app, {tree: T.unfocus(app.tree)}));
+      }
+    },
+    [updateApp],
+  );
+
   return (
-    <div
-      ref={appRef}
-      id="app"
-      spellCheck={false}
-      onFocus={(ev) => {
-        if (ev.target === appRef.current) {
-          console.log("Unfocusing item due to click on background");
-          context.setTree(T.unfocus(context.tree));
-        }
-      }}
-      tabIndex={-1}
-      className="app"
-    >
+    <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
       {popup}
       <div className="top-bar">
         <ExternalLink className="logo" href="/">
