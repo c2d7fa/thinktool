@@ -56,7 +56,6 @@ function useContext({
       tutorialFinished: initialTutorialFinished,
     }),
   );
-  const [drag, setDrag] = React.useState(Drag.empty);
 
   const batched = useBatched(200);
 
@@ -103,28 +102,17 @@ function useContext({
       });
     },
 
-    drag,
-    setDrag,
-
     changelog: ChangelogData,
     storage,
     server,
     openExternalUrl,
     send: receiver.send,
-
-    setTree(tree) {
-      context.setApp(A.merge(context, {tree}));
-    },
-
-    setState(state) {
-      context.setApp(A.merge(context, {state}));
-    },
   };
 
   useThingUrl({
     current: T.thing(context.tree, T.root(context.tree)),
     jump(thing: string) {
-      context.setTree(T.fromRoot(context.state, thing));
+      setInnerApp(A.merge(context, {tree: T.fromRoot(context.state, thing)}));
     },
   });
 
@@ -189,17 +177,19 @@ function useServerChanges(server: API.Server | null, update: (f: (state: Data.St
   }, []);
 }
 
-function useDragAndDrop({
-  drag,
-  setDrag,
-  onFinished,
-}: {
-  drag: DragInfo;
-  setDrag(drag: DragInfo): void;
-  onFinished(result: {dragged: T.NodeRef; dropped: T.NodeRef; type: "move" | "copy"}): void;
-}) {
+function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => void) {
+  // Register event listeners when drag becomes active, unregister when drag
+  // becomes inactive. We do this to avoid performance issues due to constantly
+  // listening to mouse movements. Is it necessary? Is there a cleaner solution?
   React.useEffect(() => {
-    if (!Drag.isDragging(drag)) return;
+    if (!Drag.isActive(app.drag)) return;
+
+    // We do it this way to override other cursors. For example, just setting
+    // document.body.style.cursor would still give a pointer cursor when
+    // hovering a link.
+    const styleElement = document.createElement("style");
+    styleElement.innerHTML = "* { cursor: grab !important; }";
+    document.body.appendChild(styleElement);
 
     function findNodeAt({x, y}: {x: number; y: number}): {id: number} | null {
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
@@ -213,38 +203,33 @@ function useDragAndDrop({
 
     function mousemove(ev: MouseEvent): void {
       const {clientX: x, clientY: y} = ev;
-      setDrag(Drag.hover(drag, findNodeAt({x, y})));
+      updateApp((app) => A.merge(app, {drag: Drag.hover(app.drag, findNodeAt({x, y}))}));
     }
 
     function touchmove(ev: TouchEvent): void {
       const {clientX: x, clientY: y} = ev.changedTouches[0];
-      setDrag(Drag.hover(drag, findNodeAt({x, y})));
+      updateApp((app) => A.merge(app, {drag: Drag.hover(app.drag, findNodeAt({x, y}))}));
     }
 
     window.addEventListener("mousemove", mousemove);
     window.addEventListener("touchmove", touchmove);
 
     function mouseup(ev: MouseEvent | TouchEvent): void {
-      setDrag(Drag.end(drag, {copy: ev.ctrlKey}));
+      updateApp((app) => Drag.drop(app, ev.ctrlKey ? "copy" : "move"));
     }
 
     window.addEventListener("mouseup", mouseup);
     window.addEventListener("touchend", mouseup);
 
     return () => {
+      styleElement.remove();
+
       window.removeEventListener("mousemove", mousemove);
       window.removeEventListener("touchmove", touchmove);
       window.removeEventListener("mouseup", mouseup);
       window.removeEventListener("touchend", mouseup);
     };
-  }, [drag, setDrag]);
-
-  React.useEffect(() => {
-    const result = Drag.result(drag);
-    if (result === null) return;
-    if (result !== "cancel") onFinished(result);
-    setDrag(Drag.empty);
-  }, [drag, setDrag, onFinished]);
+  }, [Drag.isActive(app.drag), updateApp]);
 }
 
 function App_({
@@ -291,21 +276,7 @@ function App_({
   useServerChanges(server ?? null, context.updateLocalState);
   useGlobalShortcuts(receiver.send);
 
-  useDragAndDrop({
-    drag: context.drag,
-    setDrag: context.setDrag,
-    onFinished({dragged, dropped, type}) {
-      if (type === "copy") {
-        const [newState, newTree, newId] = T.copyToAbove(context.state, context.tree, dragged, dropped);
-        context.setState(newState);
-        context.setTree(T.focus(newTree, newId));
-      } else if (type === "move") {
-        const [newState, newTree] = T.moveToAbove(context.state, context.tree, dragged, dropped);
-        context.setState(newState);
-        context.setTree(newTree);
-      }
-    },
-  });
+  useDragAndDrop(context, updateApp);
 
   const [toolbarShown, setToolbarShown] = React.useState<boolean>(true);
 
@@ -315,20 +286,18 @@ function App_({
     !isDevelopment && Tutorial.isActive(context.tutorialState),
   );
 
+  const onFocusApp = React.useCallback(
+    (ev: React.FocusEvent) => {
+      if (ev.target === appRef.current) {
+        console.log("Unfocusing item due to click on background");
+        updateApp((app) => A.merge(app, {tree: T.unfocus(app.tree)}));
+      }
+    },
+    [updateApp],
+  );
+
   return (
-    <div
-      ref={appRef}
-      id="app"
-      spellCheck={false}
-      onFocus={(ev) => {
-        if (ev.target === appRef.current) {
-          console.log("Unfocusing item due to click on background");
-          context.setTree(T.unfocus(context.tree));
-        }
-      }}
-      tabIndex={-1}
-      className="app"
-    >
+    <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
       {popup}
       <div className="top-bar">
         <ExternalLink className="logo" href="/">
@@ -454,8 +423,6 @@ function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Even
 
   if (result.handled) {
     setAppState(context, result.app);
-  } else if (event.tag === "action") {
-    context.send("action", {action: event.action});
   } else if (event.tag === "openUrl") {
     context.openExternalUrl(event.url);
   } else {
@@ -481,12 +448,10 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
   return updateApp;
 }
 
-function useBulletProps(context: Context, node: T.NodeRef, updateApp: ReturnType<typeof useUpdateApp>) {
-  const contextRef = usePropRef(context);
-  const beginDrag = React.useCallback(
-    () => contextRef.current!.setDrag({current: node, target: null, finished: false}),
-    [node],
-  );
+function useBulletProps(node: T.NodeRef, updateApp: ReturnType<typeof useUpdateApp>) {
+  const beginDrag = React.useCallback(() => updateApp((app) => A.merge(app, {drag: Drag.drag(app.tree, node)})), [
+    node,
+  ]);
   const onBulletClick = React.useCallback(() => updateApp((app) => Item.click(app, node)), [node]);
   const onBulletAltClick = React.useCallback(() => updateApp((app) => Item.altClick(app, node)), [node]);
   return {beginDrag, onBulletClick, onBulletAltClick};
@@ -502,7 +467,7 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
     parent: props.parent,
   });
 
-  const bulletProps = useBulletProps(props.context, props.node, updateApp);
+  const bulletProps = useBulletProps(props.node, updateApp);
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
@@ -511,7 +476,7 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
 
   return (
     <Item.Item
-      dragState={Item.dragState(props.context.drag, props.node)}
+      dragState={Drag.node(props.context.drag, props.node)}
       status={Item.status(props.context.tree, props.node)}
       id={props.node.id}
       kind={Item.kind(props.context.tree, props.node)}

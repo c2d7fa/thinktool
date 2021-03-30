@@ -2,6 +2,7 @@ import * as D from "./data";
 import * as T from "./tree";
 import * as E from "./editing";
 import * as P from "./popup";
+import * as R from "./drag";
 import {Communication} from "@thinktool/shared";
 
 import * as Tutorial from "./tutorial";
@@ -16,6 +17,7 @@ export interface App {
   tree: T.Tree;
   editors: {[nodeId: number]: E.Editor};
   popup: P.State;
+  drag: R.Drag;
 }
 
 export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: boolean}): App {
@@ -27,6 +29,7 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     changelog: "loading",
     editors: {},
     popup: P.initial,
+    drag: R.empty,
   };
 }
 
