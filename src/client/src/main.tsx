@@ -449,7 +449,9 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
 }
 
 function useBulletProps(node: T.NodeRef, updateApp: ReturnType<typeof useUpdateApp>) {
-  const beginDrag = React.useCallback(() => updateApp((app) => A.merge(app, {drag: Drag.drag(node)})), [node]);
+  const beginDrag = React.useCallback(() => updateApp((app) => A.merge(app, {drag: Drag.drag(app.tree, node)})), [
+    node,
+  ]);
   const onBulletClick = React.useCallback(() => updateApp((app) => Item.click(app, node)), [node]);
   const onBulletAltClick = React.useCallback(() => updateApp((app) => Item.altClick(app, node)), [node]);
   return {beginDrag, onBulletClick, onBulletAltClick};

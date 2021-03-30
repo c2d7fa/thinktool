@@ -5,7 +5,8 @@ export type Drag = {active: false} | {active: true; dragging: T.NodeRef; hoverin
 
 export const empty: Drag = {active: false};
 
-export function drag(node: {id: number}): Drag {
+export function drag(tree: T.Tree, node: {id: number}): Drag {
+  if (T.kind(tree, node) !== "child") return {active: false};
   return {active: true, dragging: node, hovering: null};
 }
 
@@ -27,7 +28,8 @@ export function isActive(drag: Drag): drag is {active: true; dragging: T.NodeRef
 }
 
 export function drop(app: A.App, type: "move" | "copy"): A.App {
-  if (!isActive(app.drag) || app.drag.hovering === null) return A.merge(app, {drag: empty});
+  if (!isActive(app.drag) || app.drag.hovering === null || T.kind(app.tree, app.drag.hovering) !== "child")
+    return A.merge(app, {drag: empty});
 
   if (type === "copy") {
     const [state, tree, node] = T.copyToAbove(app.state, app.tree, app.drag.dragging, app.drag.hovering);
