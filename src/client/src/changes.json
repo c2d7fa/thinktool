@@ -411,6 +411,10 @@
     {
       "date": "2021-03-30",
       "title": "Added 'sticky' drag-and-drop behavior to avoid accidental drags when you meant to click on the bullet."
+    },
+    {
+      "date": "2021-03-30",
+      "title": "Tweaked UI to avoid horizontal shift when scrollbar appears."
     }
   ]
 }
