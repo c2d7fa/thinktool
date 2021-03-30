@@ -192,6 +192,13 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
   React.useEffect(() => {
     if (!Drag.isActive(app.drag)) return;
 
+    // We do it this way to override other cursors. For example, just setting
+    // document.body.style.cursor would still give a pointer cursor when
+    // hovering a link.
+    const styleElement = document.createElement("style");
+    styleElement.innerHTML = "* { cursor: grab !important; }";
+    document.body.appendChild(styleElement);
+
     function findNodeAt({x, y}: {x: number; y: number}): {id: number} | null {
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
       while (element && !element.classList.contains("item")) {
@@ -223,6 +230,8 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
     window.addEventListener("touchend", mouseup);
 
     return () => {
+      styleElement.remove();
+
       window.removeEventListener("mousemove", mousemove);
       window.removeEventListener("touchmove", touchmove);
       window.removeEventListener("mouseup", mouseup);
