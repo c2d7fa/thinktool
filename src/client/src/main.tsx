@@ -56,7 +56,6 @@ function useContext({
       tutorialFinished: initialTutorialFinished,
     }),
   );
-  const [drag, setDrag] = React.useState(Drag.empty);
 
   const batched = useBatched(200);
 
@@ -102,9 +101,6 @@ function useContext({
         return A.merge(innerApp, {state, tree});
       });
     },
-
-    drag,
-    setDrag,
 
     changelog: ChangelogData,
     storage,
@@ -189,17 +185,12 @@ function useServerChanges(server: API.Server | null, update: (f: (state: Data.St
   }, []);
 }
 
-function useDragAndDrop({
-  drag,
-  setDrag,
-  onFinished,
-}: {
-  drag: DragInfo;
-  setDrag(drag: DragInfo): void;
-  onFinished(result: {dragged: T.NodeRef; dropped: T.NodeRef; type: "move" | "copy"}): void;
-}) {
+function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => void) {
+  // Register event listeners when drag becomes active, unregister when drag
+  // becomes inactive. We do this to avoid performance issues due to constantly
+  // listening to mouse movements. Is it necessary? Is there a cleaner solution?
   React.useEffect(() => {
-    if (!Drag.isDragging(drag)) return;
+    if (!Drag.isActive(app.drag)) return;
 
     function findNodeAt({x, y}: {x: number; y: number}): {id: number} | null {
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
@@ -213,19 +204,19 @@ function useDragAndDrop({
 
     function mousemove(ev: MouseEvent): void {
       const {clientX: x, clientY: y} = ev;
-      setDrag(Drag.hover(drag, findNodeAt({x, y})));
+      updateApp((app) => A.merge(app, {drag: Drag.hover(app.drag, findNodeAt({x, y}))}));
     }
 
     function touchmove(ev: TouchEvent): void {
       const {clientX: x, clientY: y} = ev.changedTouches[0];
-      setDrag(Drag.hover(drag, findNodeAt({x, y})));
+      updateApp((app) => A.merge(app, {drag: Drag.hover(app.drag, findNodeAt({x, y}))}));
     }
 
     window.addEventListener("mousemove", mousemove);
     window.addEventListener("touchmove", touchmove);
 
     function mouseup(ev: MouseEvent | TouchEvent): void {
-      setDrag(Drag.end(drag, {copy: ev.ctrlKey}));
+      updateApp((app) => Drag.drop(app, ev.ctrlKey ? "copy" : "move"));
     }
 
     window.addEventListener("mouseup", mouseup);
@@ -237,14 +228,7 @@ function useDragAndDrop({
       window.removeEventListener("mouseup", mouseup);
       window.removeEventListener("touchend", mouseup);
     };
-  }, [drag, setDrag]);
-
-  React.useEffect(() => {
-    const result = Drag.result(drag);
-    if (result === null) return;
-    if (result !== "cancel") onFinished(result);
-    setDrag(Drag.empty);
-  }, [drag, setDrag, onFinished]);
+  }, [Drag.isActive(app.drag), updateApp]);
 }
 
 function App_({
@@ -291,21 +275,7 @@ function App_({
   useServerChanges(server ?? null, context.updateLocalState);
   useGlobalShortcuts(receiver.send);
 
-  useDragAndDrop({
-    drag: context.drag,
-    setDrag: context.setDrag,
-    onFinished({dragged, dropped, type}) {
-      if (type === "copy") {
-        const [newState, newTree, newId] = T.copyToAbove(context.state, context.tree, dragged, dropped);
-        context.setState(newState);
-        context.setTree(T.focus(newTree, newId));
-      } else if (type === "move") {
-        const [newState, newTree] = T.moveToAbove(context.state, context.tree, dragged, dropped);
-        context.setState(newState);
-        context.setTree(newTree);
-      }
-    },
-  });
+  useDragAndDrop(context, updateApp);
 
   const [toolbarShown, setToolbarShown] = React.useState<boolean>(true);
 
@@ -479,12 +449,8 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
   return updateApp;
 }
 
-function useBulletProps(context: Context, node: T.NodeRef, updateApp: ReturnType<typeof useUpdateApp>) {
-  const contextRef = usePropRef(context);
-  const beginDrag = React.useCallback(
-    () => contextRef.current!.setDrag({current: node, target: null, finished: false}),
-    [node],
-  );
+function useBulletProps(node: T.NodeRef, updateApp: ReturnType<typeof useUpdateApp>) {
+  const beginDrag = React.useCallback(() => updateApp((app) => A.merge(app, {drag: Drag.drag(node)})), [node]);
   const onBulletClick = React.useCallback(() => updateApp((app) => Item.click(app, node)), [node]);
   const onBulletAltClick = React.useCallback(() => updateApp((app) => Item.altClick(app, node)), [node]);
   return {beginDrag, onBulletClick, onBulletAltClick};
@@ -500,7 +466,7 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
     parent: props.parent,
   });
 
-  const bulletProps = useBulletProps(props.context, props.node, updateApp);
+  const bulletProps = useBulletProps(props.node, updateApp);
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
@@ -509,7 +475,7 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
 
   return (
     <Item.Item
-      dragState={Item.dragState(props.context.drag, props.node)}
+      dragState={Drag.node(props.context.drag, props.node)}
       status={Item.status(props.context.tree, props.node)}
       id={props.node.id}
       kind={Item.kind(props.context.tree, props.node)}
