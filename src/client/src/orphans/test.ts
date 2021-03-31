@@ -3,7 +3,7 @@
 import * as Immutable from "immutable";
 import * as O from "./core";
 
-function build(items: [O.Id, {children?: O.Id[]}][]): O.Graph {
+function build(items: [O.Id, {children?: O.Id[]; links?: O.Id[]}][]): O.Graph {
   return {
     all() {
       return Immutable.Set<O.Id>(items.map((item) => item[0]));
@@ -19,8 +19,10 @@ function build(items: [O.Id, {children?: O.Id[]}][]): O.Graph {
       return Immutable.Set<O.Id>(item[1].children);
     },
 
-    links(item: O.Id) {
-      return Immutable.Set<O.Id>();
+    links(id: O.Id) {
+      const item = items.find((item) => item[0] === id);
+      if (item === undefined || item[1].links === undefined) return Immutable.Set<O.Id>();
+      return Immutable.Set<O.Id>(item[1].links);
     },
 
     parents(item: O.Id) {
@@ -85,5 +87,23 @@ describe("in a graph that consists of a loop", () => {
 
   test("there are no orphans", () => {
     expect(O.ids(O.scan(graph))).toEqual(Immutable.Set([]));
+  });
+});
+
+describe("in a graph with two components connected through child and link connections", () => {
+  const graph = build([
+    ["0", {children: ["1"]}],
+    ["1", {links: ["2"]}],
+    ["2", {children: ["3"]}],
+    ["3", {links: ["0"]}],
+
+    ["4", {children: ["5"]}],
+    ["5", {links: ["6"]}],
+    ["6", {children: ["7"]}],
+    ["7", {links: ["4"]}],
+  ]);
+
+  test("the orphans are exactly the nodes in the graph that does not contain the root item", () => {
+    expect(O.ids(O.scan(graph))).toEqual(Immutable.Set(["4", "5", "6", "7"]));
   });
 });

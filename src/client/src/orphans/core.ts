@@ -32,6 +32,9 @@ export function scan(graph: Graph): Orphans {
     for (const child of graph.children(root)) {
       reach(child);
     }
+    for (const link of graph.links(root)) {
+      reach(link);
+    }
   }
 
   reach(graph.root());
