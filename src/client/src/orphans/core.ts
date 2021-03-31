@@ -29,12 +29,10 @@ export function scan(graph: Graph): Orphans {
   function reach(root: Id): void {
     if (reached.has(root)) return;
     reached.add(root);
-    for (const child of graph.children(root)) {
-      reach(child);
-    }
-    for (const link of graph.links(root)) {
-      reach(link);
-    }
+    for (const child of graph.children(root)) reach(child);
+    for (const link of graph.links(root)) reach(link);
+    for (const parents of graph.parents(root)) reach(parents);
+    for (const reference of graph.references(root)) reach(reference);
   }
 
   reach(graph.root());
