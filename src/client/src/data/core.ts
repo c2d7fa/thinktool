@@ -10,7 +10,7 @@ import {State, Connection} from "./representation";
 //#region Fundamental operations
 
 export const empty: State = {
-  _things: {"0": {content: ["Welcome"], children: [], parents: [], isPage: false}},
+  _things: {"0": {content: ["Welcome"], children: [], parents: []}},
   _connections: {},
   _links: BinaryRelation<string, string>(),
 };
@@ -47,7 +47,7 @@ export function content(state: State, thing: string): Content {
 
 export function setContent(state: State, thing: string, newContent: Content): State {
   if (state._things[thing] === undefined) console.warn("Setting content of non-existent item %o", thing);
-  const oldThing = state._things[thing] ?? {content: [], children: [], parents: [], isPage: false};
+  const oldThing = state._things[thing] ?? {content: [], children: [], parents: []};
 
   let newLinks = state._links;
   for (const link of linksInContent(newContent)) {
@@ -176,10 +176,7 @@ export function removeChild(state: State, parent: string, index: number): State 
 
 export function create(state: State, customId?: string): [State, string] {
   const newId = customId ?? generateShortId();
-  return [
-    {...state, _things: {...state._things, [newId]: {content: [], children: [], parents: [], isPage: false}}},
-    newId,
-  ];
+  return [{...state, _things: {...state._things, [newId]: {content: [], children: [], parents: []}}}, newId];
 }
 
 export function forget(state: State, thing: string): State {
@@ -204,16 +201,6 @@ export function parents(state: State, child: string): string[] {
   }
 
   return result;
-}
-
-export function isPage(state: State, thing: string): boolean {
-  return state._things[thing]?.isPage ?? false;
-}
-
-export function togglePage(state: State, thing: string): State {
-  const oldThing = state._things[thing];
-  if (oldThing === undefined) return state;
-  return {...state, _things: {...state._things, [thing]: {...oldThing, isPage: !oldThing.isPage}}};
 }
 
 //#endregion
@@ -271,14 +258,14 @@ export function transformFullStateResponseIntoState(response: FullStateResponse)
 
   for (const thing of response.things) {
     if (!exists(state, thing.name)) {
-      state._things[thing.name] = {children: [], content: [], parents: [], isPage: false};
+      state._things[thing.name] = {children: [], content: [], parents: []};
     }
     state._things[thing.name]!.content = [];
     state = setContent(state, thing.name, thing.content);
     for (const connection of thing.children) {
       state._connections[connection.name] = {parent: thing.name, child: connection.child};
       if (state._things[connection.child] === undefined) {
-        state._things[connection.child] = {children: [], content: [], parents: [], isPage: false};
+        state._things[connection.child] = {children: [], content: [], parents: []};
       }
       state._things[connection.child]!.parents.push({connectionId: connection.name});
       state._things[thing.name]!.children.push({connectionId: connection.name});

@@ -5,7 +5,6 @@ export type FullStateResponse = {
     name: string;
     content: Content;
     children: {name: string; child: string}[];
-    isPage?: boolean;
   }[];
 };
 

@@ -18,7 +18,7 @@ import * as A from "./app";
 import * as Drag from "./drag";
 
 import * as Editor from "./ui/Editor";
-import {usePopup} from "./ui/ThingSelectPopup";
+import {usePopup} from "./popup/Popup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
@@ -57,11 +57,12 @@ function useContext({
       tutorialFinished: initialTutorialFinished,
     }),
   );
-  const [drag, setDrag] = React.useState(Drag.empty);
 
   const batched = useBatched(200);
 
   const context: Context = {
+    ...innerApp,
+
     setApp(app: A.App) {
       // Push changes to server
       const effects = Storage.Diff.effects(innerApp, app);
@@ -102,28 +103,17 @@ function useContext({
       });
     },
 
-    drag,
-    setDrag,
-
     changelog: ChangelogData,
     storage,
     server,
     openExternalUrl,
     send: receiver.send,
-
-    setTree(tree) {
-      context.setApp(A.merge(context, {tree}));
-    },
-
-    setState(state) {
-      context.setApp(A.merge(context, {state}));
-    },
   };
 
   useThingUrl({
     current: T.thing(context.tree, T.root(context.tree)),
     jump(thing: string) {
-      context.setTree(T.fromRoot(context.state, thing));
+      setInnerApp(A.merge(context, {tree: T.fromRoot(context.state, thing)}));
     },
   });
 
@@ -147,35 +137,6 @@ function useGlobalShortcuts(sendEvent: Context["send"]) {
       document.removeEventListener("keydown", onTopLevelKeyDown);
     };
   }, [sendEvent]);
-}
-
-function useExecuteActionEvents(
-  app: A.App,
-  setApp: (app: A.App) => void,
-  receiver: Receiver<Message>,
-  config: {
-    openUrl(url: string): void;
-    input(seedText?: string): Promise<[A.App, string]>;
-  },
-) {
-  const configRef = usePropRef(config);
-  const appRef = usePropRef(app);
-  const setAppRef = usePropRef(setApp);
-  React.useEffect(() => {
-    receiver.subscribe("action", async (ev) => {
-      // [TODO] The fact that Actions.execute is async here is a problem, since
-      // we could be applying the result to an outdated App state by the time
-      // that it's done executing.
-      //
-      // In practice we work around this elsewhere, but it's a hack. I think the
-      // problem here is the Actions module, which is quite hacky in general,
-      // but I'm not sure how to solve it.
-      setAppRef.current!(await Actions.execute(appRef.current!, ev.action, configRef.current!));
-    });
-    return () => {
-      console.warn("Global event receiver was changed. This should not happen.");
-    };
-  }, [receiver]);
 }
 
 function useServerChanges(server: API.Server | null, update: (f: (state: Data.State) => Data.State) => void) {
@@ -202,10 +163,6 @@ function useServerChanges(server: API.Server | null, update: (f: (state: Data.St
 
           newState = Data.setContent(newState, changedThing, thingData.content);
 
-          if (Data.isPage(newState, changedThing) !== thingData.isPage) {
-            newState = Data.togglePage(newState, changedThing);
-          }
-
           const nChildren = Data.children(newState, changedThing).length;
           for (let i = 0; i < nChildren; ++i) {
             newState = Data.removeChild(newState, changedThing, 0);
@@ -221,17 +178,19 @@ function useServerChanges(server: API.Server | null, update: (f: (state: Data.St
   }, []);
 }
 
-function useDragAndDrop({
-  drag,
-  setDrag,
-  onFinished,
-}: {
-  drag: DragInfo;
-  setDrag(drag: DragInfo): void;
-  onFinished(result: {dragged: T.NodeRef; dropped: T.NodeRef; type: "move" | "copy"}): void;
-}) {
+function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => void) {
+  // Register event listeners when drag becomes active, unregister when drag
+  // becomes inactive. We do this to avoid performance issues due to constantly
+  // listening to mouse movements. Is it necessary? Is there a cleaner solution?
   React.useEffect(() => {
-    if (!Drag.isDragging(drag)) return;
+    if (!Drag.isActive(app.drag)) return;
+
+    // We do it this way to override other cursors. For example, just setting
+    // document.body.style.cursor would still give a pointer cursor when
+    // hovering a link.
+    const styleElement = document.createElement("style");
+    styleElement.innerHTML = "* { cursor: grab !important; }";
+    document.body.appendChild(styleElement);
 
     function findNodeAt({x, y}: {x: number; y: number}): {id: number} | null {
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
@@ -245,38 +204,33 @@ function useDragAndDrop({
 
     function mousemove(ev: MouseEvent): void {
       const {clientX: x, clientY: y} = ev;
-      setDrag(Drag.hover(drag, findNodeAt({x, y})));
+      updateApp((app) => A.merge(app, {drag: Drag.hover(app.drag, findNodeAt({x, y}))}));
     }
 
     function touchmove(ev: TouchEvent): void {
       const {clientX: x, clientY: y} = ev.changedTouches[0];
-      setDrag(Drag.hover(drag, findNodeAt({x, y})));
+      updateApp((app) => A.merge(app, {drag: Drag.hover(app.drag, findNodeAt({x, y}))}));
     }
 
     window.addEventListener("mousemove", mousemove);
     window.addEventListener("touchmove", touchmove);
 
     function mouseup(ev: MouseEvent | TouchEvent): void {
-      setDrag(Drag.end(drag, {copy: ev.ctrlKey}));
+      updateApp((app) => Drag.drop(app, ev.ctrlKey ? "copy" : "move"));
     }
 
     window.addEventListener("mouseup", mouseup);
     window.addEventListener("touchend", mouseup);
 
     return () => {
+      styleElement.remove();
+
       window.removeEventListener("mousemove", mousemove);
       window.removeEventListener("touchmove", touchmove);
       window.removeEventListener("mouseup", mouseup);
       window.removeEventListener("touchend", mouseup);
     };
-  }, [drag, setDrag]);
-
-  React.useEffect(() => {
-    const result = Drag.result(drag);
-    if (result === null) return;
-    if (result !== "cancel") onFinished(result);
-    setDrag(Drag.empty);
-  }, [drag, setDrag, onFinished]);
+  }, [Drag.isActive(app.drag), updateApp]);
 }
 
 function App_({
@@ -294,64 +248,60 @@ function App_({
   server?: API.Server;
   openExternalUrl(url: string): void;
 }) {
+  const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
+
   const receiver = React.useMemo(() => createReceiver<Message>(), []);
   const context = useContext({
     initialState,
-    initialTutorialFinished,
+    initialTutorialFinished: isDevelopment || initialTutorialFinished,
     storage,
     server,
     openExternalUrl,
     receiver,
   });
 
-  const popup = usePopup(context);
+  const updateApp = useUpdateApp(context);
+  const popup = usePopup(context, updateApp);
 
-  useExecuteActionEvents(context, context.setApp, receiver, {
-    input: popup.input,
-    openUrl: context.openExternalUrl,
-  });
+  React.useEffect(() => {
+    receiver.subscribe("action", (ev) => {
+      updateApp((app) => {
+        const result = Actions.update(app, ev.action);
+        if (result.undo) console.warn("Undo isn't currently supported.");
+        if (result.url) context.openExternalUrl(result.url);
+        return result.app;
+      });
+    });
+  }, []);
+
   useServerChanges(server ?? null, context.updateLocalState);
   useGlobalShortcuts(receiver.send);
 
-  useDragAndDrop({
-    drag: context.drag,
-    setDrag: context.setDrag,
-    onFinished({dragged, dropped, type}) {
-      if (type === "copy") {
-        const [newState, newTree, newId] = T.copyToAbove(context.state, context.tree, dragged, dropped);
-        context.setState(newState);
-        context.setTree(T.focus(newTree, newId));
-      } else if (type === "move") {
-        const [newState, newTree] = T.moveToAbove(context.state, context.tree, dragged, dropped);
-        context.setState(newState);
-        context.setTree(newTree);
-      }
-    },
-  });
+  useDragAndDrop(context, updateApp);
 
   const [toolbarShown, setToolbarShown] = React.useState<boolean>(true);
 
   const appRef = React.useRef<HTMLDivElement>(null);
 
-  const [showSplash, setShowSplash] = React.useState<boolean>(Tutorial.isActive(context.tutorialState));
+  const [showSplash, setShowSplash] = React.useState<boolean>(
+    !isDevelopment && Tutorial.isActive(context.tutorialState),
+  );
+
+  const onFocusApp = React.useCallback(
+    (ev: React.FocusEvent) => {
+      if (ev.target === appRef.current) {
+        console.log("Unfocusing item due to click on background");
+        updateApp((app) => A.merge(app, {tree: T.unfocus(app.tree)}));
+      }
+    },
+    [updateApp],
+  );
 
   const orphanListProps = useOrphanListPropsFromState(context.state);
 
   return (
-    <div
-      ref={appRef}
-      id="app"
-      spellCheck={false}
-      onFocus={(ev) => {
-        if (ev.target === appRef.current) {
-          console.log("Unfocusing item due to click on background");
-          context.setTree(T.unfocus(context.tree));
-        }
-      }}
-      tabIndex={-1}
-      className="app"
-    >
-      {popup.component}
+    <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
+      {popup}
       <div className="top-bar">
         <ExternalLink className="logo" href="/">
           Thinktool
@@ -477,8 +427,6 @@ function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Even
 
   if (result.handled) {
     setAppState(context, result.app);
-  } else if (event.tag === "action") {
-    context.send("action", {action: event.action});
   } else if (event.tag === "openUrl") {
     context.openExternalUrl(event.url);
   } else {
@@ -504,12 +452,10 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
   return updateApp;
 }
 
-function useBulletProps(context: Context, node: T.NodeRef, updateApp: ReturnType<typeof useUpdateApp>) {
-  const contextRef = usePropRef(context);
-  const beginDrag = React.useCallback(
-    () => contextRef.current!.setDrag({current: node, target: null, finished: false}),
-    [node],
-  );
+function useBulletProps(node: T.NodeRef, updateApp: ReturnType<typeof useUpdateApp>) {
+  const beginDrag = React.useCallback(() => updateApp((app) => A.merge(app, {drag: Drag.drag(app.tree, node)})), [
+    node,
+  ]);
   const onBulletClick = React.useCallback(() => updateApp((app) => Item.click(app, node)), [node]);
   const onBulletAltClick = React.useCallback(() => updateApp((app) => Item.altClick(app, node)), [node]);
   return {beginDrag, onBulletClick, onBulletAltClick};
@@ -525,7 +471,7 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
     parent: props.parent,
   });
 
-  const bulletProps = useBulletProps(props.context, props.node, updateApp);
+  const bulletProps = useBulletProps(props.node, updateApp);
 
   const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
 
@@ -534,7 +480,7 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
 
   return (
     <Item.Item
-      dragState={Item.dragState(props.context.drag, props.node)}
+      dragState={Drag.node(props.context.drag, props.node)}
       status={Item.status(props.context.tree, props.node)}
       id={props.node.id}
       kind={Item.kind(props.context.tree, props.node)}
@@ -557,14 +503,18 @@ function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
     return <ExpandableItem key={child.id} node={child} context={p.context} />;
   });
 
+  const updateApp = useUpdateApp(p.context);
+
+  const toggle = React.useCallback(
+    () => updateApp((app) => A.merge(app, {tree: T.toggleBackreferences(app.state, app.tree, p.parent)})),
+    [p.parent],
+  );
+
   return (
     <>
       <li className="item">
         <div>
-          <button
-            onClick={() => p.context.setTree(T.toggleBackreferences(p.context.state, p.context.tree, p.parent))}
-            className="backreferences-text"
-          >
+          <button onClick={toggle} className="backreferences-text">
             {backreferences.length} References
             {!T.backreferencesExpanded(p.context.tree, p.parent) && "..."}
           </button>

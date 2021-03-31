@@ -403,6 +403,18 @@
     {
       "date": "2021-02-15",
       "title": "Added a button next to the currently focused item that unfolds all child items recursively."
+    },
+    {
+      "date": "2021-03-28",
+      "title": "Published new version with a large number of behind-the-scenes code changes. No new features, hopefully no new bugs either."
+    },
+    {
+      "date": "2021-03-30",
+      "title": "Added 'sticky' drag-and-drop behavior to avoid accidental drags when you meant to click on the bullet."
+    },
+    {
+      "date": "2021-03-30",
+      "title": "Tweaked UI to avoid horizontal shift when scrollbar appears."
     }
   ]
 }

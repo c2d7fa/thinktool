@@ -14,8 +14,6 @@ export {
   forget,
   exists,
   parents,
-  isPage,
-  togglePage,
   children,
   hasChildren,
   addChild,

@@ -220,10 +220,7 @@ export type Event =
   | {tag: "paste"; paragraphs: string[]}
   | {tag: "openUrl"; url: string};
 
-// [TODO] This can only handle some cases. It can't handle actions, since that
-// requires opening a popup and waiting for user input.
-//
-// [TODO] Add unit tests for this function.
+// Some events are not handled by this function, e.g. opening URLs.
 export function handling(app: App, node: T.NodeRef) {
   return (ev: Event): {handled: boolean; app: App} => {
     if (ev.tag === "edit") {
@@ -237,6 +234,9 @@ export function handling(app: App, node: T.NodeRef) {
       return {handled: true, app: A.jump(app, ev.link)};
     } else if (ev.tag === "paste") {
       return {handled: true, app: onPastedParagraphs(app, node, ev.paragraphs)};
+    } else if (ev.tag === "action") {
+      const result = Ac.update(app, ev.action);
+      return {handled: result.url === undefined && result.undo === undefined, app: result.app};
     }
 
     return {handled: false, app};

@@ -3,7 +3,6 @@ import * as Misc from "@johv/miscjs";
 
 import * as T from "../tree";
 import * as U from "../tutorial";
-import {DragInfo} from "../context";
 import {App, merge, jump} from "../app";
 
 import Bullet from "./Bullet";
@@ -14,14 +13,6 @@ import {OtherParents} from "./OtherParents";
 
 export type ItemKind = "child" | "reference" | "opened-link" | "parent";
 export type ItemStatus = "expanded" | "collapsed" | "terminal";
-
-// [TODO] This feels like it belongs in a different module -- should we even
-// know about DragInfo at all?
-export function dragState(dragInfo: DragInfo, node: T.NodeRef): "source" | "target" | null {
-  if (dragInfo.current !== null && dragInfo.target?.id === node.id) return "target";
-  if (dragInfo.current?.id === node.id && dragInfo.target !== null) return "source";
-  return null;
-}
 
 export function click(app: App, node: T.NodeRef): App {
   const kind = T.kind(app.tree, node);

@@ -5,21 +5,15 @@ windows:
     panes:
       - shell_command:
           - cd src/web
-          - sleep 10
-          - npm ci
-          - npm run link-client
           - npm run dev
       - shell_command:
           - cd src/client
-          - npm ci
           - npm run watch
       - shell_command:
           - cd src/client
-          - sleep 10
           - npm run test-watch
       - shell_command:
           - cd src/client
-          - sleep 10
           - npm run check
   - layout: even-vertical
     panes:
@@ -30,7 +24,3 @@ windows:
       - shell_command:
           - cd src/server
           - npm run watch
-  - layout: even-vertical
-    panes:
-      - shell_command:
-          - tmux set-option mouse on
