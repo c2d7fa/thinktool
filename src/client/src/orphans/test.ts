@@ -74,3 +74,16 @@ describe("in a graph that consists of two disconnected trees", () => {
     expect(O.ids(O.scan(graph))).toEqual(Immutable.Set(["b0", "b1", "b2", "b3", "b4"]));
   });
 });
+
+describe("in a graph that consists of a loop", () => {
+  const graph = build([
+    ["0", {children: ["1"]}],
+    ["1", {children: ["2"]}],
+    ["2", {children: ["3"]}],
+    ["3", {children: ["0"]}],
+  ]);
+
+  test("there are no orphans", () => {
+    expect(O.ids(O.scan(graph))).toEqual(Immutable.Set([]));
+  });
+});
