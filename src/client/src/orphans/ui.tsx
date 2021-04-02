@@ -1,32 +1,19 @@
 import * as React from "react";
 
-import * as D from "../data";
-
-import * as OC from "./core";
-import * as OI from "./integration";
+import * as A from "../app";
 
 export type OrphanListItem = {title: string};
 
-export function useOrphanListPropsFromState(state: D.State): Parameters<typeof OrphanList>[0] {
-  const [items, setItems] = React.useState<OrphanListItem[]>([]);
-
-  function rescan() {
-    const graph = OI.fromState(state);
-    const orphans = OC.scan(graph);
-    setItems(
-      OC.ids(orphans)
-        .map((id) => ({title: graph.textContent(id)}))
-        .toArray(),
-    );
-  }
-
-  return {items, rescan};
+export function useOrphanListProps(app: A.App, updateApp: (f: (app: A.App) => A.App) => void) {
+  return {items: app.orphans};
 }
 
-export function OrphanList(props: {items: OrphanListItem[]; rescan(): void}) {
+export function OrphanList(props: {items: OrphanListItem[]}) {
+  if (props.items.length === 0)
+    return <div>If you have any items that are not accissble from the root item, they will be listed here.</div>;
+
   return (
     <div>
-      <button onClick={props.rescan}>rescan</button>
       <ul>
         {props.items.map((orphan) => (
           <li>{orphan.title}</li>

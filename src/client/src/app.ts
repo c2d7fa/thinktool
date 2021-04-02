@@ -3,6 +3,7 @@ import * as T from "./tree";
 import * as E from "./editing";
 import * as P from "./popup";
 import * as R from "./drag";
+import * as O from "./orphans";
 import {Communication} from "@thinktool/shared";
 
 import * as Tutorial from "./tutorial";
@@ -19,6 +20,7 @@ export interface App {
   popup: P.State;
   drag: R.Drag;
   tab: "outline" | "orphans";
+  orphans: {title: string}[];
 }
 
 export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: boolean}): App {
@@ -32,6 +34,7 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     popup: P.initial,
     drag: R.empty,
     tab: "outline",
+    orphans: [],
   };
 }
 
@@ -126,4 +129,13 @@ export function unfold(app: App, node: T.NodeRef): App {
   }
 
   return unfold_(app, node, [T.thing(app.tree, node)]);
+}
+
+export function switchTab(app: App, tab: "outline" | "orphans"): App {
+  if (tab === "orphans") {
+    const orphans = O.scan(app.state);
+    return merge(app, {tab, orphans});
+  }
+
+  return merge(app, {tab});
 }

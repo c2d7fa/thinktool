@@ -301,11 +301,11 @@ const updates = {
   },
 
   "view-outline"({app}: UpdateArgs) {
-    return {app: A.merge(app, {tab: "outline"})};
+    return {app: A.switchTab(app, "outline")};
   },
 
   "view-orphans"({app}: UpdateArgs) {
-    return {app: A.merge(app, {tab: "orphans"})};
+    return {app: A.switchTab(app, "orphans")};
   },
 };
 
