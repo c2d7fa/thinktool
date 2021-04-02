@@ -18,6 +18,7 @@ export interface App {
   editors: {[nodeId: number]: E.Editor};
   popup: P.State;
   drag: R.Drag;
+  tab: "outline" | "orphans";
 }
 
 export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: boolean}): App {
@@ -30,6 +31,7 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     editors: {},
     popup: P.initial,
     drag: R.empty,
+    tab: "outline",
   };
 }
 

@@ -331,7 +331,6 @@ function App_({
           isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
         />
       ) : null}
-      <OrphanList {...orphanListProps} />
       {!showSplash && (
         <Tutorial.TutorialBox
           state={context.tutorialState}
@@ -343,7 +342,7 @@ function App_({
         visible={context.changelogShown}
         hide={() => setAppState(context, A.merge(context, {changelogShown: false}))}
       />
-      <ThingOverview context={context} />
+      {context.tab === "orphans" ? <OrphanList {...orphanListProps} /> : <ThingOverview context={context} />}
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );

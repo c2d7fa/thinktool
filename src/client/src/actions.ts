@@ -33,7 +33,9 @@ export type ActionName =
   | "toggle"
   | "home"
   | "forum"
-  | "unfold";
+  | "unfold"
+  | "view-outline"
+  | "view-orphans";
 
 // Some actions can only be executed under some circumstances, for example if an
 // item is selected.
@@ -69,6 +71,10 @@ export function enabled(state: App, action: ActionName): boolean {
     return T.focused(state.tree) !== null;
   } else if (action === "tutorial") {
     return !Tutorial.isActive(state.tutorialState);
+  } else if (action === "view-outline") {
+    return state.tab !== "outline";
+  } else if (action === "view-orphans") {
+    return state.tab !== "orphans";
   } else {
     console.warn("enabled(..., %o): Did not know about action.", action);
     return true;
@@ -292,6 +298,14 @@ const updates = {
 
   "forum"({app}: UpdateArgs) {
     return {app, url: "https://old.reddit.com/r/thinktool/"};
+  },
+
+  "view-outline"({app}: UpdateArgs) {
+    return {app: A.merge(app, {tab: "outline"})};
+  },
+
+  "view-orphans"({app}: UpdateArgs) {
+    return {app: A.merge(app, {tab: "orphans"})};
   },
 };
 
