@@ -23,14 +23,14 @@ $toolbar-border: 1px solid #00000020;
 
 @mixin ui-font {
   font-family: "Recursive", monospace;
-  font-variation-settings: "MONO" 0.4, "CASL" 0;
+  font-variation-settings: "MONO" 0.8, "CASL" 0;
   letter-spacing: 0;
 }
 
 @mixin heading-font {
   font-family: "Recursive", sans-serif;
   font-weight: 800;
-  font-variation-settings: "MONO" 0.2, "CASL" 0.5;
+  font-variation-settings: "MONO" 0, "CASL" 0.8;
   letter-spacing: 0;
 }
 
