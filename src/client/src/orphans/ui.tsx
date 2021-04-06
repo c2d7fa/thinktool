@@ -24,17 +24,22 @@ export function useOrphanListProps(
 
 export function OrphanList(props: {items: OrphanListItem[]; onDestroy(thing: string): void}) {
   if (props.items.length === 0)
-    return <div>If you have any items that are not accissble from the root item, they will be listed here.</div>;
+    return (
+      <div className="inbox empty">
+        If you have any items that are not accessible from the root item, they will be listed here.
+      </div>
+    );
 
   return (
-    <div>
-      <ul>
-        {props.items.map((orphan) => (
-          <li>
-            {orphan.title} <button onClick={() => props.onDestroy(orphan.thing)}>Destroy</button>
-          </li>
-        ))}
-      </ul>
+    <div className="inbox">
+      {props.items.map((orphan) => (
+        <div className="inbox-item">
+          <span className="title">{orphan.title}</span>
+          <div className="buttons">
+            <button onClick={() => props.onDestroy(orphan.thing)}>Destroy</button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
