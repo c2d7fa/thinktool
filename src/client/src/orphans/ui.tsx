@@ -5,7 +5,9 @@ import {OtherParents} from "../ui/OtherParents";
 
 import * as A from "../app";
 import * as D from "../data";
+import * as P from "../popup";
 import * as O from ".";
+import Search from "../search";
 
 export type OrphanListItem = {
   title: string;
@@ -33,6 +35,20 @@ export function useOrphanListProps(
       updateApp((app) => O.destroy(app, thing));
     },
 
+    onAddParent(thing: string) {
+      updateApp((app) =>
+        A.merge(app, {
+          popup: P.open(app.popup, {
+            query: "",
+            search: new Search(app.state),
+            select(app, parent) {
+              return O.addParent(app, thing, parent);
+            },
+          }),
+        }),
+      );
+    },
+
     onVisit(thing: string) {
       updateApp((app) => A.jump(A.switchTab(app, "outline"), thing));
     },
@@ -43,6 +59,7 @@ export function OrphanList(props: {
   items: OrphanListItem[];
   onDestroy(thing: string): void;
   onVisit(thing: string): void;
+  onAddParent(thing: string): void;
 }) {
   if (props.items.length === 0)
     return (
@@ -68,6 +85,9 @@ export function OrphanList(props: {
           <div className="buttons">
             <button onClick={() => props.onVisit(orphan.thing)}>
               <span className="icon fas fa-fw fa-hand-point-right" /> Jump
+            </button>
+            <button onClick={() => props.onAddParent(orphan.thing)}>
+              <span className="icon fas fa-fw fa-chevron-circle-up" /> Connect
             </button>
             <button onClick={() => props.onDestroy(orphan.thing)}>
               <span className="icon fas fa-fw fa-trash" /> Destroy
