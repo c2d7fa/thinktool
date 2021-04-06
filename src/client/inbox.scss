@@ -1,3 +1,5 @@
+@use "../style/base";
+@use "../style/components";
 @use "general";
 
 .inbox {
@@ -10,13 +12,64 @@
 
   padding: 2em 0;
 
-  .inbox-item {
-    padding: 0.5em;
-
+  .inbox-card {
     border-radius: 6px;
-    background-color: #f0f0f0;
+    background-color: #f8f8f8;
     border: 1px solid #e0e0e0;
     box-shadow: 0px 3px 3px -3px #e0e0e0;
+
+    display: grid;
+    grid-template: "item" auto "buttons" auto / 1fr;
+
+    .card-item {
+      grid-area: item;
+
+      padding: 0.5em;
+
+      display: grid;
+      grid-template: "bullet title" auto / 20px 1fr;
+
+      .bullet {
+        grid-area: bullet;
+        margin-top: 3px;
+      }
+  
+      .title {
+        grid-area: title;
+        margin-left: 0.5em;
+      }  
+    }
+
+    .buttons {
+      grid-area: buttons;
+
+      padding: 0.25em 1em;
+      background-color: #f0f0f0;
+      border-top: 1px solid #e8e8e8;
+
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+      column-gap: 1.5em;
+
+      button {
+        white-space: nowrap;
+
+        font-size: base.$ui-small-font-size;
+      
+        color: #606060;
+        @include base.subtle-button(#606060);
+      
+        display: flex;
+        align-items: center;
+
+        border: 1px solid #00000020;
+
+        .icon {
+          @include components.icon-before;
+        }
+      }
+    }
   }
 
   &.empty {

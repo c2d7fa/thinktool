@@ -1,5 +1,7 @@
 import * as React from "react";
 
+import Bullet from "../ui/Bullet";
+
 import * as A from "../app";
 import * as D from "../data";
 import * as O from ".";
@@ -19,10 +21,18 @@ export function useOrphanListProps(
     onDestroy(thing: string) {
       updateApp((app) => O.destroy(app, thing));
     },
+
+    onVisit(thing: string) {
+      updateApp((app) => A.jump(A.switchTab(app, "outline"), thing));
+    },
   };
 }
 
-export function OrphanList(props: {items: OrphanListItem[]; onDestroy(thing: string): void}) {
+export function OrphanList(props: {
+  items: OrphanListItem[];
+  onDestroy(thing: string): void;
+  onVisit(thing: string): void;
+}) {
   if (props.items.length === 0)
     return (
       <div className="inbox empty">
@@ -33,10 +43,23 @@ export function OrphanList(props: {items: OrphanListItem[]; onDestroy(thing: str
   return (
     <div className="inbox">
       {props.items.map((orphan) => (
-        <div className="inbox-item">
-          <span className="title">{orphan.title}</span>
+        <div className="inbox-card">
+          <div className="card-item">
+            <Bullet
+              status="collapsed"
+              beginDrag={() => {}}
+              toggle={() => props.onVisit(orphan.thing)}
+              onMiddleClick={() => props.onVisit(orphan.thing)}
+            />
+            <span className="title">{orphan.title}</span>
+          </div>
           <div className="buttons">
-            <button onClick={() => props.onDestroy(orphan.thing)}>Destroy</button>
+            <button onClick={() => props.onVisit(orphan.thing)}>
+              <span className="icon fas fa-fw fa-hand-point-right" /> Jump
+            </button>
+            <button onClick={() => props.onDestroy(orphan.thing)}>
+              <span className="icon fas fa-fw fa-trash" /> Destroy
+            </button>
           </div>
         </div>
       ))}
