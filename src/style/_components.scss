@@ -24,8 +24,8 @@
   box-shadow: base.$overlay-box-shadow-color 0 0 base.$overlay-box-shadow-radius;
 }
 
-$inactive-weight: 350;
-$active-weight: 475;
+$inactive-weight: 550;
+$active-weight: 550;
 
 // Just the "foreground" (e.g. font)
 @mixin button {
@@ -54,7 +54,7 @@ $active-weight: 475;
   margin: 0;
   white-space: nowrap;
   font-size: 0.8em;
-  font-weight: 400;
+  font-weight: $active-weight;
   cursor: default;
 }
 

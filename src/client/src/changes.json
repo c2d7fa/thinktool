@@ -415,6 +415,10 @@
     {
       "date": "2021-03-30",
       "title": "Tweaked UI to avoid horizontal shift when scrollbar appears."
+    },
+    {
+      "date": "2021-04-07",
+      "title": "Started working on an 'inbox' view that can be used to find all items that don't connect back to the root item."
     }
   ]
 }

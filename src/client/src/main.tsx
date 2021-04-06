@@ -35,6 +35,7 @@ import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
 import {usePropRef} from "./react-utils";
 import * as SelectedItem from "./ui/SelectedItem";
+import {OrphanList, useOrphanListProps} from "./orphans/ui";
 
 function useContext({
   initialState,
@@ -339,7 +340,11 @@ function App_({
         visible={context.changelogShown}
         hide={() => setAppState(context, A.merge(context, {changelogShown: false}))}
       />
-      <ThingOverview context={context} />
+      {context.tab === "orphans" ? (
+        <OrphanList {...useOrphanListProps(context, updateApp)} />
+      ) : (
+        <ThingOverview context={context} />
+      )}
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );

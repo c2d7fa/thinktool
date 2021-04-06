@@ -96,6 +96,8 @@ export default function Toolbar(props: {
     "tutorial": {description: "Go through the tutorial again.", icon: "info", label: "Tutorial"},
     "changelog": {description: "Show list of updates to Thinktool.", icon: "list", label: "Updates"},
     "unfold": {description: "Recursively show all children of selected item.", icon: "stream", label: "Unfold"},
+    "view-outline": {description: "Switch to the outline view", icon: "list-alt", label: "Outline"},
+    "view-orphans": {description: "Switch to the inbox view, which shows all items that aren't part of the outline", icon: "sticky-note", label: "Inbox"},
   }
 
   function lookup(action: keyof typeof knownActions) {
@@ -139,6 +141,10 @@ export default function Toolbar(props: {
           <ToolbarButton {...lookup("forum")}/>
           <ToolbarButton {...lookup("tutorial")}/>
           <ToolbarButton {...lookup("changelog")}/>
+      </ToolbarGroup>
+      <ToolbarGroup title="View">
+        <ToolbarButton {...lookup("view-outline")}/>
+        <ToolbarButton {...lookup("view-orphans")}/>
       </ToolbarGroup>
     </div>
   );

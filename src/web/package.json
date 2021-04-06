@@ -10,7 +10,8 @@
   "scripts": {
     "build-static": "cp ../static/icon.png public && sass index.scss public/index.css && cp node_modules/@thinktool/client/dist/app.css public",
     "dev": "npm run build-static && next dev",
-    "build": "npm run build-static && next build && next export"
+    "build": "npm run build-static && next build && next export",
+    "watch-style": "npx sass --watch ../client/app.scss public/app.css"
   },
   "dependencies": {
     "@thinktool/client": "^3.6.3",

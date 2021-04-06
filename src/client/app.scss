@@ -1,10 +1,10 @@
 @use "../style/components";
 @use "../style/base";
 
-@use "tutorial";
+@use "general";
 
-$main-bg-color: #fcfcfc;
-$outline-width: 80ex;
+@use "tutorial";
+@use "inbox";
 
 /* #region General components */
 
@@ -40,7 +40,7 @@ body {
 }
 
 .app {
-  background-color: $main-bg-color;
+  background-color: general.$main-bg-color;
 
   /* Needs to be clickable, so it can handle focus. */
   outline: none;
@@ -55,7 +55,7 @@ body {
 }
 
 .parents {
-  max-width: $outline-width;
+  max-width: general.$outline-width;
   width: 100%;
 }
 
@@ -70,7 +70,7 @@ body {
 
 .overview-main {
   margin: 1rem 0;
-  max-width: $outline-width;
+  max-width: general.$outline-width;
   width: 100%;
 
   .root {
@@ -105,7 +105,7 @@ body {
 }
 
 .references {
-  max-width: $outline-width;
+  max-width: general.$outline-width;
   width: 100%;
 
   color: #404040;
@@ -1006,7 +1006,7 @@ button.suggested-button {
   border-radius: 6px;
   width: 100%;
   height: 15rem;
-  background-color: $main-bg-color;
+  background-color: general.$main-bg-color;
   border: 1px solid #e0e0e0;
   padding: 1px;
 }

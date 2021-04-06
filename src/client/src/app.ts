@@ -3,6 +3,7 @@ import * as T from "./tree";
 import * as E from "./editing";
 import * as P from "./popup";
 import * as R from "./drag";
+import * as O from "./orphans";
 import {Communication} from "@thinktool/shared";
 
 import * as Tutorial from "./tutorial";
@@ -18,6 +19,8 @@ export interface App {
   editors: {[nodeId: number]: E.Editor};
   popup: P.State;
   drag: R.Drag;
+  tab: "outline" | "orphans";
+  orphans: O.Orphans;
 }
 
 export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: boolean}): App {
@@ -30,6 +33,8 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     editors: {},
     popup: P.initial,
     drag: R.empty,
+    tab: "outline",
+    orphans: O.scan(O.fromState(data)),
   };
 }
 
@@ -124,4 +129,15 @@ export function unfold(app: App, node: T.NodeRef): App {
   }
 
   return unfold_(app, node, [T.thing(app.tree, node)]);
+}
+
+export function switchTab(app: App, tab: "outline" | "orphans"): App {
+  if (tab === "orphans") {
+    const orphans = O.scan(O.fromState(app.state));
+    return merge(app, {tab, orphans});
+  } else if (tab === "outline") {
+    return merge(app, {tab, tree: T.fromRoot(app.state, "0")});
+  }
+
+  throw "unknown tab!";
 }
