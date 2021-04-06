@@ -1,12 +1,18 @@
 import * as React from "react";
 
 import Bullet from "../ui/Bullet";
+import {OtherParents} from "../ui/OtherParents";
 
 import * as A from "../app";
 import * as D from "../data";
 import * as O from ".";
 
-export type OrphanListItem = {title: string; thing: string};
+export type OrphanListItem = {
+  title: string;
+  thing: string;
+  parents: {id: string; text: string}[];
+  hasChildren: boolean;
+};
 
 export function useOrphanListProps(
   app: A.App,
@@ -14,7 +20,12 @@ export function useOrphanListProps(
 ): Parameters<typeof OrphanList>[0] {
   return {
     items: O.ids(app.orphans)
-      .map((thing) => ({title: D.contentText(app.state, thing), thing}))
+      .map((thing) => ({
+        title: D.contentText(app.state, thing),
+        thing,
+        parents: D.parents(app.state, thing).map((p) => ({id: p, text: D.contentText(app.state, p)})),
+        hasChildren: D.hasChildren(app.state, thing),
+      }))
       .toArray()
       .sort((a, b) => a.title.localeCompare(b.title)),
 
@@ -45,8 +56,9 @@ export function OrphanList(props: {
       {props.items.map((orphan) => (
         <div className="inbox-card">
           <div className="card-item">
+            <OtherParents otherParents={orphan.parents} click={props.onVisit} altClick={props.onVisit} />
             <Bullet
-              status="collapsed"
+              status={orphan.hasChildren ? "collapsed" : "terminal"}
               beginDrag={() => {}}
               toggle={() => props.onVisit(orphan.thing)}
               onMiddleClick={() => props.onVisit(orphan.thing)}
