@@ -20,7 +20,7 @@ export interface App {
   popup: P.State;
   drag: R.Drag;
   tab: "outline" | "orphans";
-  orphans: {title: string}[];
+  orphans: O.Orphans;
 }
 
 export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: boolean}): App {
@@ -34,7 +34,7 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     popup: P.initial,
     drag: R.empty,
     tab: "outline",
-    orphans: [],
+    orphans: O.scan(O.fromState(data)),
   };
 }
 
@@ -133,7 +133,7 @@ export function unfold(app: App, node: T.NodeRef): App {
 
 export function switchTab(app: App, tab: "outline" | "orphans"): App {
   if (tab === "orphans") {
-    const orphans = O.scan(app.state);
+    const orphans = O.scan(O.fromState(app.state));
     return merge(app, {tab, orphans});
   }
 

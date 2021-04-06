@@ -1,11 +1,20 @@
 import * as React from "react";
 
 import * as A from "../app";
+import * as D from "../data";
+import * as O from ".";
 
-export type OrphanListItem = {title: string};
+export type OrphanListItem = {title: string; thing: string};
 
-export function useOrphanListProps(app: A.App, updateApp: (f: (app: A.App) => A.App) => void) {
-  return {items: app.orphans};
+export function useOrphanListProps(
+  app: A.App,
+  updateApp: (f: (app: A.App) => A.App) => void,
+): Parameters<typeof OrphanList>[0] {
+  return {
+    items: O.ids(app.orphans)
+      .map((thing) => ({title: D.contentText(app.state, thing), thing}))
+      .toArray(),
+  };
 }
 
 export function OrphanList(props: {items: OrphanListItem[]}) {
