@@ -13,11 +13,16 @@ export function useOrphanListProps(
   return {
     items: O.ids(app.orphans)
       .map((thing) => ({title: D.contentText(app.state, thing), thing}))
-      .toArray(),
+      .toArray()
+      .sort((a, b) => a.title.localeCompare(b.title)),
+
+    onDestroy(thing: string) {
+      updateApp((app) => O.destroy(app, thing));
+    },
   };
 }
 
-export function OrphanList(props: {items: OrphanListItem[]}) {
+export function OrphanList(props: {items: OrphanListItem[]; onDestroy(thing: string): void}) {
   if (props.items.length === 0)
     return <div>If you have any items that are not accissble from the root item, they will be listed here.</div>;
 
@@ -25,7 +30,9 @@ export function OrphanList(props: {items: OrphanListItem[]}) {
     <div>
       <ul>
         {props.items.map((orphan) => (
-          <li>{orphan.title}</li>
+          <li>
+            {orphan.title} <button onClick={() => props.onDestroy(orphan.thing)}>Destroy</button>
+          </li>
         ))}
       </ul>
     </div>

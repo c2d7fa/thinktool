@@ -135,7 +135,9 @@ export function switchTab(app: App, tab: "outline" | "orphans"): App {
   if (tab === "orphans") {
     const orphans = O.scan(O.fromState(app.state));
     return merge(app, {tab, orphans});
+  } else if (tab === "outline") {
+    return merge(app, {tab, tree: T.fromRoot(app.state, "0")});
   }
 
-  return merge(app, {tab});
+  throw "unknown tab!";
 }

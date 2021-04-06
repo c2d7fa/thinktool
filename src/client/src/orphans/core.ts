@@ -43,3 +43,7 @@ export function scan(graph: Graph): Orphans {
 export function ids(orphans: Orphans): Immutable.Set<Id> {
   return orphans[_ids];
 }
+
+export function removeOrphanWithoutRefresh(orphans: Orphans, id: string): Orphans {
+  return {[_ids]: orphans[_ids].filter((id_) => id_ !== id)};
+}
