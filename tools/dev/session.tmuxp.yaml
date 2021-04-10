@@ -29,3 +29,6 @@ windows:
       - shell_command:
           - cd src/web
           - npm run watch-style
+      - shell_command:
+          - cd src/search
+          - npm run watch

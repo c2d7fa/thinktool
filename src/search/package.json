@@ -1,0 +1,22 @@
+{
+  "name": "@thinktool/search",
+  "version": "0.1.0",
+  "description": "Package for handling search in Thinktool",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/c2d7fa/thinktool.git"
+  },
+  "devDependencies": {
+    "typescript": "^4.2.4"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "files": [
+    "dist/"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts"
+}

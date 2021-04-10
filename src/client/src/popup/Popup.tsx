@@ -4,9 +4,8 @@ import {choose} from "@johv/miscjs";
 
 import * as P from ".";
 
-import Search, {Result} from "../search";
+import {Result} from "@thinktool/search";
 
-import * as A from "../app";
 import {App, merge} from "../app";
 
 function useFocusInputRef(): React.RefObject<HTMLInputElement> {

@@ -32,6 +32,7 @@
   "dependencies": {
     "@johv/immutable-extras": "^1.1.1",
     "@johv/miscjs": "^1.6.0",
+    "@thinktool/search": "^0.1.0",
     "@thinktool/shared": "^2.0.0",
     "fuse.js": "^6.4.6",
     "immutable": "^4.0.0-rc.12",

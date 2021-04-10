@@ -1,8 +1,7 @@
 import Fuse from "fuse.js";
 
+import {Result} from "@thinktool/search";
 import * as D from "./data";
-
-export type Result = {thing: string; content: string};
 
 export default class Search {
   private fuse: Fuse<{thing: string; content: string}>;

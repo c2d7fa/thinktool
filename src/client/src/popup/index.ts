@@ -1,7 +1,8 @@
 import * as A from "../app";
 import * as D from "../data";
 
-import Search, {Result} from "../search";
+import Search from "../search";
+import {Result} from "@thinktool/search";
 
 const _isOpen = Symbol("active");
 const _query = Symbol("query");

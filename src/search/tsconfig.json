@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "strict": true,
+    "outDir": "dist",
+    "declaration": true
+  },
+  "include": ["src/**/*"]
+}
