@@ -6,6 +6,10 @@ type Item = {thing: string; content: string};
 
 let fuse: Fuse<Item> = new Fuse([]);
 
+let timeout: number | null = null;
+let received = "";
+let responded = "";
+
 self.onmessage = (ev: MessageEvent) => {
   if (ev.data.tag === "initialize") {
     fuse = new Fuse<{thing: string; content: string}>(ev.data.data, {
@@ -14,10 +18,17 @@ self.onmessage = (ev: MessageEvent) => {
       ignoreLocation: true,
     });
   } else if (ev.data.tag === "query") {
-    const results = fuse
-      .search(ev.data.text, {limit: ev.data.limit})
-      .map((match) => ({content: match.item.content, thing: match.item.thing}));
-    postMessage({tag: "results", results});
+    received = ev.data.text;
+
+    if (timeout !== null) clearTimeout(timeout);
+    timeout = (setTimeout(() => {
+      if (received === responded) return;
+      responded = received;
+      const results = fuse
+        .search(responded, {limit: ev.data.limit})
+        .map((match) => ({content: match.item.content, thing: match.item.thing}));
+      postMessage({tag: "results", results});
+    }, 100) as any) as number; // TypeScript thinks this is Node.
   }
 };
 
