@@ -1,25 +1,14 @@
-import Fuse from "fuse.js";
-
-import {Result} from "@thinktool/search";
+import * as S from "@thinktool/search";
 import * as D from "./data";
 
 export default class Search {
-  private fuse: Fuse<{thing: string; content: string}>;
+  private search: S.Search;
 
   constructor(state: D.State) {
-    this.fuse = new Fuse<{thing: string; content: string}>(
-      D.allThings(state).map((thing) => ({thing, content: D.contentText(state, thing)})),
-      {keys: ["content"], findAllMatches: true, ignoreLocation: true},
-    );
+    this.search = new S.Search(D.allThings(state).map((thing) => ({thing, content: D.contentText(state, thing)})));
   }
 
-  // For large queries, the search can be quite slow. When this happens, it
-  // blocks the UI. Unfortunately, just making this method async is not enough
-  // to fix this issue, since all the work still happens at once in that case.
-  // If we wanted to fix this, I think we should look into Web Workers.
-  query(text: string, limit: number): Result[] {
-    return this.fuse
-      .search(text, {limit})
-      .map((match) => ({content: match.item.content, thing: match.item.thing}));
+  query(text: string, limit: number): S.Result[] {
+    return this.search.query(text, limit);
   }
 }

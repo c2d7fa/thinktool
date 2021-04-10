@@ -18,5 +18,8 @@
     "dist/"
   ],
   "main": "dist/index.js",
-  "types": "dist/index.d.ts"
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "fuse.js": "^6.4.6"
+  }
 }
