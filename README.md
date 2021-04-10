@@ -29,6 +29,7 @@ Source code:
 | -------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/src/shared/` | Code shared between client and server.             | [![@thinktool/shared](https://img.shields.io/npm/v/@thinktool/shared?label=@thinktool/shared)](https://www.npmjs.com/package/@thinktool/shared) |
 | `/src/client/` | Client code shared between web and desktop client. | [![@thinktool/client](https://img.shields.io/npm/v/@thinktool/client?label=@thinktool/client)](https://www.npmjs.com/package/@thinktool/client) |
+| `/src/search/` | Code for Web Worker that handles search            | [![@thinktool/search](https://img.shields.io/npm/v/@thinktool/search?label=@thinktool/search)](https://www.npmjs.com/package/@thinktool/search) |
 | `/src/server/` | Code for dynamic Node.js server.                   |
 | `/src/web/`    | Code specific to web client.                       |
 | `/src/desktop` | Code specific to desktop client.                   |
