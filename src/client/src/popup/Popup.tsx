@@ -3,10 +3,9 @@ import * as ReactDOM from "react-dom";
 import {choose} from "@johv/miscjs";
 
 import * as P from ".";
+import {Result, Search} from "@thinktool/search";
 
-import Search, {Result} from "../search";
-
-import * as A from "../app";
+import * as D from "../data";
 import {App, merge} from "../app";
 
 function useFocusInputRef(): React.RefObject<HTMLInputElement> {
@@ -107,13 +106,31 @@ export function usePopup(app: App, updateApp: (f: (app: App) => App) => void) {
     updateApp((app) => merge(app, {popup: f(app.popup)}));
   }
 
+  // [TODO] The way we listen for updates feels hacky, but I don't know how to
+  // improve it. It would be nice if we didn't have to use 'setTimeout' below
+  // (in 'setQuery'), and if we could manage the actual searching logic
+  // somewhere else; it doesn't feel like it belongs in a UI component.
+
+  const search = React.useMemo<Search>(() => {
+    const search = new Search(
+      D.allThings(app.state).map((thing) => ({thing, content: D.contentText(app.state, thing)})),
+    );
+    search.on("results", (results) => {
+      updateState((state) => P.receiveResults(state, results));
+    });
+    return search;
+  }, [P.isOpen(app.popup)]);
+
   const component = (() => {
     if (!P.isOpen(app.popup)) return null;
 
     return (
       <Popup
         query={P.query(app.popup)}
-        setQuery={(query) => updateState((state) => P.search(state, query))}
+        setQuery={(query) => {
+          updateState((state) => P.setQuery(state, query));
+          setTimeout(() => search.query(query, 25), 20);
+        }}
         results={P.results(app.popup)}
         loadMoreResults={() => {}}
         selectActive={() => updateApp((app) => P.selectActive(app))}

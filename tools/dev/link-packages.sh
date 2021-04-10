@@ -6,14 +6,20 @@ set -eux -o pipefail
 # we make a change, so instead we use 'npm link' to have changes reflected
 # immediately. See the README for more information.
 
-cd src/client
+cd src/search
+npm ci
+sudo npm link
+
+cd ../client
 npm ci
 sudo npm link
 cd node_modules/react
 sudo npm link
 cd ../react-dom
 sudo npm link
+cd ../..
+npm link @thinktool/search
 
-cd ../../../web
+cd ../web
 npm ci
 npm link @thinktool/client react react-dom
