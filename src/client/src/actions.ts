@@ -1,10 +1,8 @@
 import * as T from "./tree";
-import * as D from "./data";
 import * as P from "./popup";
 import * as Tutorial from "./tutorial";
 import * as S from "./shortcuts";
 import * as Goal from "./goal";
-import Search from "./search";
 import {NodeRef} from "./tree";
 import {App} from "./app";
 import * as A from "./app";
@@ -124,7 +122,6 @@ function withPopup(app: A.App, useSelection: (app: A.App, thing: string) => A.Ap
     app: A.merge(app, {
       popup: P.open(app.popup, {
         query: A.selectedText(app),
-        search: new Search(app.state),
         select: useSelection,
       }),
     }),

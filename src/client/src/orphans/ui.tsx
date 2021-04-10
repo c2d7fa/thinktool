@@ -7,7 +7,6 @@ import * as A from "../app";
 import * as D from "../data";
 import * as P from "../popup";
 import * as O from ".";
-import Search from "../search";
 
 export type OrphanListItem = {
   title: string;
@@ -40,7 +39,6 @@ export function useOrphanListProps(
         A.merge(app, {
           popup: P.open(app.popup, {
             query: "",
-            search: new Search(app.state),
             select(app, parent) {
               return O.addParent(app, thing, parent);
             },
