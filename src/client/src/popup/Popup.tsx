@@ -116,7 +116,15 @@ export function usePopup(app: App, updateApp: (f: (app: App) => App) => void) {
       D.allThings(app.state).map((thing) => ({thing, content: D.contentText(app.state, thing)})),
     );
     search.on("results", (results) => {
-      updateState((state) => P.receiveResults(state, results));
+      updateApp((app) => {
+        return merge(app, {
+          popup: P.receiveResults(
+            app.popup,
+            app.state,
+            results.map((result) => result.thing),
+          ),
+        });
+      });
     });
     return search;
   }, [P.isOpen(app.popup)]);

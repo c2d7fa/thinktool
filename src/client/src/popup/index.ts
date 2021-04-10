@@ -48,12 +48,12 @@ export function setQuery(state: State, query: string): State {
   return {...state, [_query]: query};
 }
 
-export function receiveResults(state: State, results: Result[]): State {
+export function receiveResults(state: State, data: D.State, things: string[]): State {
   if (!isOpen(state)) {
     console.warn("Tried to set results, but popup isn't open.");
     return state;
   }
-  return {...state, [_results]: results};
+  return {...state, [_results]: things.map((thing) => ({thing, content: D.contentText(data, thing)}))};
 }
 
 export function results(state: State): Result[] {
