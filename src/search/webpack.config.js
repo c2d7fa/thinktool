@@ -1,9 +1,17 @@
 const path = require("path");
 
 module.exports = {
+  mode: "production",
   entry: "./src/index.ts",
   module: {
     rules: [
+      {
+        test: /\.worker\.ts$/,
+        loader: "worker-loader",
+        options: {
+          inline: "no-fallback",
+        },
+      },
       {
         test: /\.ts$/,
         use: "ts-loader",
@@ -19,11 +27,6 @@ module.exports = {
     filename: "index.js",
     library: {
       type: "commonjs",
-    }
-  },
-  externals: {
-    "fuse.js": {
-      commonjs: "fuse.js",
     },
   },
 };

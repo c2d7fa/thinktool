@@ -1,25 +1,27 @@
-import Fuse from "fuse.js";
+import SearchWorker from "./search.worker";
+
+let worker = (null as any) as Worker;
 
 export type Result = {thing: string; content: string};
 
 export class Search {
-  private fuse: Fuse<{thing: string; content: string}>;
   private resultsCallbacks: ((results: Result[]) => void)[];
 
   constructor(data: {thing: string; content: string}[]) {
+    if (worker === null) worker = new SearchWorker();
+
     this.resultsCallbacks = [];
-    this.fuse = new Fuse<{thing: string; content: string}>(data, {
-      keys: ["content"],
-      findAllMatches: true,
-      ignoreLocation: true,
-    });
+
+    worker.postMessage({tag: "initialize", data});
+    worker.onmessage = (ev: MessageEvent) => {
+      if (ev.data.tag === "results") {
+        this.emitResults(ev.data.results);
+      }
+    };
   }
 
   query(text: string, limit: number): void {
-    const results = this.fuse
-      .search(text, {limit})
-      .map((match) => ({content: match.item.content, thing: match.item.thing}));
-    this.emitResults(results);
+    worker.postMessage({tag: "query", text, limit});
   }
 
   on(event: "results", callback: (results: Result[]) => void): void {
