@@ -21,18 +21,21 @@ function useFocusInputRef(): React.RefObject<HTMLInputElement> {
 
 type Result = {thing: string; content: E.EditorContent};
 
-function ResultListItem(props: {result: Result; selected: boolean; onSelect: () => void}) {
-  // Using onPointerDown instead of onClick to circumvent parent getting blur
-  // event before we get our events.
-  return (
-    <li
-      onPointerDown={props.onSelect}
-      className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}
-    >
-      <StaticContent content={props.result.content} />
-    </li>
-  );
-}
+const ResultListItem = React.memo(
+  function (props: {result: Result; selected: boolean; onSelect: () => void}) {
+    // Using onPointerDown instead of onClick to circumvent parent getting blur
+    // event before we get our events.
+    return (
+      <li
+        onPointerDown={props.onSelect}
+        className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}
+      >
+        <StaticContent content={props.result.content} />
+      </li>
+    );
+  },
+  (prev, next) => prev.result.thing === next.result.thing && prev.selected === next.selected,
+);
 
 function Popup(props: {
   query: string;
