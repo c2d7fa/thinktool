@@ -423,6 +423,14 @@
     {
       "date": "2021-04-11",
       "title": "Improved responsiveness of search popup, especially for long queries."
+    },
+    {
+      "date": "2021-04-12",
+      "title": "Search popup now shows links and parents of items."
+    },
+    {
+      "date": "2021-04-12",
+      "title": "General performance improvements, including more optimizations for search popup."
     }
   ]
 }
