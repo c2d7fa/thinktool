@@ -3,10 +3,13 @@ import * as ReactDOM from "react-dom";
 import {choose} from "@johv/miscjs";
 
 import * as P from ".";
-import {Result, Search} from "@thinktool/search";
+import {Search} from "@thinktool/search";
 
 import * as D from "../data";
 import {App, merge} from "../app";
+
+import {StaticContent} from "../ui/Editor";
+import * as E from "../editing";
 
 function useFocusInputRef(): React.RefObject<HTMLInputElement> {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -16,6 +19,8 @@ function useFocusInputRef(): React.RefObject<HTMLInputElement> {
   return inputRef;
 }
 
+type Result = {thing: string; content: E.EditorContent};
+
 function ResultListItem(props: {result: Result; selected: boolean; onSelect: () => void}) {
   // Using onPointerDown instead of onClick to circumvent parent getting blur
   // event before we get our events.
@@ -24,9 +29,7 @@ function ResultListItem(props: {result: Result; selected: boolean; onSelect: () 
       onPointerDown={props.onSelect}
       className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}
     >
-      <span className="link-autocomplete-popup-result-content">
-        {props.result.content} <span className="link-autocomplete-popup-id">{props.result.thing}</span>
-      </span>
+      <StaticContent content={props.result.content} />
     </li>
   );
 }

@@ -1,13 +1,14 @@
 import * as A from "../app";
 import * as D from "../data";
-
-import {Result} from "@thinktool/search";
+import * as E from "../editing";
 
 const _isOpen = Symbol("active");
 const _query = Symbol("query");
 const _results = Symbol("results");
 const _activeIndex = Symbol("activeIndex");
 const _select = Symbol("activeIndex");
+
+type Result = {thing: string; content: E.EditorContent};
 
 export type State =
   | {[_isOpen]: false}
@@ -53,7 +54,7 @@ export function receiveResults(state: State, data: D.State, things: string[]): S
     console.warn("Tried to set results, but popup isn't open.");
     return state;
   }
-  return {...state, [_results]: things.map((thing) => ({thing, content: D.contentText(data, thing)}))};
+  return {...state, [_results]: things.map((thing) => ({thing, content: E.loadContent(data, thing)}))};
 }
 
 export function results(state: State): Result[] {

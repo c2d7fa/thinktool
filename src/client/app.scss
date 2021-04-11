@@ -647,6 +647,10 @@ a.plain-text-link:hover {
   padding: 0.5rem 2rem;
   border-bottom: 1px solid #00000018;
 
+  .editor {
+    cursor: pointer;
+  }
+
   &:hover {
     background-color: #00000008;
   }
@@ -679,15 +683,6 @@ a.plain-text-link:hover {
 .link-autocomplete-popup input:hover + .create-label,
 .link-autocomplete-popup input.selected-result + .create-label {
   color: #00000080;
-}
-
-.link-autocomplete-popup-id {
-  @include components.item-id;
-  margin-left: 1em;
-}
-
-.link-autocomplete-popup-id::before {
-  content: "#";
 }
 
 /* #endregion */
