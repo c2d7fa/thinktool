@@ -10,6 +10,7 @@ import {App, merge} from "../app";
 
 import {StaticContent} from "../ui/Editor";
 import Bullet from "../ui/Bullet";
+import {OtherParents} from "../ui/OtherParents";
 
 function useFocusInputRef(): React.RefObject<HTMLInputElement> {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -28,6 +29,7 @@ const ResultListItem = React.memo(
         onPointerDown={props.onSelect}
         className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}
       >
+        <OtherParents otherParents={props.result.parents} click={() => {}} altClick={() => {}} />
         <Bullet
           beginDrag={() => {}}
           status={props.result.hasChildren ? "collapsed" : "terminal"}

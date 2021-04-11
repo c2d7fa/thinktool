@@ -8,7 +8,12 @@ const _results = Symbol("results");
 const _activeIndex = Symbol("activeIndex");
 const _select = Symbol("activeIndex");
 
-export type Result = {thing: string; content: E.EditorContent; hasChildren: boolean};
+export type Result = {
+  thing: string;
+  content: E.EditorContent;
+  hasChildren: boolean;
+  parents: {id: string; text: string}[];
+};
 
 export type State =
   | {[_isOpen]: false}
@@ -60,6 +65,7 @@ export function receiveResults(state: State, data: D.State, things: string[]): S
       thing,
       content: E.loadContent(data, thing),
       hasChildren: D.hasChildrenOrReferences(data, thing),
+      parents: D.parents(data, thing).map((parent) => ({id: parent, text: D.contentText(data, parent)})),
     })),
   };
 }
