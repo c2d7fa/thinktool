@@ -52,7 +52,7 @@ function useContext({
   openExternalUrl(url: string): void;
   receiver: Receiver<Message>;
 }): Context {
-  const [innerApp, setInnerApp] = React.useState<A.App>(
+  const [innerApp, setInnerApp] = React.useState<A.App>(() =>
     A.from(initialState, T.fromRoot(initialState, extractThingFromURL()), {
       tutorialFinished: initialTutorialFinished,
     }),
