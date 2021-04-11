@@ -9,7 +9,7 @@ import * as D from "../data";
 import {App, merge} from "../app";
 
 import {StaticContent} from "../ui/Editor";
-import * as E from "../editing";
+import Bullet from "../ui/Bullet";
 
 function useFocusInputRef(): React.RefObject<HTMLInputElement> {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -19,10 +19,8 @@ function useFocusInputRef(): React.RefObject<HTMLInputElement> {
   return inputRef;
 }
 
-type Result = {thing: string; content: E.EditorContent};
-
 const ResultListItem = React.memo(
-  function (props: {result: Result; selected: boolean; onSelect: () => void}) {
+  function (props: {result: P.Result; selected: boolean; onSelect: () => void}) {
     // Using onPointerDown instead of onClick to circumvent parent getting blur
     // event before we get our events.
     return (
@@ -30,6 +28,12 @@ const ResultListItem = React.memo(
         onPointerDown={props.onSelect}
         className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}
       >
+        <Bullet
+          beginDrag={() => {}}
+          status={props.result.hasChildren ? "collapsed" : "terminal"}
+          toggle={() => {}}
+          onMiddleClick={() => {}}
+        />
         <StaticContent content={props.result.content} />
       </li>
     );
@@ -42,7 +46,7 @@ function Popup(props: {
   setQuery(query: string): void;
 
   loadMoreResults(): void;
-  results: Result[];
+  results: P.Result[];
 
   selectActive(): void;
   selectThing(thing: string): void;

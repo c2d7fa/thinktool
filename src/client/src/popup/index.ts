@@ -8,7 +8,7 @@ const _results = Symbol("results");
 const _activeIndex = Symbol("activeIndex");
 const _select = Symbol("activeIndex");
 
-type Result = {thing: string; content: E.EditorContent};
+export type Result = {thing: string; content: E.EditorContent; hasChildren: boolean};
 
 export type State =
   | {[_isOpen]: false}
@@ -54,7 +54,14 @@ export function receiveResults(state: State, data: D.State, things: string[]): S
     console.warn("Tried to set results, but popup isn't open.");
     return state;
   }
-  return {...state, [_results]: things.map((thing) => ({thing, content: E.loadContent(data, thing)}))};
+  return {
+    ...state,
+    [_results]: things.map((thing) => ({
+      thing,
+      content: E.loadContent(data, thing),
+      hasChildren: D.hasChildrenOrReferences(data, thing),
+    })),
+  };
 }
 
 export function results(state: State): Result[] {

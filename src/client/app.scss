@@ -123,9 +123,7 @@ body {
   padding-left: 2rem;
 }
 
-.item {
-  margin-bottom: 1rem;
-
+@mixin item-grid {
   display: grid;
   grid: "empty parents" auto "bullet item" auto / 20px 1fr;
   gap: 1px 1rem;
@@ -141,6 +139,11 @@ body {
   .content {
     grid-area: item;
   }
+}
+
+.item {
+  margin-bottom: 1rem;
+  @include item-grid;
 }
 
 /* #endregion */
@@ -646,6 +649,8 @@ a.plain-text-link:hover {
   cursor: pointer;
   padding: 0.5rem 2rem;
   border-bottom: 1px solid #00000018;
+
+  @include item-grid;
 
   .editor {
     cursor: pointer;
