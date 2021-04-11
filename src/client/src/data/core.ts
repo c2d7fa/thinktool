@@ -4,7 +4,7 @@ import {BinaryRelation} from "@johv/immutable-extras";
 import * as Shared from "@thinktool/shared";
 type FullStateResponse = Shared.Communication.FullStateResponse;
 
-import {Content, linksInContent} from "./content";
+import {backreferences, Content, linksInContent} from "./content";
 import {State, Connection} from "./representation";
 
 //#region Fundamental operations
@@ -218,6 +218,10 @@ export function children(state: State, thing: string): string[] {
 
 export function hasChildren(things: State, thing: string): boolean {
   return children(things, thing).length !== 0;
+}
+
+export function hasChildrenOrReferences(things: State, thing: string): boolean {
+  return hasChildren(things, thing) || backreferences(things, thing).length > 0;
 }
 
 export function addChild(

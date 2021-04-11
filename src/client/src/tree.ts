@@ -260,9 +260,8 @@ export function expand(state: D.State, tree: Tree, node: NodeRef): Tree {
   }
 }
 
-// Nodes without children (including backreferences and other parents) are always expanded.
 function shouldAlwaysBeExpanded(state: D.State, tree: Tree, node: NodeRef): boolean {
-  return !D.hasChildren(state, thing(tree, node)) && D.backreferences(state, thing(tree, node)).length === 0;
+  return !D.hasChildrenOrReferences(state, thing(tree, node));
 }
 
 export function toggle(state: D.State, tree: Tree, node: NodeRef): Tree {
