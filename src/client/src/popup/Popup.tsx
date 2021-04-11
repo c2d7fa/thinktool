@@ -3,10 +3,14 @@ import * as ReactDOM from "react-dom";
 import {choose} from "@johv/miscjs";
 
 import * as P from ".";
-import {Result, Search} from "@thinktool/search";
+import {Search} from "@thinktool/search";
 
 import * as D from "../data";
 import {App, merge} from "../app";
+
+import {StaticContent} from "../ui/Editor";
+import Bullet from "../ui/Bullet";
+import {OtherParents} from "../ui/OtherParents";
 
 function useFocusInputRef(): React.RefObject<HTMLInputElement> {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -16,27 +20,35 @@ function useFocusInputRef(): React.RefObject<HTMLInputElement> {
   return inputRef;
 }
 
-function ResultListItem(props: {result: Result; selected: boolean; onSelect: () => void}) {
-  // Using onPointerDown instead of onClick to circumvent parent getting blur
-  // event before we get our events.
-  return (
-    <li
-      onPointerDown={props.onSelect}
-      className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}
-    >
-      <span className="link-autocomplete-popup-result-content">
-        {props.result.content} <span className="link-autocomplete-popup-id">{props.result.thing}</span>
-      </span>
-    </li>
-  );
-}
+const ResultListItem = React.memo(
+  function (props: {result: P.Result; selected: boolean; onSelect: () => void}) {
+    // Using onPointerDown instead of onClick to circumvent parent getting blur
+    // event before we get our events.
+    return (
+      <li
+        onPointerDown={props.onSelect}
+        className={`link-autocomplete-popup-result${props.selected ? " selected-result" : ""}`}
+      >
+        <OtherParents otherParents={props.result.parents} click={() => {}} altClick={() => {}} />
+        <Bullet
+          beginDrag={() => {}}
+          status={props.result.hasChildren ? "collapsed" : "terminal"}
+          toggle={() => {}}
+          onMiddleClick={() => {}}
+        />
+        <StaticContent content={props.result.content} />
+      </li>
+    );
+  },
+  (prev, next) => prev.result.thing === next.result.thing && prev.selected === next.selected,
+);
 
 function Popup(props: {
   query: string;
   setQuery(query: string): void;
 
   loadMoreResults(): void;
-  results: Result[];
+  results: P.Result[];
 
   selectActive(): void;
   selectThing(thing: string): void;
@@ -116,7 +128,15 @@ export function usePopup(app: App, updateApp: (f: (app: App) => App) => void) {
       D.allThings(app.state).map((thing) => ({thing, content: D.contentText(app.state, thing)})),
     );
     search.on("results", (results) => {
-      updateState((state) => P.receiveResults(state, results));
+      updateApp((app) => {
+        return merge(app, {
+          popup: P.receiveResults(
+            app.popup,
+            app.state,
+            results.map((result) => result.thing),
+          ),
+        });
+      });
     });
     return search;
   }, [P.isOpen(app.popup)]);

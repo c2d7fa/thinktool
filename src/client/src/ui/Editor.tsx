@@ -255,6 +255,12 @@ export function forNode(app: App, node: T.NodeRef): {editor: E.Editor; hasFocus:
   };
 }
 
+export function StaticContent(props: {content: E.EditorContent}) {
+  return (
+    <Editor editor={{selection: {from: 0, to: 0}, content: props.content}} hasFocus={false} onEvent={() => {}} />
+  );
+}
+
 export const Editor = React.memo(
   function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(event: Event): void}) {
     const onEventRef = usePropRef(props.onEvent);

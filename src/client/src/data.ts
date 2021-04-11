@@ -16,6 +16,7 @@ export {
   parents,
   children,
   hasChildren,
+  hasChildrenOrReferences,
   addChild,
   remove,
   otherParents,

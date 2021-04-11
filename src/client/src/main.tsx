@@ -16,6 +16,7 @@ import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
 import * as Drag from "./drag";
+import * as P from "./popup";
 
 import * as Editor from "./ui/Editor";
 import {usePopup} from "./popup/Popup";
@@ -52,7 +53,7 @@ function useContext({
   openExternalUrl(url: string): void;
   receiver: Receiver<Message>;
 }): Context {
-  const [innerApp, setInnerApp] = React.useState<A.App>(
+  const [innerApp, setInnerApp] = React.useState<A.App>(() =>
     A.from(initialState, T.fromRoot(initialState, extractThingFromURL()), {
       tutorialFinished: initialTutorialFinished,
     }),
@@ -350,37 +351,43 @@ function App_({
   );
 }
 
-function ThingOverview(p: {context: Context}) {
-  const node = T.root(p.context.tree);
+const ThingOverview = React.memo(
+  function (p: {context: Context}) {
+    const node = T.root(p.context.tree);
 
-  const hasReferences = Data.backreferences(p.context.state, T.thing(p.context.tree, node)).length > 0;
+    const hasReferences = Data.backreferences(p.context.state, T.thing(p.context.tree, node)).length > 0;
 
-  const onEditEvent = useOnEditEvent(p.context, node);
+    const onEditEvent = useOnEditEvent(p.context, node);
 
-  return (
-    <div className="overview">
-      <ParentsOutline context={p.context} />
-      <div className="overview-main">
-        <SelectedItem.SelectedItem
-          onEditEvent={onEditEvent}
-          {...SelectedItem.useUnfold(p.context, useUpdateApp(p.context))}
-          {...Editor.forNode(p.context, node)}
-        />
-        <div className="children">
-          <Outline context={p.context} />
-        </div>
-      </div>
-      {hasReferences && (
-        <>
-          <div className="references">
-            <h1 className="link-section">References</h1>
-            <ReferencesOutline context={p.context} />
+    return (
+      <div className="overview">
+        <ParentsOutline context={p.context} />
+        <div className="overview-main">
+          <SelectedItem.SelectedItem
+            onEditEvent={onEditEvent}
+            {...SelectedItem.useUnfold(p.context, useUpdateApp(p.context))}
+            {...Editor.forNode(p.context, node)}
+          />
+          <div className="children">
+            <Outline context={p.context} />
           </div>
-        </>
-      )}
-    </div>
-  );
-}
+        </div>
+        {hasReferences && (
+          <>
+            <div className="references">
+              <h1 className="link-section">References</h1>
+              <ReferencesOutline context={p.context} />
+            </div>
+          </>
+        )}
+      </div>
+    );
+  },
+  (prev, next) => {
+    // When the popup is open, we know that the outline view won't change.
+    return P.isOpen(prev.context.popup) && P.isOpen(next.context.popup);
+  },
+);
 
 // TODO: ParentsOutline and ReferencesOutline should both have appropriate
 // custom behavior in response to key-presses (e.g. Alt+Backspace in

@@ -25,7 +25,7 @@ export function useOrphanListProps(
         title: D.contentText(app.state, thing),
         thing,
         parents: D.parents(app.state, thing).map((p) => ({id: p, text: D.contentText(app.state, p)})),
-        hasChildren: D.hasChildren(app.state, thing),
+        hasChildren: D.hasChildrenOrReferences(app.state, thing),
       }))
       .toArray()
       .sort((a, b) => a.title.localeCompare(b.title)),

@@ -15,18 +15,20 @@ export function editorEq(a: Editor, b: Editor): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-export function load(app: A.App, node: T.NodeRef): Editor {
-  const content = D.content(app.state, T.thing(app.tree, node));
-  const state = app.state;
+export function loadContent(state: D.State, thing: string): EditorContent {
+  const content = D.content(state, thing);
+  return content.map((piece) => {
+    if (typeof piece === "string") {
+      return piece;
+    } else {
+      return {link: piece.link, title: D.exists(state, piece.link) ? D.contentText(state, piece.link) : null};
+    }
+  });
+}
 
+export function load(app: A.App, node: T.NodeRef): Editor {
   return {
-    content: content.map((piece) => {
-      if (typeof piece === "string") {
-        return piece;
-      } else {
-        return {link: piece.link, title: D.exists(state, piece.link) ? D.contentText(state, piece.link) : null};
-      }
-    }),
+    content: loadContent(app.state, T.thing(app.tree, node)),
     selection: {from: 0, to: 0},
   };
 }
