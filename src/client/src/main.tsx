@@ -37,6 +37,7 @@ import {Message} from "./messages";
 import {usePropRef} from "./react-utils";
 import * as SelectedItem from "./ui/SelectedItem";
 import {OrphanList, useOrphanListProps} from "./orphans/ui";
+import {Search} from "@thinktool/search";
 
 function useContext({
   initialState,
@@ -262,7 +263,24 @@ function App_({
   });
 
   const updateApp = useUpdateApp(context);
-  const popup = usePopup(context, updateApp);
+
+  const search = React.useMemo<Search>(() => {
+    const search = new Search([]);
+    search.on("results", (results) =>
+      updateApp((app) =>
+        A.merge(app, {
+          popup: P.receiveResults(
+            app.popup,
+            app.state,
+            results.map((result) => result.thing),
+          ),
+        }),
+      ),
+    );
+    return search;
+  }, []);
+
+  const popup = usePopup(context, updateApp, (query) => search.query(query, 25));
 
   React.useEffect(() => {
     receiver.subscribe("action", (ev) => {
@@ -270,8 +288,14 @@ function App_({
         const result = Actions.update(app, ev.action);
         if (result.undo) console.warn("Undo isn't currently supported.");
         if (result.url) context.openExternalUrl(result.url);
+        if (result.search) receiver.send("search", {search: result.search});
         return result.app;
       });
+    });
+
+    receiver.subscribe("search", (ev) => {
+      search.reset(ev.search.items);
+      search.query(ev.search.query, 25);
     });
   }, []);
 
@@ -433,13 +457,10 @@ function Outline(p: {context: Context}) {
 function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Event) {
   const result = Editor.handling(context, node)(event);
 
-  if (result.handled) {
-    setAppState(context, result.app);
-  } else if (event.tag === "openUrl") {
-    context.openExternalUrl(event.url);
-  } else {
-    console.error("Unhandled event from editor: %o", event);
-  }
+  setAppState(context, result.app);
+
+  if (result.effects?.url) context.openExternalUrl(result.effects.url);
+  if (result.effects?.search) context.send("search", {search: result.effects.search});
 }
 
 function useOnEditEvent(context: Context, node: T.NodeRef): (ev: Editor.Event) => void {

@@ -7,7 +7,7 @@ export type Result = {thing: string; content: string};
 export class Search {
   private resultsCallbacks: ((results: Result[]) => void)[];
 
-  constructor(data: {thing: string; content: string}[]) {
+  constructor(data: Result[]) {
     if (worker === null) worker = new SearchWorker();
 
     this.resultsCallbacks = [];
@@ -18,6 +18,10 @@ export class Search {
         this.emitResults(ev.data.results);
       }
     };
+  }
+
+  reset(data: Result[]) {
+    worker.postMessage({tag: "initialize", data});
   }
 
   query(text: string, limit: number): void {

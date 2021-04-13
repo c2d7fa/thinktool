@@ -431,6 +431,10 @@
     {
       "date": "2021-04-12",
       "title": "General performance improvements, including more optimizations for search popup."
+    },
+    {
+      "date": "2021-04-13",
+      "title": "Fixed a bug where search popup would not be populated with results when opening it after selecting some text."
     }
   ]
 }
