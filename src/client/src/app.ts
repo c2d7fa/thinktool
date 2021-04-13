@@ -142,11 +142,19 @@ export function switchTab(app: App, tab: "outline" | "orphans"): App {
   throw "unknown tab!";
 }
 
-export function openPopup(app: App, useSelection: (app: App, thing: string) => App): App {
-  return merge(app, {
+export function openPopup(
+  app: App,
+  useSelection: (app: App, thing: string) => App,
+): {app: App; search: {query: string; items: {thing: string; content: string}[]}} {
+  const items = D.allThings(app.state).map((thing) => ({thing, content: D.contentText(app.state, thing)}));
+  const query = selectedText(app);
+
+  const app_ = merge(app, {
     popup: P.open(app.popup, {
-      query: selectedText(app),
+      query,
       select: useSelection,
     }),
   });
+
+  return {app: app_, search: {items, query}};
 }

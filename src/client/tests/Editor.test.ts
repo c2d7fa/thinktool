@@ -22,10 +22,6 @@ describe("handling editor events", () => {
 
       const after = result.app;
 
-      it("is handled", () => {
-        expect(result.handled).toBe(true);
-      });
-
       it("updates its content and selection", () => {
         expect(A.editor(before, W.from(before).root.ref)).toEqual({content: [], selection: {from: 0, to: 0}});
         expect(A.editor(after, W.from(after).root.ref)).toEqual({

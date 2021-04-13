@@ -32,7 +32,7 @@
   "dependencies": {
     "@johv/immutable-extras": "^1.1.1",
     "@johv/miscjs": "^1.6.0",
-    "@thinktool/search": "^1.0.0",
+    "@thinktool/search": "^1.1.0",
     "@thinktool/shared": "^2.0.0",
     "immutable": "^4.0.0-rc.12",
     "prosemirror-model": "^1.13.1",

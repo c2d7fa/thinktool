@@ -220,26 +220,36 @@ export type Event =
   | {tag: "paste"; paragraphs: string[]}
   | {tag: "openUrl"; url: string};
 
-// Some events are not handled by this function, e.g. opening URLs.
+// Side-effects aren't handled in this function. Instead, they are described by
+// 'effects' in the return value and must be handled by the caller.
 export function handling(app: App, node: T.NodeRef) {
-  return (ev: Event): {handled: boolean; app: App} => {
+  return (
+    ev: Event,
+  ): {
+    app: App;
+    effects?: {search?: {items: {thing: string; content: string}[]; query: string}; url?: string};
+  } => {
     if (ev.tag === "edit") {
       let result = app;
       if (ev.focused) result = A.merge(app, {tree: T.focus(app.tree, node)});
       result = A.edit(result, node, ev.editor);
-      return {handled: true, app: result};
+      return {app: result};
     } else if (ev.tag === "open") {
-      return {handled: true, app: A.toggleLink(app, node, ev.link)};
+      return {app: A.toggleLink(app, node, ev.link)};
     } else if (ev.tag === "jump") {
-      return {handled: true, app: A.jump(app, ev.link)};
+      return {app: A.jump(app, ev.link)};
     } else if (ev.tag === "paste") {
-      return {handled: true, app: onPastedParagraphs(app, node, ev.paragraphs)};
+      return {app: onPastedParagraphs(app, node, ev.paragraphs)};
     } else if (ev.tag === "action") {
       const result = Ac.update(app, ev.action);
-      return {handled: result.url === undefined && result.undo === undefined, app: result.app};
+      if (result.url) return {app: result.app, effects: {url: result.url}};
+      if (result.search) return {app: result.app, effects: {search: result.search}};
+      return {app: result.app};
+    } else if (ev.tag === "openUrl") {
+      return {app: app, effects: {url: ev.url}};
+    } else {
+      throw "unhandled case";
     }
-
-    return {handled: false, app};
   };
 }
 

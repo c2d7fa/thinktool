@@ -83,6 +83,7 @@ export interface UpdateResult {
   app: App;
   url?: string;
   undo?: boolean;
+  search?: {items: {thing: string; content: string}[]; query: string};
 }
 
 export function update(app: App, action: keyof typeof updates): UpdateResult {
@@ -117,31 +118,27 @@ type UpdateArgs = {
   target: NodeRef | null;
 };
 
-function withPopup(app: A.App, useSelection: (app: A.App, thing: string) => A.App): {app: A.App} {
-  return {app: A.openPopup(app, useSelection)};
-}
-
 const updates = {
   "unfold"({target, app}: UpdateArgs) {
     return {app: A.unfold(app, require(target))};
   },
 
   "insert-sibling"({app, target}: UpdateArgs) {
-    return withPopup(app, (result, selection) => {
+    return A.openPopup(app, (result, selection) => {
       const [newState, newTree] = T.insertSiblingAfter(result.state, result.tree, require(target), selection);
       return A.merge(result, {state: newState, tree: newTree});
     });
   },
 
   "insert-child"({app, target}: UpdateArgs) {
-    return withPopup(app, (result, selection) => {
+    return A.openPopup(app, (result, selection) => {
       const [newState, newTree] = T.insertChild(result.state, result.tree, require(target), selection, 0);
       return A.merge(result, {state: newState, tree: newTree});
     });
   },
 
   "insert-parent"({app, target}: UpdateArgs) {
-    return withPopup(app, (result, selection) => {
+    return A.openPopup(app, (result, selection) => {
       const [newState, newTree] = T.insertParent(result.state, result.tree, require(target), selection);
       result = A.merge(result, {state: newState, tree: newTree});
       result = applyActionEvent(result, {
@@ -267,7 +264,7 @@ const updates = {
 
   "find"({app}: UpdateArgs) {
     const previouslyFocused = T.thing(app.tree, T.root(app.tree));
-    return withPopup(app, (result, selection) => {
+    return A.openPopup(app, (result, selection) => {
       result = A.jump(result, selection);
       result = applyActionEvent(result, {action: "found", previouslyFocused, thing: selection});
       return result;
@@ -275,7 +272,7 @@ const updates = {
   },
 
   "insert-link"({app, target}: UpdateArgs) {
-    return withPopup(app, (result, selection) => {
+    return A.openPopup(app, (result, selection) => {
       result = applyActionEvent(result, {action: "link-inserted"});
       result = A.editInsertLink(result, require(target), selection);
       return result;
