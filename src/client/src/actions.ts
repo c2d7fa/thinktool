@@ -118,14 +118,7 @@ type UpdateArgs = {
 };
 
 function withPopup(app: A.App, useSelection: (app: A.App, thing: string) => A.App): {app: A.App} {
-  return {
-    app: A.merge(app, {
-      popup: P.open(app.popup, {
-        query: A.selectedText(app),
-        select: useSelection,
-      }),
-    }),
-  };
+  return {app: A.openPopup(app, useSelection)};
 }
 
 const updates = {

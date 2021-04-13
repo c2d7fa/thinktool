@@ -141,3 +141,12 @@ export function switchTab(app: App, tab: "outline" | "orphans"): App {
 
   throw "unknown tab!";
 }
+
+export function openPopup(app: App, useSelection: (app: App, thing: string) => App): App {
+  return merge(app, {
+    popup: P.open(app.popup, {
+      query: selectedText(app),
+      select: useSelection,
+    }),
+  });
+}
