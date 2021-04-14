@@ -49,6 +49,12 @@ export function save(app: A.App, editor: Editor, thing: string): A.App {
   });
 }
 
+function normalizeSelection(editor: Editor): {from: number; to: number} {
+  return editor.selection.from <= editor.selection.to
+    ? editor.selection
+    : {from: editor.selection.to, to: editor.selection.from};
+}
+
 export function selectedText(editor: Editor): string {
   let positionalElements: ContentElement[] = [];
   for (const element of editor.content) {
@@ -58,7 +64,8 @@ export function selectedText(editor: Editor): string {
       positionalElements.push(element);
     }
   }
-  const slice = positionalElements.slice(editor.selection.from, editor.selection.to);
+  const {from, to} = normalizeSelection(editor);
+  const slice = positionalElements.slice(from, to);
   let result = "";
   for (const element of slice) {
     if (typeof element === "string") {
@@ -121,7 +128,8 @@ export function insertLink(editor: Editor, link: {link: string; title: string}):
     }
   }
 
-  positionalElements.splice(editor.selection.from, editor.selection.to - editor.selection.from, link);
+  const {from, to} = normalizeSelection(editor);
+  positionalElements.splice(from, to - from, link);
 
   let content: EditorContent = [];
 
@@ -143,7 +151,7 @@ export function insertLink(editor: Editor, link: {link: string; title: string}):
   }
   if (current !== null) content.push(current);
 
-  const cursor = editor.selection.from + 1;
+  const cursor = from + 1;
 
   return {content, selection: {from: cursor, to: cursor}};
 }

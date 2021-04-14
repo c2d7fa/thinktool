@@ -437,12 +437,16 @@
       "title": "Fixed a bug where search popup would not be populated with results when opening it after selecting some text."
     },
     {
-      "date": "2021-04-13",
+      "date": "2021-04-14",
       "title": "Fixed a bug with the behavior of the text cursor on items beginning with a link."
     },
     {
-      "date": "2021-04-13",
+      "date": "2021-04-14",
       "title": "Tweaked appearance of internal links to make them stand out slightly more."
+    },
+    {
+      "date": "2021-04-14",
+      "title": "Fixed a bug where backwards text selection would not populate search popup."
     }
   ]
 }
