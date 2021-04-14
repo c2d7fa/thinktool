@@ -439,6 +439,10 @@
     {
       "date": "2021-04-13",
       "title": "Fixed a bug with the behavior of the text cursor on items beginning with a link."
+    },
+    {
+      "date": "2021-04-13",
+      "title": "Tweaked appearance of internal links to make them stand out slightly more."
     }
   ]
 }

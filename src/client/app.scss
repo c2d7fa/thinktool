@@ -276,13 +276,13 @@ a.plain-text-link:hover {
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 
-  border: 1px solid hsla(40, 80%, 80%, 60%);
+  border: 1px solid hsl(40, 80%, 60%);
 
   transition: border base.$quick-transition-time;
 }
 
 .internal-link:hover {
-  border: 1px solid hsl(40, 80%, 80%);
+  border-color: hsl(40, 80%, 60%);
 }
 
 .internal-link .empty-content {
@@ -441,8 +441,8 @@ a.plain-text-link:hover {
 }
 
 .bullet.opened-link-bullet .bullet-hover-rect {
-  opacity: 0.5;
-  fill: hsl(40, 80%, 80%);
+  opacity: 0;
+  fill: hsl(40, 80%, 90%);
 }
 
 .bullet.opened-link-bullet path.bullet-circle {
@@ -474,7 +474,7 @@ a.plain-text-link:hover {
 }
 
 .bullet.link-bullet .bullet-hover-rect {
-  fill: hsl(40, 80%, 85%);
+  fill: hsl(40, 80%, 90%);
 }
 
 .bullet.link-bullet.expanded .bullet-hover-rect {
