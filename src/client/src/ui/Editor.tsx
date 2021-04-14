@@ -277,54 +277,66 @@ export const Editor = React.memo(
   function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(event: Event): void}) {
     const onEventRef = usePropRef(props.onEvent);
 
-    const keyPlugin = new PS.Plugin({
-      props: {
-        handleKeyDown(view, ev) {
-          let conditions: Sh.Condition[] = [];
-          if (view.endOfTextblock("backward")) conditions.push("first-character");
-          if (view.endOfTextblock("forward")) conditions.push("last-character");
-          if (view.endOfTextblock("up")) conditions.push("first-line");
-          if (view.endOfTextblock("down")) conditions.push("last-line");
+    const keyPlugin = React.useMemo(
+      () =>
+        new PS.Plugin({
+          props: {
+            handleKeyDown(view, ev) {
+              let conditions: Sh.Condition[] = [];
+              if (view.endOfTextblock("backward")) conditions.push("first-character");
+              if (view.endOfTextblock("forward")) conditions.push("last-character");
+              if (view.endOfTextblock("up")) conditions.push("first-line");
+              if (view.endOfTextblock("down")) conditions.push("last-line");
 
-          for (const action of Ac.allActionsWithShortcuts) {
-            if (Sh.matches(ev, Ac.shortcut(action), conditions)) {
-              onEventRef.current!({tag: "action", action});
-              return true;
-            }
-          }
+              for (const action of Ac.allActionsWithShortcuts) {
+                if (Sh.matches(ev, Ac.shortcut(action), conditions)) {
+                  onEventRef.current!({tag: "action", action});
+                  return true;
+                }
+              }
 
-          if (ev.key === "Backspace" && view.state.doc.childCount === 0) {
-            console.log("Destroying item due to backspace on empty item.");
-            onEventRef.current!({tag: "action", action: "destroy"});
-            // [TODO] Shouldn't we also return here?
-          }
+              if (ev.key === "Backspace" && view.state.doc.childCount === 0) {
+                console.log("Destroying item due to backspace on empty item.");
+                onEventRef.current!({tag: "action", action: "destroy"});
+                // [TODO] Shouldn't we also return here?
+              }
 
-          // We don't want to handle anything by default.
-          return false;
-        },
-      },
-    });
+              // We don't want to handle anything by default.
+              return false;
+            },
+          },
+        }),
+      [],
+    );
 
-    const externalLinkDecorationPlugin = createExternalLinkDecorationPlugin({
-      openExternalUrl(url: string) {
-        onEventRef.current!({tag: "openUrl", url});
-      },
-    });
+    const externalLinkDecorationPlugin = React.useMemo(
+      () =>
+        createExternalLinkDecorationPlugin({
+          openExternalUrl(url: string) {
+            onEventRef.current!({tag: "openUrl", url});
+          },
+        }),
+      [],
+    );
 
-    const pastePlugin = new PS.Plugin({
-      props: {
-        handlePaste(view, ev, slice) {
-          const text = ev.clipboardData?.getData("text/plain");
+    const pastePlugin = React.useMemo(
+      () =>
+        new PS.Plugin({
+          props: {
+            handlePaste(view, ev, slice) {
+              const text = ev.clipboardData?.getData("text/plain");
 
-          if (text !== undefined && E.isParagraphFormattedText(text)) {
-            onEventRef.current!({tag: "paste", paragraphs: E.paragraphs(text)});
-            return true;
-          }
+              if (text !== undefined && E.isParagraphFormattedText(text)) {
+                onEventRef.current!({tag: "paste", paragraphs: E.paragraphs(text)});
+                return true;
+              }
 
-          return false;
-        },
-      },
-    });
+              return false;
+            },
+          },
+        }),
+      [],
+    );
 
     const proseMirrorState = React.useMemo(
       () =>
