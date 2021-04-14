@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as ReactDOMServer from "react-dom/server";
 
 import * as PS from "prosemirror-state";
 import * as PV from "prosemirror-view";
@@ -24,27 +25,12 @@ function buildInternalLink(args: {
 }): HTMLElement {
   const container = document.createElement("span");
 
-  // [TODO] This is an abuse of React. We never clean anything up. We should
-  // probably create this element manually, although that would also require us
-  // to do the same for <Bullet>, which is unfortunate.
+  // We already wrote <Bullet>, but we don't want React to manage it, so we use
+  // this somewhat hacky approach where we render the markup to a string and
+  // then manually attach the event listeners.
 
-  ReactDOM.render(
-    <span
-      className="internal-link"
-      onMouseDown={(ev) => {
-        ev.preventDefault();
-      }}
-      onAuxClick={(ev) => {
-        const isMiddleClick = ev.button === 1;
-        if (isMiddleClick) {
-          args.jump();
-        }
-      }}
-      onClick={(ev) => {
-        if (ev.shiftKey) args.jump();
-        else args.toggle();
-      }}
-    >
+  const markup = ReactDOMServer.renderToStaticMarkup(
+    <span className="internal-link">
       <Bullet
         specialType="link"
         status="collapsed"
@@ -63,8 +49,24 @@ function buildInternalLink(args: {
         )}
       </span>
     </span>,
-    container,
   );
+
+  container.innerHTML = markup;
+
+  const linkElement = container.querySelector("span")!;
+  linkElement.onmousedown = (ev) => {
+    ev.preventDefault();
+  };
+  linkElement.onauxclick = (ev) => {
+    const isMiddleClick = ev.button === 1;
+    if (isMiddleClick) {
+      args.jump();
+    }
+  };
+  linkElement.onclick = (ev) => {
+    if (ev.shiftKey) args.jump();
+    else args.toggle();
+  };
 
   return container;
 }
