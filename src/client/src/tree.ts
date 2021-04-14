@@ -651,6 +651,26 @@ export function insertParent(state: D.State, tree: Tree, node: NodeRef, parent: 
   return [newState, newTree];
 }
 
+export function replace(state: D.State, tree: Tree, node: NodeRef, replacement: string): [D.State, Tree, NodeRef] {
+  const index = indexInParent(tree, node);
+
+  if (index === undefined) {
+    console.error("Node did not exist in parent.");
+    return [state, tree, node];
+  }
+
+  // If the item is empty, just remove it completely
+  const remove_ = D.contentEq(D.content(state, thing(tree, node)), []) ? removeThing : remove;
+
+  let [newState, newTree] = remove_(state, tree, node);
+
+  const [state_, tree_, newNode] = insertChild(newState, newTree, parent(tree, node)!, replacement, index);
+  newState = state_;
+  newTree = focus(tree_, newNode);
+
+  return [newState, newTree, newNode];
+}
+
 export function removeThing(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {
   const newState = D.remove(state, thing(tree, node));
   let newTree = focus(tree, previousVisibleItem(tree, node));
