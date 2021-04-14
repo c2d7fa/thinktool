@@ -13,6 +13,7 @@ CREATE TABLE things (
 	name TEXT NOT NULL,
 	json_content JSON NOT NULL DEFAULT '[]',
 	last_modified TIMESTAMP WITH TIME ZONE,
+	first_created TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 	is_page BOOLEAN NOT NULL DEFAULT false,
 	PRIMARY KEY ("user", name)
 );
