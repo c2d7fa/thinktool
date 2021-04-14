@@ -133,6 +133,31 @@ function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string):
   });
 }
 
+function createPlaceholderDecorationPlugin(): PS.Plugin<typeof schema> {
+  return new PS.Plugin({
+    props: {
+      decorations(state: PS.EditorState<PM.Schema>) {
+        if (state.doc.childCount === 0) {
+          return PV.DecorationSet.create(state.doc, [
+            PV.Decoration.widget(
+              0,
+              () => {
+                const element = document.createElement("span");
+                element.classList.add("placeholder");
+                element.textContent = "Press Alt-X to connect existing item.";
+                return element;
+              },
+              {key: "placeholder"},
+            ),
+          ]);
+        } else {
+          return PV.DecorationSet.create(state.doc, []);
+        }
+      },
+    },
+  });
+}
+
 function toProseMirror(
   editor: E.Editor,
   args: {
@@ -277,6 +302,8 @@ export const Editor = React.memo(
   function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(event: Event): void}) {
     const onEventRef = usePropRef(props.onEvent);
 
+    const placeholderPlugin = React.useMemo(() => createPlaceholderDecorationPlugin(), []);
+
     const keyPlugin = React.useMemo(
       () =>
         new PS.Plugin({
@@ -343,7 +370,7 @@ export const Editor = React.memo(
         toProseMirror(props.editor, {
           openLink: (link) => onEventRef.current!({tag: "open", link}),
           jumpLink: (link) => onEventRef.current!({tag: "jump", link}),
-          plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
+          plugins: [placeholderPlugin, keyPlugin, pastePlugin, externalLinkDecorationPlugin],
         }),
       [props.editor],
     );

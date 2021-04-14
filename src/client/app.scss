@@ -303,6 +303,15 @@ a.plain-text-link:hover {
   margin: 0;
 
   line-height: 175%;
+
+  .placeholder {
+    color: #aaa;
+    font-style: italic;
+  }
+
+  .ProseMirror:not(.ProseMirror-focused) .placeholder {
+    visibility: hidden;
+  }
 }
 
 .editor .ProseMirror {
