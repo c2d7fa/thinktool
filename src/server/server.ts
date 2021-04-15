@@ -9,6 +9,10 @@ import {Communication} from "@thinktool/shared";
 
 const staticUrl = process.env.DIAFORM_STATIC_HOST;
 
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled rejection: %o", reason);
+});
+
 // #region changes
 
 // We want to be able to subscribe to changes in a user's data. This is used to

@@ -1,13 +1,13 @@
 # Build
 
-FROM node:lts as build
+FROM node:15.14 as build
 COPY . /work
 WORKDIR /work
 RUN tools/build-server.sh
 
 # Production
 
-FROM node:lts
+FROM node:15.14
 COPY --from=build /work/dist/server /server
 WORKDIR /server
 RUN npm ci
