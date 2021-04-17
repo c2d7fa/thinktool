@@ -1,2 +1,13 @@
+@use "../style/base";
+
 $main-bg-color: #fcfcfc;
 $outline-width: 80ex;
+
+@mixin placeholder-text($color: #ccc) {
+  color: $color;
+
+  kbd {
+    @include base.ui-font;
+    font-size: 0.85em;
+  }
+}

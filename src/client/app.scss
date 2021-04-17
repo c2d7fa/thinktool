@@ -306,13 +306,7 @@ a.plain-text-link:hover {
   line-height: 175%;
 
   .placeholder {
-    color: #ccc;
-
-    kbd {
-      @include base.ui-font;
-      font-size: 0.85em;
-    }
-
+    @include general.placeholder-text;
     transition: opacity base.$quick-transition-time ease-out;
   }
 

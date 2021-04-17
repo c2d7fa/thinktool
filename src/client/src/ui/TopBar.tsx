@@ -16,7 +16,22 @@ export function useTopBarProps(
             logOutUrl: context.server.logOutUrl,
           },
     onToggleToolbar: () => args.setIsToolbarShown(!args.isToolbarShown),
+    searchBar: {
+      shortcut: "Alt-F",
+      action: "search",
+      onActivate() {
+        context.send("action", {action: "find"});
+      },
+    },
   };
+}
+
+function SearchBar(props: {shortcut: string; action: string; onActivate(): void}) {
+  return (
+    <div className="search-bar" onClick={() => props.onActivate()}>
+      Press <kbd>{props.shortcut}</kbd> to {props.action}.
+    </div>
+  );
 }
 
 export function TopBar(props: {
@@ -24,6 +39,8 @@ export function TopBar(props: {
   login: null | {username: string; logOutUrl: string};
 
   onToggleToolbar(): void;
+
+  searchBar: Parameters<typeof SearchBar>[0];
 }) {
   return (
     <div className="top-bar">
@@ -37,7 +54,7 @@ export function TopBar(props: {
         </button>
       </div>
       <div className="middle">
-        <div className="search-bar">Press Alt-F to search.</div>
+        <SearchBar {...props.searchBar} />
       </div>
       <div className="right">
         {props.login && (

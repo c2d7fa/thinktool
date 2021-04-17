@@ -39,8 +39,13 @@
     background-color: #f8f8f8;
     padding: 0.2em 0.5em;
     border-radius: 6px;
-    border: 1px solid #eee;
-    color: #bbb;
+    border: 1px solid #e0e0e0;
+
+    @include general.placeholder-text(#aaa);
+
+    &:hover {
+      border-color: #d0d0d0;
+    }
   }
 
   .logo {
