@@ -2,10 +2,27 @@ import * as React from "react";
 import {Context} from "../context";
 import {ExternalLink} from "./ExternalLink";
 
+import * as A from "../app";
+import * as E from "../editing";
+import * as Sh from "../shortcuts";
+import * as Ac from "../actions";
+
 export function useTopBarProps(
   context: Context,
   args: {isToolbarShown: boolean; setIsToolbarShown(b: boolean): void; username?: string},
 ): Parameters<typeof TopBar>[0] {
+  const [action, description] = (() => {
+    const editor = A.focusedEditor(context);
+    if (editor === null) {
+      return ["find", "search"] as ["find", string];
+    } else if (E.isEmpty(editor)) {
+      return ["replace", "connect an existing item"] as ["replace", string];
+    } else {
+      console.log("not empty");
+      return ["insert-link", "insert a link"] as ["insert-link", string];
+    }
+  })();
+
   return {
     isToolbarShown: args.isToolbarShown,
     login:
@@ -17,10 +34,10 @@ export function useTopBarProps(
           },
     onToggleToolbar: () => args.setIsToolbarShown(!args.isToolbarShown),
     searchBar: {
-      shortcut: "Alt-F",
-      action: "search",
+      shortcut: Sh.format(Ac.shortcut(action)),
+      action: description,
       onActivate() {
-        context.send("action", {action: "find"});
+        context.send("action", {action});
       },
     },
   };

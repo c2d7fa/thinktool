@@ -12,7 +12,15 @@ export type ContentElement = string | {link: string; title: string | null};
 export type Range = {from: number; to: number};
 
 export function editorEq(a: Editor, b: Editor): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+  return (
+    a.selection.from === b.selection.from &&
+    a.selection.to === b.selection.to &&
+    JSON.stringify(a.content) === JSON.stringify(b.content)
+  );
+}
+
+export function isEmpty(editor: Editor): boolean {
+  return editorEq(editor, {selection: {from: 0, to: 0}, content: []});
 }
 
 export function loadContent(state: D.State, thing: string): EditorContent {

@@ -151,7 +151,7 @@ function createPlaceholderDecorationPlugin(): PS.Plugin<typeof schema> {
                 shortcut.textContent = "Alt-X";
                 element.appendChild(shortcut);
 
-                element.appendChild(document.createTextNode(" to connect existing item."));
+                element.appendChild(document.createTextNode(" to connect an existing item."));
 
                 return element;
               },
