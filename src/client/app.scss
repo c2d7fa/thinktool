@@ -305,12 +305,18 @@ a.plain-text-link:hover {
   line-height: 175%;
 
   .placeholder {
-    color: #aaa;
-    font-style: italic;
+    color: #ccc;
+
+    kbd {
+      @include base.ui-font;
+      font-size: 0.85em;
+    }
+
+    transition: opacity base.$quick-transition-time ease-out;
   }
 
   .ProseMirror:not(.ProseMirror-focused) .placeholder {
-    visibility: hidden;
+    opacity: 0;
   }
 }
 

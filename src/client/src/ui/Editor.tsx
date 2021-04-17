@@ -144,7 +144,15 @@ function createPlaceholderDecorationPlugin(): PS.Plugin<typeof schema> {
               () => {
                 const element = document.createElement("span");
                 element.classList.add("placeholder");
-                element.textContent = "Press Alt-X to connect existing item.";
+
+                element.appendChild(document.createTextNode("Press "));
+
+                const shortcut = document.createElement("kbd");
+                shortcut.textContent = "Alt-X";
+                element.appendChild(shortcut);
+
+                element.appendChild(document.createTextNode(" to connect existing item."));
+
                 return element;
               },
               {key: "placeholder"},
