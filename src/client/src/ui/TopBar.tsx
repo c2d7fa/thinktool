@@ -27,23 +27,30 @@ export function TopBar(props: {
 }) {
   return (
     <div className="top-bar">
-      <ExternalLink className="logo" href="/">
-        Thinktool
-      </ExternalLink>
-      <button onClick={() => props.onToggleToolbar()}>
-        <i className="icon fas fa-bars" />
-        {props.isToolbarShown ? "Hide" : "Show"} Menu
-      </button>
-      {props.login && (
-        <div id="current-user">
-          <ExternalLink className="username" href="/user.html">
-            {props.login.username}
-          </ExternalLink>
-          <a className="log-out" href={props.login.logOutUrl}>
-            Log Out
-          </a>
-        </div>
-      )}
+      <div className="left">
+        <ExternalLink className="logo" href="/">
+          Thinktool
+        </ExternalLink>
+        <button onClick={() => props.onToggleToolbar()}>
+          <i className="icon fas fa-bars" />
+          {props.isToolbarShown ? "Hide" : "Show"} Menu
+        </button>
+      </div>
+      <div className="middle">
+        <div className="search-bar">Press Alt-F to search.</div>
+      </div>
+      <div className="right">
+        {props.login && (
+          <div id="current-user">
+            <ExternalLink className="username" href="/user.html">
+              {props.login.username}
+            </ExternalLink>
+            <a className="log-out" href={props.login.logOutUrl}>
+              Log Out
+            </a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
