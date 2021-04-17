@@ -154,6 +154,10 @@ const updates = {
   },
 
   "replace"({app, target}: UpdateArgs) {
+    if (A.editor(app, require(target))!.content.length !== 0) {
+      console.log("Refusing to replace item because it already has content");
+      return {app};
+    }
     return A.openPopup(app, (app, selection) => {
       return A.replace(app, require(target), selection);
     });
