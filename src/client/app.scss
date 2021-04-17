@@ -303,6 +303,21 @@ a.plain-text-link:hover {
   margin: 0;
 
   line-height: 175%;
+
+  .placeholder {
+    color: #ccc;
+
+    kbd {
+      @include base.ui-font;
+      font-size: 0.85em;
+    }
+
+    transition: opacity base.$quick-transition-time ease-out;
+  }
+
+  .ProseMirror:not(.ProseMirror-focused) .placeholder {
+    opacity: 0;
+  }
 }
 
 .editor .ProseMirror {

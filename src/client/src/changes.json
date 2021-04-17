@@ -447,6 +447,10 @@
     {
       "date": "2021-04-14",
       "title": "Fixed a bug where backwards text selection would not populate search popup."
+    },
+    {
+      "date": "2021-04-17",
+      "title": "You can now insert a connection to an existing item by first creating a new item, and then pressing Alt-X to replace that item with another one."
     }
   ]
 }

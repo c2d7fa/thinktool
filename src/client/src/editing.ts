@@ -81,6 +81,13 @@ export function select(editor: Editor, selection: Range): Editor {
   return {...editor, selection};
 }
 
+export function placeSelectionAtEnd(editor: Editor): Editor {
+  const innerLength = editor.content
+    .map((element) => (typeof element === "string" ? element.length : 1))
+    .reduce((a, b) => a + b);
+  return select(editor, {from: innerLength, to: innerLength});
+}
+
 export function externalLinkRanges(content: EditorContent): Range[] {
   let indexedTexts: {index: number; text: string}[] = [];
 

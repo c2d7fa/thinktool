@@ -12,6 +12,7 @@ export type ActionName =
   | "insert-child"
   | "insert-parent"
   | "insert-link"
+  | "replace"
   | "find"
   | "new"
   | "new-before"
@@ -56,6 +57,7 @@ export function enabled(state: App, action: ActionName): boolean {
     "insert-sibling",
     "insert-parent",
     "insert-link",
+    "replace",
     "new-before",
     "focus-up",
     "focus-down",
@@ -148,6 +150,16 @@ const updates = {
         newTree,
       });
       return result;
+    });
+  },
+
+  "replace"({app, target}: UpdateArgs) {
+    if (A.editor(app, require(target))!.content.length !== 0) {
+      console.log("Refusing to replace item because it already has content");
+      return {app};
+    }
+    return A.openPopup(app, (app, selection) => {
+      return A.replace(app, require(target), selection);
     });
   },
 
@@ -322,6 +334,8 @@ export function shortcut(action: ActionName): S.Shortcut {
       return {mod: true, key: "s"};
     case "insert-link":
       return {mod: true, key: "l"};
+    case "replace":
+      return {mod: true, key: "x"};
     case "toggle":
       return {key: "Tab"};
     case "undo":
@@ -358,4 +372,5 @@ export const allActionsWithShortcuts: ActionName[] = [
   "insert-sibling",
   "insert-parent",
   "insert-link",
+  "replace",
 ];

@@ -133,6 +133,39 @@ function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string):
   });
 }
 
+function createPlaceholderDecorationPlugin(): PS.Plugin<typeof schema> {
+  return new PS.Plugin({
+    props: {
+      decorations(state: PS.EditorState<PM.Schema>) {
+        if (state.doc.childCount === 0) {
+          return PV.DecorationSet.create(state.doc, [
+            PV.Decoration.widget(
+              0,
+              () => {
+                const element = document.createElement("span");
+                element.classList.add("placeholder");
+
+                element.appendChild(document.createTextNode("Press "));
+
+                const shortcut = document.createElement("kbd");
+                shortcut.textContent = "Alt-X";
+                element.appendChild(shortcut);
+
+                element.appendChild(document.createTextNode(" to connect existing item."));
+
+                return element;
+              },
+              {key: "placeholder"},
+            ),
+          ]);
+        } else {
+          return PV.DecorationSet.create(state.doc, []);
+        }
+      },
+    },
+  });
+}
+
 function toProseMirror(
   editor: E.Editor,
   args: {
@@ -277,61 +310,75 @@ export const Editor = React.memo(
   function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(event: Event): void}) {
     const onEventRef = usePropRef(props.onEvent);
 
-    const keyPlugin = new PS.Plugin({
-      props: {
-        handleKeyDown(view, ev) {
-          let conditions: Sh.Condition[] = [];
-          if (view.endOfTextblock("backward")) conditions.push("first-character");
-          if (view.endOfTextblock("forward")) conditions.push("last-character");
-          if (view.endOfTextblock("up")) conditions.push("first-line");
-          if (view.endOfTextblock("down")) conditions.push("last-line");
+    const placeholderPlugin = React.useMemo(() => createPlaceholderDecorationPlugin(), []);
 
-          for (const action of Ac.allActionsWithShortcuts) {
-            if (Sh.matches(ev, Ac.shortcut(action), conditions)) {
-              onEventRef.current!({tag: "action", action});
-              return true;
-            }
-          }
+    const keyPlugin = React.useMemo(
+      () =>
+        new PS.Plugin({
+          props: {
+            handleKeyDown(view, ev) {
+              let conditions: Sh.Condition[] = [];
+              if (view.endOfTextblock("backward")) conditions.push("first-character");
+              if (view.endOfTextblock("forward")) conditions.push("last-character");
+              if (view.endOfTextblock("up")) conditions.push("first-line");
+              if (view.endOfTextblock("down")) conditions.push("last-line");
 
-          if (ev.key === "Backspace" && view.state.doc.childCount === 0) {
-            console.log("Destroying item due to backspace on empty item.");
-            onEventRef.current!({tag: "action", action: "destroy"});
-            // [TODO] Shouldn't we also return here?
-          }
+              for (const action of Ac.allActionsWithShortcuts) {
+                if (Sh.matches(ev, Ac.shortcut(action), conditions)) {
+                  onEventRef.current!({tag: "action", action});
+                  return true;
+                }
+              }
 
-          // We don't want to handle anything by default.
-          return false;
-        },
-      },
-    });
+              if (ev.key === "Backspace" && view.state.doc.childCount === 0) {
+                console.log("Destroying item due to backspace on empty item.");
+                onEventRef.current!({tag: "action", action: "destroy"});
+                // [TODO] Shouldn't we also return here?
+              }
 
-    const externalLinkDecorationPlugin = createExternalLinkDecorationPlugin({
-      openExternalUrl(url: string) {
-        onEventRef.current!({tag: "openUrl", url});
-      },
-    });
+              // We don't want to handle anything by default.
+              return false;
+            },
+          },
+        }),
+      [],
+    );
 
-    const pastePlugin = new PS.Plugin({
-      props: {
-        handlePaste(view, ev, slice) {
-          const text = ev.clipboardData?.getData("text/plain");
+    const externalLinkDecorationPlugin = React.useMemo(
+      () =>
+        createExternalLinkDecorationPlugin({
+          openExternalUrl(url: string) {
+            onEventRef.current!({tag: "openUrl", url});
+          },
+        }),
+      [],
+    );
 
-          if (text !== undefined && E.isParagraphFormattedText(text)) {
-            onEventRef.current!({tag: "paste", paragraphs: E.paragraphs(text)});
-            return true;
-          }
+    const pastePlugin = React.useMemo(
+      () =>
+        new PS.Plugin({
+          props: {
+            handlePaste(view, ev, slice) {
+              const text = ev.clipboardData?.getData("text/plain");
 
-          return false;
-        },
-      },
-    });
+              if (text !== undefined && E.isParagraphFormattedText(text)) {
+                onEventRef.current!({tag: "paste", paragraphs: E.paragraphs(text)});
+                return true;
+              }
+
+              return false;
+            },
+          },
+        }),
+      [],
+    );
 
     const proseMirrorState = React.useMemo(
       () =>
         toProseMirror(props.editor, {
           openLink: (link) => onEventRef.current!({tag: "open", link}),
           jumpLink: (link) => onEventRef.current!({tag: "jump", link}),
-          plugins: [keyPlugin, pastePlugin, externalLinkDecorationPlugin],
+          plugins: [placeholderPlugin, keyPlugin, pastePlugin, externalLinkDecorationPlugin],
         }),
       [props.editor],
     );

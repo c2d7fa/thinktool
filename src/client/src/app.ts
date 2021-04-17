@@ -158,3 +158,9 @@ export function openPopup(
 
   return {app: app_, search: {items, query}};
 }
+
+export function replace(app: App, node: T.NodeRef, thing: string): App {
+  const [state, tree, newNode] = T.replace(app.state, app.tree, node, thing);
+  let app_ = merge(app, {state, tree});
+  return edit(app_, newNode, E.placeSelectionAtEnd(editor(app_, newNode)!));
+}
