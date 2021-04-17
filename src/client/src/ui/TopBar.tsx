@@ -18,7 +18,6 @@ export function useTopBarProps(
     } else if (E.isEmpty(editor)) {
       return ["replace", "connect an existing item"] as ["replace", string];
     } else {
-      console.log("not empty");
       return ["insert-link", "insert a link"] as ["insert-link", string];
     }
   })();
@@ -45,7 +44,13 @@ export function useTopBarProps(
 
 function SearchBar(props: {shortcut: string; action: string; onActivate(): void}) {
   return (
-    <div className="search-bar" onClick={() => props.onActivate()}>
+    <div
+      className="search-bar"
+      onPointerDown={(ev) => {
+        ev.preventDefault();
+        props.onActivate();
+      }}
+    >
       Press <kbd>{props.shortcut}</kbd> to {props.action}.
     </div>
   );
