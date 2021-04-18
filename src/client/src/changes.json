@@ -459,6 +459,10 @@
     {
       "date": "2021-04-18",
       "title": "Fixed an issue where editors would not register focus changes when the user clicked on an item in the same position that the cursor had before losing focus."
+    },
+    {
+      "date": "2021-04-18",
+      "title": "Pressing escape now unfocuses currently focused editor."
     }
   ]
 }

@@ -282,6 +282,7 @@ export function handling(app: App, node: T.NodeRef) {
     if (ev.tag === "edit") {
       let result = app;
       if (ev.focused) result = A.merge(app, {tree: T.focus(app.tree, node)});
+      if (!ev.focused && T.hasFocus(app.tree, node)) result = A.merge(app, {tree: T.unfocus(app.tree)});
       result = A.edit(result, node, ev.editor);
       return {app: result};
     } else if (ev.tag === "open") {
@@ -360,6 +361,12 @@ export const Editor = React.memo(
                 console.log("Destroying item due to backspace on empty item.");
                 onEventRef.current!({tag: "action", action: "destroy"});
                 // [TODO] Shouldn't we also return here?
+              }
+
+              if (ev.key === "Escape") {
+                console.log("escape");
+                onEventRef.current!({tag: "edit", editor: editorRef.current!, focused: false});
+                return true;
               }
 
               // We don't want to handle anything by default.
