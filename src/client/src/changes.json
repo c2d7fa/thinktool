@@ -455,6 +455,10 @@
     {
       "date": "2021-04-18",
       "title": "Added a 'search bar' that suggests an action based on the current context and reminds you of its shortcut."
+    },
+    {
+      "date": "2021-04-18",
+      "title": "Fixed an issue where editors would not register focus changes when the user clicked on an item in the same position that the cursor had before losing focus."
     }
   ]
 }

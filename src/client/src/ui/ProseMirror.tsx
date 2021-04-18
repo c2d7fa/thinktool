@@ -29,6 +29,12 @@ export default function ProseMirror<Schema extends PM.Schema>(props: {
     function dispatchTransaction(this: PV.EditorView<Schema>, transaction: PS.Transaction<Schema>) {
       const newState = this.state.apply(transaction);
       this.updateState(newState);
+
+      // Note that no transaciton is created when an unfocused editor gains
+      // focus via a mouse click if the selection doesn't change compared to
+      // when the editor last had focus. So if you want all focus updates, you
+      // must register your own plugin to handle this; see <Editor> for an
+      // example.
       onStateUpdatedRef.current!(newState, {focused: this.hasFocus()});
     }
 

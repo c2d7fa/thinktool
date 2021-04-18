@@ -166,6 +166,21 @@ function createPlaceholderDecorationPlugin(): PS.Plugin<typeof schema> {
   });
 }
 
+// By default, we don't get focus updates when the user clicks on the editor but
+// doesn't change the cursor position, so we have to listen for these types of
+// updates manually; see also the comment in <ProseMirror>.
+function createFocusPlugin(args: {onFocus(): void}): PS.Plugin<typeof schema> {
+  return new PS.Plugin({
+    props: {
+      handleClick(view) {
+        console.log("handling click");
+        args.onFocus();
+        return false;
+      },
+    },
+  });
+}
+
 function toProseMirror(
   editor: E.Editor,
   args: {
@@ -309,6 +324,17 @@ export function StaticContent(props: {content: E.EditorContent}) {
 export const Editor = React.memo(
   function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(event: Event): void}) {
     const onEventRef = usePropRef(props.onEvent);
+    const editorRef = usePropRef(props.editor);
+
+    const focusPlugin = React.useMemo(
+      () =>
+        createFocusPlugin({
+          onFocus() {
+            onEventRef.current!({tag: "edit", editor: editorRef.current!, focused: true});
+          },
+        }),
+      [],
+    );
 
     const placeholderPlugin = React.useMemo(() => createPlaceholderDecorationPlugin(), []);
 
@@ -378,7 +404,7 @@ export const Editor = React.memo(
         toProseMirror(props.editor, {
           openLink: (link) => onEventRef.current!({tag: "open", link}),
           jumpLink: (link) => onEventRef.current!({tag: "jump", link}),
-          plugins: [placeholderPlugin, keyPlugin, pastePlugin, externalLinkDecorationPlugin],
+          plugins: [focusPlugin, placeholderPlugin, keyPlugin, pastePlugin, externalLinkDecorationPlugin],
         }),
       [props.editor],
     );
