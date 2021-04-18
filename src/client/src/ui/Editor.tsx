@@ -173,7 +173,6 @@ function createFocusPlugin(args: {onFocus(): void}): PS.Plugin<typeof schema> {
   return new PS.Plugin({
     props: {
       handleClick(view) {
-        console.log("handling click");
         args.onFocus();
         return false;
       },
@@ -364,7 +363,6 @@ export const Editor = React.memo(
               }
 
               if (ev.key === "Escape") {
-                console.log("escape");
                 onEventRef.current!({tag: "edit", editor: editorRef.current!, focused: false});
                 return true;
               }

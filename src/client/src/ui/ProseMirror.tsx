@@ -43,6 +43,13 @@ export default function ProseMirror<Schema extends PM.Schema>(props: {
 
   React.useEffect(() => {
     if (props.hasFocus) editorViewRef.current!.focus();
+    if (!props.hasFocus && editorViewRef.current!.hasFocus()) {
+      if (typeof (editorViewRef.current!.dom as any)["blur"] === "function") {
+        (editorViewRef.current!.dom as any).blur();
+      } else {
+        console.error("Couldn't remove focus from editor!");
+      }
+    }
   }, [props.hasFocus]);
 
   React.useEffect(() => {
