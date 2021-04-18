@@ -28,6 +28,7 @@ import * as Item from "./ui/Item";
 import UserPage from "./ui/UserPage";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
 import {OtherParents, useOtherParents} from "./ui/OtherParents";
+import {TopBar, useTopBarProps} from "./ui/TopBar";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -304,7 +305,7 @@ function App_({
 
   useDragAndDrop(context, updateApp);
 
-  const [toolbarShown, setToolbarShown] = React.useState<boolean>(true);
+  const [isToolbarShown, setIsToolbarShown] = React.useState<boolean>(true);
 
   const appRef = React.useRef<HTMLDivElement>(null);
 
@@ -322,31 +323,13 @@ function App_({
     [updateApp],
   );
 
+  const topBarProps = useTopBarProps(context, {isToolbarShown, setIsToolbarShown, username});
+
   return (
     <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
       {popup}
-      <div className="top-bar">
-        <ExternalLink className="logo" href="/">
-          Thinktool
-        </ExternalLink>
-        <button onClick={() => setToolbarShown(!toolbarShown)}>
-          <i className="icon fas fa-bars" />
-          {toolbarShown ? "Hide" : "Show"} Menu
-        </button>
-        <div id="current-user">
-          {username && (
-            <ExternalLink className="username" href="/user.html">
-              {username}
-            </ExternalLink>
-          )}
-          {context.server && (
-            <a className="log-out" href={context.server.logOutUrl}>
-              Log Out
-            </a>
-          )}
-        </div>
-      </div>
-      {toolbarShown ? (
+      <TopBar {...topBarProps} />
+      {isToolbarShown ? (
         <Toolbar
           executeAction={(action) => receiver.send("action", {action})}
           isEnabled={(action) => Actions.enabled(context, action)}

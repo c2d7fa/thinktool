@@ -68,12 +68,15 @@ export function editInsertLink(app: App, node: T.NodeRef, link: string): App {
   return edit(app, node, E.insertLink(editor(app, node)!, {link, title: D.contentText(app.state, link)}));
 }
 
-export function selectedText(app: App): string {
+export function focusedEditor(app: App): E.Editor | null {
   const focusedNode = T.focused(app.tree);
-  if (focusedNode === null) return "";
-  const activeEditor = editor(app, focusedNode);
-  if (activeEditor === null) return "";
-  return E.selectedText(activeEditor);
+  if (focusedNode === null) return null;
+  return editor(app, focusedNode);
+}
+
+export function selectedText(app: App): string {
+  const editor = focusedEditor(app);
+  return editor ? E.selectedText(editor) : "";
 }
 
 export function merge(app: App, values: {[K in keyof App]?: App[K]}): App {

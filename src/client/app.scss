@@ -5,6 +5,7 @@
 
 @use "tutorial";
 @use "inbox";
+@use "top-bar";
 
 /* #region General components */
 
@@ -305,13 +306,7 @@ a.plain-text-link:hover {
   line-height: 175%;
 
   .placeholder {
-    color: #ccc;
-
-    kbd {
-      @include base.ui-font;
-      font-size: 0.85em;
-    }
-
+    @include general.placeholder-text;
     transition: opacity base.$quick-transition-time ease-out;
   }
 
@@ -703,56 +698,6 @@ a.plain-text-link:hover {
 .link-autocomplete-popup input:hover + .create-label,
 .link-autocomplete-popup input.selected-result + .create-label {
   color: #00000080;
-}
-
-/* #endregion */
-
-/* #region Top bar */
-
-.top-bar {
-  display: flex;
-  justify-content: flex-start;
-
-  padding: (base.$ui-small-font-size / 2) 1rem;
-  @include components.overlay;
-  z-index: 1500;
-}
-
-.top-bar .logo {
-  @include components.logo;
-  margin-right: 1rem;
-
-  transition: color base.$quick-transition-time;
-  color: #606060;
-  &:hover {
-    color: #404040;
-  }
-}
-
-.top-bar button {
-  white-space: nowrap;
-
-  font-size: base.$ui-small-font-size;
-  color: base.$top-bar-ui-color;
-  @include base.subtle-button(base.$top-bar-ui-color);
-}
-
-#current-user {
-  margin-left: auto; /* Right align */
-  text-align: right;
-
-  a {
-    @extend button;
-    text-decoration: inherit;
-
-    font-size: base.$ui-small-font-size;
-    color: base.$top-bar-ui-color;
-    @include base.subtle-button(base.$top-bar-ui-color);
-  }
-
-  a.username {
-    margin-right: 1rem;
-  }
 }
 
 /* #endregion */
