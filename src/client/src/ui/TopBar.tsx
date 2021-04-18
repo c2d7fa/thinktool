@@ -53,7 +53,10 @@ function SearchBar(props: {shortcut: string; action: string; onActivate(): void;
         props.onActivate();
       }}
     >
-      Press <kbd>{props.shortcut}</kbd> to {props.action}.
+      <span className="icon fa-fw fas fa-search" />
+      <span>
+        Press <kbd>{props.shortcut}</kbd> to {props.action}.
+      </span>
     </div>
   );
 }
