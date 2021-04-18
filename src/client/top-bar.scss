@@ -55,6 +55,20 @@
       color: #bbb;
       font-size: 0.8em;
       margin-top: -2px;
+
+      display: none;
+    }
+
+    &.icon-search .fa-search {
+      display: block;
+    }
+
+    &.icon-link .fa-link {
+      display: block;
+    }
+
+    &.icon-plus-circle .fa-plus-circle {
+      display: block;
     }
 
     &:hover {

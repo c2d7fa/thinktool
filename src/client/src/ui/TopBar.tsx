@@ -35,6 +35,7 @@ export function useTopBarProps(
     onToggleToolbar: () => args.setIsToolbarShown(!args.isToolbarShown),
     searchBar: {
       shortcut: Sh.format(Ac.shortcut(action)),
+      icon: action === "find" ? "search" : action === "insert-link" ? "link" : "plus-circle",
       action: description,
       isSearching: P.isOpen(context.popup),
       onActivate() {
@@ -44,16 +45,25 @@ export function useTopBarProps(
   };
 }
 
-function SearchBar(props: {shortcut: string; action: string; onActivate(): void; isSearching: boolean}) {
+function SearchBar(props: {
+  shortcut: string;
+  action: string;
+  onActivate(): void;
+  icon: "search" | "link" | "plus-circle";
+  isSearching: boolean;
+}) {
   return (
     <div
-      className={`search-bar ${props.isSearching ? "searching" : ""}`}
+      className={`search-bar ${props.isSearching ? "searching" : ""} icon-${props.icon}`}
       onPointerDown={(ev) => {
         ev.preventDefault();
         props.onActivate();
       }}
     >
-      <span className="icon fa-fw fas fa-search" />
+      {/* We use FA, which apparently doesn't handle replacements very well, so we use this hack; see the CSS. */}
+      <span className={`icon fa-fw fas fa-search`} />
+      <span className={`icon fa-fw fas fa-link`} />
+      <span className={`icon fa-fw fas fa-plus-circle`} />
       <span>
         Press <kbd>{props.shortcut}</kbd> to {props.action}.
       </span>
