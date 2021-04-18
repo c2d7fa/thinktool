@@ -43,8 +43,15 @@
 
     @include general.placeholder-text(#aaa);
 
+    transition: opacity base.$quick-transition-time;
+
     &:hover {
       border-color: #d0d0d0;
+    }
+
+    &.searching {
+      opacity: 0;
+      cursor: default;
     }
   }
 

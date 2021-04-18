@@ -4,6 +4,7 @@ import {ExternalLink} from "./ExternalLink";
 
 import * as A from "../app";
 import * as E from "../editing";
+import * as P from "../popup";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
 
@@ -35,6 +36,7 @@ export function useTopBarProps(
     searchBar: {
       shortcut: Sh.format(Ac.shortcut(action)),
       action: description,
+      isSearching: P.isOpen(context.popup),
       onActivate() {
         context.send("action", {action});
       },
@@ -42,10 +44,10 @@ export function useTopBarProps(
   };
 }
 
-function SearchBar(props: {shortcut: string; action: string; onActivate(): void}) {
+function SearchBar(props: {shortcut: string; action: string; onActivate(): void; isSearching: boolean}) {
   return (
     <div
-      className="search-bar"
+      className={`search-bar ${props.isSearching ? "searching" : ""}`}
       onPointerDown={(ev) => {
         ev.preventDefault();
         props.onActivate();
