@@ -25,6 +25,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
+    "build": "tsc --outDir ../../dist/server",
     "watch": "cp package.json package-lock.json ../../dist/server && tsc --watch --outDir ../../dist/server"
   }
 }

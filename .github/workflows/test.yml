@@ -9,7 +9,9 @@ jobs:
         uses: actions/checkout@v1
       - name: Install dependencies
         run: |
-          cd src/shared && sudo npm link && cd ../..
-          cd src/client && npm link @thinktool/shared && npm ci
+          cd src
+          yarn install --frozen-lockfile
+          cd shared && yarn run build && cd ..
+          cd search && yarn run build && cd ..
       - name: Run test suite
-        run: cd src/client && npm run test
+        run: cd src/client && yarn run test
