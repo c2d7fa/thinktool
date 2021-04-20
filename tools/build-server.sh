@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
+set -eux -o pipefail
 
-set -e
-
-echo "Building server..."
 mkdir -p dist/server
-cd src/server
-npm ci
-node_modules/.bin/tsc --outDir ../../dist/server
-cp package.json package-lock.json ../../dist/server
-cd ../..
-cp -r src/server/{node_modules,package.json} dist/server
-echo "Built 'dist/server' from 'src/server'."
+
+echo "Installing dependencies..."
+cd src
+yarn install --frozen-lockfile
+
+echo "Building local packages..."
+yarn workspaces run build
+
+echo "Building server into dist/server..."
+cd server
+cp -r dist/* ../../dist/server
+cp -r package.json ../../dist/server
+cd ..
+cp -r node_modules ../dist/server
+cd ..
