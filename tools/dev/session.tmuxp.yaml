@@ -18,9 +18,8 @@ windows:
   - layout: even-vertical
     panes:
       - shell_command:
-          - sleep 10
-          - cd dist/server
-          - node server.js
+          - cd src/server
+          - node dist/server.js
       - shell_command:
           - cd src/server
           - npm run watch
