@@ -7,9 +7,14 @@ set -eux -o pipefail
 
 mkdir -p dist/static
 
-echo "Building web client into dist/static/..."
-cd src/web
-npm ci
-npm run build
+echo "Installing dependencies..."
+cd src
+yarn install --frozen-lockfile
+
+echo "Building local packages..."
+yarn workspaces run build
+
+echo "Building web client into dist/static..."
+cd web
 cp -r out/* ../../dist/static
 cd ../..

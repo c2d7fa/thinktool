@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "workspaces": [
+    "shared",
+    "server",
+    "search",
+    "client",
+    "web",
+    "desktop"
+  ]
+}

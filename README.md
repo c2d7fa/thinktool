@@ -64,9 +64,11 @@ The static resources should be deployed to a static site hosting service, while
 the server code should be run on an appropriate server using Node.js. The
 desktop client is bundled as an executable app.
 
-You will need to have the following dependencies installed:
+Yarn is required, since we use Yarn Workspaces. You will need to have the
+following dependencies installed:
 
-- Node.js and NPM
+- Node.js
+- Yarn
 - Docker
 - Bash and the GNU core utilities
 - Curl
@@ -88,15 +90,22 @@ There is also a script that does this for you:
 
     $ tools/dev/start-docker.sh
 
-#### Developing `@thinktool/client` package
+### Dependencies
 
-When working on the client package, it may be useful to test your changes via
-the web package. The typical way to do this is by linking the client package
-into the web package with `npm link ../client` from `src/web/`.
+We use Yarn to manage dependencies. The `src/` directory is set up as a
+workspace:
 
-One problem with this is that installing the client package's `devDependencies`
-installs React, even though this is supposed to be a peer dependency. For this
-reason, you'll have to also run `npm link node_modules/@thinktool/client/node_modules/react{,-dom}`.
+    $ cd src
+
+From there, you can install everything with a single command:
+
+    $ yarn install
+
+This will automatically link local packages together, so you can test the whole
+application, even if the packages are published separately. However, this also
+means that you will need to build the dependencies. To build all packages, run:
+
+    $ yarn workspaces run build
 
 ### Static Resources
 
