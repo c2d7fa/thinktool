@@ -8,7 +8,8 @@ cd src
 yarn install --frozen-lockfile
 
 echo "Building local packages..."
-yarn workspaces run build
+cd shared && yarn run build && cd ..
+cd server && yarn run build && cd ..
 
 echo "Building server into dist/server..."
 cd server
