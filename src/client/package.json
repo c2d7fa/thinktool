@@ -49,9 +49,8 @@
   },
   "scripts": {
     "build-style": "mkdir -p dist && sass app.scss dist/app.css",
-    "check": "tsc",
-    "build": "yarn run build-style && babel src/ -D --extensions .ts,.tsx --out-dir dist && tsc",
-    "watch": "yarn run build && babel -w --verbose src/ -D --extensions .ts,.tsx --out-dir dist",
+    "build": "yarn run build-style && webpack",
+    "watch": "yarn run build && webpack --watch",
     "test": "jest --roots tests --roots src",
     "test-watch": "jest --watchAll --roots tests --roots src"
   },

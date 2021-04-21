@@ -12,9 +12,6 @@ windows:
       - shell_command:
           - cd src/client
           - npm run test-watch
-      - shell_command:
-          - cd src/client
-          - npm run check
   - layout: even-vertical
     panes:
       - shell_command:
