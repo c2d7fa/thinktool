@@ -1,5 +1,9 @@
 import * as React from "react";
 
+const ImageWelcome = require("../../splash-welcome.png");
+const ImageMultipleParents = require("../../splash-multiple-parents.svg");
+const ImageBidirectionalLinks = require("../..//splash-bidirectional-links.svg");
+
 // I don't think "splash screen" is exactly the right terminology for this. It's
 // the thing that pops up when a user first logs in and explains a bit about our
 // features and how to get started.
@@ -42,14 +46,14 @@ const welcomePage = (
   <>
     <div className="splash-image">
       <img
-        src="https://thinktool.io/splash-welcome.png"
+        src={ImageWelcome}
         style={{display: "block", width: "75%", height: "100%", objectFit: "cover", margin: "auto"}}
       />
     </div>
     <h1>Welcome to Thinktool</h1>
     <p>
-      With bidirectional links and multiple parents, you'll spend your time <em>writing</em> notes, not
-      organizing them.
+      With bidirectional links and multiple parents, you'll spend your time <em>writing</em> notes, not organizing
+      them.
     </p>
   </>
 );
@@ -57,12 +61,12 @@ const welcomePage = (
 const parentsPage = (
   <>
     <div className="splash-image">
-      <img src="https://thinktool.io/splash-multiple-parents.svg" />
+      <img src={ImageMultipleParents} />
     </div>
     <h1>Multiple parents</h1>
     <p>
-      Organize your library freely. You can place the same item under multiple parents. Thinktool keeps
-      everything synced.
+      Organize your library freely. You can place the same item under multiple parents. Thinktool keeps everything
+      synced.
     </p>
   </>
 );
@@ -70,12 +74,12 @@ const parentsPage = (
 const linksPage = (
   <>
     <div className="splash-image">
-      <img src="https://thinktool.io/splash-bidirectional-links.svg" />
+      <img src={ImageBidirectionalLinks} />
     </div>
     <h1>Bidirectional links</h1>
     <p>
-      Use links to associate related items. Thinktool will find and collect references to each of the items in
-      your library.
+      Use links to associate related items. Thinktool will find and collect references to each of the items in your
+      library.
     </p>
   </>
 );

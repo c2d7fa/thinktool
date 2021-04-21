@@ -9,6 +9,3 @@ cp ../static/*.png build
 
 echo "Building static resources specific to desktop client..."
 cp -r static/* build
-
-echo "Building stylesheets..."
-cp ../client/dist/app.css build

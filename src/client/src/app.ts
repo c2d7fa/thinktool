@@ -8,7 +8,6 @@ import {Communication} from "@thinktool/shared";
 
 import * as Tutorial from "./tutorial";
 import {GoalId} from "./goal";
-import {App} from "./main";
 
 export interface App {
   state: D.State;
