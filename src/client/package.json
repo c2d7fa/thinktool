@@ -24,10 +24,13 @@
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "babel-loader": "^8.2.2",
+    "css-loader": "^5.2.4",
     "jest": "^26.6.3",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "sass": "^1.32.4",
+    "sass-loader": "^11.0.1",
+    "style-loader": "^2.0.0",
     "ts-loader": "^9.0.2",
     "typescript": "^4.1.3",
     "webpack": "^5.34.0",
@@ -48,9 +51,8 @@
     "react-dom": "^17.0.1"
   },
   "scripts": {
-    "build-style": "mkdir -p dist && sass app.scss dist/app.css",
-    "build": "yarn run build-style && webpack",
-    "watch": "yarn run build && webpack --watch",
+    "build": "webpack",
+    "watch": "webpack --watch --mode=development",
     "test": "jest --roots tests --roots src",
     "test-watch": "jest --watchAll --roots tests --roots src"
   },

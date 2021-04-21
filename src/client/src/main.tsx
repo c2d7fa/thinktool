@@ -1,3 +1,5 @@
+import "../app.scss";
+
 import {Communication} from "@thinktool/shared";
 
 import * as ChangelogData from "./changes.json";

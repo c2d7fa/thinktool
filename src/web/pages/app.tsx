@@ -1,13 +1,20 @@
 import Head from "next/head";
 
 import * as React from "react";
-import * as Thinktool from "@thinktool/client";
 
 export async function getStaticProps() {
   return {props: {apiHost: process.env.DIAFORM_API_HOST}};
 }
 
 export default function App(props: {apiHost: string}) {
+  const [mainElement, setMainElement] = React.useState(<div>Loading...</div>);
+
+  React.useEffect(() => {
+    import("@thinktool/client").then((Thinktool) => {
+      setMainElement(<Thinktool.App apiHost={props.apiHost} />);
+    });
+  }, []);
+
   return (
     <>
       <Head>
@@ -17,11 +24,10 @@ export default function App(props: {apiHost: string}) {
         <link rel="prefetch" href="https://thinktool.io/splash-welcome.png" />
         <link rel="prefetch" href="https://thinktool.io/splash-bidirectional-links.svg" />
         <link rel="prefetch" href="https://thinktool.io/splash-multiple-parents.svg" />
-        <link rel="stylesheet" href="/app.css" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script src="https://kit.fontawesome.com/d7c222beb5.js" crossOrigin="anonymous" />
       </Head>
-      {process.browser && <Thinktool.App apiHost={props.apiHost} />}
+      {mainElement}
       <script data-goatcounter="https://thinktool.goatcounter.com/count" async src="//gc.zgo.at/count.js" />
     </>
   );
