@@ -2,7 +2,6 @@
   "compilerOptions": {
     "target": "ESNext",
     "moduleResolution": "node",
-    "emitDeclarationOnly": true,
     "jsx": "react",
     "strict": true,
     "outDir": "dist",
