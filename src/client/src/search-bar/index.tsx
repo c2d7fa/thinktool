@@ -2,7 +2,7 @@ import * as React from "react";
 
 const Style = require("./style.module.scss").default;
 
-import {classes} from "@johv/miscjs";
+import {classes, choose} from "@johv/miscjs";
 
 import * as A from "../app";
 import * as Sh from "../shortcuts";
@@ -17,6 +17,10 @@ export function useSearchBarProps(
   send: M.Send,
   search: (query: string) => void,
 ): Parameters<typeof SearchBar>[0] {
+  function updatePopup(f: (state: P.State) => P.State): void {
+    updateApp((app) => A.merge(app, {popup: f(app.popup)}));
+  }
+
   const [action, description] = (() => {
     const editor = A.focusedEditor(app);
     if (editor === null) {
@@ -38,8 +42,11 @@ export function useSearchBarProps(
     },
     query: P.query(app.popup),
     onQuery(query: string) {
-      updateApp((app) => A.merge(app, {popup: P.setQuery(app.popup, query)}));
+      updatePopup((popup) => P.setQuery(popup, query));
       search(query);
+    },
+    onAbort() {
+      updatePopup(P.close);
     },
   };
 }
@@ -52,6 +59,7 @@ export function SearchBar(props: {
   query: string;
 
   onActivate(): void;
+  onAbort(): void;
   onQuery(query: string): void;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -61,6 +69,13 @@ export function SearchBar(props: {
       inputRef.current.focus();
     }
   }, [inputRef, props.isSearching]);
+
+  function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
+    const {found} = choose(ev.key, {
+      Escape: props.onAbort,
+    });
+    if (found) ev.preventDefault();
+  }
 
   return (
     <div
@@ -85,6 +100,8 @@ export function SearchBar(props: {
           ref={inputRef}
           value={props.query}
           onInput={(ev) => props.onQuery((ev.target as HTMLInputElement).value)}
+          onBlur={props.onAbort}
+          onKeyDown={onKeyDown}
         />
       ) : (
         <span>
