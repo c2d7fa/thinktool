@@ -32,55 +32,6 @@
     justify-content: flex-end;
   }
 
-  .search-bar {
-    cursor: text;
-    font-size: 0.9em;
-    width: 50vw;
-    background-color: #fbfbfb;
-    padding: 0.2em 0.5em;
-    border-radius: 6px;
-    border: 1px solid #aaa;
-
-    box-shadow: inset #aaa 0 2px 6px -4px;
-    border-radius: base.$overlay-border-radius;
-
-    @include general.placeholder-text(#aaa);
-
-    transition: opacity base.$quick-transition-time;
-
-    display: flex;
-    align-items: center;
-
-    .icon {
-      color: #bbb;
-      font-size: 0.8em;
-      margin-top: -2px;
-
-      display: none;
-    }
-
-    &.icon-search .fa-search {
-      display: block;
-    }
-
-    &.icon-link .fa-link {
-      display: block;
-    }
-
-    &.icon-plus-circle .fa-plus-circle {
-      display: block;
-    }
-
-    &:hover {
-      border-color: #888;
-    }
-
-    &.searching {
-      opacity: 0;
-      cursor: default;
-    }
-  }
-
   .logo {
     @include components.logo;
     margin-right: 1rem;
