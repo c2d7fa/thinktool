@@ -108,7 +108,7 @@ export function SearchBar(props: {
         [Style["find"]]: props.icon === "search",
         [Style["link"]]: props.icon === "link",
         [Style["connect"]]: props.icon === "plus-circle",
-        [Style["searching"]]: props.isSearching,
+        [Style["showresults"]]: props.isSearching && props.results.length > 0,
       })}
       onPointerDown={(ev) => {
         ev.preventDefault();

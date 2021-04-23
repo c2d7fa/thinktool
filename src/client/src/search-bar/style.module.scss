@@ -12,6 +12,7 @@
   cursor: text;
   font-size: 0.9em;
   width: 50vw;
+  max-width: general.$outline-width;
   background-color: $background-color;
   padding: 0.2em 0.5em;
   border-radius: 6px;
@@ -52,13 +53,13 @@
     border-color: #888;
   }
 
-  &.searching {
+  &.showresults {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
-  }
 
-  &.searching .results {
-    visibility: visible;
+    .results {
+      visibility: visible;
+    }
   }
 
   input {
@@ -78,10 +79,15 @@
     position: absolute;
     box-sizing: border-box;
 
-    left: -1px; // Not sure why this is necessary
+    // Necessary to fit search bar exactly. Not sure why.
+    left: -1px;
+    right: -1px;
+
     top: 100%;
-    width: 50vw;
-    height: max(200px, 35vh);
+
+    height: 40vh;
+    min-height: 150px;
+    max-height: 50vw;
 
     display: flex;
     flex-direction: column;
