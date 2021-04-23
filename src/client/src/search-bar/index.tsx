@@ -62,6 +62,7 @@ export function SearchBar(props: {
       <span>
         Press <kbd>{props.shortcut}</kbd> to {props.action}.
       </span>
+      <div className={Style.results} />
     </div>
   );
 }

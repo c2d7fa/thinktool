@@ -10,6 +10,8 @@
 
   padding: (base.$ui-small-font-size / 2) 1rem;
   @include components.overlay;
+
+  position: relative;
   z-index: 1500;
 
   .left {

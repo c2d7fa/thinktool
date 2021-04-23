@@ -3,13 +3,21 @@
 @use "../../general";
 
 .search-bar {
+  $background-color: #fbfbfb;
+  $border: 1px solid #aaa;
+
+  position: relative;
+  box-sizing: border-box;
+
+
   cursor: text;
   font-size: 0.9em;
   width: 50vw;
-  background-color: #fbfbfb;
+  background-color: $background-color;
   padding: 0.2em 0.5em;
+  padding-bottom: 0.1em;
   border-radius: 6px;
-  border: 1px solid #aaa;
+  border: $border;
 
   box-shadow: inset #aaa 0 2px 6px -4px;
   border-radius: base.$overlay-border-radius;
@@ -46,7 +54,28 @@
   }
 
   &.searching {
-    opacity: 0;
-    cursor: default;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  &.searching .results {
+    visibility: visible;
+  }
+
+  .results {
+    visibility: hidden;
+
+    position: absolute;
+    box-sizing: border-box;
+
+    left: -1px; // Not sure why this is necessary
+    top: 100%;
+    width: 50vw;
+    height: max(200px, 35vh);
+
+    background-color: $background-color;
+    border: $border;
+
+    border-radius: 0 0 base.$overlay-border-radius base.$overlay-border-radius;
   }
 }
