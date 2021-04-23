@@ -98,6 +98,8 @@
 
     border-radius: 0 0 base.$overlay-border-radius base.$overlay-border-radius;
 
+    box-shadow: #aaa 0 2px 6px -4px;
+
     .result {
       border-bottom: 1px solid #eee;
       padding: 0.25em 1em;
