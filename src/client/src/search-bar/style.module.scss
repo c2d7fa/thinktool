@@ -9,13 +9,11 @@
   position: relative;
   box-sizing: border-box;
 
-
   cursor: text;
   font-size: 0.9em;
   width: 50vw;
   background-color: $background-color;
   padding: 0.2em 0.5em;
-  padding-bottom: 0.1em;
   border-radius: 6px;
   border: $border;
 
@@ -32,7 +30,6 @@
   :global(.icon) {
     color: #bbb;
     font-size: 0.8em;
-    margin-top: -2px;
 
     display: none;
   }
@@ -60,6 +57,17 @@
 
   &.searching .results {
     visibility: visible;
+  }
+
+  input {
+    font: inherit;
+    border: none;
+    background: none;
+    outline: none;
+
+    color: #444;
+
+    width: 100%;
   }
 
   .results {

@@ -41,6 +41,14 @@ export function SearchBar(props: {
   icon: "search" | "link" | "plus-circle";
   isSearching: boolean;
 }) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (inputRef.current !== null && props.isSearching) {
+      inputRef.current.focus();
+    }
+  }, [inputRef, props.isSearching]);
+
   return (
     <div
       className={classes({
@@ -59,9 +67,13 @@ export function SearchBar(props: {
       <span className={`icon fa-fw fas fa-search`} />
       <span className={`icon fa-fw fas fa-link`} />
       <span className={`icon fa-fw fas fa-plus-circle`} />
-      <span>
-        Press <kbd>{props.shortcut}</kbd> to {props.action}.
-      </span>
+      {props.isSearching ? (
+        <input ref={inputRef} />
+      ) : (
+        <span>
+          Press <kbd>{props.shortcut}</kbd> to {props.action}.
+        </span>
+      )}
       <div className={Style.results} />
     </div>
   );

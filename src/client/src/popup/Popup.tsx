@@ -12,14 +12,6 @@ import {StaticContent} from "../ui/Editor";
 import Bullet from "../ui/Bullet";
 import {OtherParents} from "../ui/OtherParents";
 
-function useFocusInputRef(): React.RefObject<HTMLInputElement> {
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  React.useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-  return inputRef;
-}
-
 const ResultListItem = React.memo(
   function (props: {result: P.Result; selected: boolean; onSelect: () => void}) {
     // Using onPointerDown instead of onClick to circumvent parent getting blur
@@ -60,10 +52,6 @@ function Popup(props: {
   up(): void;
   down(): void;
 }) {
-  // This element should always be focused when it exists. We expect the parent
-  // to remove us from the DOM when we're not needed.
-  const inputRef = useFocusInputRef();
-
   function onScroll(ev: React.UIEvent) {
     const el = ev.target as HTMLUListElement;
     if (el.scrollTop + el.clientHeight + 500 > el.scrollHeight) {
@@ -86,7 +74,6 @@ function Popup(props: {
       <input
         onPointerDown={props.selectNewItem}
         className={props.isNewItemActive ? " selected-result" : ""}
-        ref={inputRef}
         type="text"
         value={props.query}
         onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
