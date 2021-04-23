@@ -156,6 +156,8 @@ body {
     border: 1px solid hsl(90, 20%, 80%);
     border-radius: 3px;
 
+    white-space: nowrap;
+
     .bullet {
       margin: 0;
       margin-top: -2px;
@@ -316,14 +318,10 @@ a.plain-text-link:hover {
   user-select: none;
   display: inline-block;
 
-  /* We have to really insist on this for some reason */
-  width: 20px !important;
-  height: 20px !important;
-  min-width: 20px !important;
-  min-height: 20px !important;
+  width: 20px;
+  height: 20px;
 
   margin-top: 6px;
-  margin-right: 1rem;
   cursor: pointer;
 
   text-align: center;

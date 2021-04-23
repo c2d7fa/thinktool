@@ -93,13 +93,22 @@
     border-radius: 0 0 base.$overlay-border-radius base.$overlay-border-radius;
 
     .result {
-      font-size: 1.1rem; // Same as normal item; mainly workaround to correct bullet size.
-
       border-bottom: 1px solid #eee;
-      padding: 0.5em;
+      padding: 0.25em 1em;
 
       :global {
         @include general.item-grid;
+
+        .bullet {
+          height: 1em;
+          width: 1em;
+        }
+
+        .other-parents-small:not(:empty) {
+          // Roughly match space above item without parents due to font size and
+          // line height differences.
+          padding-top: 0.5em;
+        }
       }
     }
   }

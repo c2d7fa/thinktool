@@ -14,8 +14,8 @@ $outline-width: 80ex;
 
 @mixin item-grid {
   display: grid;
-  grid: "empty parents" auto "bullet item" auto / 20px 1fr;
-  gap: 1px 1rem;
+  grid: "empty parents" auto "bullet item" auto / 1em 1fr;
+  gap: 3px 1em;
 
   .bullet {
     grid-area: bullet;
