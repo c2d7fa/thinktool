@@ -11,7 +11,12 @@ import * as P from "../popup";
 import * as E from "../editing";
 import * as M from "../messages";
 
-export function useSearchBarProps(app: A.App, send: M.Send): Parameters<typeof SearchBar>[0] {
+export function useSearchBarProps(
+  app: A.App,
+  updateApp: A.UpdateApp,
+  send: M.Send,
+  search: (query: string) => void,
+): Parameters<typeof SearchBar>[0] {
   const [action, description] = (() => {
     const editor = A.focusedEditor(app);
     if (editor === null) {
@@ -31,15 +36,23 @@ export function useSearchBarProps(app: A.App, send: M.Send): Parameters<typeof S
     onActivate() {
       send("action", {action});
     },
+    query: P.query(app.popup),
+    onQuery(query: string) {
+      updateApp((app) => A.merge(app, {popup: P.setQuery(app.popup, query)}));
+      search(query);
+    },
   };
 }
 
 export function SearchBar(props: {
   shortcut: string;
   action: string;
-  onActivate(): void;
   icon: "search" | "link" | "plus-circle";
   isSearching: boolean;
+  query: string;
+
+  onActivate(): void;
+  onQuery(query: string): void;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -68,7 +81,11 @@ export function SearchBar(props: {
       <span className={`icon fa-fw fas fa-link`} />
       <span className={`icon fa-fw fas fa-plus-circle`} />
       {props.isSearching ? (
-        <input ref={inputRef} />
+        <input
+          ref={inputRef}
+          value={props.query}
+          onInput={(ev) => props.onQuery((ev.target as HTMLInputElement).value)}
+        />
       ) : (
         <span>
           Press <kbd>{props.shortcut}</kbd> to {props.action}.

@@ -1,24 +1,32 @@
 import * as React from "react";
 
-import {Context} from "../context";
 import {ExternalLink} from "./ExternalLink";
 import {SearchBar, useSearchBarProps} from "../search-bar";
+import {Server} from "../server-api";
+import {Send} from "../messages";
+import {App, UpdateApp} from "../app";
 
-export function useTopBarProps(
-  context: Context,
-  args: {isToolbarShown: boolean; setIsToolbarShown(b: boolean): void; username?: string},
-): Parameters<typeof TopBar>[0] {
+export function useTopBarProps(args: {
+  app: App;
+  send: Send;
+  updateApp: UpdateApp;
+  isToolbarShown: boolean;
+  setIsToolbarShown(b: boolean): void;
+  server?: Server;
+  username?: string;
+  search(query: string): void;
+}): Parameters<typeof TopBar>[0] {
   return {
     isToolbarShown: args.isToolbarShown,
     login:
-      args.username === undefined || context.server === undefined
+      args.username === undefined || args.server === undefined
         ? null
         : {
             username: args.username,
-            logOutUrl: context.server.logOutUrl,
+            logOutUrl: args.server.logOutUrl,
           },
     onToggleToolbar: () => args.setIsToolbarShown(!args.isToolbarShown),
-    searchBar: useSearchBarProps(context, context.send),
+    searchBar: useSearchBarProps(args.app, args.updateApp, args.send, args.search),
   };
 }
 

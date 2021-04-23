@@ -325,7 +325,16 @@ function App_({
     [updateApp],
   );
 
-  const topBarProps = useTopBarProps(context, {isToolbarShown, setIsToolbarShown, username});
+  const topBarProps = useTopBarProps({
+    app: context,
+    updateApp,
+    send: context.send,
+    isToolbarShown,
+    setIsToolbarShown,
+    username,
+    server: context.server,
+    search: (query) => search.query(query, 25),
+  });
 
   return (
     <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">

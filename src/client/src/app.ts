@@ -22,6 +22,8 @@ export interface App {
   orphans: O.Orphans;
 }
 
+export type UpdateApp = (f: (app: App) => App) => void;
+
 export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: boolean}): App {
   return {
     state: data,
