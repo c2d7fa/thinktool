@@ -20,7 +20,9 @@
   box-shadow: inset #aaa 0 2px 6px -4px;
   border-radius: base.$overlay-border-radius;
 
-  @include general.placeholder-text(#aaa);
+  .placeholder {
+    @include general.placeholder-text(#aaa);
+  }
 
   transition: opacity base.$quick-transition-time;
 
@@ -81,9 +83,24 @@
     width: 50vw;
     height: max(200px, 35vh);
 
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll;
+
     background-color: $background-color;
     border: $border;
 
     border-radius: 0 0 base.$overlay-border-radius base.$overlay-border-radius;
+
+    .result {
+      font-size: 1.1rem; // Same as normal item; mainly workaround to correct bullet size.
+
+      border-bottom: 1px solid #eee;
+      padding: 0.5em;
+
+      :global {
+        @include general.item-grid;
+      }
+    }
   }
 }

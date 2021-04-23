@@ -11,3 +11,21 @@ $outline-width: 80ex;
     font-size: 0.85em;
   }
 }
+
+@mixin item-grid {
+  display: grid;
+  grid: "empty parents" auto "bullet item" auto / 20px 1fr;
+  gap: 1px 1rem;
+
+  .bullet {
+    grid-area: bullet;
+  }
+
+  .other-parents-small {
+    grid-area: parents;
+  }
+
+  .content {
+    grid-area: item;
+  }
+}

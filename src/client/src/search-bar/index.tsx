@@ -11,6 +11,28 @@ import * as P from "../popup";
 import * as E from "../editing";
 import * as M from "../messages";
 
+import {OtherParents} from "../ui/OtherParents";
+import {StaticContent} from "../ui/Editor";
+import Bullet from "../ui/Bullet";
+
+const Result = React.memo(
+  function (props: {result: P.Result}) {
+    return (
+      <div className={classes({[Style.result]: true})}>
+        <OtherParents otherParents={props.result.parents} click={() => {}} altClick={() => {}} />
+        <Bullet
+          beginDrag={() => {}}
+          status={props.result.hasChildren ? "collapsed" : "terminal"}
+          toggle={() => {}}
+          onMiddleClick={() => {}}
+        />
+        <StaticContent content={props.result.content} />
+      </div>
+    );
+  },
+  (prev, next) => prev.result.thing === next.result.thing,
+);
+
 export function useSearchBarProps(
   app: A.App,
   updateApp: A.UpdateApp,
@@ -37,6 +59,7 @@ export function useSearchBarProps(
     icon: action === "find" ? "search" : action === "insert-link" ? "link" : "plus-circle",
     action: description,
     isSearching: P.isOpen(app.popup),
+    results: P.results(app.popup),
     onActivate() {
       send("action", {action});
     },
@@ -57,6 +80,7 @@ export function SearchBar(props: {
   icon: "search" | "link" | "plus-circle";
   isSearching: boolean;
   query: string;
+  results: P.Result[];
 
   onActivate(): void;
   onAbort(): void;
@@ -104,11 +128,15 @@ export function SearchBar(props: {
           onKeyDown={onKeyDown}
         />
       ) : (
-        <span>
+        <span className={Style.placeholder}>
           Press <kbd>{props.shortcut}</kbd> to {props.action}.
         </span>
       )}
-      <div className={Style.results} />
+      <div className={Style.results}>
+        {props.results.map((result) => (
+          <Result key={result.thing} result={result} />
+        ))}
+      </div>
     </div>
   );
 }
