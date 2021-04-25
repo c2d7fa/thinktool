@@ -59,12 +59,10 @@ export function useSearchBarProps(
     icon: action === "find" ? "search" : action === "insert-link" ? "link" : "plus-circle",
     action: description,
     isSearching: P.isOpen(app.popup),
-    results: P.results(app.popup),
+    results: P.isOpen(app.popup) ? P.results(app.popup) : [],
     isThingActive: (thing) => P.isThingActive(app.popup, thing),
-    onActivate() {
-      send("action", {action});
-    },
-    query: P.query(app.popup),
+    onActivate: () => send("action", {action}),
+    query: P.isOpen(app.popup) ? P.query(app.popup) : "",
     onQuery(query: string) {
       updatePopup((popup) => P.setQuery(popup, query));
       search(query);
