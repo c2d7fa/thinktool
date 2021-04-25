@@ -16,9 +16,9 @@ import {StaticContent} from "../ui/Editor";
 import Bullet from "../ui/Bullet";
 
 const Result = React.memo(
-  function (props: {result: P.Result}) {
+  function (props: {result: P.Result; isSelected: boolean}) {
     return (
-      <div className={classes({[Style.result]: true})}>
+      <div className={classes({[Style.result]: true, [Style.selected]: props.isSelected})}>
         <OtherParents otherParents={props.result.parents} click={() => {}} altClick={() => {}} />
         <Bullet
           beginDrag={() => {}}
@@ -30,7 +30,7 @@ const Result = React.memo(
       </div>
     );
   },
-  (prev, next) => prev.result.thing === next.result.thing,
+  (prev, next) => prev.result.thing === next.result.thing && prev.isSelected === next.isSelected,
 );
 
 export function useSearchBarProps(
@@ -60,6 +60,7 @@ export function useSearchBarProps(
     action: description,
     isSearching: P.isOpen(app.popup),
     results: P.results(app.popup),
+    isThingActive: (thing) => P.isThingActive(app.popup, thing),
     onActivate() {
       send("action", {action});
     },
@@ -71,6 +72,8 @@ export function useSearchBarProps(
     onAbort() {
       updatePopup(P.close);
     },
+    onUp: () => updatePopup((popup) => P.activatePrevious(popup)),
+    onDown: () => updatePopup((popup) => P.activateNext(popup)),
   };
 }
 
@@ -81,10 +84,13 @@ export function SearchBar(props: {
   isSearching: boolean;
   query: string;
   results: P.Result[];
+  isThingActive(thing: string): boolean;
 
   onActivate(): void;
   onAbort(): void;
   onQuery(query: string): void;
+  onUp(): void;
+  onDown(): void;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -97,6 +103,8 @@ export function SearchBar(props: {
   function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
     const {found} = choose(ev.key, {
       Escape: props.onAbort,
+      ArrowDown: props.onDown,
+      ArrowUp: props.onUp,
     });
     if (found) ev.preventDefault();
   }
@@ -134,7 +142,7 @@ export function SearchBar(props: {
       )}
       <div className={Style.results}>
         {props.results.map((result) => (
-          <Result key={result.thing} result={result} />
+          <Result key={result.thing} result={result} isSelected={props.isThingActive(result.thing)} />
         ))}
       </div>
     </div>
