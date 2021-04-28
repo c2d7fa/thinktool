@@ -84,12 +84,8 @@ export function useSearchBarProps(
     },
     onUp: () => updatePopup((popup) => P.activatePrevious(popup)),
     onDown: () => updatePopup((popup) => P.activateNext(popup)),
-    onSelect(thing) {
-      updateApp((app) => {
-        const newApp = P.selectThing(app, thing);
-        return newApp;
-      });
-    },
+    onSelect: (thing) => updateApp((app) => P.selectThing(app, thing)),
+    onSelectActive: () => updateApp((app) => P.selectActive(app)),
   };
 }
 
@@ -108,6 +104,7 @@ export function SearchBar(props: {
   onUp(): void;
   onDown(): void;
   onSelect(thing: string): void;
+  onSelectActive(): void;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -119,6 +116,7 @@ export function SearchBar(props: {
 
   function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
     const {found} = choose(ev.key, {
+      Enter: props.onSelectActive,
       Escape: props.onAbort,
       ArrowDown: props.onDown,
       ArrowUp: props.onUp,

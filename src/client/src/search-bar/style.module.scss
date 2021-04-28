@@ -111,7 +111,7 @@
 
       padding: 0.25em 1em;
 
-      &:hover, &.selected:hover {
+      &:hover {
         background-color: #f4f4f4;
       }
 
@@ -120,8 +120,12 @@
       }
 
       &.selected {
-        background-color: #f8f8f8;
+        background-color: #f4f4f4;
         border-color: #888;
+      }
+
+      &.selected:hover {
+        background-color: #f2f2f2;
       }
 
       :global {
