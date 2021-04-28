@@ -21,7 +21,6 @@ import * as Drag from "./drag";
 import * as P from "./popup";
 
 import * as Editor from "./ui/Editor";
-import {usePopup} from "./popup/Popup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
@@ -283,8 +282,6 @@ function App_({
     return search;
   }, []);
 
-  const popup = usePopup(context, updateApp, (query) => search.query(query, 25));
-
   React.useEffect(() => {
     receiver.subscribe("action", (ev) => {
       updateApp((app) => {
@@ -338,7 +335,6 @@ function App_({
 
   return (
     <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
-      {popup}
       <TopBar {...topBarProps} />
       {isToolbarShown ? (
         <Toolbar
