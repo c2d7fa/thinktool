@@ -8,7 +8,6 @@ import * as A from "../app";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
 import * as P from "../popup";
-import * as E from "../editing";
 import * as M from "../messages";
 
 import {OtherParents} from "../ui/OtherParents";
@@ -55,21 +54,21 @@ export function useSearchBarProps(
     updateApp((app) => A.merge(app, {popup: f(app.popup)}));
   }
 
-  const [action, description] = (() => {
-    const editor = A.focusedEditor(app);
-    if (editor === null) {
-      return ["find", "search"] as ["find", string];
-    } else if (E.isEmpty(editor)) {
-      return ["replace", "connect an existing item"] as ["replace", string];
-    } else {
-      return ["insert-link", "insert a link"] as ["insert-link", string];
-    }
-  })();
+  const icon = P.icon(app);
+  const action = icon === "search" ? "find" : icon === "insert" ? "replace" : "insert-link";
+  const description =
+    icon === "search"
+      ? "search"
+      : icon === "insert"
+      ? "connect an existing item"
+      : icon === "link"
+      ? "insert a link"
+      : "";
 
   return {
     shortcut: Sh.format(Ac.shortcut(action)),
-    icon: action === "find" ? "search" : action === "insert-link" ? "link" : "plus-circle",
-    action: description,
+    icon,
+    description,
     isSearching: P.isOpen(app.popup),
     results: P.isOpen(app.popup) ? P.results(app.popup) : [],
     isThingActive: (thing) => P.isThingActive(app.popup, thing),
@@ -92,8 +91,8 @@ export function useSearchBarProps(
 
 export function SearchBar(props: {
   shortcut: string;
-  action: string;
-  icon: "search" | "link" | "plus-circle";
+  description: string;
+  icon: "search" | "link" | "insert";
   isSearching: boolean;
   query: string;
   results: P.Result[];
@@ -132,7 +131,7 @@ export function SearchBar(props: {
         [Style["search-bar"]]: true,
         [Style["find"]]: props.icon === "search",
         [Style["link"]]: props.icon === "link",
-        [Style["connect"]]: props.icon === "plus-circle",
+        [Style["connect"]]: props.icon === "insert",
         [Style["showresults"]]: props.isSearching && props.results.length > 0,
         [Style["new-item-selected"]]: props.isNewItemActive,
       })}
@@ -159,7 +158,7 @@ export function SearchBar(props: {
         />
       ) : (
         <span className={Style.placeholder}>
-          Press <kbd>{props.shortcut}</kbd> to {props.action}.
+          Press <kbd>{props.shortcut}</kbd> to {props.description}.
         </span>
       )}
       <div className={Style.results}>

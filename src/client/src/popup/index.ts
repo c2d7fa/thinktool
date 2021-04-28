@@ -6,7 +6,8 @@ const _isOpen = Symbol("active");
 const _query = Symbol("query");
 const _results = Symbol("results");
 const _activeIndex = Symbol("activeIndex");
-const _select = Symbol("activeIndex");
+const _select = Symbol("select");
+const _icon = Symbol("icon");
 
 export type Result = {
   thing: string;
@@ -23,11 +24,15 @@ export type State =
       [_results]: Result[];
       [_activeIndex]: number | null;
       [_select]: (app: A.App, thing: string) => A.App;
+      [_icon]: "search" | "insert" | "link";
     };
 
 export const initial: State = {[_isOpen]: false};
 
-export function open(state: State, args: {query: string; select(app: A.App, thing: string): A.App}): State {
+export function open(
+  state: State,
+  args: {query: string; icon: "search" | "insert" | "link"; select(app: A.App, thing: string): A.App},
+): State {
   return {
     ...state,
     [_isOpen]: true,
@@ -35,6 +40,7 @@ export function open(state: State, args: {query: string; select(app: A.App, thin
     [_results]: [],
     [_activeIndex]: 0,
     [_select]: args.select,
+    [_icon]: args.icon,
   };
 }
 
@@ -156,4 +162,14 @@ export function selectThing(app: A.App, thing: string | null): A.App {
   result = A.merge(result, {popup: close(result.popup)});
 
   return result;
+}
+
+export function icon(app: A.App): "search" | "insert" | "link" {
+  if (isOpen(app.popup)) return app.popup[_icon];
+
+  const editor = A.focusedEditor(app);
+
+  if (editor === null) return "search";
+  else if (E.isEmpty(editor)) return "insert";
+  else return "link";
 }
