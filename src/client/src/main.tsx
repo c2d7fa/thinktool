@@ -21,7 +21,6 @@ import * as Drag from "./drag";
 import * as P from "./popup";
 
 import * as Editor from "./ui/Editor";
-import {usePopup} from "./popup/Popup";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
@@ -283,8 +282,6 @@ function App_({
     return search;
   }, []);
 
-  const popup = usePopup(context, updateApp, (query) => search.query(query, 25));
-
   React.useEffect(() => {
     receiver.subscribe("action", (ev) => {
       updateApp((app) => {
@@ -325,20 +322,30 @@ function App_({
     [updateApp],
   );
 
-  const topBarProps = useTopBarProps(context, {isToolbarShown, setIsToolbarShown, username});
+  const topBarProps = useTopBarProps({
+    app: context,
+    updateApp,
+    send: context.send,
+    isToolbarShown,
+    setIsToolbarShown,
+    username,
+    server: context.server,
+    search: (query) => search.query(query, 25),
+  });
 
   return (
     <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
-      {popup}
-      <TopBar {...topBarProps} />
-      {isToolbarShown ? (
-        <Toolbar
-          executeAction={(action) => receiver.send("action", {action})}
-          isEnabled={(action) => Actions.enabled(context, action)}
-          isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
-          isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
-        />
-      ) : null}
+      <div className="app-header">
+        <TopBar {...topBarProps} />
+        {isToolbarShown ? (
+          <Toolbar
+            executeAction={(action) => receiver.send("action", {action})}
+            isEnabled={(action) => Actions.enabled(context, action)}
+            isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
+            isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
+          />
+        ) : null}
+      </div>
       {!showSplash && (
         <Tutorial.TutorialBox
           state={context.tutorialState}

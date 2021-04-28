@@ -42,6 +42,7 @@ export function useOrphanListProps(
             select(app, parent) {
               return O.addParent(app, thing, parent);
             },
+            icon: "insert",
           }),
         }),
       );

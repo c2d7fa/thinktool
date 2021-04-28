@@ -22,6 +22,8 @@ export interface App {
   orphans: O.Orphans;
 }
 
+export type UpdateApp = (f: (app: App) => App) => void;
+
 export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: boolean}): App {
   return {
     state: data,
@@ -147,6 +149,7 @@ export function switchTab(app: App, tab: "outline" | "orphans"): App {
 export function openPopup(
   app: App,
   useSelection: (app: App, thing: string) => App,
+  args?: {icon: "search" | "insert" | "link"},
 ): {app: App; search: {query: string; items: {thing: string; content: string}[]}} {
   const items = D.allThings(app.state).map((thing) => ({thing, content: D.contentText(app.state, thing)}));
   const query = selectedText(app);
@@ -155,6 +158,7 @@ export function openPopup(
     popup: P.open(app.popup, {
       query,
       select: useSelection,
+      icon: args?.icon ?? "search",
     }),
   });
 

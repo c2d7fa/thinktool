@@ -48,6 +48,16 @@ body {
   min-height: 100vh;
 }
 
+.app-header {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  z-index: 500;
+  border-bottom: base.$toolbar-border;
+}
+
 .overview {
   display: flex;
   flex-direction: column;
@@ -124,27 +134,9 @@ body {
   padding-left: 2rem;
 }
 
-@mixin item-grid {
-  display: grid;
-  grid: "empty parents" auto "bullet item" auto / 20px 1fr;
-  gap: 1px 1rem;
-
-  .bullet {
-    grid-area: bullet;
-  }
-
-  .other-parents-small {
-    grid-area: parents;
-  }
-
-  .content {
-    grid-area: item;
-  }
-}
-
 .item {
   margin-bottom: 1rem;
-  @include item-grid;
+  @include general.item-grid;
 }
 
 /* #endregion */
@@ -173,6 +165,8 @@ body {
     color: hsl(90, 30%, 30%);
     border: 1px solid hsl(90, 20%, 80%);
     border-radius: 3px;
+
+    white-space: nowrap;
 
     .bullet {
       margin: 0;
@@ -334,14 +328,10 @@ a.plain-text-link:hover {
   user-select: none;
   display: inline-block;
 
-  /* We have to really insist on this for some reason */
-  width: 20px !important;
-  height: 20px !important;
-  min-width: 20px !important;
-  min-height: 20px !important;
+  width: 20px;
+  height: 20px;
 
   margin-top: 6px;
-  margin-right: 1rem;
   cursor: pointer;
 
   text-align: center;
@@ -545,171 +535,11 @@ a.plain-text-link:hover {
 
 /* #endregion */
 
-/* #region Search popup */
-
-.link-autocomplete-popup {
-  position: fixed;
-  z-index: 1000;
-
-  left: 20vw;
-  top: 15vh;
-
-  width: 60vw;
-  max-height: 60vh;
-
-  @include components.overlay;
-  @include components.popup-with-shadow;
-
-  display: flex;
-  flex-direction: column;
-
-  overflow-y: none;
-}
-
-@supports not (backdrop-filter: blur(3px)) {
-  .link-autocomplete-popup {
-    background: #fffffff0;
-  }
-}
-
-@media (min-width: 1600px) {
-  .link-autocomplete-popup {
-    left: 25vw;
-    width: 50vw;
-  }
-}
-
-@media (min-width: 2000px) {
-  .link-autocomplete-popup {
-    left: 30vw;
-    width: 40vw;
-  }
-}
-
-@media (max-width: 1100px) {
-  .link-autocomplete-popup {
-    left: 15vw;
-    width: 70vw;
-  }
-}
-
-@media (max-width: 740px) {
-  .link-autocomplete-popup {
-    left: 5vw;
-    width: 90vw;
-  }
-}
-
-@media (max-height: 900px) {
-  .link-autocomplete-popup {
-    top: 10vh;
-    max-height: 70vh;
-  }
-}
-
-@media (max-height: 600px) {
-  .link-autocomplete-popup {
-    top: 5vh;
-    max-height: 90vh;
-  }
-}
-
-.link-autocomplete-popup-results {
-  border-top: base.$overlay-border;
-}
-
-.link-autocomplete-popup-results {
-  flex: 1 1 100%;
-
-  @include base.reset-list;
-
-  overflow-y: auto;
-  overflow-wrap: break-word;
-}
-
-.link-autocomplete-popup input {
-  cursor: pointer;
-
-  width: 100%;
-  box-sizing: border-box;
-
-  font: inherit;
-  background: none;
-  outline: none;
-  border: none;
-
-  background-color: #00000008;
-  padding: 1rem 2rem;
-  border-radius: base.$overlay-border-radius base.$overlay-border-radius 0 0;
-
-  &:hover {
-    background-color: #00000010;
-  }
-
-  &.selected-result {
-    background-color: #00000018;
-
-    &:hover {
-      background-color: #00000020;
-    }
-  }
-}
-
-.link-autocomplete-popup-result {
-  cursor: pointer;
-  padding: 0.5rem 2rem;
-  border-bottom: 1px solid #00000018;
-
-  @include item-grid;
-
-  .editor {
-    cursor: pointer;
-  }
-
-  &:hover {
-    background-color: #00000008;
-  }
-
-  &.selected-result {
-    background-color: #00000010;
-
-    &:hover {
-      background-color: #00000018;
-    }
-  }
-}
-
-.link-autocomplete-popup .create-label {
-  display: inline-block;
-  position: absolute;
-  right: 2rem;
-  top: 1rem;
-
-  font-size: base.$ui-small-font-size;
-  vertical-align: middle;
-
-  @include components.button;
-
-  color: transparent;
-
-  transition: color base.$quick-transition-time;
-}
-
-.link-autocomplete-popup input:hover + .create-label,
-.link-autocomplete-popup input.selected-result + .create-label {
-  color: #00000080;
-}
-
-/* #endregion */
-
 /* #region Toolbar */
 
 .toolbar {
-  position: sticky;
-  top: 0;
   width: 100%;
   overflow-x: auto;
-  z-index: 550;
 
   font-size: base.$ui-small-font-size;
   padding-bottom: base.$ui-small-font-size;
@@ -717,25 +547,6 @@ a.plain-text-link:hover {
 
   display: flex;
 }
-
-/* #region Toolbar border */
-
-// When the toolbar is hidden, there should be a border on the top bar instead.
-// This is a somewhat awkward way to achieve that.
-
-.toolbar {
-  border-bottom: base.$toolbar-border;
-}
-
-.toolbar ~ .overview {
-  border-top: none;
-}
-
-.overview {
-  border-top: base.$toolbar-border;
-}
-
-/* #endregion */
 
 @media (max-height: 580px) {
   .toolbar {
