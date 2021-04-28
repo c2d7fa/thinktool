@@ -335,15 +335,17 @@ function App_({
 
   return (
     <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
-      <TopBar {...topBarProps} />
-      {isToolbarShown ? (
-        <Toolbar
-          executeAction={(action) => receiver.send("action", {action})}
-          isEnabled={(action) => Actions.enabled(context, action)}
-          isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
-          isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
-        />
-      ) : null}
+      <div className="app-header">
+        <TopBar {...topBarProps} />
+        {isToolbarShown ? (
+          <Toolbar
+            executeAction={(action) => receiver.send("action", {action})}
+            isEnabled={(action) => Actions.enabled(context, action)}
+            isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
+            isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
+          />
+        ) : null}
+      </div>
       {!showSplash && (
         <Tutorial.TutorialBox
           state={context.tutorialState}

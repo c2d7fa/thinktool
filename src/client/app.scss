@@ -48,6 +48,16 @@ body {
   min-height: 100vh;
 }
 
+.app-header {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  z-index: 500;
+  border-bottom: base.$toolbar-border;
+}
+
 .overview {
   display: flex;
   flex-direction: column;
@@ -528,11 +538,8 @@ a.plain-text-link:hover {
 /* #region Toolbar */
 
 .toolbar {
-  position: sticky;
-  top: 0;
   width: 100%;
   overflow-x: auto;
-  z-index: 550;
 
   font-size: base.$ui-small-font-size;
   padding-bottom: base.$ui-small-font-size;
@@ -540,25 +547,6 @@ a.plain-text-link:hover {
 
   display: flex;
 }
-
-/* #region Toolbar border */
-
-// When the toolbar is hidden, there should be a border on the top bar instead.
-// This is a somewhat awkward way to achieve that.
-
-.toolbar {
-  border-bottom: base.$toolbar-border;
-}
-
-.toolbar ~ .overview {
-  border-top: none;
-}
-
-.overview {
-  border-top: base.$toolbar-border;
-}
-
-/* #endregion */
 
 @media (max-height: 580px) {
   .toolbar {
