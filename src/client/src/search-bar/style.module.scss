@@ -105,14 +105,22 @@
     }
 
     .result {
+      &, :global(.editor) {
+        cursor: pointer;
+      }
+
       padding: 0.25em 1em;
+
+      &:hover, &.selected:hover {
+        background-color: #f4f4f4;
+      }
 
       &:not(:first-child) {
         border-top: 1px solid #eee;
       }
 
       &.selected {
-        background-color: #f4f4f4;
+        background-color: #f8f8f8;
         border-color: #888;
       }
 

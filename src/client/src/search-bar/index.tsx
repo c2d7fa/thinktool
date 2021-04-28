@@ -16,9 +16,18 @@ import {StaticContent} from "../ui/Editor";
 import Bullet from "../ui/Bullet";
 
 const Result = React.memo(
-  function (props: {result: P.Result; isSelected: boolean}) {
+  function (props: {result: P.Result; isSelected: boolean; onSelect(): void}) {
+    // Using onPointerDown instead of onClick to circumvent parent getting blur
+    // event before we get our events.
     return (
-      <div className={classes({[Style.result]: true, [Style.selected]: props.isSelected})}>
+      <div
+        className={classes({[Style.result]: true, [Style.selected]: props.isSelected})}
+        onPointerDown={(ev) => {
+          ev.stopPropagation();
+          ev.preventDefault();
+          props.onSelect();
+        }}
+      >
         <OtherParents otherParents={props.result.parents} click={() => {}} altClick={() => {}} />
         <Bullet
           beginDrag={() => {}}
@@ -30,7 +39,10 @@ const Result = React.memo(
       </div>
     );
   },
-  (prev, next) => prev.result.thing === next.result.thing && prev.isSelected === next.isSelected,
+  (prev, next) =>
+    prev.result.thing === next.result.thing &&
+    prev.isSelected === next.isSelected &&
+    prev.onSelect === next.onSelect,
 );
 
 export function useSearchBarProps(
@@ -72,6 +84,12 @@ export function useSearchBarProps(
     },
     onUp: () => updatePopup((popup) => P.activatePrevious(popup)),
     onDown: () => updatePopup((popup) => P.activateNext(popup)),
+    onSelect(thing) {
+      updateApp((app) => {
+        const newApp = P.selectThing(app, thing);
+        return newApp;
+      });
+    },
   };
 }
 
@@ -89,6 +107,7 @@ export function SearchBar(props: {
   onQuery(query: string): void;
   onUp(): void;
   onDown(): void;
+  onSelect(thing: string): void;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -129,7 +148,7 @@ export function SearchBar(props: {
         <input
           ref={inputRef}
           value={props.query}
-          onInput={(ev) => props.onQuery((ev.target as HTMLInputElement).value)}
+          onChange={(ev) => props.onQuery((ev.target as HTMLInputElement).value)}
           onBlur={props.onAbort}
           onKeyDown={onKeyDown}
         />
@@ -140,7 +159,12 @@ export function SearchBar(props: {
       )}
       <div className={Style.results}>
         {props.results.map((result) => (
-          <Result key={result.thing} result={result} isSelected={props.isThingActive(result.thing)} />
+          <Result
+            key={result.thing}
+            result={result}
+            isSelected={props.isThingActive(result.thing)}
+            onSelect={() => props.onSelect(result.thing)}
+          />
         ))}
       </div>
     </div>
