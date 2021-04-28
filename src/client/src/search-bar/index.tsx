@@ -75,6 +75,7 @@ export function useSearchBarProps(
     isThingActive: (thing) => P.isThingActive(app.popup, thing),
     onActivate: () => send("action", {action}),
     query: P.isOpen(app.popup) ? P.query(app.popup) : "",
+    isNewItemActive: P.isThingActive(app.popup, null),
     onQuery(query: string) {
       updatePopup((popup) => P.setQuery(popup, query));
       search(query);
@@ -97,6 +98,7 @@ export function SearchBar(props: {
   query: string;
   results: P.Result[];
   isThingActive(thing: string): boolean;
+  isNewItemActive: boolean;
 
   onActivate(): void;
   onAbort(): void;
@@ -132,6 +134,7 @@ export function SearchBar(props: {
         [Style["link"]]: props.icon === "link",
         [Style["connect"]]: props.icon === "plus-circle",
         [Style["showresults"]]: props.isSearching && props.results.length > 0,
+        [Style["new-item-selected"]]: props.isNewItemActive,
       })}
       onPointerDown={(ev) => {
         ev.preventDefault();
@@ -149,6 +152,10 @@ export function SearchBar(props: {
           onChange={(ev) => props.onQuery((ev.target as HTMLInputElement).value)}
           onBlur={props.onAbort}
           onKeyDown={onKeyDown}
+          onPointerDown={(ev) => {
+            // Clicks should just reposition the cursor in the input field.
+            ev.stopPropagation();
+          }}
         />
       ) : (
         <span className={Style.placeholder}>
