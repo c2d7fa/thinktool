@@ -104,6 +104,18 @@ export function initialize(apiHost: string) {
     await api(`api/account/tutorial-finished`, {method: "PUT", body: "true"});
   }
 
+  async function setToolbarState({shown}: {shown: boolean}): Promise<void> {
+    await api(`settings/toolbar/shown`, {method: "PUT", body: JSON.stringify(shown)});
+  }
+
+  async function getToolbarState(): Promise<{shown: boolean}> {
+    const response = await api(`settings/toolbar/shown`);
+    if (response.status !== 200) throw {status: response.status};
+    const result = await response.json();
+    if (typeof result["shown"] !== "boolean") throw {result};
+    return {shown: result.shown as boolean};
+  }
+
   return {
     transformFullStateResponseIntoState,
     getFullState,
@@ -120,5 +132,7 @@ export function initialize(apiHost: string) {
     setPassword,
     getTutorialFinished,
     setTutorialFinished,
+    setToolbarState,
+    getToolbarState,
   };
 }

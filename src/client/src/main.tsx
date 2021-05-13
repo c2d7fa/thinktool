@@ -304,7 +304,19 @@ function App_({
 
   useDragAndDrop(context, updateApp);
 
-  const [isToolbarShown, setIsToolbarShown] = React.useState<boolean>(true);
+  const [isToolbarShown, setIsToolbarShown_] = React.useState<boolean>(true);
+  function setIsToolbarShown(isToolbarShown: boolean) {
+    setIsToolbarShown_(isToolbarShown);
+    server?.setToolbarState({shown: isToolbarShown}).catch((error) => {
+      console.warn("Error while setting toolbar state: %o", error);
+    });
+  }
+  server
+    ?.getToolbarState()
+    .then(({shown}) => setIsToolbarShown_(shown))
+    .catch((error) => {
+      console.warn("Error while getting toolbar state: %o", error);
+    });
 
   const appRef = React.useRef<HTMLDivElement>(null);
 
