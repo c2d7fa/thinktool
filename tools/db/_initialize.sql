@@ -53,3 +53,8 @@ CREATE TABLE newsletter_sent (
 	recipient TEXT NOT NULL REFERENCES newsletter_subscriptions (email),
 	sent TIMESTAMP WITH TIME ZONE NOT NULL
 );
+
+CREATE TABLE toolbar_shown (
+	"user" TEXT REFERENCES "users" (name),
+	shown BOOLEAN NOT NULL DEFAULT true
+);
