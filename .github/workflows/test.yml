@@ -7,10 +7,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v1
-      - name: Set up Node 15.14.0
+      - name: Set up Node 16.3.0
         uses: actions/setup-node@v2
         with:
-          node-version: '15.14.0'
+          node-version: '16.3.0'
       - name: Install dependencies
         run: |
           cd src

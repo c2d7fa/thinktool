@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/client",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "Client code for Thinktool, shared between web and desktop client.",
   "license": "UNLICENSED",
   "repository": {
@@ -25,11 +25,11 @@
     "@types/react-dom": "^17.0.0",
     "babel-loader": "^8.2.2",
     "css-loader": "^5.2.4",
-    "jest": "^26.6.3",
+    "jest": "^27.0.4",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "sass": "^1.32.4",
-    "sass-loader": "^11.0.1",
+    "sass-loader": "^12.1.0",
     "style-loader": "^2.0.0",
     "ts-loader": "^9.0.2",
     "typescript": "^4.1.3",
@@ -39,8 +39,8 @@
   "dependencies": {
     "@johv/immutable-extras": "^1.1.1",
     "@johv/miscjs": "^1.6.0",
-    "@thinktool/search": "^1.1.0",
-    "@thinktool/shared": "^2.0.0",
+    "@thinktool/search": "^1.1.1",
+    "@thinktool/shared": "^2.0.1",
     "immutable": "^4.0.0-rc.12",
     "prosemirror-model": "^1.14.0",
     "prosemirror-state": "^1.3.4",

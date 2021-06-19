@@ -4,6 +4,10 @@ Electron.app.whenReady().then(async () => {
   const window = new Electron.BrowserWindow({
     webPreferences: {
       nodeIntegration: true,
+
+      // [TODO] We should make our application compatible with the default value
+      // instead. See https://www.electronjs.org/docs/tutorial/context-isolation.
+      contextIsolation: false,
     },
   });
 
