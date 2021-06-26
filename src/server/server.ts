@@ -42,11 +42,7 @@ const changes = (() => {
     }
   }
 
-  function subscribe(
-    userId: DB.UserId,
-    receiver: ClientId,
-    callback: (thing: string) => void,
-  ): SubscriptionId {
+  function subscribe(userId: DB.UserId, receiver: ClientId, callback: (thing: string) => void): SubscriptionId {
     const id = nextId++;
     subscriptions[id] = {userId, callback, receiver};
     return id;
@@ -273,10 +269,7 @@ app.post("/state/things", requireSession, requireClientId, async (req, res) => {
     changes.updated(req.user!, thing.name, res.locals.clientId);
   }
 
-  res
-    .header("Access-Control-Allow-Origin", staticUrl)
-    .header("Access-Control-Allow-Credentials", "true")
-    .end();
+  res.header("Access-Control-Allow-Origin", staticUrl).header("Access-Control-Allow-Credentials", "true").end();
 });
 
 app.options("/state/things/:thing", async (req, res) => {
@@ -291,10 +284,7 @@ app.options("/state/things/:thing", async (req, res) => {
 app.delete("/state/things/:thing", requireSession, parseThingExists, requireClientId, async (req, res) => {
   await DB.deleteThing(req.user!, res.locals.thing);
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
-  res
-    .header("Access-Control-Allow-Origin", staticUrl)
-    .header("Access-Control-Allow-Credentials", "true")
-    .end();
+  res.header("Access-Control-Allow-Origin", staticUrl).header("Access-Control-Allow-Credentials", "true").end();
 });
 
 function isValidContent(json: any): json is Communication.Content {
@@ -321,10 +311,7 @@ app.put("/api/things/:thing/content", requireSession, parseThingExists, requireC
   await DB.setContent(req.user!, res.locals.thing, req.body);
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
 
-  res
-    .header("Access-Control-Allow-Origin", staticUrl)
-    .header("Access-Control-Allow-Credentials", "true")
-    .end();
+  res.header("Access-Control-Allow-Origin", staticUrl).header("Access-Control-Allow-Credentials", "true").end();
 });
 
 // #endregion
@@ -343,11 +330,7 @@ app.get("/state/things/:thing", requireSession, parseThingExists, async (req, re
 
 app.post("/login", async (req, res) => {
   if (
-    !(
-      typeof req.body === "object" &&
-      typeof req.body.user === "string" &&
-      typeof req.body.password === "string"
-    )
+    !(typeof req.body === "object" && typeof req.body.user === "string" && typeof req.body.password === "string")
   ) {
     console.warn("Bad login request: %o", req.body);
     return res.status(400).type("text/plain").send("400 Bad Request");
@@ -358,10 +341,7 @@ app.post("/login", async (req, res) => {
   const userId = await DB.userId(user.toLowerCase(), password);
   if (userId === null) {
     console.warn("User %o tried to log in with incorrect password", user);
-    return res
-      .status(401)
-      .type("text/plain")
-      .send("Invalid username and password combination. Please try again.");
+    return res.status(401).type("text/plain").send("Invalid username and password combination. Please try again.");
   }
 
   const sessionId = await DB.Session.create(userId);
