@@ -68,18 +68,11 @@ export async function setPassword(user: string, password: string): Promise<void>
   });
 }
 
-export async function knownUserEmailPair({user, email}: {user: string; email: string}): Promise<boolean> {
+export async function userWithEmail(email: string): Promise<UserId | null> {
   return await withClient(async (client) => {
-    const result = await client.query(`SELECT name, email FROM users WHERE name = $1 AND email = $2`, [
-      user,
-      email,
-    ]);
-    if (result.rowCount === 1) {
-      // Should always be true, but just to be safe...
-      return result.rows[0].name === user && result.rows[0].email === email;
-    } else {
-      return false;
-    }
+    const result = await client.query(`SELECT name FROM users WHERE email = $1`, [email]);
+    if (result.rowCount !== 1) return null;
+    else return {name: result.rows[0].name};
   });
 }
 

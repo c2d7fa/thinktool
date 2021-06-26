@@ -7,6 +7,8 @@ import * as DB from "./database";
 import * as Mail from "./mail";
 import {Communication} from "@thinktool/shared";
 
+import * as PasswordRecovery from "./password-recovery";
+
 const staticUrl = process.env.DIAFORM_STATIC_HOST;
 
 process.on("unhandledRejection", (reason, promise) => {
@@ -518,34 +520,22 @@ app.get("/api/account/tutorial-finished", requireSession, async (req, res) => {
 });
 
 app.post("/forgot-password", async (req, res) => {
-  if (
-    !(typeof req.body === "object" && typeof req.body.user === "string" && typeof req.body.email === "string")
-  ) {
-    return res.status(400).type("text/plain").send("400 Bad Request");
-  }
+  if (typeof req.body !== "object") return res.sendStatus(400);
+  if (typeof req.body.user !== "string" && typeof req.body.email !== "string") return res.sendStatus(400);
 
-  if (await DB.knownUserEmailPair({user: req.body.user, email: req.body.email})) {
-    const key = await new Promise<string>((resolve, reject) => {
-      crypto.randomBytes(32, (err, buffer) => {
-        if (err) reject(err);
-        resolve(buffer.toString("base64"));
-      });
-    });
-    await DB.registerResetKey({user: req.body.user, key});
+  const startResult = await PasswordRecovery.start(
+    typeof req.body.user === "string" ? {username: req.body.user} : {email: req.body.email},
+    PasswordRecovery.databaseUsers,
+  );
 
-    // [TODO] Send email
+  if (startResult.recoveryKey !== null)
+    await DB.registerResetKey({user: startResult.recoveryKey.user.name, key: startResult.recoveryKey.key});
+  if (startResult.email !== null)
     await Mail.send({
-      to: req.body.email,
+      to: startResult.email.to,
       subject: "Reset your password",
-      message: `You requested to be sent this email because you forgot your password.\nTo recover your account, go to this URL: ${staticUrl}/recover-account.html\n\Use this secret Reset Key: ${key}\n\nThe key will expire in 2 hours.`,
+      message: startResult.email.body,
     });
-  } else {
-    console.warn(
-      "Someone tried to recover account with invalid user/email pair: %o, %o",
-      req.body.user,
-      req.body.email,
-    );
-  }
 
   res
     .status(200)

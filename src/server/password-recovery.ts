@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+import * as Database from "./database";
 
 const staticUrl = process.env.DIAFORM_STATIC_HOST;
 
@@ -70,3 +71,19 @@ export class InMemoryUsers implements Users<number> {
     else return {id: matching[0][0], ...matching[0][1]};
   }
 }
+
+export const databaseUsers: Users<{name: string}> = {
+  async find(
+    args: {email: string} | {username: string},
+  ): Promise<null | {id: {name: string}; username: string; email: string}> {
+    if ("username" in args) {
+      const email = await Database.getEmail({name: args.username});
+      if (email === null) return null;
+      return {id: {name: args.username}, username: args.username, email};
+    } else {
+      const user = await Database.userWithEmail(args.email);
+      if (user === null) return null;
+      return {id: user, username: user.name, email: args.email};
+    }
+  },
+};
