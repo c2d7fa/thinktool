@@ -13,15 +13,18 @@ export type ResetResult<UsedId> = {
 };
 
 export interface Users<Id> {
-  find(args: {email: string}): Id | null;
+  find(args: {email: string} | {username: string}): {id: Id; username: string; email: string} | null;
 }
 
 export interface RecoveryKeys<UserId> {
   check(key: string): UserId | null;
 }
 
-export function start<UserId>(args: {email: string}, users: Users<UserId>): RecoveryResult<UserId> {
-  const user = users.find({email: args.email});
+export function start<UserId>(
+  args: {email: string} | {username: string},
+  users: Users<UserId>,
+): RecoveryResult<UserId> {
+  const user = "email" in args ? users.find({email: args.email}) : users.find({username: args.username});
 
   if (user === null) return {recoveryKey: null, email: null};
 
@@ -30,8 +33,8 @@ export function start<UserId>(args: {email: string}, users: Users<UserId>): Reco
   const body = `You requested to be sent this email because you forgot your password.\nTo recover your account, go to this URL: ${staticUrl}/recover-account.html\n\Use this secret Reset Key: ${key}\n\nThe key will expire in 2 hours.`;
 
   return {
-    recoveryKey: {user, key},
-    email: {to: args.email, body},
+    recoveryKey: {user: user.id, key},
+    email: {to: user.email, body},
   };
 }
 
@@ -42,4 +45,25 @@ export function recover<UserId>(key: string, keys: RecoveryKeys<UserId>): ResetR
     isValid: user !== null,
     user: user,
   };
+}
+
+export class InMemoryUsers implements Users<number> {
+  private _users = new Map<number, {username: string; email: string}>();
+  private _nextId = 1;
+
+  add(args: {username: string; email: string}): number {
+    const id = this._nextId;
+    this._nextId += 1;
+    this._users.set(id, args);
+    return id;
+  }
+
+  find(args: {email: string} | {username: string}): null | {id: number; username: string; email: string} {
+    const matching = [...this._users.entries()].filter(([key, value]) =>
+      "email" in args ? value.email === args.email : value.username === args.username,
+    );
+
+    if (matching.length === 0) return null;
+    else return {id: matching[0][0], ...matching[0][1]};
+  }
 }
