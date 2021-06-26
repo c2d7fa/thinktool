@@ -6,7 +6,7 @@ const staticUrl = process.env.DIAFORM_STATIC_HOST;
 
 const exampleUsers = new PasswordRecovery.InMemoryUsers();
 exampleUsers.add({username: "test", email: "test@example.com"});
-const testUserId = exampleUsers.find({username: "test"})!.id;
+const testUserId = async () => (await exampleUsers.find({username: "test"}))!.id;
 
 // [TODO] Test that key expires after 2 hours.
 
@@ -20,21 +20,25 @@ describe("the in-memory user store", () => {
     expect(user1).not.toEqual(user2);
   });
 
-  test("looking up an existing user by email returns the ID, username and email", () => {
-    expect(users.find({email: "user1@example.com"})).toEqual({
+  test("looking up an existing user by email returns the ID, username and email", async () => {
+    expect(await users.find({email: "user1@example.com"})).toEqual({
       id: user1,
       username: "user1",
       email: "user1@example.com",
     });
   });
 
-  test("looking up an existing user by username returns the ID, username and email", () => {
-    expect(users.find({username: "user1"})).toEqual({id: user1, username: "user1", email: "user1@example.com"});
+  test("looking up an existing user by username returns the ID, username and email", async () => {
+    expect(await users.find({username: "user1"})).toEqual({
+      id: user1,
+      username: "user1",
+      email: "user1@example.com",
+    });
   });
 
-  test("looking up a non-existent user returns null", () => {
-    expect(users.find({email: "invalid@example.com"})).toBeNull();
-    expect(users.find({username: "invalid"})).toBeNull();
+  test("looking up a non-existent user returns null", async () => {
+    expect(await users.find({email: "invalid@example.com"})).toBeNull();
+    expect(await users.find({username: "invalid"})).toBeNull();
   });
 });
 
@@ -44,33 +48,38 @@ function correctRecovery(type: "email address" | "username") {
 
     describe("starting recovery", () => {
       const args = type === "email address" ? {email: "test@example.com"} : {username: "test"};
-      const {recoveryKey, email} = PasswordRecovery.start(args, exampleUsers);
+      const result = PasswordRecovery.start(args, exampleUsers);
 
-      test("a new recovery key is generated", () => {
+      test("a new recovery key is generated", async () => {
+        const {recoveryKey} = await result;
         expect(recoveryKey).not.toBeNull();
         generatedKey = recoveryKey?.key ?? "";
       });
 
-      test("the recovery key is associated with the user account", () => {
-        expect(recoveryKey?.user).toBe(testUserId);
+      test("the recovery key is associated with the user account", async () => {
+        const {recoveryKey} = await result;
+        expect(recoveryKey?.user).toBe(await testUserId());
       });
 
-      test("an email is sent to the user's email address", () => {
+      test("an email is sent to the user's email address", async () => {
+        const {email} = await result;
         expect(email?.to).toBe("test@example.com");
       });
 
-      test("the email contains the recovery key", () => {
+      test("the email contains the recovery key", async () => {
+        const {email, recoveryKey} = await result;
         expect(email?.body).toContain(recoveryKey?.key);
       });
 
-      test("the email contains a link to the recovery page", () => {
+      test("the email contains a link to the recovery page", async () => {
+        const {email} = await result;
         expect(email?.body).toContain(`${staticUrl}/recover-account.html`);
       });
     });
 
     describe("resetting password", () => {
       const exampleRecoveryKeys = {
-        check(key: string): null | number {
+        async check(key: string): Promise<null | number> {
           return key === generatedKey ? 100 : null;
         },
       };
@@ -78,24 +87,24 @@ function correctRecovery(type: "email address" | "username") {
       describe("with the generated recovery key", () => {
         const result = PasswordRecovery.recover(generatedKey, exampleRecoveryKeys);
 
-        test("it's allowed", () => {
-          expect(result.isValid).toBeTruthy();
+        test("it's allowed", async () => {
+          expect((await result).isValid).toBeTruthy();
         });
 
-        test("the recovery key is associated to the same user", () => {
-          expect(result.user).toBe(100);
+        test("the recovery key is associated to the same user", async () => {
+          expect((await result).user).toBe(100);
         });
       });
 
       describe("with a fake recovery key", () => {
         const result = PasswordRecovery.recover("fakekey", exampleRecoveryKeys);
 
-        test("it's not allowed", () => {
-          expect(result.isValid).toBeFalsy();
+        test("it's not allowed", async () => {
+          expect((await result).isValid).toBeFalsy();
         });
 
-        test("the recovery key is not associated with any user", () => {
-          expect(result.user).toBeNull();
+        test("the recovery key is not associated with any user", async () => {
+          expect((await result).user).toBeNull();
         });
       });
     });
@@ -105,9 +114,9 @@ function correctRecovery(type: "email address" | "username") {
 correctRecovery("email address");
 correctRecovery("username");
 
-test("the same recovery key is not generated twice", () => {
-  const result1 = PasswordRecovery.start({email: "test@example.com"}, exampleUsers);
-  const result2 = PasswordRecovery.start({email: "test@example.com"}, exampleUsers);
+test("the same recovery key is not generated twice", async () => {
+  const result1 = await PasswordRecovery.start({email: "test@example.com"}, exampleUsers);
+  const result2 = await PasswordRecovery.start({email: "test@example.com"}, exampleUsers);
 
   expect(result1.recoveryKey?.key).not.toBe(result2.recoveryKey?.key);
 });

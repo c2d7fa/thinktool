@@ -13,18 +13,19 @@ export type ResetResult<UsedId> = {
 };
 
 export interface Users<Id> {
-  find(args: {email: string} | {username: string}): {id: Id; username: string; email: string} | null;
+  find(args: {email: string} | {username: string}): Promise<{id: Id; username: string; email: string} | null>;
 }
 
 export interface RecoveryKeys<UserId> {
-  check(key: string): UserId | null;
+  check(key: string): Promise<UserId | null>;
 }
 
-export function start<UserId>(
+export async function start<UserId>(
   args: {email: string} | {username: string},
   users: Users<UserId>,
-): RecoveryResult<UserId> {
-  const user = "email" in args ? users.find({email: args.email}) : users.find({username: args.username});
+): Promise<RecoveryResult<UserId>> {
+  const user =
+    "email" in args ? await users.find({email: args.email}) : await users.find({username: args.username});
 
   if (user === null) return {recoveryKey: null, email: null};
 
@@ -38,8 +39,8 @@ export function start<UserId>(
   };
 }
 
-export function recover<UserId>(key: string, keys: RecoveryKeys<UserId>): ResetResult<UserId> {
-  const user = keys.check(key);
+export async function recover<UserId>(key: string, keys: RecoveryKeys<UserId>): Promise<ResetResult<UserId>> {
+  const user = await keys.check(key);
 
   return {
     isValid: user !== null,
@@ -58,7 +59,9 @@ export class InMemoryUsers implements Users<number> {
     return id;
   }
 
-  find(args: {email: string} | {username: string}): null | {id: number; username: string; email: string} {
+  async find(
+    args: {email: string} | {username: string},
+  ): Promise<null | {id: number; username: string; email: string}> {
     const matching = [...this._users.entries()].filter(([key, value]) =>
       "email" in args ? value.email === args.email : value.username === args.username,
     );
