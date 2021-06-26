@@ -7,6 +7,7 @@ import * as DB from "./database";
 import * as Mail from "./mail";
 import {Communication} from "@thinktool/shared";
 
+import * as Routing from "./routing";
 import * as PasswordRecovery from "./password-recovery";
 
 const staticUrl = process.env.DIAFORM_STATIC_HOST;
@@ -500,11 +501,13 @@ app.get("/api/account/tutorial-finished", requireSession, async (req, res) => {
 });
 
 app.post("/forgot-password", async (req, res) => {
-  if (typeof req.body !== "object") return res.sendStatus(400);
-  if (typeof req.body.user !== "string" && typeof req.body.email !== "string") return res.sendStatus(400);
+  const user = Routing.body(req, res, "user", Routing.isString(), {optional: true});
+  const email = Routing.body(req, res, "email", Routing.isString(), {optional: true});
+
+  if (user === null && email === null) return;
 
   const startResult = await PasswordRecovery.start(
-    typeof req.body.user === "string" ? {username: req.body.user} : {email: req.body.email},
+    user === null ? {email: email!} : {username: user},
     PasswordRecovery.databaseUsers,
   );
 
@@ -527,21 +530,14 @@ app.post("/forgot-password", async (req, res) => {
 });
 
 app.post("/recover-account", async (req, res) => {
-  if (
-    !(
-      typeof req.body === "object" &&
-      typeof req.body.user === "string" &&
-      typeof req.body.key === "string" &&
-      typeof req.body.password === "string" &&
-      req.body.password.length > 0 &&
-      req.body.password.length <= 256
-    )
-  ) {
-    return res.status(400).type("text/plain").send("400 Bad Request");
-  }
+  const user = Routing.body(req, res, "user", Routing.isString());
+  const key = Routing.body(req, res, "key", Routing.isString());
+  const password = Routing.body<string>(req, res, "password", Routing.isString({maxLength: 256}));
 
-  if (await DB.isValidResetKey(req.body.user, req.body.key)) {
-    await DB.setPassword(req.body.user, req.body.password);
+  if (user === null || key === null || password === null) return;
+
+  if (await DB.isValidResetKey(user, key)) {
+    await DB.setPassword(user, password);
     return res
       .status(200)
       .header("Access-Control-Allow-Origin", staticUrl)
