@@ -45,7 +45,7 @@ export async function recover<UserId>(
 ): Promise<ResetResult<UserId>> {
   const userKey = await keys.check(key);
 
-  if (userKey === null || userKey !== user) return {setPassword: null};
+  if (userKey === null || JSON.stringify(userKey) !== JSON.stringify(user)) return {setPassword: null};
 
   return {
     setPassword: {
@@ -55,26 +55,26 @@ export async function recover<UserId>(
   };
 }
 
-export class InMemoryUsers implements Users<number> {
+export class InMemoryUsers implements Users<{id: number}> {
   private _users = new Map<number, {username: string; email: string}>();
   private _nextId = 1;
 
-  add(args: {username: string; email: string}): number {
+  add(args: {username: string; email: string}): {id: number} {
     const id = this._nextId;
     this._nextId += 1;
     this._users.set(id, args);
-    return id;
+    return {id};
   }
 
   async find(
     args: {email: string} | {username: string},
-  ): Promise<null | {id: number; username: string; email: string}> {
+  ): Promise<null | {id: {id: number}; username: string; email: string}> {
     const matching = [...this._users.entries()].filter(([key, value]) =>
       "email" in args ? value.email === args.email : value.username === args.username,
     );
 
     if (matching.length === 0) return null;
-    else return {id: matching[0][0], ...matching[0][1]};
+    else return {id: {id: matching[0][0]}, ...matching[0][1]};
   }
 }
 

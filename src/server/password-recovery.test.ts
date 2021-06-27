@@ -58,7 +58,7 @@ function correctRecovery(type: "email address" | "username") {
 
       test("the recovery key is associated with the user account", async () => {
         const {recoveryKey} = await result;
-        expect(recoveryKey?.user).toBe(await testUserId());
+        expect(recoveryKey?.user).toEqual(await testUserId());
       });
 
       test("an email is sent to the user's email address", async () => {
@@ -79,7 +79,7 @@ function correctRecovery(type: "email address" | "username") {
 
     describe("resetting password", () => {
       const exampleRecoveryKeys = {
-        async check(key: string): Promise<null | number> {
+        async check(key: string): Promise<null | {id: number}> {
           return key === generatedKey ? await testUserId() : null;
         },
       };
@@ -91,7 +91,7 @@ function correctRecovery(type: "email address" | "username") {
             exampleRecoveryKeys,
           );
 
-          expect((await result).setPassword?.user).toBe(await testUserId());
+          expect((await result).setPassword?.user).toEqual(await testUserId());
           expect((await result).setPassword?.password).toBe("newPassword");
         });
       });
@@ -110,7 +110,7 @@ function correctRecovery(type: "email address" | "username") {
       describe("with a different user ID", () => {
         test("does not update the password", async () => {
           const result = PasswordRecovery.recover(
-            {key: generatedKey, user: 200, password: "newPassword"},
+            {key: generatedKey, user: {id: 200}, password: "newPassword"},
             exampleRecoveryKeys,
           );
 

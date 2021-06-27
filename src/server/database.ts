@@ -76,11 +76,11 @@ export async function userWithEmail(email: string): Promise<UserId | null> {
   });
 }
 
-export async function registerResetKey({user, key}: {user: string; key: string}): Promise<void> {
+export async function registerResetKey({user, key}: {user: UserId; key: string}): Promise<void> {
   return await withClient(async (client) => {
     await client.query(
       `INSERT INTO reset_keys ("user", key, expire) VALUES ($1, $2, NOW() + INTERVAL '2 hours')`,
-      [user, key],
+      [user.name, key],
     );
   });
 }
