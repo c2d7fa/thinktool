@@ -464,7 +464,7 @@ app.put("/api/account/password", requireSession, async (req, res) => {
   }
 
   if (req.body !== "") {
-    await DB.setPassword(req.user!.name, req.body);
+    await DB.setPassword(req.user!, req.body);
   }
 
   res
@@ -536,8 +536,13 @@ app.post("/recover-account", async (req, res) => {
 
   if (user === null || key === null || password === null) return;
 
-  if (await DB.isValidResetKey(user, key)) {
-    await DB.setPassword(user, password);
+  const result = await PasswordRecovery.recover(
+    {user: {name: user}, key, password},
+    PasswordRecovery.databaseKeys,
+  );
+
+  if (result.setPassword !== null) {
+    await DB.setPassword(result.setPassword.user, result.setPassword.password);
     return res
       .status(200)
       .header("Access-Control-Allow-Origin", staticUrl)

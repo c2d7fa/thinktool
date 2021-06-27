@@ -80,31 +80,41 @@ function correctRecovery(type: "email address" | "username") {
     describe("resetting password", () => {
       const exampleRecoveryKeys = {
         async check(key: string): Promise<null | number> {
-          return key === generatedKey ? 100 : null;
+          return key === generatedKey ? await testUserId() : null;
         },
       };
 
-      describe("with the generated recovery key", () => {
-        const result = PasswordRecovery.recover(generatedKey, exampleRecoveryKeys);
+      describe("with the generated recovery key and the correct user", () => {
+        test("causes the password for the given user to be updated", async () => {
+          const result = PasswordRecovery.recover(
+            {key: generatedKey, user: await testUserId(), password: "newPassword"},
+            exampleRecoveryKeys,
+          );
 
-        test("it's allowed", async () => {
-          expect((await result).isValid).toBeTruthy();
-        });
-
-        test("the recovery key is associated to the same user", async () => {
-          expect((await result).user).toBe(100);
+          expect((await result).setPassword?.user).toBe(await testUserId());
+          expect((await result).setPassword?.password).toBe("newPassword");
         });
       });
 
       describe("with a fake recovery key", () => {
-        const result = PasswordRecovery.recover("fakekey", exampleRecoveryKeys);
+        test("does not update the password", async () => {
+          const result = PasswordRecovery.recover(
+            {key: "invalid", user: await testUserId(), password: "newPassword"},
+            exampleRecoveryKeys,
+          );
 
-        test("it's not allowed", async () => {
-          expect((await result).isValid).toBeFalsy();
+          expect((await result).setPassword).toBeNull();
         });
+      });
 
-        test("the recovery key is not associated with any user", async () => {
-          expect((await result).user).toBeNull();
+      describe("with a different user ID", () => {
+        test("does not update the password", async () => {
+          const result = PasswordRecovery.recover(
+            {key: generatedKey, user: 200, password: "newPassword"},
+            exampleRecoveryKeys,
+          );
+
+          expect((await result).setPassword).toBeNull();
         });
       });
     });

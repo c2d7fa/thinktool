@@ -8,9 +8,8 @@ export type RecoveryResult<UserId> = {
   email: {to: string; body: string} | null;
 };
 
-export type ResetResult<UsedId> = {
-  isValid: boolean;
-  user: UsedId | null;
+export type ResetResult<UserId> = {
+  setPassword: null | {user: UserId; password: string};
 };
 
 export interface Users<Id> {
@@ -40,12 +39,19 @@ export async function start<UserId>(
   };
 }
 
-export async function recover<UserId>(key: string, keys: RecoveryKeys<UserId>): Promise<ResetResult<UserId>> {
-  const user = await keys.check(key);
+export async function recover<UserId>(
+  {user, key, password}: {user: UserId; key: string; password: string},
+  keys: RecoveryKeys<UserId>,
+): Promise<ResetResult<UserId>> {
+  const userKey = await keys.check(key);
+
+  if (userKey === null || userKey !== user) return {setPassword: null};
 
   return {
-    isValid: user !== null,
-    user: user,
+    setPassword: {
+      user,
+      password,
+    },
   };
 }
 
@@ -85,5 +91,11 @@ export const databaseUsers: Users<{name: string}> = {
       if (user === null) return null;
       return {id: user, username: user.name, email: args.email};
     }
+  },
+};
+
+export const databaseKeys: RecoveryKeys<{name: string}> = {
+  async check(key: string): Promise<{name: string} | null> {
+    return await Database.userForResetKey(key);
   },
 };
