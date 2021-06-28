@@ -41,7 +41,11 @@ export async function start<UserId>(
 
   const key = crypto.randomBytes(32).toString("base64");
 
-  const body = `You requested to be sent this email because you forgot your password.\nTo recover your account, go to this URL: ${staticUrl}/recover-account.html\n\Use this secret Reset Key: ${key}\n\nThe key will expire in 2 hours.`;
+  let body = `You requested to be sent this email because you forgot your password.\nTo recover your account, go to this URL: ${staticUrl}/recover-account.html\n\Use this secret Reset Key: ${key}\n\nThe key will expire in 2 hours.`;
+
+  if ("email" in args) {
+    body += `\n\nYour username is '${user.username}'.`;
+  }
 
   return {
     recoveryKey: {user: user.id, key},

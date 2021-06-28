@@ -71,6 +71,13 @@ function correctRecovery(type: "email address" | "username") {
         expect(email?.body).toContain(recoveryKey?.key);
       });
 
+      if (type === "email address") {
+        test("the email contains the username", async () => {
+          const {email} = await result;
+          expect(email?.body).toContain("username is 'test'");
+        });
+      }
+
       test("the email contains a link to the recovery page", async () => {
         const {email} = await result;
         expect(email?.body).toContain(`${staticUrl}/recover-account.html`);
