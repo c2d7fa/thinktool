@@ -130,3 +130,18 @@ test("the same recovery key is not generated twice", async () => {
 
   expect(result1.recoveryKey?.key).not.toBe(result2.recoveryKey?.key);
 });
+
+describe("when using an invalid email to recover account", () => {
+  const result = PasswordRecovery.start({email: "invalid@example.com"}, exampleUsers);
+
+  test("no recovery key is generated", async () => {
+    const {recoveryKey} = await result;
+    expect(recoveryKey).toBeNull();
+  });
+
+  test("an email is sent explaining that no account is associated with the address", async () => {
+    const {email} = await result;
+    expect(email?.to).toBe("invalid@example.com");
+    expect(email?.body).toContain("no account associated");
+  });
+});

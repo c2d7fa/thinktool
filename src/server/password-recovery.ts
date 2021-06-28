@@ -27,7 +27,17 @@ export async function start<UserId>(
   const user =
     "email" in args ? await users.find({email: args.email}) : await users.find({username: args.username});
 
-  if (user === null) return {recoveryKey: null, email: null};
+  if (user === null) {
+    if ("username" in args) return {recoveryKey: null, email: null};
+    else
+      return {
+        recoveryKey: null,
+        email: {
+          to: args.email,
+          body: `You or someone else tried to recover a Thinktool (https://thinktool.io/) account associated with this email address. However, there is no account associated with this email address.\n\nIf you didn't try to recover your account, you can safely ignore this email.`,
+        },
+      };
+  }
 
   const key = crypto.randomBytes(32).toString("base64");
 

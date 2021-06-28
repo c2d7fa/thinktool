@@ -516,7 +516,7 @@ app.post("/forgot-password", async (req, res) => {
   if (startResult.email !== null)
     await Mail.send({
       to: startResult.email.to,
-      subject: "Reset your password",
+      subject: "Account recovery",
       message: startResult.email.body,
     });
 
