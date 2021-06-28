@@ -71,7 +71,7 @@ export async function setPassword(user: UserId, password: string): Promise<void>
 export async function userWithEmail(email: string): Promise<UserId | null> {
   return await withClient(async (client) => {
     const result = await client.query(`SELECT name FROM users WHERE email = $1`, [email]);
-    if (result.rowCount !== 1) return null;
+    if (result.rowCount === 0) return null;
     else return {name: result.rows[0].name as string};
   });
 }
