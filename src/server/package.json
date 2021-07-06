@@ -30,5 +30,8 @@
     "check": "tsc --noEmit",
     "build": "tsc --outDir dist",
     "watch": "tsc --watch --outDir dist"
+  },
+  "dependencies": {
+    "@johv/miscjs": "^1.7.1"
   }
 }

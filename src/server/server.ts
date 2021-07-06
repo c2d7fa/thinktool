@@ -10,6 +10,12 @@ import {Communication} from "@thinktool/shared";
 import * as Routing from "./routing";
 import * as PasswordRecovery from "./password-recovery";
 
+import {spec} from "@johv/miscjs";
+import {Spec} from "@johv/miscjs/lib/spec";
+const {isValid, $array, $or} = spec;
+
+const $content = $array($or(["string", {link: "string"}] as const));
+
 const staticUrl = process.env.DIAFORM_STATIC_HOST;
 
 process.on("unhandledRejection", (reason, promise) => {
@@ -245,24 +251,22 @@ app.options("/state/things", async (req, res) => {
 });
 
 app.post("/state/things", requireSession, requireClientId, async (req, res) => {
-  if (typeof req.body !== "object") {
-    res.status(400).type("text/plain").send("400 Bad Request");
-    return;
-  }
-  const data = req.body as Communication.UpdateThings;
+  const $updateContent = $array({
+    name: "string",
+    content: $content,
+    children: $array({name: "string", child: "string"}),
+  });
+
+  const data: unknown = req.body;
+  if (!isValid($updateContent, data)) return res.sendStatus(400);
 
   for (const thing of data) {
-    if (!isValidContent(thing.content)) {
-      console.warn("Ignoring item %o with invalid content %o", thing, thing.content);
-      continue;
-    }
-
     await DB.updateThing({
       userId: req.user!,
       thing: thing.name,
       content: thing.content,
       children: thing.children,
-      isPage: thing.isPage,
+      isPage: false, // [TODO] Unused. We can just remove this.
     });
   }
 
@@ -288,28 +292,11 @@ app.delete("/state/things/:thing", requireSession, parseThingExists, requireClie
   res.header("Access-Control-Allow-Origin", staticUrl).header("Access-Control-Allow-Credentials", "true").end();
 });
 
-function isValidContent(json: any): json is Communication.Content {
-  try {
-    for (const segment of json) {
-      if (typeof segment === "string") continue; // Text segment
-      if (typeof segment.link === "string" && Object.keys(segment).length === 1) continue; // Link segment
-      console.warn("Bad segment %o", segment);
-      return false;
-    }
-    return true;
-  } catch (e) {
-    console.warn("Bad content %o", json);
-    return false;
-  }
-}
-
 app.put("/api/things/:thing/content", requireSession, parseThingExists, requireClientId, async (req, res) => {
-  if (!isValidContent(req.body)) {
-    res.status(400).type("text/plain").send("400 Bad Request");
-    return;
-  }
+  const content: unknown = req.body;
+  if (!isValid($content, content)) return res.sendStatus(400);
 
-  await DB.setContent(req.user!, res.locals.thing, req.body);
+  await DB.setContent(req.user!, res.locals.thing, content);
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
 
   res.header("Access-Control-Allow-Origin", staticUrl).header("Access-Control-Allow-Credentials", "true").end();
