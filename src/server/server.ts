@@ -317,18 +317,13 @@ app.get("/state/things/:thing", requireSession, parseThingExists, async (req, re
 });
 
 app.post("/login", async (req, res) => {
-  if (
-    !(typeof req.body === "object" && typeof req.body.user === "string" && typeof req.body.password === "string")
-  ) {
-    console.warn("Bad login request: %o", req.body);
-    return res.status(400).type("text/plain").send("400 Bad Request");
-  }
+  const body: unknown = req.body;
+  if (!isValid({user: "string", password: "string"}, body)) return res.sendStatus(400);
 
-  const {user, password} = req.body;
+  const userId = await DB.userId(body.user.toLowerCase(), body.password);
 
-  const userId = await DB.userId(user.toLowerCase(), password);
   if (userId === null) {
-    console.warn("User %o tried to log in with incorrect password", user);
+    console.warn("User %o tried to log in with incorrect password", body.user);
     return res.status(401).type("text/plain").send("Invalid username and password combination. Please try again.");
   }
 
@@ -337,36 +332,24 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/signup", async (req, res) => {
+  const body: unknown = req.body;
   if (
-    !(
-      typeof req.body === "object" &&
-      typeof req.body.user === "string" &&
-      req.body.user.length > 0 &&
-      req.body.user.length <= 32 &&
-      /^[a-z][a-z0-9]*$/.test(req.body.user) &&
-      typeof req.body.password === "string" &&
-      req.body.password.length > 0 &&
-      req.body.password.length <= 256 &&
-      typeof req.body.email === "string" &&
-      req.body.email.length > 0 &&
-      req.body.email.length < 1024
-    )
-  ) {
-    return res.status(400).type("text/plain").send("400 Bad Request");
-  }
+    !isValid({user: "string", password: "string", email: "string"}, body) ||
+    body.user.length > 32 ||
+    body.user.length === 0
+  )
+    return res.sendStatus(400);
 
-  const {user, password, email} = req.body;
-
-  const result = await DB.createUser(user, password, email);
+  const result = await DB.createUser(body.user, body.password, body.email);
   if (result.type === "error")
     return res
       .status(409)
       .type("text/plain")
-      .send(`Unable to create user: The user "${user}" already exists. (Or a different error occurred.)`);
+      .send(`Unable to create user: The user "${body.user}" already exists. (Or a different error occurred.)`);
   const {userId} = result;
 
   if (req.body.newsletter !== undefined) {
-    await DB.subscribeToNewsletter(email);
+    await DB.subscribeToNewsletter(body.email);
   }
 
   const sessionId = await DB.Session.create(userId);
