@@ -483,12 +483,7 @@ app.post("/forgot-password", async (req, res) => {
 
   if (startResult.recoveryKey !== null)
     await DB.registerResetKey({user: startResult.recoveryKey.user, key: startResult.recoveryKey.key});
-  if (startResult.email !== null)
-    await Mail.send({
-      to: startResult.email.to,
-      subject: "Account recovery",
-      message: startResult.email.body,
-    });
+  if (startResult.email !== null) await Mail.send(startResult.email);
 
   res
     .status(200)
