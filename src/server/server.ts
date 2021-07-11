@@ -11,7 +11,8 @@ import * as Routing from "./routing";
 import * as PasswordRecovery from "./password-recovery";
 
 import {spec} from "@johv/miscjs";
-import {Spec} from "@johv/miscjs/lib/spec";
+import {$nullable, Spec} from "@johv/miscjs/lib/spec";
+import {subscribe, unsubscribe} from "./newsletter";
 const {isValid, $array, $or} = spec;
 
 const $content = $array($or(["string", {link: "string"}] as const));
@@ -334,7 +335,10 @@ app.post("/login", async (req, res) => {
 app.post("/signup", async (req, res) => {
   const body: unknown = req.body;
   if (
-    !isValid({user: "string", password: "string", email: "string"}, body) ||
+    !isValid(
+      {user: "string", password: "string", email: "string", newsletter: $nullable({email: "string"})},
+      body,
+    ) ||
     body.user.length > 32 ||
     body.user.length === 0
   )
@@ -348,8 +352,10 @@ app.post("/signup", async (req, res) => {
       .send(`Unable to create user: The user "${body.user}" already exists. (Or a different error occurred.)`);
   const {userId} = result;
 
-  if (req.body.newsletter !== undefined) {
-    await DB.subscribeToNewsletter(body.email);
+  if (body.newsletter !== undefined) {
+    const result = await subscribe(body.email, DB.newsletterService);
+    await DB.newsletterService.do(result);
+    if (result.email) Mail.send(result.email);
   }
 
   const sessionId = await DB.Session.create(userId);
@@ -533,18 +539,20 @@ app.options("/newsletter/subscribe", async (req, res) => {
 });
 
 app.post("/newsletter/subscribe", async (req, res) => {
-  console.log(req.body);
-  if (typeof req.body !== "object" || typeof req.body.email !== "string") {
-    return res.status(400).type("text/plain").send("400 Bad Request");
-  }
+  const body: unknown = req.body;
+  if (!isValid({email: "string"} as const, body)) return res.sendStatus(400);
 
-  await DB.subscribeToNewsletter(req.body.email);
+  const result = await subscribe(body.email, DB.newsletterService);
+  DB.newsletterService.do(result);
+  if (result.email) Mail.send(result.email);
 
   return res
     .status(200)
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
-    .send(`${req.body.email} is now subscribed to the newsletter.`);
+    .send(
+      `${body.email} is now subscribed to the newsletter. You should receive a confirmation email. Check your spam folder.`,
+    );
 });
 
 app.get("/unsubscribe", async (req, res) => {
@@ -556,9 +564,9 @@ app.get("/unsubscribe", async (req, res) => {
 });
 
 app.post("/unsubscribe", async (req, res) => {
-  const key = req.query.key;
-  if (typeof key !== "string") {
-    console.warn("User tried to unsubscribe from newsletter but did not provide key", key);
+  const query: unknown = req.query;
+  if (!isValid({key: "string"}, query)) {
+    console.warn("User tried to unsubscribe from newsletter but did not provide key!");
     return res
       .status(400)
       .send(
@@ -566,18 +574,19 @@ app.post("/unsubscribe", async (req, res) => {
       );
   }
 
-  const result = await DB.unsubscribe(key);
+  const result = await unsubscribe(query.key, DB.newsletterService);
+  DB.newsletterService.do(result);
+  if (result.email) Mail.send(result.email);
 
-  if (result === "invalid-key") {
-    console.warn("User tried to unsubscribe with invalid key", key);
+  if (result.error === "invalid-unsubscribe") {
+    console.warn("User tried to unsubscribe with invalid key %o", query.key);
     return res
       .status(400)
       .send(
-        `The key <code>${key}</code> was not recognized. Did you use the correct link?<p>If you can't unsubscribe, please send an email to jonas@thinktool.io, and I'll do it for you manually :)`,
+        `The key <code>${query.key}</code> was not recognized. Did you use an incorrect link, or have you already unsubscribed previously?<p>If you can't unsubscribe, please send an email to jonas@thinktool.io, and I'll do it for you manually :)`,
       );
   } else {
-    const email = result[1];
-    return res.status(200).send(`Succesfully unsubscribed ${email} from the newsletter.`);
+    return res.status(200).send(`You've been successfully unsubscribed from the newsletter.`);
   }
 });
 

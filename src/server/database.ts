@@ -9,6 +9,7 @@ export {UserId, initialize} from "./database/core";
 export * as Session from "./database/session";
 
 import {UserId, withClient, withTransaction} from "./database/core";
+import {isValid} from "@johv/miscjs/lib/spec";
 
 export interface Users {
   nextId: number;
@@ -259,20 +260,45 @@ export async function setEmail(userId: UserId, email: string): Promise<void> {
   });
 }
 
-export async function subscribeToNewsletter(email: string): Promise<void> {
-  await withClient(async (client) => {
-    const unsubscribeToken = await new Promise<string>((resolve, reject) => {
-      crypto.randomBytes(12, (err, buffer) => {
-        if (err) reject(err);
-        resolve(buffer.toString("hex"));
-      });
+export const newsletterService = {
+  async getKey(email: string): Promise<string | null> {
+    return await withClient(async (client) => {
+      const result = await client.query(
+        `SELECT unsubscribe_token FROM newsletter_subscriptions WHERE email = $1 AND unsubscribed IS NULL`,
+        [email],
+      );
+      if (result.rowCount === 0) return null;
+      const row = result.rows[0];
+      if (!isValid({unsubscribe_token: "string"}, row)) {
+        console.error("Unexpected:", row);
+        return null;
+      }
+      return row.unsubscribe_token;
     });
-    await client.query(
-      `INSERT INTO newsletter_subscriptions (email, registered, unsubscribe_token) VALUES ($1, NOW(), $2) ON CONFLICT (email) DO NOTHING`,
-      [email, unsubscribeToken],
-    );
-  });
-}
+  },
+
+  async do(action: {addSubscription?: {email: string; key: string}; removeSubscription?: {key: string}}) {
+    if (action.addSubscription) {
+      const {email, key} = action.addSubscription;
+      await withClient(async (client) => {
+        await client.query(
+          `INSERT INTO newsletter_subscriptions (email, registered, unsubscribe_token) VALUES ($1, NOW(), $2) ON CONFLICT (email) DO NOTHING`,
+          [email, key],
+        );
+      });
+    }
+
+    if (action.removeSubscription) {
+      const {key} = action.removeSubscription;
+      await withClient(async (client) => {
+        await client.query(
+          "UPDATE newsletter_subscriptions SET unsubscribed = NOW() WHERE unsubscribe_token = $1",
+          [key],
+        );
+      });
+    }
+  },
+};
 
 export async function getTutorialFinished(userId: UserId): Promise<boolean> {
   return await withClient(async (client) => {
@@ -290,20 +316,5 @@ export async function getTutorialFinished(userId: UserId): Promise<boolean> {
 export async function setTutorialFinished(userId: UserId, finished: boolean): Promise<void> {
   await withClient(async (client) => {
     await client.query(`UPDATE users SET tutorial_finished = $2 WHERE name = $1`, [userId.name, finished]);
-  });
-}
-
-export async function unsubscribe(key: string): Promise<["ok", string] | "invalid-key"> {
-  return await withClient(async (client) => {
-    const result = await client.query(
-      "UPDATE newsletter_subscriptions SET unsubscribed = NOW() WHERE unsubscribe_token = $1 RETURNING email",
-      [key],
-    );
-
-    if (result.rowCount !== 1) {
-      return "invalid-key";
-    }
-
-    return ["ok", result.rows[0].email];
   });
 }
