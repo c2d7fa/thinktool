@@ -297,6 +297,13 @@ export const newsletterService = {
     if (action.addSubscription) {
       const {email, key} = action.addSubscription;
       await withClient(async (client) => {
+        // It would surely be more sensible to add another record instead of
+        // updating old records, but our schema doesn't allow that, and I'm too
+        // lazy to update it.
+        await client.query(
+          `UPDATE newsletter_subscriptions SET unsubscribed = NULL, unsubscribe_token = $2 WHERE email = $1`,
+          [email, key],
+        );
         await client.query(
           `INSERT INTO newsletter_subscriptions (email, registered, unsubscribe_token) VALUES ($1, NOW(), $2) ON CONFLICT (email) DO NOTHING`,
           [email, key],
