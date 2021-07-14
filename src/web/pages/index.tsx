@@ -123,15 +123,15 @@ export default function Index(props: {apiHost: string}) {
             <h1 className="bullet">Alternatives</h1>
 
             <p>
-              Thinktool is directly inspired by outliners like
+              Thinktool is directly inspired by outliners like{" "}
               <a href="https://orgmode.org/" rel="nofollow" className="external-app-link">
                 <span>Org mode</span>
               </a>
-              ,
+              ,{" "}
               <a href="https://workflowy.com/" rel="nofollow" className="external-app-link">
                 <span>Workflowy</span>
               </a>{" "}
-              and
+              and{" "}
               <a href="https://dynalist.io/" rel="nofollow" className="external-app-link">
                 <span>Dynalist</span>
               </a>
