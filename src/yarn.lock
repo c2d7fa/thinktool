@@ -768,6 +768,11 @@
   resolved "https://registry.yarnpkg.com/@johv/miscjs/-/miscjs-1.6.1.tgz#75cdf19a3dada114d3727ce076342f0f1d79ce70"
   integrity sha512-wXknkUXR/w7VKRBzh4j98QAXTcQBlFYmlhzA/GH8P9hkDrR6Knau3MZ49lRpC6iYHVg+ouscsCVpaX2JMQZ6/Q==
 
+"@johv/miscjs@^1.7.1":
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/@johv/miscjs/-/miscjs-1.7.1.tgz#1fa9b961ead0484a104a65807d9d6c7f01f70f4d"
+  integrity sha512-WrGLTBBeM8JzqsWV7vgxu+VCSrhtBb5pXUnPRz0Hkbxt2V3gdelAeAj/pDsV0kiJOyYT0D8G0QrWUGLo95xt0A==
+
 "@malept/cross-spawn-promise@^1.1.0":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@malept/cross-spawn-promise/-/cross-spawn-promise-1.1.1.tgz#504af200af6b98e198bce768bc1730c6936ae01d"

@@ -68,19 +68,19 @@ function correctRecovery(type: "email address" | "username") {
 
       test("the email contains the recovery key", async () => {
         const {email, recoveryKey} = await result;
-        expect(email?.body).toContain(recoveryKey?.key);
+        expect(email?.message).toContain(recoveryKey?.key);
       });
 
       if (type === "email address") {
         test("the email contains the username", async () => {
           const {email} = await result;
-          expect(email?.body).toContain("username is 'test'");
+          expect(email?.message).toContain("username is 'test'");
         });
       }
 
       test("the email contains a link to the recovery page", async () => {
         const {email} = await result;
-        expect(email?.body).toContain(`${staticUrl}/recover-account.html`);
+        expect(email?.message).toContain(`${staticUrl}/recover-account.html`);
       });
     });
 
@@ -149,6 +149,6 @@ describe("when using an invalid email to recover account", () => {
   test("an email is sent explaining that no account is associated with the address", async () => {
     const {email} = await result;
     expect(email?.to).toBe("invalid@example.com");
-    expect(email?.body).toContain("no account associated");
+    expect(email?.message).toContain("no account associated");
   });
 });

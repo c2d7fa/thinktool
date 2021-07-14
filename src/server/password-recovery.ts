@@ -1,11 +1,12 @@
 import * as crypto from "crypto";
 import * as Database from "./database";
+import {Email} from "./mail";
 
 const staticUrl = process.env.DIAFORM_STATIC_HOST;
 
 export type RecoveryResult<UserId> = {
   recoveryKey: {user: UserId; key: string} | null;
-  email: {to: string; body: string} | null;
+  email: Email | null;
 };
 
 export type ResetResult<UserId> = {
@@ -34,22 +35,23 @@ export async function start<UserId>(
         recoveryKey: null,
         email: {
           to: args.email,
-          body: `You or someone else tried to recover a Thinktool (https://thinktool.io/) account associated with this email address. However, there is no account associated with this email address.\n\nIf you didn't try to recover your account, you can safely ignore this email.`,
+          subject: "Account Recovery",
+          message: `You or someone else tried to recover a Thinktool (https://thinktool.io/) account associated with this email address. However, there is no account associated with this email address.\n\nIf you didn't try to recover your account, you can safely ignore this email.`,
         },
       };
   }
 
   const key = crypto.randomBytes(32).toString("base64");
 
-  let body = `You requested to be sent this email because you forgot your password.\nTo recover your account, go to this URL: ${staticUrl}/recover-account.html\n\Use this secret Reset Key: ${key}\n\nThe key will expire in 2 hours.`;
+  let message = `You requested to be sent this email because you forgot your password.\nTo recover your account, go to this URL: ${staticUrl}/recover-account.html\n\Use this secret Reset Key: ${key}\n\nThe key will expire in 2 hours.`;
 
   if ("email" in args) {
-    body += `\n\nYour username is '${user.username}'.`;
+    message += `\n\nYour username is '${user.username}'.`;
   }
 
   return {
     recoveryKey: {user: user.id, key},
-    email: {to: user.email, body},
+    email: {to: user.email, subject: "Account Recovery", message},
   };
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/server",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "The API server for Thinktool.",
   "license": "UNLICENSED",
   "repository": {
@@ -30,5 +30,8 @@
     "check": "tsc --noEmit",
     "build": "tsc --outDir dist",
     "watch": "tsc --watch --outDir dist"
+  },
+  "dependencies": {
+    "@johv/miscjs": "^1.7.1"
   }
 }

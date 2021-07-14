@@ -59,8 +59,8 @@ export default function Download(props: {apiHost: string; generatedTime: number}
             <div>
               <h1>Get notified when the desktop client is ready.</h1>
               <p>
-                Receive monthly updates about new features and get a look behind the scenes at Thinktool by
-                subscribing to the newsletter.
+                Receive occasional news about major updates by subscribing to the newsletter below. You can
+                unsubscribe at any time.
               </p>
             </div>
             <form action={`${props.apiHost}/newsletter/subscribe`} method="POST">
