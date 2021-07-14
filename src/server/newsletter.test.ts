@@ -4,7 +4,11 @@ import {subscribe, unsubscribe} from "./newsletter";
 
 describe("when subscribing to the newsletter for the first time", () => {
   const subscribeResult = subscribe("test@example.com", {
-    async getKey(email: string) {
+    async getKey(args: {email: string}) {
+      return null;
+    },
+
+    async getEmail(args: {key: string}) {
       return null;
     },
   });
@@ -30,8 +34,12 @@ describe("when subscribing to the newsletter for the first time", () => {
     const unsubscribeResult = async () => {
       const key = (await subscribeResult).addSubscription!.key;
       return await unsubscribe(key, {
-        async getKey(email: string) {
+        async getKey({email}: {email: string}) {
           return email === "test@example.com" ? key : null;
+        },
+
+        async getEmail(args: {key: string}) {
+          return args.key === key ? "test@example.com" : null;
         },
       });
     };
@@ -45,8 +53,12 @@ describe("when subscribing to the newsletter for the first time", () => {
 
 describe("after subscribing multiple times", () => {
   const subscribeResult = subscribe("test@example.com", {
-    async getKey(email: string) {
+    async getKey({email}: {email: string}) {
       return email === "test@example.com" ? "key123" : null;
+    },
+
+    async getEmail(args: {key: string}) {
+      return args.key === "key123" ? "test@example.com" : null;
     },
   });
 
@@ -62,5 +74,26 @@ describe("after subscribing multiple times", () => {
 
   test("there is no subscription added the second time", async () => {
     expect((await subscribeResult).addSubscription).toBeUndefined();
+  });
+});
+
+describe("when trying to unsubscribe with a non-existent key", () => {
+  const unsubscribeScenario = async () =>
+    unsubscribe("invalid", {
+      async getKey(args: {email: string}) {
+        return null;
+      },
+
+      async getEmail(args: {key: string}) {
+        return null;
+      },
+    });
+
+  test("no subscriptions are removed", async () => {
+    expect((await unsubscribeScenario()).removeSubscription).toBeUndefined();
+  });
+
+  test("an error is returned", async () => {
+    expect((await unsubscribeScenario()).error).toBe("invalid-unsubscribe");
   });
 });

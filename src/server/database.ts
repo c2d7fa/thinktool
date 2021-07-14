@@ -261,7 +261,7 @@ export async function setEmail(userId: UserId, email: string): Promise<void> {
 }
 
 export const newsletterService = {
-  async getKey(email: string): Promise<string | null> {
+  async getKey({email}: {email: string}): Promise<string | null> {
     return await withClient(async (client) => {
       const result = await client.query(
         `SELECT unsubscribe_token FROM newsletter_subscriptions WHERE email = $1 AND unsubscribed IS NULL`,
@@ -274,6 +274,22 @@ export const newsletterService = {
         return null;
       }
       return row.unsubscribe_token;
+    });
+  },
+
+  async getEmail({key}: {key: string}): Promise<string | null> {
+    return await withClient(async (client) => {
+      const result = await client.query(
+        `SELECT email FROM newsletter_subscriptions WHERE unsubscribe_token = $1 AND unsubscribed IS NULL`,
+        [key],
+      );
+      if (result.rowCount === 0) return null;
+      const row = result.rows[0];
+      if (!isValid({email: "string"}, row)) {
+        console.error("Unexpected: %o", row);
+        return null;
+      }
+      return row.email;
     });
   },
 
