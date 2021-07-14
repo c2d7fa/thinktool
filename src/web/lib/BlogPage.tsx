@@ -9,12 +9,7 @@ export default function BlogPage(props: {apiHost: string; children: React.ReactN
         <link rel="stylesheet" href="/blog.css" />
         <link rel="icon" href="/icon.png" type="image/png" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link
-          rel="alternate"
-          title="Thinktool"
-          type="application/rss+xml"
-          href="https://thinktool.io/blog.rss"
-        />
+        <link rel="alternate" title="Thinktool" type="application/rss+xml" href="https://thinktool.io/blog.rss" />
       </Head>
       <div className="top-bar">
         <a href="/">
@@ -28,10 +23,7 @@ export default function BlogPage(props: {apiHost: string; children: React.ReactN
           <div>
             <h1>Thanks for reading. </h1>
             <p>This is the blog for Thinktool, an associative note-taking app that I'm currently building.</p>
-            <p>
-              Subscribe to the newsletter below if you want to receive monthly updates about new features and
-              get a look behind the scenes.
-            </p>
+            <p>Subscribe to the newsletter below if you want to receive occasional news about major updates.</p>
           </div>
           <form action={`${props.apiHost}/newsletter/subscribe`} method="POST">
             <input type="email" name="email" required placeholder="you@example.com" />

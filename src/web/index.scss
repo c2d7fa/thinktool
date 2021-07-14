@@ -400,6 +400,7 @@ a > .icon {
   margin: 0;
   font-size: 1em;
   display: inline;
+  padding-right: 0.5em;
 }
 
 .newsletter p {
@@ -414,9 +415,12 @@ a > .icon {
   margin-top: 0.5rem;
 
   display: flex;
+  flex-direction: row;
 }
 
-.newsletter input {
+.newsletter input[type="email"] {
+  padding: 0 0.5em;
+
   background-color: #00000008;
   border: none;
   color: #000000a0;
@@ -429,15 +433,20 @@ a > .icon {
 }
 
 .newsletter input[type="submit"] {
+  padding: 0 0.5em;
+
+  background-color: #00000008;
+  border: none;
+  color: #000000a0;
+
+  width: auto;
+
   font-size: 0.9em;
   text-transform: uppercase;
   padding-top: 0.525em;
   padding-bottom: 0.525em;
 
-  border: none;
-
   margin-left: 0.5em;
-  flex-shrink: 0;
 }
 
 .newsletter input[type="submit"]:hover {
