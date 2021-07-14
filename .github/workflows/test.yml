@@ -19,3 +19,18 @@ jobs:
           cd search && yarn run build && cd ..
       - name: Run test suite
         run: cd src/client && yarn run test
+  test-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v1
+      - name: Set up Node 16.3.0
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.3.0'
+      - name: Install dependencies
+        run: |
+          cd src
+          yarn install --frozen-lockfile
+      - name: Run test suite
+        run: cd src/server && yarn run test

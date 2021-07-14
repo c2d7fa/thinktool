@@ -29,7 +29,8 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "tsc --outDir dist",
-    "watch": "tsc --watch --outDir dist"
+    "watch": "tsc --watch --outDir dist",
+    "test": "jest --verbose"
   },
   "dependencies": {
     "@johv/miscjs": "^1.7.1"
