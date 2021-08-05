@@ -11,7 +11,7 @@ import * as Routing from "./routing";
 import * as PasswordRecovery from "./password-recovery";
 
 import {spec} from "@johv/miscjs";
-import {$nullable, Spec} from "@johv/miscjs/lib/spec";
+import {$literal, $nullable, Spec} from "@johv/miscjs/lib/spec";
 import {subscribe, unsubscribe} from "./newsletter";
 const {isValid, $array, $or} = spec;
 
@@ -336,7 +336,11 @@ app.post("/signup", async (req, res) => {
   const body: unknown = req.body;
   if (
     !isValid(
-      {user: "string", password: "string", email: "string", newsletter: $nullable({email: "string"})},
+      {
+        user: "string",
+        password: "string",
+        email: "string",
+      },
       body,
     ) ||
     body.user.length > 32 ||
@@ -352,7 +356,9 @@ app.post("/signup", async (req, res) => {
       .send(`Unable to create user: The user "${body.user}" already exists. (Or a different error occurred.)`);
   const {userId} = result;
 
-  if (body.newsletter !== undefined) {
+  // [TODO] We should add support to the 'isValid' library for optional
+  // properties instead of doing this.
+  if ((body as any).newsletter !== undefined) {
     const result = await subscribe(body.email, DB.newsletterService);
     await DB.newsletterService.do(result);
     if (result.email) Mail.send(result.email);
