@@ -183,3 +183,17 @@ Once you have the `thinktool` image, run it with the environment variables given
         -e DIAFORM_STATIC_HOST \
         -p 80:80 \
         thinktool
+
+### Releasing new client version
+
+When you are ready to push out a client-side update, follow this checklist:
+
+0. Manually update the package version number in `client/package.json`.
+0. In the client directory run `yarn build` and `yarn publish`.
+0. Wait for the package to be published.
+0. In `desktop`, run `yarn upgrade @thinktool/client@^<VERSION>`.
+0. In `web`, run `yarn upgrade @thinktool/client@<VERSION>`.
+0. Create a commit, merge into the master branch (if not already on master branch), and push to origin.
+0. Go to the repository on GitHub, and run the action titled "Deploy to Azure Storage".
+
+(Note: The fact that we need to do all this manually is a flaw in the workflow. We should look into finding better approaches, or at the very least automating it.)
