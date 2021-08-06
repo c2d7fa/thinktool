@@ -53,7 +53,9 @@ function request(
   });
 }
 
-export async function send({subject, to, message}: {subject: string; to: string; message: string}) {
+export type Email = {subject: string; to: string; message: string};
+
+export async function send({to, subject, message}: Email) {
   console.log("Sending email with subject %o to %o", subject, to);
 
   const response = await request("POST", "messages", {

@@ -12,14 +12,7 @@ function LogInForm(props: {apiHost: string; forgotPassword(): void}) {
     <form action={`${props.apiHost}/login`} method="POST">
       <div className="entry">
         <label htmlFor="login-user">Username</label>
-        <input
-          type="text"
-          id="login-user"
-          placeholder="e.g. 'username123'"
-          name="user"
-          maxLength={32}
-          required
-        />
+        <input type="text" id="login-user" placeholder="e.g. 'username123'" name="user" maxLength={32} required />
       </div>
       <div className="entry">
         <label htmlFor="login-password">Password</label>
@@ -45,14 +38,7 @@ function LogInForm(props: {apiHost: string; forgotPassword(): void}) {
 function ForgotPasswordForm(props: {apiHost: string}) {
   return (
     <form action={`${props.apiHost}/forgot-password`} method="POST">
-      <p>
-        Enter your username and email below. Then you'll be sent an email with instructions on how to recover
-        your account.
-      </p>
-      <div className="entry">
-        <label htmlFor="user">Username</label>
-        <input type="text" id="user" placeholder="e.g. 'username123'" name="user" maxLength={32} required />
-      </div>
+      <p>Enter your email below. Then you'll be sent an email with instructions on how to recover your account.</p>
       <div className="entry">
         <label htmlFor="email">Email</label>
         <input id="email" type="email" placeholder="e.g. 'user@example.com'" name="email" required />
@@ -107,8 +93,7 @@ export default function Login(props: {apiHost: string}) {
                     required
                   />
                   <div className="invalid-username">
-                    Username may only contain lowercase letters and numbers. The first character must be a
-                    letter.
+                    Username may only contain lowercase letters and numbers. The first character must be a letter.
                   </div>
                 </div>
                 <div className="entry">

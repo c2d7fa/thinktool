@@ -7,6 +7,16 @@ import * as DB from "./database";
 import * as Mail from "./mail";
 import {Communication} from "@thinktool/shared";
 
+import * as Routing from "./routing";
+import * as PasswordRecovery from "./password-recovery";
+
+import {spec} from "@johv/miscjs";
+import {$literal, $nullable, Spec} from "@johv/miscjs/lib/spec";
+import {subscribe, unsubscribe} from "./newsletter";
+const {isValid, $array, $or} = spec;
+
+const $content = $array($or(["string", {link: "string"}] as const));
+
 const staticUrl = process.env.DIAFORM_STATIC_HOST;
 
 process.on("unhandledRejection", (reason, promise) => {
@@ -40,11 +50,7 @@ const changes = (() => {
     }
   }
 
-  function subscribe(
-    userId: DB.UserId,
-    receiver: ClientId,
-    callback: (thing: string) => void,
-  ): SubscriptionId {
+  function subscribe(userId: DB.UserId, receiver: ClientId, callback: (thing: string) => void): SubscriptionId {
     const id = nextId++;
     subscriptions[id] = {userId, callback, receiver};
     return id;
@@ -246,24 +252,22 @@ app.options("/state/things", async (req, res) => {
 });
 
 app.post("/state/things", requireSession, requireClientId, async (req, res) => {
-  if (typeof req.body !== "object") {
-    res.status(400).type("text/plain").send("400 Bad Request");
-    return;
-  }
-  const data = req.body as Communication.UpdateThings;
+  const $updateContent = $array({
+    name: "string",
+    content: $content,
+    children: $array({name: "string", child: "string"}),
+  });
+
+  const data: unknown = req.body;
+  if (!isValid($updateContent, data)) return res.sendStatus(400);
 
   for (const thing of data) {
-    if (!isValidContent(thing.content)) {
-      console.warn("Ignoring item %o with invalid content %o", thing, thing.content);
-      continue;
-    }
-
     await DB.updateThing({
       userId: req.user!,
       thing: thing.name,
       content: thing.content,
       children: thing.children,
-      isPage: thing.isPage,
+      isPage: false, // [TODO] Unused. We can just remove this.
     });
   }
 
@@ -271,10 +275,7 @@ app.post("/state/things", requireSession, requireClientId, async (req, res) => {
     changes.updated(req.user!, thing.name, res.locals.clientId);
   }
 
-  res
-    .header("Access-Control-Allow-Origin", staticUrl)
-    .header("Access-Control-Allow-Credentials", "true")
-    .end();
+  res.header("Access-Control-Allow-Origin", staticUrl).header("Access-Control-Allow-Credentials", "true").end();
 });
 
 app.options("/state/things/:thing", async (req, res) => {
@@ -289,40 +290,17 @@ app.options("/state/things/:thing", async (req, res) => {
 app.delete("/state/things/:thing", requireSession, parseThingExists, requireClientId, async (req, res) => {
   await DB.deleteThing(req.user!, res.locals.thing);
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
-  res
-    .header("Access-Control-Allow-Origin", staticUrl)
-    .header("Access-Control-Allow-Credentials", "true")
-    .end();
+  res.header("Access-Control-Allow-Origin", staticUrl).header("Access-Control-Allow-Credentials", "true").end();
 });
 
-function isValidContent(json: any): json is Communication.Content {
-  try {
-    for (const segment of json) {
-      if (typeof segment === "string") continue; // Text segment
-      if (typeof segment.link === "string" && Object.keys(segment).length === 1) continue; // Link segment
-      console.warn("Bad segment %o", segment);
-      return false;
-    }
-    return true;
-  } catch (e) {
-    console.warn("Bad content %o", json);
-    return false;
-  }
-}
-
 app.put("/api/things/:thing/content", requireSession, parseThingExists, requireClientId, async (req, res) => {
-  if (!isValidContent(req.body)) {
-    res.status(400).type("text/plain").send("400 Bad Request");
-    return;
-  }
+  const content: unknown = req.body;
+  if (!isValid($content, content)) return res.sendStatus(400);
 
-  await DB.setContent(req.user!, res.locals.thing, req.body);
+  await DB.setContent(req.user!, res.locals.thing, content);
   changes.updated(req.user!, res.locals.thing, res.locals.clientId);
 
-  res
-    .header("Access-Control-Allow-Origin", staticUrl)
-    .header("Access-Control-Allow-Credentials", "true")
-    .end();
+  res.header("Access-Control-Allow-Origin", staticUrl).header("Access-Control-Allow-Credentials", "true").end();
 });
 
 // #endregion
@@ -340,26 +318,14 @@ app.get("/state/things/:thing", requireSession, parseThingExists, async (req, re
 });
 
 app.post("/login", async (req, res) => {
-  if (
-    !(
-      typeof req.body === "object" &&
-      typeof req.body.user === "string" &&
-      typeof req.body.password === "string"
-    )
-  ) {
-    console.warn("Bad login request: %o", req.body);
-    return res.status(400).type("text/plain").send("400 Bad Request");
-  }
+  const body: unknown = req.body;
+  if (!isValid({user: "string", password: "string"}, body)) return res.sendStatus(400);
 
-  const {user, password} = req.body;
+  const userId = await DB.userId(body.user.toLowerCase(), body.password);
 
-  const userId = await DB.userId(user.toLowerCase(), password);
   if (userId === null) {
-    console.warn("User %o tried to log in with incorrect password", user);
-    return res
-      .status(401)
-      .type("text/plain")
-      .send("Invalid username and password combination. Please try again.");
+    console.warn("User %o tried to log in with incorrect password", body.user);
+    return res.status(401).type("text/plain").send("Invalid username and password combination. Please try again.");
   }
 
   const sessionId = await DB.Session.create(userId);
@@ -367,36 +333,35 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/signup", async (req, res) => {
+  const body: unknown = req.body;
   if (
-    !(
-      typeof req.body === "object" &&
-      typeof req.body.user === "string" &&
-      req.body.user.length > 0 &&
-      req.body.user.length <= 32 &&
-      /^[a-z][a-z0-9]*$/.test(req.body.user) &&
-      typeof req.body.password === "string" &&
-      req.body.password.length > 0 &&
-      req.body.password.length <= 256 &&
-      typeof req.body.email === "string" &&
-      req.body.email.length > 0 &&
-      req.body.email.length < 1024
-    )
-  ) {
-    return res.status(400).type("text/plain").send("400 Bad Request");
-  }
+    !isValid(
+      {
+        user: "string",
+        password: "string",
+        email: "string",
+      },
+      body,
+    ) ||
+    body.user.length > 32 ||
+    body.user.length === 0
+  )
+    return res.sendStatus(400);
 
-  const {user, password, email} = req.body;
-
-  const result = await DB.createUser(user, password, email);
+  const result = await DB.createUser(body.user, body.password, body.email);
   if (result.type === "error")
     return res
       .status(409)
       .type("text/plain")
-      .send(`Unable to create user: The user "${user}" already exists. (Or a different error occurred.)`);
+      .send(`Unable to create user: The user "${body.user}" already exists. (Or a different error occurred.)`);
   const {userId} = result;
 
-  if (req.body.newsletter !== undefined) {
-    await DB.subscribeToNewsletter(email);
+  // [TODO] We should add support to the 'isValid' library for optional
+  // properties instead of doing this.
+  if ((body as any).newsletter !== undefined) {
+    const result = await subscribe(body.email, DB.newsletterService);
+    await DB.newsletterService.do(result);
+    if (result.email) Mail.send(result.email);
   }
 
   const sessionId = await DB.Session.create(userId);
@@ -481,7 +446,7 @@ app.put("/api/account/password", requireSession, async (req, res) => {
   }
 
   if (req.body !== "") {
-    await DB.setPassword(req.user!.name, req.body);
+    await DB.setPassword(req.user!, req.body);
   }
 
   res
@@ -518,34 +483,19 @@ app.get("/api/account/tutorial-finished", requireSession, async (req, res) => {
 });
 
 app.post("/forgot-password", async (req, res) => {
-  if (
-    !(typeof req.body === "object" && typeof req.body.user === "string" && typeof req.body.email === "string")
-  ) {
-    return res.status(400).type("text/plain").send("400 Bad Request");
-  }
+  const user = Routing.body(req, res, "user", Routing.isString(), {optional: true});
+  const email = Routing.body(req, res, "email", Routing.isString(), {optional: true});
 
-  if (await DB.knownUserEmailPair({user: req.body.user, email: req.body.email})) {
-    const key = await new Promise<string>((resolve, reject) => {
-      crypto.randomBytes(32, (err, buffer) => {
-        if (err) reject(err);
-        resolve(buffer.toString("base64"));
-      });
-    });
-    await DB.registerResetKey({user: req.body.user, key});
+  if (user === null && email === null) return;
 
-    // [TODO] Send email
-    await Mail.send({
-      to: req.body.email,
-      subject: "Reset your password",
-      message: `You requested to be sent this email because you forgot your password.\nTo recover your account, go to this URL: ${staticUrl}/recover-account.html\n\Use this secret Reset Key: ${key}\n\nThe key will expire in 2 hours.`,
-    });
-  } else {
-    console.warn(
-      "Someone tried to recover account with invalid user/email pair: %o, %o",
-      req.body.user,
-      req.body.email,
-    );
-  }
+  const startResult = await PasswordRecovery.start(
+    user === null ? {email: email!} : {username: user},
+    PasswordRecovery.databaseUsers,
+  );
+
+  if (startResult.recoveryKey !== null)
+    await DB.registerResetKey({user: startResult.recoveryKey.user, key: startResult.recoveryKey.key});
+  if (startResult.email !== null) await Mail.send(startResult.email);
 
   res
     .status(200)
@@ -557,21 +507,19 @@ app.post("/forgot-password", async (req, res) => {
 });
 
 app.post("/recover-account", async (req, res) => {
-  if (
-    !(
-      typeof req.body === "object" &&
-      typeof req.body.user === "string" &&
-      typeof req.body.key === "string" &&
-      typeof req.body.password === "string" &&
-      req.body.password.length > 0 &&
-      req.body.password.length <= 256
-    )
-  ) {
-    return res.status(400).type("text/plain").send("400 Bad Request");
-  }
+  const user = Routing.body(req, res, "user", Routing.isString());
+  const key = Routing.body(req, res, "key", Routing.isString());
+  const password = Routing.body<string>(req, res, "password", Routing.isString({maxLength: 256}));
 
-  if (await DB.isValidResetKey(req.body.user, req.body.key)) {
-    await DB.setPassword(req.body.user, req.body.password);
+  if (user === null || key === null || password === null) return;
+
+  const result = await PasswordRecovery.recover(
+    {user: {name: user}, key, password},
+    PasswordRecovery.databaseKeys,
+  );
+
+  if (result.setPassword !== null) {
+    await DB.setPassword(result.setPassword.user, result.setPassword.password);
     return res
       .status(200)
       .header("Access-Control-Allow-Origin", staticUrl)
@@ -597,18 +545,20 @@ app.options("/newsletter/subscribe", async (req, res) => {
 });
 
 app.post("/newsletter/subscribe", async (req, res) => {
-  console.log(req.body);
-  if (typeof req.body !== "object" || typeof req.body.email !== "string") {
-    return res.status(400).type("text/plain").send("400 Bad Request");
-  }
+  const body: unknown = req.body;
+  if (!isValid({email: "string"} as const, body)) return res.sendStatus(400);
 
-  await DB.subscribeToNewsletter(req.body.email);
+  const result = await subscribe(body.email, DB.newsletterService);
+  DB.newsletterService.do(result);
+  if (result.email) Mail.send(result.email);
 
   return res
     .status(200)
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
-    .send(`${req.body.email} is now subscribed to the newsletter.`);
+    .send(
+      `${body.email} is now subscribed to the newsletter. You should receive a confirmation email. Check your spam folder.`,
+    );
 });
 
 app.get("/unsubscribe", async (req, res) => {
@@ -620,9 +570,9 @@ app.get("/unsubscribe", async (req, res) => {
 });
 
 app.post("/unsubscribe", async (req, res) => {
-  const key = req.query.key;
-  if (typeof key !== "string") {
-    console.warn("User tried to unsubscribe from newsletter but did not provide key", key);
+  const query: unknown = req.query;
+  if (!isValid({key: "string"}, query)) {
+    console.warn("User tried to unsubscribe from newsletter but did not provide key!");
     return res
       .status(400)
       .send(
@@ -630,18 +580,19 @@ app.post("/unsubscribe", async (req, res) => {
       );
   }
 
-  const result = await DB.unsubscribe(key);
+  const result = await unsubscribe(query.key, DB.newsletterService);
+  DB.newsletterService.do(result);
+  if (result.email) Mail.send(result.email);
 
-  if (result === "invalid-key") {
-    console.warn("User tried to unsubscribe with invalid key", key);
+  if (result.error === "invalid-unsubscribe") {
+    console.warn("User tried to unsubscribe with invalid key %o", query.key);
     return res
       .status(400)
       .send(
-        `The key <code>${key}</code> was not recognized. Did you use the correct link?<p>If you can't unsubscribe, please send an email to jonas@thinktool.io, and I'll do it for you manually :)`,
+        `The key <code>${query.key}</code> was not recognized. Did you use an incorrect link, or have you already unsubscribed previously?<p>If you can't unsubscribe, please send an email to jonas@thinktool.io, and I'll do it for you manually :)`,
       );
   } else {
-    const email = result[1];
-    return res.status(200).send(`Succesfully unsubscribed ${email} from the newsletter.`);
+    return res.status(200).send(`You've been successfully unsubscribed from the newsletter.`);
   }
 });
 

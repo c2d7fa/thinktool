@@ -7,5 +7,6 @@
     "client",
     "web",
     "desktop"
-  ]
+  ],
+  "version": "0.0.1"
 }

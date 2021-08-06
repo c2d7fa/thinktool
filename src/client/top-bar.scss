@@ -8,7 +8,7 @@
 
   display: flex;
 
-  padding: (base.$ui-small-font-size / 2) 1rem;
+  padding: (base.$ui-small-font-size * 0.5) 1rem;
   @include components.overlay;
 
   position: relative;

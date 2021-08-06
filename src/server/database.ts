@@ -9,6 +9,7 @@ export {UserId, initialize} from "./database/core";
 export * as Session from "./database/session";
 
 import {UserId, withClient, withTransaction} from "./database/core";
+import {isValid} from "@johv/miscjs/lib/spec";
 
 export interface Users {
   nextId: number;
@@ -61,50 +62,38 @@ export async function createUser(
   });
 }
 
-export async function setPassword(user: string, password: string): Promise<void> {
+export async function setPassword(user: UserId, password: string): Promise<void> {
   const hashedPassword = await bcrypt.hash(password, 6);
   return await withClient(async (client) => {
-    await client.query(`UPDATE users SET password = $2 WHERE name = $1`, [user, hashedPassword]);
+    await client.query(`UPDATE users SET password = $2 WHERE name = $1`, [user.name, hashedPassword]);
   });
 }
 
-export async function knownUserEmailPair({user, email}: {user: string; email: string}): Promise<boolean> {
+export async function userWithEmail(email: string): Promise<UserId | null> {
   return await withClient(async (client) => {
-    const result = await client.query(`SELECT name, email FROM users WHERE name = $1 AND email = $2`, [
-      user,
-      email,
-    ]);
-    if (result.rowCount === 1) {
-      // Should always be true, but just to be safe...
-      return result.rows[0].name === user && result.rows[0].email === email;
-    } else {
-      return false;
-    }
+    const result = await client.query(`SELECT name FROM users WHERE email = $1`, [email]);
+    if (result.rowCount === 0) return null;
+    else return {name: result.rows[0].name as string};
   });
 }
 
-export async function registerResetKey({user, key}: {user: string; key: string}): Promise<void> {
+export async function registerResetKey({user, key}: {user: UserId; key: string}): Promise<void> {
   return await withClient(async (client) => {
     await client.query(
       `INSERT INTO reset_keys ("user", key, expire) VALUES ($1, $2, NOW() + INTERVAL '2 hours')`,
-      [user, key],
+      [user.name, key],
     );
   });
 }
 
-export async function isValidResetKey(user: string, key: string): Promise<boolean> {
+export async function userForResetKey(key: string): Promise<UserId | null> {
   return await withClient(async (client) => {
-    const result = await client.query(
-      `SELECT "user", key FROM reset_keys WHERE "user" = $1 AND key = $2 AND expire > NOW()`,
-      [user, key],
-    );
-    return result.rowCount === 1;
+    const result = await client.query(`SELECT "user" FROM reset_keys WHERE key = $1 AND expire > NOW()`, [key]);
+    return (result.rowCount === 1 && {name: result.rows[0].user as string}) || null;
   });
 }
 
-export async function getFullState(
-  userId: UserId,
-): Promise<{
+export async function getFullState(userId: UserId): Promise<{
   things: {
     name: string;
     content: Communication.Content;
@@ -195,21 +184,14 @@ export async function deleteThing(userId: UserId, thing: string): Promise<void> 
       userId.name,
       thing,
     ]);
-    await client.query(`UPDATE connections SET tag = NULL WHERE "user" = $1 AND tag = $2`, [
-      userId.name,
-      thing,
-    ]);
+    await client.query(`UPDATE connections SET tag = NULL WHERE "user" = $1 AND tag = $2`, [userId.name, thing]);
     await client.query(`DELETE FROM things WHERE "user" = $1 AND name = $2`, [userId.name, thing]);
   });
 }
 
 // IMPORTANT: You must validate the content BEFORE passing it into this
 // function! Otherwise, invalid data will be stored in the database!
-export async function setContent(
-  userId: UserId,
-  thing: string,
-  content: Communication.Content,
-): Promise<void> {
+export async function setContent(userId: UserId, thing: string, content: Communication.Content): Promise<void> {
   await withClient(async (client) => {
     await client.query(
       `UPDATE things SET json_content = $3, last_modified = NOW() WHERE "user" = $1 AND name = $2`,
@@ -278,20 +260,68 @@ export async function setEmail(userId: UserId, email: string): Promise<void> {
   });
 }
 
-export async function subscribeToNewsletter(email: string): Promise<void> {
-  await withClient(async (client) => {
-    const unsubscribeToken = await new Promise<string>((resolve, reject) => {
-      crypto.randomBytes(12, (err, buffer) => {
-        if (err) reject(err);
-        resolve(buffer.toString("hex"));
-      });
+export const newsletterService = {
+  async getKey({email}: {email: string}): Promise<string | null> {
+    return await withClient(async (client) => {
+      const result = await client.query(
+        `SELECT unsubscribe_token FROM newsletter_subscriptions WHERE email = $1 AND unsubscribed IS NULL`,
+        [email],
+      );
+      if (result.rowCount === 0) return null;
+      const row = result.rows[0];
+      if (!isValid({unsubscribe_token: "string"}, row)) {
+        console.error("Unexpected:", row);
+        return null;
+      }
+      return row.unsubscribe_token;
     });
-    await client.query(
-      `INSERT INTO newsletter_subscriptions (email, registered, unsubscribe_token) VALUES ($1, NOW(), $2) ON CONFLICT (email) DO NOTHING`,
-      [email, unsubscribeToken],
-    );
-  });
-}
+  },
+
+  async getEmail({key}: {key: string}): Promise<string | null> {
+    return await withClient(async (client) => {
+      const result = await client.query(
+        `SELECT email FROM newsletter_subscriptions WHERE unsubscribe_token = $1 AND unsubscribed IS NULL`,
+        [key],
+      );
+      if (result.rowCount === 0) return null;
+      const row = result.rows[0];
+      if (!isValid({email: "string"}, row)) {
+        console.error("Unexpected: %o", row);
+        return null;
+      }
+      return row.email;
+    });
+  },
+
+  async do(action: {addSubscription?: {email: string; key: string}; removeSubscription?: {key: string}}) {
+    if (action.addSubscription) {
+      const {email, key} = action.addSubscription;
+      await withClient(async (client) => {
+        // It would surely be more sensible to add another record instead of
+        // updating old records, but our schema doesn't allow that, and I'm too
+        // lazy to update it.
+        await client.query(
+          `UPDATE newsletter_subscriptions SET unsubscribed = NULL, unsubscribe_token = $2 WHERE email = $1`,
+          [email, key],
+        );
+        await client.query(
+          `INSERT INTO newsletter_subscriptions (email, registered, unsubscribe_token) VALUES ($1, NOW(), $2) ON CONFLICT (email) DO NOTHING`,
+          [email, key],
+        );
+      });
+    }
+
+    if (action.removeSubscription) {
+      const {key} = action.removeSubscription;
+      await withClient(async (client) => {
+        await client.query(
+          "UPDATE newsletter_subscriptions SET unsubscribed = NOW() WHERE unsubscribe_token = $1",
+          [key],
+        );
+      });
+    }
+  },
+};
 
 export async function getTutorialFinished(userId: UserId): Promise<boolean> {
   return await withClient(async (client) => {
@@ -309,20 +339,5 @@ export async function getTutorialFinished(userId: UserId): Promise<boolean> {
 export async function setTutorialFinished(userId: UserId, finished: boolean): Promise<void> {
   await withClient(async (client) => {
     await client.query(`UPDATE users SET tutorial_finished = $2 WHERE name = $1`, [userId.name, finished]);
-  });
-}
-
-export async function unsubscribe(key: string): Promise<["ok", string] | "invalid-key"> {
-  return await withClient(async (client) => {
-    const result = await client.query(
-      "UPDATE newsletter_subscriptions SET unsubscribed = NOW() WHERE unsubscribe_token = $1 RETURNING email",
-      [key],
-    );
-
-    if (result.rowCount !== 1) {
-      return "invalid-key";
-    }
-
-    return ["ok", result.rows[0].email];
   });
 }

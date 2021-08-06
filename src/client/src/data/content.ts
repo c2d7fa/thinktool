@@ -45,11 +45,11 @@ export function contentText(state: State, thing: string): string {
 // with the referenced item embedded where the reference is.
 
 export function references(state: State, thing: string): string[] {
-  return state._links.image(thing).toJS();
+  return state._links.image(thing).toArray();
 }
 
 export function backreferences(state: State, thing: string): string[] {
-  return state._links.preimage(thing).toJS();
+  return state._links.preimage(thing).toArray();
 }
 
 export function linksInContent(content: Content): Immutable.Set<string> {
