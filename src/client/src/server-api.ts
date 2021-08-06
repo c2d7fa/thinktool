@@ -105,15 +105,15 @@ export function initialize(apiHost: string) {
   }
 
   async function setToolbarState({shown}: {shown: boolean}): Promise<void> {
-    await api(`settings/toolbar/shown`, {method: "PUT", body: JSON.stringify(shown)});
+    await api(`api/account/toolbar-shown`, {method: "PUT", body: JSON.stringify(shown)});
   }
 
   async function getToolbarState(): Promise<{shown: boolean}> {
-    const response = await api(`settings/toolbar/shown`);
+    const response = await api(`api/account/toolbar-shown`);
     if (response.status !== 200) throw {status: response.status};
     const result = await response.json();
-    if (typeof result["shown"] !== "boolean") throw {result};
-    return {shown: result.shown as boolean};
+    if (typeof result !== "boolean") throw {result};
+    return {shown: result as boolean};
   }
 
   return {

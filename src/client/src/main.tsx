@@ -311,12 +311,14 @@ function App_({
       console.warn("Error while setting toolbar state: %o", error);
     });
   }
-  server
-    ?.getToolbarState()
-    .then(({shown}) => setIsToolbarShown_(shown))
-    .catch((error) => {
-      console.warn("Error while getting toolbar state: %o", error);
-    });
+  React.useEffect(() => {
+    server
+      ?.getToolbarState()
+      .then(({shown}) => setIsToolbarShown_(shown))
+      .catch((error) => {
+        console.warn("Error while getting toolbar state: %o", error);
+      });
+  }, []);
 
   const appRef = React.useRef<HTMLDivElement>(null);
 

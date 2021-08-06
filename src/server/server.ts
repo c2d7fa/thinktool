@@ -482,6 +482,30 @@ app.get("/api/account/tutorial-finished", requireSession, async (req, res) => {
     .send(await DB.getTutorialFinished(req.user!));
 });
 
+app.options("/api/account/toolbar-shown", async (req, res) => {
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .header("Access-Control-Allow-Methods", "GET, PUT, OPTIONS")
+    .send();
+});
+
+app.get("/api/account/toolbar-shown", requireSession, async (req, res) => {
+  res
+    .status(200)
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send(/* [TODO] */ false);
+});
+
+app.put("/api/account/toolbar-shown", requireSession, async (req, res) => {
+  // [TODO]
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .sendStatus(200);
+});
+
 app.post("/forgot-password", async (req, res) => {
   const user = Routing.body(req, res, "user", Routing.isString(), {optional: true});
   const email = Routing.body(req, res, "email", Routing.isString(), {optional: true});
