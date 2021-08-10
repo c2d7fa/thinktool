@@ -11,7 +11,6 @@ import * as Routing from "./routing";
 import * as PasswordRecovery from "./password-recovery";
 
 import {spec} from "@johv/miscjs";
-import {$literal, $nullable, Spec} from "@johv/miscjs/lib/spec";
 import {subscribe, unsubscribe} from "./newsletter";
 const {isValid, $array, $or} = spec;
 
@@ -480,6 +479,32 @@ app.get("/api/account/tutorial-finished", requireSession, async (req, res) => {
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
     .send(await DB.getTutorialFinished(req.user!));
+});
+
+app.options("/api/account/toolbar-shown", async (req, res) => {
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .header("Access-Control-Allow-Methods", "GET, PUT, OPTIONS")
+    .send();
+});
+
+app.get("/api/account/toolbar-shown", requireSession, async (req, res) => {
+  res
+    .status(200)
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .send(await DB.getToolbarShown(req.user!));
+});
+
+app.put("/api/account/toolbar-shown", requireSession, async (req, res) => {
+  const shown: unknown = req.body;
+  if (!(shown === "true" || shown === "false")) return res.sendStatus(400);
+  await DB.setToolbarShown(req.user!, shown === "true");
+  res
+    .header("Access-Control-Allow-Origin", staticUrl)
+    .header("Access-Control-Allow-Credentials", "true")
+    .sendStatus(200);
 });
 
 app.post("/forgot-password", async (req, res) => {
