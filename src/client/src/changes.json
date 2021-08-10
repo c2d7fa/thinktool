@@ -467,6 +467,10 @@
     {
       "date": "2021-04-28",
       "title": "Replaced the old search popup with a popup under the new search bar."
+    },
+    {
+      "date": "2021-08-10",
+      "title": "The app now remembers whether the toolbar menu is shown or hidden."
     }
   ]
 }
