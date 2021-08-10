@@ -341,3 +341,22 @@ export async function setTutorialFinished(userId: UserId, finished: boolean): Pr
     await client.query(`UPDATE users SET tutorial_finished = $2 WHERE name = $1`, [userId.name, finished]);
   });
 }
+
+export async function getToolbarShown(userId: UserId): Promise<boolean> {
+  return await withClient(async (client) => {
+    const result = await client.query(`SELECT toolbar_shown FROM users WHERE name = $1`, [userId.name]);
+
+    if (result.rowCount !== 1) {
+      console.warn("Wrong number of rows: %o", result);
+      return false;
+    }
+
+    return result.rows[0].toolbar_shown;
+  });
+}
+
+export async function setToolbarShown(userId: UserId, shown: boolean): Promise<void> {
+  await withClient(async (client) => {
+    await client.query(`UPDATE users SET toolbar_shown = $2 WHERE name = $1`, [userId.name, shown]);
+  });
+}

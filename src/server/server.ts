@@ -11,7 +11,6 @@ import * as Routing from "./routing";
 import * as PasswordRecovery from "./password-recovery";
 
 import {spec} from "@johv/miscjs";
-import {$literal, $nullable, Spec} from "@johv/miscjs/lib/spec";
 import {subscribe, unsubscribe} from "./newsletter";
 const {isValid, $array, $or} = spec;
 
@@ -495,11 +494,13 @@ app.get("/api/account/toolbar-shown", requireSession, async (req, res) => {
     .status(200)
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")
-    .send(/* [TODO] */ false);
+    .send(await DB.getToolbarShown(req.user!));
 });
 
 app.put("/api/account/toolbar-shown", requireSession, async (req, res) => {
-  // [TODO]
+  const shown: unknown = req.body;
+  if (!(shown === "true" || shown === "false")) return res.sendStatus(400);
+  await DB.setToolbarShown(req.user!, shown === "true");
   res
     .header("Access-Control-Allow-Origin", staticUrl)
     .header("Access-Control-Allow-Credentials", "true")

@@ -54,7 +54,4 @@ CREATE TABLE newsletter_sent (
 	sent TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-CREATE TABLE toolbar_shown (
-	"user" TEXT REFERENCES "users" (name),
-	shown BOOLEAN NOT NULL DEFAULT true
-);
+ALTER TABLE "users" ADD COLUMN toolbar_shown BOOLEAN NOT NULL DEFAULT true;
