@@ -11,15 +11,13 @@ This repository contains the source code of [**Thinktool**](https://thinktool.io
 <p align="center">(Screenshot showing links, backreferences and multiple parents.)</p>
 </blockquote>
 
-## Thinktool isn't open source! (Yet...)
+## Open Source
 
-Although it's source code is provided publicly here, this software isn't currently open source.
+All content of this repository to which I own the copyright is licensed under the terms of the GNU AGPLv3 or any later version as described in `LICENSE.md`.
 
-As such, the instructions in this README are mostly written for myself, and may not be sufficient to compile this project on your own. That being said, you can find some hints on how to run it in `.github/workflows`.
+This repository is not currently accepting issues or pull requests. Please see Thinktool's web page for information about how to contact me with your feedback about Thinktool. I may occationally force push to this repository, since I'm not expecting anyone else to be actively working on it. You are welcome to create your own fork.
 
-This project is also not currently accepting issues or pull requests. Please see Thinktool's web page for information about how to contact me with your feedback about Thinktool. I may occationally force push to this repository, since I'm not expecting anyone else to be actively working on it.
-
-**However,** if I abandon this project in the future (or when I otherwise consider it "finished"), I intend to make it open source, probably under the AGPL. If you can see that I haven't touched this repository in a couple of months, feel free to send me an email reminding me of this fact!
+The instructions in this README are mostly written for myself, and may not be sufficient to compile this project on your own. However, you can find some hints on how to run it in `.github/workflows`.
 
 ## Directory Structure
 
@@ -54,7 +52,7 @@ Tools and configuration:
 
 ## Deployment
 
-The application consists of two parts:
+The application consists of three parts:
 
 1. Static resources, output to `/dist/static/`
 2. Node.js server, output to `/dist/server/`
