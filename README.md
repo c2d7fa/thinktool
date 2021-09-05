@@ -11,6 +11,30 @@ This repository contains the source code of [**Thinktool**](https://thinktool.io
 <p align="center">(Screenshot showing links, backreferences and multiple parents.)</p>
 </blockquote>
 
+## Project status
+
+No-one else is working on Thinktool, so development is slow. However, I use Thinktool for all my note-taking (after switching from [Obsidian](https://obsidian.md)), and I'm still actively working on it (as of September 2021).
+
+Currently, the main priorities are improving the desktop client and offline-only support for improved privacy and data security as well as improving the UX and "learnability". There is no specific roadmap or time estimates.
+
+The website and newsletter haven't been updated in a while. If you want to follow Thinktool's development, watch this repository.
+
+## Comparison to other software
+
+**Offline client:** [Obsidian](https://obsidian.md/) and [Logseq](https://logseq.com/) have excellent offline clients, which let you store your data in Markdown files locally. [Thinktool](https://thinktool.io) does have an offline desktop client, but it's janky in comparison and uses a SQLite database for data storage.
+
+**Graph structure:** [Roam Research](https://roamresearch.com/), [Logseq](https://logseq.com) and [Obsidian](https://obsidian.md/) let you link different pages together and use that graph structure to explore your notes. However, only pages -- not individual items -- can be connected like this. In contrast, Thinktool lets you connect individual items to multiple parents, so the same item can exist in multiple places.
+
+**Transclusion:** To work around the issue of connecting individual items, [Roam Research](https://roamresearch.com/) and [Logseq](https://logseq.com) support embedding (transcluding) blocks. However, recursive transclusion is not supported, and transclusions are second-class. [Thinktool](https://thinktool.io) doesn't need transclusion, because the same item can simply exist in multiple places -- there is no difference between the "original" item and its clones.
+
+**Hierarchical structure:** If you want to connect pages hierarchically, [Roam Research](https://roamresearch.com/), [Logseq](https://logseq.com)  and [Obsidian](https://obsidian.md/) require you to create a separate index page where you link the different pages together (or use some other custom system). [Thinktool](https://thinktool.io) makes no distinction between pages and items, so you can simply add one page as a child of another page.
+
+**Bidirectional links:** All of these tools, including [Thinktool](https://thinktool.io) are built around bidirectional linking and have similar features.
+
+**Miscellaneous features:** [Roam Research](https://roamresearch.com/), and to a lesser extent [Logseq](https://logseq.com), have a bunch of neat features that let you use it for task management, spaced repetition and more. [Thinktool](https://thinktool.io) is designed just for note-taking, so it doesn't have a lot of extra features.
+
+**Ease of use and UI:** Even though [Thinktool's](https://thinktool.io/) data model is arguably simpler than these other tools, the UI is quite a bit worse, so it ends up being harder to understand.
+
 ## Open Source
 
 All content of this repository to which I own the copyright is licensed under the terms of the GNU AGPLv3 or any later version as described in `LICENSE.md`.
@@ -18,6 +42,8 @@ All content of this repository to which I own the copyright is licensed under th
 This repository is not currently accepting issues or pull requests. Please see Thinktool's web page for information about how to contact me with your feedback about Thinktool. I may occationally force push to this repository, since I'm not expecting anyone else to be actively working on it. You are welcome to create your own fork.
 
 The instructions in this README are mostly written for myself, and may not be sufficient to compile this project on your own. However, you can find some hints on how to run it in `.github/workflows`.
+
+You will always be able to compile and use this version of Thinktool for free. The online service hosted at https://thinktool.io *may* eventually become a subscription service, but it's currently also free, and probably will be for a while.
 
 ## Directory Structure
 
