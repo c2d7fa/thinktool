@@ -487,44 +487,71 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
   return updateApp;
 }
 
-function useBulletProps(node: T.NodeRef, updateApp: ReturnType<typeof useUpdateApp>) {
-  const beginDrag = React.useCallback(() => updateApp((app) => A.merge(app, {drag: Drag.drag(app.tree, node)})), [
-    node,
-  ]);
-  const onBulletClick = React.useCallback(() => updateApp((app) => Item.click(app, node)), [node]);
-  const onBulletAltClick = React.useCallback(() => updateApp((app) => Item.altClick(app, node)), [node]);
-  return {beginDrag, onBulletClick, onBulletAltClick};
-}
-
 function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.NodeRef}) {
   const updateApp = useUpdateApp(props.context);
+  const contextRef = usePropRef(props.context);
 
-  const {otherParents, click: onOtherParentClick, altClick: onOtherParentAltClick} = useOtherParents({
-    app: props.context,
-    updateApp,
-    node: props.node,
-    parent: props.parent,
-  });
+  const app = props.context;
 
-  const bulletProps = useBulletProps(props.node, updateApp);
+  function dataItemizeNode(node: T.NodeRef, parent?: T.NodeRef): Item.ItemData {
+    const otherParents = Data.otherParents(
+      app.state,
+      T.thing(app.tree, node),
+      parent && T.thing(app.tree, parent),
+    ).map((id) => ({id, text: Data.contentText(app.state, id)}));
 
-  const subtree = <Subtree context={props.context} parent={props.node} grandparent={props.parent} />;
+    const backreferences = Data.backreferences(app.state, T.thing(app.tree, node));
 
-  const onEditEvent = useOnEditEvent(props.context, props.node);
-  const editorProps = {...Editor.forNode(props.context, props.node), onEditEvent};
+    const editor = Editor.forNode(app, node);
 
-  return (
-    <Item.Item
-      dragState={Drag.node(props.context.drag, props.node)}
-      status={Item.status(props.context.tree, props.node)}
-      id={props.node.id}
-      kind={Item.kind(props.context.tree, props.node)}
-      {...{otherParents, onOtherParentClick, onOtherParentAltClick}}
-      subtree={subtree}
-      {...bulletProps}
-      {...editorProps}
-    />
-  );
+    return {
+      id: node.id,
+      kind: Item.kind(app.tree, node),
+      dragState: Drag.node(app.drag, node),
+      hasFocus: editor.hasFocus,
+      status: Item.status(app.tree, node),
+      editor: editor.editor,
+      otherParents: otherParents,
+      openedLinks: T.openedLinksChildren(app.tree, node).map((n) => dataItemizeNode(n, node)),
+      isPlaceholderShown: PlaceholderItem.isVisible(app) && T.root(app.tree).id === node.id, // [TODO] kinda
+      children: T.children(app.tree, node).map((n) => dataItemizeNode(n, node)),
+      references:
+        backreferences.length === 0
+          ? {state: "empty"}
+          : !T.backreferencesExpanded(app.tree, node)
+          ? {state: "collapsed", count: backreferences.length}
+          : {
+              state: "expanded",
+              count: backreferences.length,
+              items: T.backreferencesChildren(app.tree, node).map((n) => dataItemizeNode(n)),
+            },
+    };
+  }
+
+  const item = dataItemizeNode(props.node, props.parent);
+
+  const onItemEvent = React.useCallback((event: Item.ItemEvent) => {
+    const node = (event: {id: number}): T.NodeRef => ({id: event.id});
+
+    if (event.type === "drag") {
+      updateApp((app) => A.merge(app, {drag: Drag.drag(app.tree, node(event))}));
+    } else if (event.type === "click-bullet") {
+      updateApp((app) => (event.alt ? Item.altClick : Item.click)(app, node(event)));
+    } else if (event.type === "click-parent") {
+      updateApp((app) => A.jump(app, event.thing));
+    } else if (event.type === "click-placeholder") {
+      updateApp(PlaceholderItem.create);
+    } else if (event.type === "toggle-references") {
+      updateApp((app) => A.merge(app, {tree: T.toggleBackreferences(app.state, app.tree, node(event))}));
+    } else if (event.type === "edit") {
+      handleEditorEvent(contextRef.current!, node(event), event.event);
+    } else {
+      const unreachable: never = event;
+      console.error("Unknown item event type: %o", unreachable);
+    }
+  }, []);
+
+  return <Item.Item item={item} onItemEvent={onItemEvent} />;
 }
 
 function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
