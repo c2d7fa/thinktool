@@ -137,7 +137,7 @@ function References({linkedItem, onItemEvent}: {linkedItem: ItemData; onItemEven
   );
 }
 
-function Subtree({parent, onItemEvent}: {parent: ItemData; onItemEvent: (event: ItemEvent) => void}) {
+export function Subtree({parent, onItemEvent}: {parent: ItemData; onItemEvent: (event: ItemEvent) => void}) {
   const children = parent.children.map((child) => <Item key={child.id} item={child} onItemEvent={onItemEvent} />);
   const openedLinks = parent.openedLinks.map((link) => (
     <Item key={link.id} item={link} onItemEvent={onItemEvent} />
@@ -188,5 +188,5 @@ export const Item = React.memo(
       </li>
     );
   },
-  (prev, next) => JSON.stringify(prev) === JSON.stringify(next),
+  (prev, next) => JSON.stringify(prev.item) === JSON.stringify(next.item) && prev.onItemEvent === next.onItemEvent,
 );

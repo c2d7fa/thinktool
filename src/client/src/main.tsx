@@ -383,15 +383,27 @@ function App_({
 
 const ThingOverview = React.memo(
   function (p: {context: Context}) {
+    const contextRef = usePropRef(p.context);
+
     const node = T.root(p.context.tree);
 
     const hasReferences = Data.backreferences(p.context.state, T.thing(p.context.tree, node)).length > 0;
 
-    const onEditEvent = useOnEditEvent(p.context, node);
+    const onEditEvent = React.useCallback(
+      (ev: Editor.Event) => handleEditorEvent(contextRef.current!, node, ev),
+      [node],
+    );
+
+    const onItemEvent = useOnItemEvent(p.context);
+
+    const root = dataItemizeNode(p.context, node);
+    const parents = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map((n) =>
+      dataItemizeNode(p.context, n),
+    );
 
     return (
       <div className="overview">
-        <ParentsOutline context={p.context} />
+        <ParentsOutline parents={parents} onItemEvent={onItemEvent} />
         <div className="overview-main">
           <SelectedItem.SelectedItem
             onEditEvent={onEditEvent}
@@ -399,14 +411,14 @@ const ThingOverview = React.memo(
             {...Editor.forNode(p.context, node)}
           />
           <div className="children">
-            <Outline context={p.context} />
+            <Item.Subtree parent={root} onItemEvent={onItemEvent} />
           </div>
         </div>
         {hasReferences && (
           <>
             <div className="references">
               <h1 className="link-section">References</h1>
-              <ReferencesOutline context={p.context} />
+              <ReferencesOutline references={root.references} onItemEvent={onItemEvent} />
             </div>
           </>
         )}
@@ -423,41 +435,32 @@ const ThingOverview = React.memo(
 // custom behavior in response to key-presses (e.g. Alt+Backspace in
 // ParentsOutline should remove parent from child).
 
-function ParentsOutline(p: {context: Context}) {
-  const parentItems = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map((child: T.NodeRef) => {
-    return <ExpandableItem key={child.id} node={child} context={p.context} />;
+function ParentsOutline(props: {parents: Item.ItemData[]; onItemEvent: (event: Item.ItemEvent) => void}) {
+  if (props.parents.length === 0) return null;
+
+  const parentItems = props.parents.map((item) => (
+    <Item.Item key={item.id} item={item} onItemEvent={props.onItemEvent} />
+  ));
+
+  return (
+    <div className="parents">
+      <h1 className="link-section">Parents</h1>
+      <ul className="subtree">{parentItems}</ul>
+    </div>
+  );
+}
+
+function ReferencesOutline(props: {
+  references: Item.ItemData["references"];
+  onItemEvent: (event: Item.ItemEvent) => void;
+}) {
+  if (props.references.state === "empty" || props.references.state === "collapsed") return null;
+
+  const referenceItems = props.references.items.map((item) => {
+    return <Item.Item key={item.id} item={item} onItemEvent={props.onItemEvent} />;
   });
 
-  const subtree = <ul className="subtree">{parentItems}</ul>;
-
-  if (parentItems.length === 0) {
-    return null;
-  } else {
-    return (
-      <div className="parents">
-        <h1 className="link-section">Parents</h1>
-        {subtree}
-      </div>
-    );
-  }
-}
-
-function ReferencesOutline(p: {context: Context}) {
-  const referenceItems = T.backreferencesChildren(p.context.tree, T.root(p.context.tree)).map(
-    (child: T.NodeRef) => {
-      return <ExpandableItem key={child.id} node={child} context={p.context} />;
-    },
-  );
-
-  if (referenceItems.length === 0) {
-    return null;
-  } else {
-    return <ul className="subtree">{referenceItems}</ul>;
-  }
-}
-
-function Outline(p: {context: Context}) {
-  return <Subtree context={p.context} parent={T.root(p.context.tree)} omitReferences={true} />;
+  return <ul className="subtree">{referenceItems}</ul>;
 }
 
 function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Event) {
@@ -467,14 +470,6 @@ function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Even
 
   if (result.effects?.url) context.openExternalUrl(result.effects.url);
   if (result.effects?.search) context.send("search", {search: result.effects.search});
-}
-
-function useOnEditEvent(context: Context, node: T.NodeRef): (ev: Editor.Event) => void {
-  // We don't want to update all editors each time context changes. Editor will
-  // not update if none of its props have changed. To ensure that this condition
-  // is met, we always pass the same callback.
-  const contextRef = usePropRef(context);
-  return React.useCallback((ev: Editor.Event) => handleEditorEvent(contextRef.current!, node, ev), [node]);
 }
 
 function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
@@ -487,50 +482,45 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
   return updateApp;
 }
 
-function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.NodeRef}) {
-  const updateApp = useUpdateApp(props.context);
-  const contextRef = usePropRef(props.context);
+function dataItemizeNode(app: A.App, node: T.NodeRef, parent?: T.NodeRef): Item.ItemData {
+  const otherParents = Data.otherParents(
+    app.state,
+    T.thing(app.tree, node),
+    parent && T.thing(app.tree, parent),
+  ).map((id) => ({id, text: Data.contentText(app.state, id)}));
 
-  const app = props.context;
+  const backreferences = Data.backreferences(app.state, T.thing(app.tree, node));
 
-  function dataItemizeNode(node: T.NodeRef, parent?: T.NodeRef): Item.ItemData {
-    const otherParents = Data.otherParents(
-      app.state,
-      T.thing(app.tree, node),
-      parent && T.thing(app.tree, parent),
-    ).map((id) => ({id, text: Data.contentText(app.state, id)}));
+  const editor = Editor.forNode(app, node);
 
-    const backreferences = Data.backreferences(app.state, T.thing(app.tree, node));
+  return {
+    id: node.id,
+    kind: Item.kind(app.tree, node),
+    dragState: Drag.node(app.drag, node),
+    hasFocus: editor.hasFocus,
+    status: Item.status(app.tree, node),
+    editor: editor.editor,
+    otherParents: otherParents,
+    openedLinks: T.openedLinksChildren(app.tree, node).map((n) => dataItemizeNode(app, n, node)),
+    isPlaceholderShown: PlaceholderItem.isVisible(app) && T.root(app.tree).id === node.id,
+    children: T.children(app.tree, node).map((n) => dataItemizeNode(app, n, node)),
+    references:
+      backreferences.length === 0
+        ? {state: "empty"}
+        : !T.backreferencesExpanded(app.tree, node)
+        ? {state: "collapsed", count: backreferences.length}
+        : {
+            state: "expanded",
+            count: backreferences.length,
+            items: T.backreferencesChildren(app.tree, node).map((n) => dataItemizeNode(app, n)),
+          },
+  };
+}
 
-    const editor = Editor.forNode(app, node);
-
-    return {
-      id: node.id,
-      kind: Item.kind(app.tree, node),
-      dragState: Drag.node(app.drag, node),
-      hasFocus: editor.hasFocus,
-      status: Item.status(app.tree, node),
-      editor: editor.editor,
-      otherParents: otherParents,
-      openedLinks: T.openedLinksChildren(app.tree, node).map((n) => dataItemizeNode(n, node)),
-      isPlaceholderShown: PlaceholderItem.isVisible(app) && T.root(app.tree).id === node.id, // [TODO] kinda
-      children: T.children(app.tree, node).map((n) => dataItemizeNode(n, node)),
-      references:
-        backreferences.length === 0
-          ? {state: "empty"}
-          : !T.backreferencesExpanded(app.tree, node)
-          ? {state: "collapsed", count: backreferences.length}
-          : {
-              state: "expanded",
-              count: backreferences.length,
-              items: T.backreferencesChildren(app.tree, node).map((n) => dataItemizeNode(n)),
-            },
-    };
-  }
-
-  const item = dataItemizeNode(props.node, props.parent);
-
-  const onItemEvent = React.useCallback((event: Item.ItemEvent) => {
+function useOnItemEvent(context: Context) {
+  const updateApp = useUpdateApp(context);
+  const contextRef = usePropRef(context);
+  return React.useCallback((event: Item.ItemEvent) => {
     const node = (event: {id: number}): T.NodeRef => ({id: event.id});
 
     if (event.type === "drag") {
@@ -550,64 +540,6 @@ function ExpandableItem(props: {context: Context; node: T.NodeRef; parent?: T.No
       console.error("Unknown item event type: %o", unreachable);
     }
   }, []);
-
-  return <Item.Item item={item} onItemEvent={onItemEvent} />;
-}
-
-function BackreferencesItem(p: {context: Context; parent: T.NodeRef}) {
-  const backreferences = Data.backreferences(p.context.state, T.thing(p.context.tree, p.parent));
-
-  if (backreferences.length === 0) {
-    return null;
-  }
-
-  const children = T.backreferencesChildren(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem key={child.id} node={child} context={p.context} />;
-  });
-
-  const updateApp = useUpdateApp(p.context);
-
-  const toggle = React.useCallback(
-    () => updateApp((app) => A.merge(app, {tree: T.toggleBackreferences(app.state, app.tree, p.parent)})),
-    [p.parent],
-  );
-
-  return (
-    <>
-      <li className="item">
-        <div>
-          <button onClick={toggle} className="backreferences-text">
-            {backreferences.length} References
-            {!T.backreferencesExpanded(p.context.tree, p.parent) && "..."}
-          </button>
-        </div>
-      </li>
-      {T.backreferencesExpanded(p.context.tree, p.parent) && children}
-    </>
-  );
-}
-
-function Subtree(p: {context: Context; parent: T.NodeRef; grandparent?: T.NodeRef; omitReferences?: boolean}) {
-  const children = T.children(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
-  });
-
-  const openedLinksChildren = T.openedLinksChildren(p.context.tree, p.parent).map((child) => {
-    return <ExpandableItem key={child.id} node={child} parent={p.parent} context={p.context} />;
-  });
-
-  return (
-    <ul className="subtree">
-      {openedLinksChildren}
-      {children}
-      {PlaceholderItem.isVisible(p.context) && (
-        <PlaceholderItem.PlaceholderItem
-          onCreate={() => setAppState(p.context, PlaceholderItem.create(p.context))}
-        />
-      )}
-      {!p.omitReferences && <BackreferencesItem key="backreferences" parent={p.parent} context={p.context} />}
-    </ul>
-  );
 }
 
 // ==
