@@ -27,7 +27,7 @@ import {ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
 import * as Item from "./ui/Item";
 import UserPage from "./ui/UserPage";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
-import {Outline} from "./outline";
+import * as Outline from "./outline";
 import {TopBar, useTopBarProps} from "./ui/TopBar";
 
 import * as React from "react";
@@ -298,7 +298,7 @@ function App_({
       {app.tab === "orphans" ? (
         <OrphanList {...useOrphanListProps(app, updateApp)} />
       ) : (
-        <Outline app={app} onItemEvent={onItemEvent} />
+        <Outline.Outline outline={Outline.fromApp(app)} onItemEvent={onItemEvent} />
       )}
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
