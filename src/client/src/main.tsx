@@ -157,12 +157,7 @@ function App_({
 
   const batched = useBatched(200);
 
-  const context = {
-    updateAppWithoutSaving,
-    changelog: ChangelogData,
-    openExternalUrl,
-    send: receiver.send,
-  };
+  const changelog = ChangelogData;
 
   useThingUrl({
     current: T.thing(app.tree, T.root(app.tree)),
@@ -214,7 +209,7 @@ function App_({
       updateApp((app) => {
         const result = Actions.update(app, ev.action);
         if (result.undo) console.warn("Undo isn't currently supported.");
-        if (result.url) context.openExternalUrl(result.url);
+        if (result.url) openExternalUrl(result.url);
         if (result.search) receiver.send("search", {search: result.search});
         return result.app;
       });
@@ -226,7 +221,7 @@ function App_({
     });
   }, []);
 
-  useServerChanges(server ?? null, context.updateAppWithoutSaving);
+  useServerChanges(server ?? null, updateAppWithoutSaving);
   useGlobalShortcuts(receiver.send);
 
   useDragAndDrop(app, updateApp);
@@ -266,7 +261,7 @@ function App_({
   const topBarProps = useTopBarProps({
     app,
     updateApp,
-    send: context.send,
+    send: receiver.send,
     isToolbarShown,
     setIsToolbarShown,
     username,
@@ -274,7 +269,7 @@ function App_({
     search: (query) => search.query(query, 25),
   });
 
-  const onItemEvent = useOnItemEvent({updateApp, openExternalUrl: context.openExternalUrl, send: context.send});
+  const onItemEvent = useOnItemEvent({updateApp, openExternalUrl: openExternalUrl, send: receiver.send});
 
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
@@ -296,7 +291,7 @@ function App_({
         />
       )}
       <Changelog
-        changelog={context.changelog}
+        changelog={changelog}
         visible={app.changelogShown}
         hide={() => updateApp((app) => A.merge(app, {changelogShown: false}))}
       />
