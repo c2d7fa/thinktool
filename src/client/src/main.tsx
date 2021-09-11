@@ -158,8 +158,6 @@ function App_({
   const batched = useBatched(200);
 
   const context = {
-    ...app,
-
     setApp(newApp: A.App) {
       // Push changes to server
       const effects = Storage.Diff.effects(app, newApp);
@@ -175,22 +173,6 @@ function App_({
       updateAppWithoutSaving(newApp);
     },
 
-    get state() {
-      return app.state;
-    },
-    get tree() {
-      return app.tree;
-    },
-    get tutorialState() {
-      return app.tutorialState;
-    },
-    get changelogShown() {
-      return app.changelogShown;
-    },
-    get editors() {
-      return app.editors;
-    },
-
     updateAppWithoutSaving,
     changelog: ChangelogData,
     openExternalUrl,
@@ -198,16 +180,17 @@ function App_({
   };
 
   useThingUrl({
-    current: T.thing(context.tree, T.root(context.tree)),
+    current: T.thing(app.tree, T.root(app.tree)),
     jump(thing: string) {
-      updateAppWithoutSaving(A.merge(context, {tree: T.fromRoot(context.state, thing)}));
+      updateAppWithoutSaving(A.merge(app, {tree: T.fromRoot(app.state, thing)}));
     },
   });
 
   // Speculative optimization. I haven't tested the impact of this.
   const contextRef = usePropRef(context);
+  const appRef = usePropRef(app);
   const updateApp = React.useMemo(
-    () => (f: (app: A.App) => A.App) => contextRef.current!.setApp(f(contextRef.current!)),
+    () => (f: (app: A.App) => A.App) => contextRef.current!.setApp(f(appRef.current!)),
     [],
   );
 
@@ -247,7 +230,7 @@ function App_({
   useServerChanges(server ?? null, context.updateAppWithoutSaving);
   useGlobalShortcuts(receiver.send);
 
-  useDragAndDrop(context, updateApp);
+  useDragAndDrop(app, updateApp);
 
   const [isToolbarShown, setIsToolbarShown_] = React.useState<boolean>(true);
   function setIsToolbarShown(isToolbarShown: boolean) {
@@ -265,15 +248,15 @@ function App_({
       });
   }, []);
 
-  const appRef = React.useRef<HTMLDivElement>(null);
+  const appElementRef = React.useRef<HTMLDivElement>(null);
 
   const [showSplash, setShowSplash] = React.useState<boolean>(
-    !isDevelopment && Tutorial.isActive(context.tutorialState),
+    !isDevelopment && Tutorial.isActive(app.tutorialState),
   );
 
   const onFocusApp = React.useCallback(
     (ev: React.FocusEvent) => {
-      if (ev.target === appRef.current) {
+      if (ev.target === appElementRef.current) {
         console.log("Unfocusing item due to click on background");
         updateApp((app) => A.merge(app, {tree: T.unfocus(app.tree)}));
       }
@@ -282,7 +265,7 @@ function App_({
   );
 
   const topBarProps = useTopBarProps({
-    app: context,
+    app,
     updateApp,
     send: context.send,
     isToolbarShown,
@@ -295,33 +278,33 @@ function App_({
   const onItemEvent = useOnItemEvent({updateApp, openExternalUrl: context.openExternalUrl, send: context.send});
 
   return (
-    <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
+    <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
       <div className="app-header">
         <TopBar {...topBarProps} />
         {isToolbarShown ? (
           <Toolbar
             executeAction={(action) => receiver.send("action", {action})}
-            isEnabled={(action) => Actions.enabled(context, action)}
-            isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
-            isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
+            isEnabled={(action) => Actions.enabled(app, action)}
+            isRelevant={(action) => Tutorial.isRelevant(app.tutorialState, action)}
+            isNotIntroduced={(action) => Tutorial.isNotIntroduced(app.tutorialState, action)}
           />
         ) : null}
       </div>
       {!showSplash && (
         <Tutorial.TutorialBox
-          state={context.tutorialState}
-          setState={(tutorialState) => context.setApp(A.merge(context, {tutorialState}))}
+          state={app.tutorialState}
+          setState={(tutorialState) => context.setApp(A.merge(app, {tutorialState}))}
         />
       )}
       <Changelog
         changelog={context.changelog}
-        visible={context.changelogShown}
-        hide={() => context.setApp(A.merge(context, {changelogShown: false}))}
+        visible={app.changelogShown}
+        hide={() => context.setApp(A.merge(app, {changelogShown: false}))}
       />
-      {context.tab === "orphans" ? (
-        <OrphanList {...useOrphanListProps(context, updateApp)} />
+      {app.tab === "orphans" ? (
+        <OrphanList {...useOrphanListProps(app, updateApp)} />
       ) : (
-        <Outline app={context} onItemEvent={onItemEvent} />
+        <Outline app={app} onItemEvent={onItemEvent} />
       )}
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
