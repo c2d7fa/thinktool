@@ -347,6 +347,8 @@ function App_({
     search: (query) => search.query(query, 25),
   });
 
+  const onItemEvent = useOnItemEvent(context);
+
   return (
     <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
       <div className="app-header">
@@ -374,7 +376,7 @@ function App_({
       {context.tab === "orphans" ? (
         <OrphanList {...useOrphanListProps(context, updateApp)} />
       ) : (
-        <ThingOverview context={context} />
+        <ThingOverview app={context} onItemEvent={onItemEvent} />
       )}
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
@@ -382,33 +384,23 @@ function App_({
 }
 
 const ThingOverview = React.memo(
-  function (p: {context: Context}) {
-    const contextRef = usePropRef(p.context);
+  function ({app, onItemEvent}: {app: A.App; onItemEvent(event: Item.ItemEvent): void}) {
+    const node = T.root(app.tree);
 
-    const node = T.root(p.context.tree);
+    const hasReferences = Data.backreferences(app.state, T.thing(app.tree, node)).length > 0;
 
-    const hasReferences = Data.backreferences(p.context.state, T.thing(p.context.tree, node)).length > 0;
-
-    const onEditEvent = React.useCallback(
-      (ev: Editor.Event) => handleEditorEvent(contextRef.current!, node, ev),
-      [node],
-    );
-
-    const onItemEvent = useOnItemEvent(p.context);
-
-    const root = dataItemizeNode(p.context, node);
-    const parents = T.otherParentsChildren(p.context.tree, T.root(p.context.tree)).map((n) =>
-      dataItemizeNode(p.context, n),
-    );
+    const root = dataItemizeNode(app, node);
+    const parents = T.otherParentsChildren(app.tree, T.root(app.tree)).map((n) => dataItemizeNode(app, n));
 
     return (
       <div className="overview">
         <ParentsOutline parents={parents} onItemEvent={onItemEvent} />
         <div className="overview-main">
           <SelectedItem.SelectedItem
-            onEditEvent={onEditEvent}
-            {...SelectedItem.useUnfold(p.context, useUpdateApp(p.context))}
-            {...Editor.forNode(p.context, node)}
+            onEditEvent={(event) => onItemEvent({type: "edit", id: node.id, event})}
+            isFolded={SelectedItem.isFolded(app)}
+            unfold={() => onItemEvent({type: "unfold", id: node.id})}
+            {...Editor.forNode(app, node)}
           />
           <div className="children">
             <Item.Subtree parent={root} onItemEvent={onItemEvent} />
@@ -427,7 +419,7 @@ const ThingOverview = React.memo(
   },
   (prev, next) => {
     // When the popup is open, we know that the outline view won't change.
-    return P.isOpen(prev.context.popup) && P.isOpen(next.context.popup);
+    return P.isOpen(prev.app.popup) && P.isOpen(next.app.popup);
   },
 );
 
@@ -535,6 +527,8 @@ function useOnItemEvent(context: Context) {
       updateApp((app) => A.merge(app, {tree: T.toggleBackreferences(app.state, app.tree, node(event))}));
     } else if (event.type === "edit") {
       handleEditorEvent(contextRef.current!, node(event), event.event);
+    } else if (event.type === "unfold") {
+      updateApp((app) => A.unfold(app, node(event)));
     } else {
       const unreachable: never = event;
       console.error("Unknown item event type: %o", unreachable);

@@ -104,6 +104,7 @@ export type ItemEvent =
   | {type: "click-parent"; thing: string; alt: boolean}
   | {type: "click-placeholder"}
   | {type: "toggle-references"; id: number}
+  | {type: "unfold"; id: number}
   | {type: "edit"; id: number; event: Editor.Event};
 
 // [TODO] Use imported stylesheets for class names
