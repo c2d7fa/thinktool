@@ -56,7 +56,7 @@ function useContext({
   openExternalUrl(url: string): void;
   receiver: Receiver<Message>;
 }): Context {
-  const [innerApp, setInnerApp] = React.useState<A.App>(() =>
+  const [app, updateAppWithoutSaving] = React.useState<A.App>(() =>
     A.from(initialState, T.fromRoot(initialState, extractThingFromURL()), {
       tutorialFinished: initialTutorialFinished,
     }),
@@ -65,11 +65,11 @@ function useContext({
   const batched = useBatched(200);
 
   const context: Context = {
-    ...innerApp,
+    ...app,
 
-    setApp(app: A.App) {
+    setApp(newApp: A.App) {
       // Push changes to server
-      const effects = Storage.Diff.effects(innerApp, app);
+      const effects = Storage.Diff.effects(app, newApp);
       Storage.execute(storage, effects, {
         setContent(thing, content) {
           batched.update(thing, () => {
@@ -79,34 +79,26 @@ function useContext({
       });
 
       // Update actual app
-      setInnerApp(app);
+      updateAppWithoutSaving(newApp);
     },
 
     get state() {
-      return innerApp.state;
+      return app.state;
     },
     get tree() {
-      return innerApp.tree;
+      return app.tree;
     },
     get tutorialState() {
-      return innerApp.tutorialState;
+      return app.tutorialState;
     },
     get changelogShown() {
-      return innerApp.changelogShown;
+      return app.changelogShown;
     },
     get editors() {
-      return innerApp.editors;
+      return app.editors;
     },
 
-    // [TODO] Do we actually need this?
-    updateLocalState(update) {
-      setInnerApp((innerApp) => {
-        const state = update(innerApp.state);
-        const tree = T.refresh(innerApp.tree, state);
-        return A.merge(innerApp, {state, tree});
-      });
-    },
-
+    updateAppWithoutSaving,
     changelog: ChangelogData,
     storage,
     server,
@@ -117,7 +109,7 @@ function useContext({
   useThingUrl({
     current: T.thing(context.tree, T.root(context.tree)),
     jump(thing: string) {
-      setInnerApp(A.merge(context, {tree: T.fromRoot(context.state, thing)}));
+      updateAppWithoutSaving(A.merge(context, {tree: T.fromRoot(context.state, thing)}));
     },
   });
 
@@ -143,7 +135,7 @@ function useGlobalShortcuts(sendEvent: Context["send"]) {
   }, [sendEvent]);
 }
 
-function useServerChanges(server: API.Server | null, update: (f: (state: Data.State) => Data.State) => void) {
+function useServerChanges(server: API.Server | null, updateApp: (f: (app: A.App) => A.App) => void) {
   React.useEffect(() => {
     if (server === null) return;
 
@@ -155,7 +147,7 @@ function useServerChanges(server: API.Server | null, update: (f: (state: Data.St
         }))(),
       );
       const changedThings = await Promise.all(loadThingDataTasks);
-      update((state) => Sync.receiveChangedThingsFromServer(state, changedThings));
+      updateApp((app) => Sync.receiveChangedThingsFromServer(app, changedThings));
     });
   }, []);
 }
@@ -277,7 +269,7 @@ function App_({
     });
   }, []);
 
-  useServerChanges(server ?? null, context.updateLocalState);
+  useServerChanges(server ?? null, context.updateAppWithoutSaving);
   useGlobalShortcuts(receiver.send);
 
   useDragAndDrop(context, updateApp);

@@ -1,34 +1,38 @@
 import {Communication} from "@thinktool/shared";
+
+import * as A from "./app";
 import * as D from "./data";
+import * as T from "./tree";
 
 export function receiveChangedThingsFromServer(
-  state: D.State,
+  app: A.App,
   changedThings: {thing: string; data: Communication.ThingData | null}[],
-): D.State {
-  let newState = state;
+): A.App {
+  let state = app.state;
 
   for (const {thing, data} of changedThings) {
     if (data === null) {
       // Thing was deleted
-      newState = D.remove(newState, thing);
+      state = D.remove(state, thing);
       continue;
     }
 
-    if (!D.exists(newState, thing)) {
+    if (!D.exists(state, thing)) {
       // A new item was created
-      newState = D.create(newState, thing)[0];
+      state = D.create(state, thing)[0];
     }
 
-    newState = D.setContent(newState, thing, data.content);
+    state = D.setContent(state, thing, data.content);
 
-    const nChildren = D.children(newState, thing).length;
+    const nChildren = D.children(state, thing).length;
     for (let i = 0; i < nChildren; ++i) {
-      newState = D.removeChild(newState, thing, 0);
+      state = D.removeChild(state, thing, 0);
     }
     for (const childConnection of data.children) {
-      newState = D.addChild(newState, thing, childConnection.child, childConnection.name)[0];
+      state = D.addChild(state, thing, childConnection.child, childConnection.name)[0];
     }
   }
 
-  return newState;
+  const tree = T.refresh(app.tree, state);
+  return A.merge(app, {state, tree});
 }

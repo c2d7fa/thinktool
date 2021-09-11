@@ -24,7 +24,7 @@ export interface Context extends App {
   storage: Storage;
   server?: Server;
 
-  updateLocalState(f: (value: State) => State): void;
+  updateAppWithoutSaving(f: (app: App) => App): void;
 
   openExternalUrl(url: string): void;
 
