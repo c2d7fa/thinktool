@@ -158,21 +158,6 @@ function App_({
   const batched = useBatched(200);
 
   const context = {
-    setApp(newApp: A.App) {
-      // Push changes to server
-      const effects = Storage.Diff.effects(app, newApp);
-      Storage.execute(storage, effects, {
-        setContent(thing, content) {
-          batched.update(thing, () => {
-            storage.setContent(thing, content);
-          });
-        },
-      });
-
-      // Update actual app
-      updateAppWithoutSaving(newApp);
-    },
-
     updateAppWithoutSaving,
     changelog: ChangelogData,
     openExternalUrl,
@@ -186,13 +171,27 @@ function App_({
     },
   });
 
-  // Speculative optimization. I haven't tested the impact of this.
-  const contextRef = usePropRef(context);
-  const appRef = usePropRef(app);
-  const updateApp = React.useMemo(
-    () => (f: (app: A.App) => A.App) => contextRef.current!.setApp(f(appRef.current!)),
-    [],
-  );
+  const updateApp = React.useMemo(() => {
+    console.warn("Creating 'updateApp'. This should only happen once.");
+    return (f: (app: A.App) => A.App) => {
+      updateAppWithoutSaving((app) => {
+        const newApp = f(app);
+
+        // Push changes to server
+        const effects = Storage.Diff.effects(app, newApp);
+        Storage.execute(storage, effects, {
+          setContent(thing, content) {
+            batched.update(thing, () => {
+              storage.setContent(thing, content);
+            });
+          },
+        });
+
+        // Update actual app
+        return newApp;
+      });
+    };
+  }, [storage]);
 
   const search = React.useMemo<Search>(() => {
     const search = new Search([]);
@@ -293,13 +292,13 @@ function App_({
       {!showSplash && (
         <Tutorial.TutorialBox
           state={app.tutorialState}
-          setState={(tutorialState) => context.setApp(A.merge(app, {tutorialState}))}
+          setState={(tutorialState) => updateApp((app) => A.merge(app, {tutorialState}))}
         />
       )}
       <Changelog
         changelog={context.changelog}
         visible={app.changelogShown}
-        hide={() => context.setApp(A.merge(app, {changelogShown: false}))}
+        hide={() => updateApp((app) => A.merge(app, {changelogShown: false}))}
       />
       {app.tab === "orphans" ? (
         <OrphanList {...useOrphanListProps(app, updateApp)} />
