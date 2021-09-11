@@ -5,8 +5,9 @@ import * as A from "../app";
 import * as E from "../editing";
 import * as Editor from "./Editor";
 
-export function useUnfold(app: A.App, updateApp: (f: (app: A.App) => A.App) => void) {
+export function isFolded(app: A.App) {
   let isFolded = false;
+
   for (const child of T.children(app.tree, T.root(app.tree))) {
     if (!T.expanded(app.tree, child)) {
       isFolded = true;
@@ -14,11 +15,7 @@ export function useUnfold(app: A.App, updateApp: (f: (app: A.App) => A.App) => v
     }
   }
 
-  const unfold = React.useCallback(() => {
-    updateApp((app) => A.unfold(app, T.root(app.tree)));
-  }, [updateApp]);
-
-  return {isFolded, unfold};
+  return isFolded;
 }
 
 export const SelectedItem = React.memo(function SelectedItem(props: {

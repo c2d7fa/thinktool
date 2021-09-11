@@ -10,6 +10,7 @@ import Bullet from "./Bullet";
 import * as Editor from "./Editor";
 import * as E from "../editing";
 import {OtherParents} from "./OtherParents";
+import {PlaceholderItem} from "./PlaceholderItem";
 
 export type ItemKind = "child" | "reference" | "opened-link" | "parent";
 export type ItemStatus = "expanded" | "collapsed" | "terminal";
@@ -80,55 +81,113 @@ export function kind(tree: T.Tree, node: T.NodeRef): ItemKind {
   return maybeResult;
 }
 
-// An item in the outline that represents a particular node in the tree. This is
-// a general component that takes the list of other parents, the subtree and
-// even the content editor components as props.
-export function Item(props: {
+export type ItemData = {
   id: number;
   kind: ItemKind;
   dragState: "source" | "target" | null;
-  status: ItemStatus;
-
-  beginDrag(): void;
-  onBulletClick(): void;
-  onBulletAltClick(): void;
-
-  subtree: React.ReactNode;
-
-  otherParents: {id: string; text: string}[];
-  onOtherParentClick(id: string): void;
-  onOtherParentAltClick(id: string): void;
-
-  editor: E.Editor;
   hasFocus: boolean;
-  onEditEvent(event: Editor.Event): void;
-}) {
-  const className = Misc.classes({
-    "item": true,
-    "drop-target": props.dragState === "target",
-    "drag-source": props.dragState === "source",
-    "opened-link": props.kind === "opened-link",
-  });
+  status: ItemStatus;
+  editor: E.Editor;
+  otherParents: {id: string; text: string}[];
+  openedLinks: ItemData[];
+  isPlaceholderShown: boolean;
+  children: ItemData[];
+  references:
+    | {state: "empty"}
+    | {state: "collapsed"; count: number}
+    | {state: "expanded"; count: number; items: ItemData[]};
+};
+
+export type ItemEvent =
+  | {type: "drag"; id: number}
+  | {type: "click-bullet"; id: number; alt: boolean}
+  | {type: "click-parent"; thing: string; alt: boolean}
+  | {type: "click-placeholder"}
+  | {type: "toggle-references"; id: number}
+  | {type: "unfold"; id: number}
+  | {type: "edit"; id: number; event: Editor.Event};
+
+// [TODO] Use imported stylesheets for class names
+
+function References({linkedItem, onItemEvent}: {linkedItem: ItemData; onItemEvent: (event: ItemEvent) => void}) {
+  if (linkedItem.references.state === "empty") return null;
+
+  const text = `${linkedItem.references.count} References${linkedItem.references.state === "collapsed" && "..."}`;
+
+  const items =
+    linkedItem.references.state !== "expanded"
+      ? null
+      : linkedItem.references.items.map((reference) => (
+          <Item key={reference.id} item={reference} onItemEvent={onItemEvent} />
+        ));
 
   return (
-    <li className="subtree-container">
-      {/* data-id is used for drag and drop. */}
-      <div className={className} data-id={props.id}>
-        <OtherParents
-          otherParents={props.otherParents}
-          click={props.onOtherParentClick}
-          altClick={props.onOtherParentAltClick}
-        />
-        <Bullet
-          specialType={props.kind === "child" ? undefined : props.kind}
-          beginDrag={props.beginDrag}
-          status={props.status}
-          toggle={props.onBulletClick}
-          onMiddleClick={props.onBulletAltClick}
-        />
-        <Editor.Editor editor={props.editor} hasFocus={props.hasFocus} onEvent={props.onEditEvent} />
-      </div>
-      {props.status === "expanded" && props.subtree}
-    </li>
+    <>
+      <li className="item">
+        <div>
+          <button
+            onClick={() => onItemEvent({type: "toggle-references", id: linkedItem.id})}
+            className="backreferences-text"
+          >
+            {text}
+          </button>
+        </div>
+      </li>
+      {items}
+    </>
   );
 }
+
+export function Subtree({parent, onItemEvent}: {parent: ItemData; onItemEvent: (event: ItemEvent) => void}) {
+  const children = parent.children.map((child) => <Item key={child.id} item={child} onItemEvent={onItemEvent} />);
+  const openedLinks = parent.openedLinks.map((link) => (
+    <Item key={link.id} item={link} onItemEvent={onItemEvent} />
+  ));
+
+  return (
+    <ul className="subtree">
+      {openedLinks}
+      {children}
+      {parent.isPlaceholderShown && <PlaceholderItem onCreate={() => onItemEvent({type: "click-placeholder"})} />}
+      <References linkedItem={parent} onItemEvent={onItemEvent} />
+    </ul>
+  );
+}
+
+export const Item = React.memo(
+  function Item({item, onItemEvent}: {item: ItemData; onItemEvent: (event: ItemEvent) => void}) {
+    const className = Misc.classes({
+      "item": true,
+      "drop-target": item.dragState === "target",
+      "drag-source": item.dragState === "source",
+      "opened-link": item.kind === "opened-link",
+    });
+
+    return (
+      <li className="subtree-container">
+        {/* data-id is used for drag and drop. */}
+        <div className={className} data-id={item.id}>
+          <OtherParents
+            otherParents={item.otherParents}
+            click={(thing) => onItemEvent({type: "click-parent", thing, alt: false})}
+            altClick={(thing) => onItemEvent({type: "click-parent", thing, alt: true})}
+          />
+          <Bullet
+            specialType={item.kind === "child" ? undefined : item.kind}
+            beginDrag={() => onItemEvent({type: "drag", id: item.id})}
+            status={item.status}
+            toggle={() => onItemEvent({type: "click-bullet", id: item.id, alt: false})}
+            onMiddleClick={() => onItemEvent({type: "click-bullet", id: item.id, alt: true})}
+          />
+          <Editor.Editor
+            editor={item.editor}
+            hasFocus={item.hasFocus}
+            onEvent={(event) => onItemEvent({type: "edit", id: item.id, event})}
+          />
+        </div>
+        {item.status === "expanded" && <Subtree parent={item} onItemEvent={onItemEvent} />}
+      </li>
+    );
+  },
+  (prev, next) => JSON.stringify(prev.item) === JSON.stringify(next.item) && prev.onItemEvent === next.onItemEvent,
+);
