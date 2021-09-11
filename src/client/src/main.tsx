@@ -5,7 +5,7 @@ import {Communication} from "@thinktool/shared";
 import * as ChangelogData from "./changes.json";
 
 import {State} from "./data";
-import {Context, setAppState} from "./context";
+import {Context} from "./context";
 import {extractThingFromURL, useThingUrl} from "./url";
 import {useBatched} from "./batched";
 
@@ -45,7 +45,6 @@ function useContext({
   initialState,
   initialTutorialFinished,
   storage,
-  server,
   openExternalUrl,
   receiver,
 }: {
@@ -100,8 +99,6 @@ function useContext({
 
     updateAppWithoutSaving,
     changelog: ChangelogData,
-    storage,
-    server,
     openExternalUrl,
     send: receiver.send,
   };
@@ -116,7 +113,7 @@ function useContext({
   return context;
 }
 
-function useGlobalShortcuts(sendEvent: Context["send"]) {
+function useGlobalShortcuts(sendEvent: Receiver<Message>["send"]) {
   React.useEffect(() => {
     function onTopLevelKeyDown(ev: KeyboardEvent) {
       if (Sh.matches(ev, Actions.shortcut("undo"))) {
@@ -313,7 +310,7 @@ function App_({
     isToolbarShown,
     setIsToolbarShown,
     username,
-    server: context.server,
+    server,
     search: (query) => search.query(query, 25),
   });
 
@@ -335,13 +332,13 @@ function App_({
       {!showSplash && (
         <Tutorial.TutorialBox
           state={context.tutorialState}
-          setState={(tutorialState) => setAppState(context, A.merge(context, {tutorialState}))}
+          setState={(tutorialState) => context.setApp(A.merge(context, {tutorialState}))}
         />
       )}
       <Changelog
         changelog={context.changelog}
         visible={context.changelogShown}
-        hide={() => setAppState(context, A.merge(context, {changelogShown: false}))}
+        hide={() => context.setApp(A.merge(context, {changelogShown: false}))}
       />
       {context.tab === "orphans" ? (
         <OrphanList {...useOrphanListProps(context, updateApp)} />
@@ -357,7 +354,7 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
   // Speculative optimization. I haven't tested the impact of this.
   const contextRef = usePropRef(context);
   const updateApp = React.useMemo(
-    () => (f: (app: A.App) => A.App) => setAppState(contextRef.current!, f(contextRef.current!)),
+    () => (f: (app: A.App) => A.App) => contextRef.current!.setApp(f(contextRef.current!)),
     [],
   );
   return updateApp;
@@ -365,9 +362,7 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
 
 function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Event) {
   const result = Editor.handling(context, node)(event);
-
-  setAppState(context, result.app);
-
+  context.setApp(result.app);
   if (result.effects?.url) context.openExternalUrl(result.effects.url);
   if (result.effects?.search) context.send("search", {search: result.effects.search});
 }
