@@ -9,7 +9,6 @@ import {Context} from "./context";
 import {extractThingFromURL, useThingUrl} from "./url";
 import {useBatched} from "./batched";
 
-import * as Data from "./data";
 import * as T from "./tree";
 import * as Tutorial from "./tutorial";
 import * as API from "./server-api";
@@ -231,7 +230,12 @@ function App_({
     receiver,
   });
 
-  const updateApp = useUpdateApp(context);
+  // Speculative optimization. I haven't tested the impact of this.
+  const contextRef = usePropRef(context);
+  const updateApp = React.useMemo(
+    () => (f: (app: A.App) => A.App) => contextRef.current!.setApp(f(contextRef.current!)),
+    [],
+  );
 
   const search = React.useMemo<Search>(() => {
     const search = new Search([]);
@@ -314,7 +318,7 @@ function App_({
     search: (query) => search.query(query, 25),
   });
 
-  const onItemEvent = useOnItemEvent(context);
+  const onItemEvent = useOnItemEvent({updateApp, openExternalUrl: context.openExternalUrl, send: context});
 
   return (
     <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
@@ -350,26 +354,15 @@ function App_({
   );
 }
 
-function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
-  // Speculative optimization. I haven't tested the impact of this.
-  const contextRef = usePropRef(context);
-  const updateApp = React.useMemo(
-    () => (f: (app: A.App) => A.App) => contextRef.current!.setApp(f(contextRef.current!)),
-    [],
-  );
-  return updateApp;
-}
-
-function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Event) {
-  const result = Editor.handling(context, node)(event);
-  context.setApp(result.app);
-  if (result.effects?.url) context.openExternalUrl(result.effects.url);
-  if (result.effects?.search) context.send("search", {search: result.effects.search});
-}
-
-function useOnItemEvent(context: Context) {
-  const updateApp = useUpdateApp(context);
-  const contextRef = usePropRef(context);
+function useOnItemEvent({
+  updateApp,
+  openExternalUrl,
+  send,
+}: {
+  updateApp(f: (app: A.App) => A.App): void;
+  openExternalUrl(url: string): void;
+  send: Receiver<Message>["send"];
+}) {
   return React.useCallback((event: Item.ItemEvent) => {
     const node = (event: {id: number}): T.NodeRef => ({id: event.id});
 
@@ -384,7 +377,12 @@ function useOnItemEvent(context: Context) {
     } else if (event.type === "toggle-references") {
       updateApp((app) => A.merge(app, {tree: T.toggleBackreferences(app.state, app.tree, node(event))}));
     } else if (event.type === "edit") {
-      handleEditorEvent(contextRef.current!, node(event), event.event);
+      updateApp((app) => {
+        const result = Editor.handling(app, node(event))(event.event);
+        if (result.effects?.url) openExternalUrl(result.effects.url);
+        if (result.effects?.search) send("search", {search: result.effects.search});
+        return result.app;
+      });
     } else if (event.type === "unfold") {
       updateApp((app) => A.unfold(app, node(event)));
     } else {
