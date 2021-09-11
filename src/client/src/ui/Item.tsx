@@ -177,7 +177,7 @@ export const Item = React.memo(
             beginDrag={() => onItemEvent({type: "drag", id: item.id})}
             status={item.status}
             toggle={() => onItemEvent({type: "click-bullet", id: item.id, alt: false})}
-            onMiddleClick={() => onItemEvent({type: "click-bullet", id: item.id, alt: false})}
+            onMiddleClick={() => onItemEvent({type: "click-bullet", id: item.id, alt: true})}
           />
           <Editor.Editor
             editor={item.editor}
