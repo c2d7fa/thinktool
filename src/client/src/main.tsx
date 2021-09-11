@@ -5,7 +5,6 @@ import {Communication} from "@thinktool/shared";
 import * as ChangelogData from "./changes.json";
 
 import {State} from "./data";
-import {Context} from "./context";
 import {extractThingFromURL, useThingUrl} from "./url";
 import {useBatched} from "./batched";
 
@@ -39,78 +38,6 @@ import {Message} from "./messages";
 import {usePropRef} from "./react-utils";
 import {OrphanList, useOrphanListProps} from "./orphans/ui";
 import {Search} from "@thinktool/search";
-
-function useContext({
-  initialState,
-  initialTutorialFinished,
-  storage,
-  openExternalUrl,
-  receiver,
-}: {
-  initialState: State;
-  initialTutorialFinished: boolean;
-  storage: Storage.Storage;
-  server?: API.Server;
-  openExternalUrl(url: string): void;
-  receiver: Receiver<Message>;
-}): Context {
-  const [app, updateAppWithoutSaving] = React.useState<A.App>(() =>
-    A.from(initialState, T.fromRoot(initialState, extractThingFromURL()), {
-      tutorialFinished: initialTutorialFinished,
-    }),
-  );
-
-  const batched = useBatched(200);
-
-  const context: Context = {
-    ...app,
-
-    setApp(newApp: A.App) {
-      // Push changes to server
-      const effects = Storage.Diff.effects(app, newApp);
-      Storage.execute(storage, effects, {
-        setContent(thing, content) {
-          batched.update(thing, () => {
-            storage.setContent(thing, content);
-          });
-        },
-      });
-
-      // Update actual app
-      updateAppWithoutSaving(newApp);
-    },
-
-    get state() {
-      return app.state;
-    },
-    get tree() {
-      return app.tree;
-    },
-    get tutorialState() {
-      return app.tutorialState;
-    },
-    get changelogShown() {
-      return app.changelogShown;
-    },
-    get editors() {
-      return app.editors;
-    },
-
-    updateAppWithoutSaving,
-    changelog: ChangelogData,
-    openExternalUrl,
-    send: receiver.send,
-  };
-
-  useThingUrl({
-    current: T.thing(context.tree, T.root(context.tree)),
-    jump(thing: string) {
-      updateAppWithoutSaving(A.merge(context, {tree: T.fromRoot(context.state, thing)}));
-    },
-  });
-
-  return context;
-}
 
 function useGlobalShortcuts(sendEvent: Receiver<Message>["send"]) {
   React.useEffect(() => {
@@ -221,13 +148,60 @@ function App_({
   const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
 
   const receiver = React.useMemo(() => createReceiver<Message>(), []);
-  const context = useContext({
-    initialState,
-    initialTutorialFinished: isDevelopment || initialTutorialFinished,
-    storage,
-    server,
+
+  const [app, updateAppWithoutSaving] = React.useState<A.App>(() =>
+    A.from(initialState, T.fromRoot(initialState, extractThingFromURL()), {
+      tutorialFinished: isDevelopment || initialTutorialFinished,
+    }),
+  );
+
+  const batched = useBatched(200);
+
+  const context = {
+    ...app,
+
+    setApp(newApp: A.App) {
+      // Push changes to server
+      const effects = Storage.Diff.effects(app, newApp);
+      Storage.execute(storage, effects, {
+        setContent(thing, content) {
+          batched.update(thing, () => {
+            storage.setContent(thing, content);
+          });
+        },
+      });
+
+      // Update actual app
+      updateAppWithoutSaving(newApp);
+    },
+
+    get state() {
+      return app.state;
+    },
+    get tree() {
+      return app.tree;
+    },
+    get tutorialState() {
+      return app.tutorialState;
+    },
+    get changelogShown() {
+      return app.changelogShown;
+    },
+    get editors() {
+      return app.editors;
+    },
+
+    updateAppWithoutSaving,
+    changelog: ChangelogData,
     openExternalUrl,
-    receiver,
+    send: receiver.send,
+  };
+
+  useThingUrl({
+    current: T.thing(context.tree, T.root(context.tree)),
+    jump(thing: string) {
+      updateAppWithoutSaving(A.merge(context, {tree: T.fromRoot(context.state, thing)}));
+    },
   });
 
   // Speculative optimization. I haven't tested the impact of this.
@@ -318,7 +292,7 @@ function App_({
     search: (query) => search.query(query, 25),
   });
 
-  const onItemEvent = useOnItemEvent({updateApp, openExternalUrl: context.openExternalUrl, send: context});
+  const onItemEvent = useOnItemEvent({updateApp, openExternalUrl: context.openExternalUrl, send: context.send});
 
   return (
     <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
