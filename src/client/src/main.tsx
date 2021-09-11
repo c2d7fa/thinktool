@@ -19,6 +19,7 @@ import * as Sh from "./shortcuts";
 import * as A from "./app";
 import * as Drag from "./drag";
 import * as P from "./popup";
+import * as Sync from "./sync";
 
 import * as Editor from "./ui/Editor";
 import Toolbar from "./ui/Toolbar";
@@ -147,36 +148,14 @@ function useServerChanges(server: API.Server | null, update: (f: (state: Data.St
     if (server === null) return;
 
     return server.onChanges(async (changes) => {
-      for (const changedThing of changes) {
-        const thingData = await server.getThingData(changedThing);
-
-        if (thingData === null) {
-          // Thing was deleted
-          update((state) => Data.remove(state, changedThing));
-          continue;
-        }
-
-        update((state) => {
-          let newState = state;
-
-          if (!Data.exists(newState, changedThing)) {
-            // A new item was created
-            newState = Data.create(newState, changedThing)[0];
-          }
-
-          newState = Data.setContent(newState, changedThing, thingData.content);
-
-          const nChildren = Data.children(newState, changedThing).length;
-          for (let i = 0; i < nChildren; ++i) {
-            newState = Data.removeChild(newState, changedThing, 0);
-          }
-          for (const childConnection of thingData.children) {
-            newState = Data.addChild(newState, changedThing, childConnection.child, childConnection.name)[0];
-          }
-
-          return newState;
-        });
-      }
+      const loadThingDataTasks = changes.map((thing) =>
+        (async () => ({
+          thing,
+          data: await server.getThingData(thing),
+        }))(),
+      );
+      const changedThings = await Promise.all(loadThingDataTasks);
+      update((state) => Sync.receiveChangedThingsFromServer(state, changedThings));
     });
   }, []);
 }
