@@ -5,7 +5,7 @@ import {Communication} from "@thinktool/shared";
 import * as ChangelogData from "./changes.json";
 
 import {State} from "./data";
-import {Context, DragInfo, setAppState} from "./context";
+import {Context, setAppState} from "./context";
 import {extractThingFromURL, useThingUrl} from "./url";
 import {useBatched} from "./batched";
 
@@ -24,11 +24,11 @@ import * as Editor from "./ui/Editor";
 import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
-import {ExternalLinkProvider, ExternalLink, ExternalLinkType} from "./ui/ExternalLink";
+import {ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
 import * as Item from "./ui/Item";
 import UserPage from "./ui/UserPage";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
-import {OtherParents, useOtherParents} from "./ui/OtherParents";
+import {Outline} from "./outline";
 import {TopBar, useTopBarProps} from "./ui/TopBar";
 
 import * as React from "react";
@@ -37,7 +37,6 @@ import * as ReactDOM from "react-dom";
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
 import {usePropRef} from "./react-utils";
-import * as SelectedItem from "./ui/SelectedItem";
 import {OrphanList, useOrphanListProps} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 
@@ -376,92 +375,11 @@ function App_({
       {context.tab === "orphans" ? (
         <OrphanList {...useOrphanListProps(context, updateApp)} />
       ) : (
-        <ThingOverview app={context} onItemEvent={onItemEvent} />
+        <Outline app={context} onItemEvent={onItemEvent} />
       )}
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );
-}
-
-const ThingOverview = React.memo(
-  function ({app, onItemEvent}: {app: A.App; onItemEvent(event: Item.ItemEvent): void}) {
-    const node = T.root(app.tree);
-
-    const hasReferences = Data.backreferences(app.state, T.thing(app.tree, node)).length > 0;
-
-    const root = dataItemizeNode(app, node);
-    const parents = T.otherParentsChildren(app.tree, T.root(app.tree)).map((n) => dataItemizeNode(app, n));
-
-    return (
-      <div className="overview">
-        <ParentsOutline parents={parents} onItemEvent={onItemEvent} />
-        <div className="overview-main">
-          <SelectedItem.SelectedItem
-            onEditEvent={(event) => onItemEvent({type: "edit", id: node.id, event})}
-            isFolded={SelectedItem.isFolded(app)}
-            unfold={() => onItemEvent({type: "unfold", id: node.id})}
-            {...Editor.forNode(app, node)}
-          />
-          <div className="children">
-            <Item.Subtree parent={root} onItemEvent={onItemEvent} />
-          </div>
-        </div>
-        {hasReferences && (
-          <>
-            <div className="references">
-              <h1 className="link-section">References</h1>
-              <ReferencesOutline references={root.references} onItemEvent={onItemEvent} />
-            </div>
-          </>
-        )}
-      </div>
-    );
-  },
-  (prev, next) => {
-    // When the popup is open, we know that the outline view won't change.
-    return P.isOpen(prev.app.popup) && P.isOpen(next.app.popup);
-  },
-);
-
-// TODO: ParentsOutline and ReferencesOutline should both have appropriate
-// custom behavior in response to key-presses (e.g. Alt+Backspace in
-// ParentsOutline should remove parent from child).
-
-function ParentsOutline(props: {parents: Item.ItemData[]; onItemEvent: (event: Item.ItemEvent) => void}) {
-  if (props.parents.length === 0) return null;
-
-  const parentItems = props.parents.map((item) => (
-    <Item.Item key={item.id} item={item} onItemEvent={props.onItemEvent} />
-  ));
-
-  return (
-    <div className="parents">
-      <h1 className="link-section">Parents</h1>
-      <ul className="subtree">{parentItems}</ul>
-    </div>
-  );
-}
-
-function ReferencesOutline(props: {
-  references: Item.ItemData["references"];
-  onItemEvent: (event: Item.ItemEvent) => void;
-}) {
-  if (props.references.state === "empty" || props.references.state === "collapsed") return null;
-
-  const referenceItems = props.references.items.map((item) => {
-    return <Item.Item key={item.id} item={item} onItemEvent={props.onItemEvent} />;
-  });
-
-  return <ul className="subtree">{referenceItems}</ul>;
-}
-
-function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Event) {
-  const result = Editor.handling(context, node)(event);
-
-  setAppState(context, result.app);
-
-  if (result.effects?.url) context.openExternalUrl(result.effects.url);
-  if (result.effects?.search) context.send("search", {search: result.effects.search});
 }
 
 function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
@@ -474,39 +392,13 @@ function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
   return updateApp;
 }
 
-function dataItemizeNode(app: A.App, node: T.NodeRef, parent?: T.NodeRef): Item.ItemData {
-  const otherParents = Data.otherParents(
-    app.state,
-    T.thing(app.tree, node),
-    parent && T.thing(app.tree, parent),
-  ).map((id) => ({id, text: Data.contentText(app.state, id)}));
+function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Event) {
+  const result = Editor.handling(context, node)(event);
 
-  const backreferences = Data.backreferences(app.state, T.thing(app.tree, node));
+  setAppState(context, result.app);
 
-  const editor = Editor.forNode(app, node);
-
-  return {
-    id: node.id,
-    kind: Item.kind(app.tree, node),
-    dragState: Drag.node(app.drag, node),
-    hasFocus: editor.hasFocus,
-    status: Item.status(app.tree, node),
-    editor: editor.editor,
-    otherParents: otherParents,
-    openedLinks: T.openedLinksChildren(app.tree, node).map((n) => dataItemizeNode(app, n, node)),
-    isPlaceholderShown: PlaceholderItem.isVisible(app) && T.root(app.tree).id === node.id,
-    children: T.children(app.tree, node).map((n) => dataItemizeNode(app, n, node)),
-    references:
-      backreferences.length === 0
-        ? {state: "empty"}
-        : !T.backreferencesExpanded(app.tree, node)
-        ? {state: "collapsed", count: backreferences.length}
-        : {
-            state: "expanded",
-            count: backreferences.length,
-            items: T.backreferencesChildren(app.tree, node).map((n) => dataItemizeNode(app, n)),
-          },
-  };
+  if (result.effects?.url) context.openExternalUrl(result.effects.url);
+  if (result.effects?.search) context.send("search", {search: result.effects.search});
 }
 
 function useOnItemEvent(context: Context) {
