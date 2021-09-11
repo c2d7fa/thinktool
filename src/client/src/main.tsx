@@ -5,11 +5,9 @@ import {Communication} from "@thinktool/shared";
 import * as ChangelogData from "./changes.json";
 
 import {State} from "./data";
-import {Context, setAppState} from "./context";
 import {extractThingFromURL, useThingUrl} from "./url";
 import {useBatched} from "./batched";
 
-import * as Data from "./data";
 import * as T from "./tree";
 import * as Tutorial from "./tutorial";
 import * as API from "./server-api";
@@ -41,82 +39,7 @@ import {usePropRef} from "./react-utils";
 import {OrphanList, useOrphanListProps} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 
-function useContext({
-  initialState,
-  initialTutorialFinished,
-  storage,
-  server,
-  openExternalUrl,
-  receiver,
-}: {
-  initialState: State;
-  initialTutorialFinished: boolean;
-  storage: Storage.Storage;
-  server?: API.Server;
-  openExternalUrl(url: string): void;
-  receiver: Receiver<Message>;
-}): Context {
-  const [app, updateAppWithoutSaving] = React.useState<A.App>(() =>
-    A.from(initialState, T.fromRoot(initialState, extractThingFromURL()), {
-      tutorialFinished: initialTutorialFinished,
-    }),
-  );
-
-  const batched = useBatched(200);
-
-  const context: Context = {
-    ...app,
-
-    setApp(newApp: A.App) {
-      // Push changes to server
-      const effects = Storage.Diff.effects(app, newApp);
-      Storage.execute(storage, effects, {
-        setContent(thing, content) {
-          batched.update(thing, () => {
-            storage.setContent(thing, content);
-          });
-        },
-      });
-
-      // Update actual app
-      updateAppWithoutSaving(newApp);
-    },
-
-    get state() {
-      return app.state;
-    },
-    get tree() {
-      return app.tree;
-    },
-    get tutorialState() {
-      return app.tutorialState;
-    },
-    get changelogShown() {
-      return app.changelogShown;
-    },
-    get editors() {
-      return app.editors;
-    },
-
-    updateAppWithoutSaving,
-    changelog: ChangelogData,
-    storage,
-    server,
-    openExternalUrl,
-    send: receiver.send,
-  };
-
-  useThingUrl({
-    current: T.thing(context.tree, T.root(context.tree)),
-    jump(thing: string) {
-      updateAppWithoutSaving(A.merge(context, {tree: T.fromRoot(context.state, thing)}));
-    },
-  });
-
-  return context;
-}
-
-function useGlobalShortcuts(sendEvent: Context["send"]) {
+function useGlobalShortcuts(sendEvent: Receiver<Message>["send"]) {
   React.useEffect(() => {
     function onTopLevelKeyDown(ev: KeyboardEvent) {
       if (Sh.matches(ev, Actions.shortcut("undo"))) {
@@ -225,16 +148,45 @@ function App_({
   const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
 
   const receiver = React.useMemo(() => createReceiver<Message>(), []);
-  const context = useContext({
-    initialState,
-    initialTutorialFinished: isDevelopment || initialTutorialFinished,
-    storage,
-    server,
-    openExternalUrl,
-    receiver,
+
+  const [app, updateAppWithoutSaving] = React.useState<A.App>(() =>
+    A.from(initialState, T.fromRoot(initialState, extractThingFromURL()), {
+      tutorialFinished: isDevelopment || initialTutorialFinished,
+    }),
+  );
+
+  const batched = useBatched(200);
+
+  const changelog = ChangelogData;
+
+  useThingUrl({
+    current: T.thing(app.tree, T.root(app.tree)),
+    jump(thing: string) {
+      updateAppWithoutSaving(A.merge(app, {tree: T.fromRoot(app.state, thing)}));
+    },
   });
 
-  const updateApp = useUpdateApp(context);
+  const updateApp = React.useMemo(() => {
+    console.warn("Creating 'updateApp'. This should only happen once.");
+    return (f: (app: A.App) => A.App) => {
+      updateAppWithoutSaving((app) => {
+        const newApp = f(app);
+
+        // Push changes to server
+        const effects = Storage.Diff.effects(app, newApp);
+        Storage.execute(storage, effects, {
+          setContent(thing, content) {
+            batched.update(thing, () => {
+              storage.setContent(thing, content);
+            });
+          },
+        });
+
+        // Update actual app
+        return newApp;
+      });
+    };
+  }, [storage]);
 
   const search = React.useMemo<Search>(() => {
     const search = new Search([]);
@@ -257,7 +209,7 @@ function App_({
       updateApp((app) => {
         const result = Actions.update(app, ev.action);
         if (result.undo) console.warn("Undo isn't currently supported.");
-        if (result.url) context.openExternalUrl(result.url);
+        if (result.url) openExternalUrl(result.url);
         if (result.search) receiver.send("search", {search: result.search});
         return result.app;
       });
@@ -269,10 +221,10 @@ function App_({
     });
   }, []);
 
-  useServerChanges(server ?? null, context.updateAppWithoutSaving);
+  useServerChanges(server ?? null, updateAppWithoutSaving);
   useGlobalShortcuts(receiver.send);
 
-  useDragAndDrop(context, updateApp);
+  useDragAndDrop(app, updateApp);
 
   const [isToolbarShown, setIsToolbarShown_] = React.useState<boolean>(true);
   function setIsToolbarShown(isToolbarShown: boolean) {
@@ -290,15 +242,15 @@ function App_({
       });
   }, []);
 
-  const appRef = React.useRef<HTMLDivElement>(null);
+  const appElementRef = React.useRef<HTMLDivElement>(null);
 
   const [showSplash, setShowSplash] = React.useState<boolean>(
-    !isDevelopment && Tutorial.isActive(context.tutorialState),
+    !isDevelopment && Tutorial.isActive(app.tutorialState),
   );
 
   const onFocusApp = React.useCallback(
     (ev: React.FocusEvent) => {
-      if (ev.target === appRef.current) {
+      if (ev.target === appElementRef.current) {
         console.log("Unfocusing item due to click on background");
         updateApp((app) => A.merge(app, {tree: T.unfocus(app.tree)}));
       }
@@ -307,74 +259,61 @@ function App_({
   );
 
   const topBarProps = useTopBarProps({
-    app: context,
+    app,
     updateApp,
-    send: context.send,
+    send: receiver.send,
     isToolbarShown,
     setIsToolbarShown,
     username,
-    server: context.server,
+    server,
     search: (query) => search.query(query, 25),
   });
 
-  const onItemEvent = useOnItemEvent(context);
+  const onItemEvent = useOnItemEvent({updateApp, openExternalUrl: openExternalUrl, send: receiver.send});
 
   return (
-    <div ref={appRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
+    <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
       <div className="app-header">
         <TopBar {...topBarProps} />
         {isToolbarShown ? (
           <Toolbar
             executeAction={(action) => receiver.send("action", {action})}
-            isEnabled={(action) => Actions.enabled(context, action)}
-            isRelevant={(action) => Tutorial.isRelevant(context.tutorialState, action)}
-            isNotIntroduced={(action) => Tutorial.isNotIntroduced(context.tutorialState, action)}
+            isEnabled={(action) => Actions.enabled(app, action)}
+            isRelevant={(action) => Tutorial.isRelevant(app.tutorialState, action)}
+            isNotIntroduced={(action) => Tutorial.isNotIntroduced(app.tutorialState, action)}
           />
         ) : null}
       </div>
       {!showSplash && (
         <Tutorial.TutorialBox
-          state={context.tutorialState}
-          setState={(tutorialState) => setAppState(context, A.merge(context, {tutorialState}))}
+          state={app.tutorialState}
+          setState={(tutorialState) => updateApp((app) => A.merge(app, {tutorialState}))}
         />
       )}
       <Changelog
-        changelog={context.changelog}
-        visible={context.changelogShown}
-        hide={() => setAppState(context, A.merge(context, {changelogShown: false}))}
+        changelog={changelog}
+        visible={app.changelogShown}
+        hide={() => updateApp((app) => A.merge(app, {changelogShown: false}))}
       />
-      {context.tab === "orphans" ? (
-        <OrphanList {...useOrphanListProps(context, updateApp)} />
+      {app.tab === "orphans" ? (
+        <OrphanList {...useOrphanListProps(app, updateApp)} />
       ) : (
-        <Outline app={context} onItemEvent={onItemEvent} />
+        <Outline app={app} onItemEvent={onItemEvent} />
       )}
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );
 }
 
-function useUpdateApp(context: Context): (f: (app: A.App) => A.App) => void {
-  // Speculative optimization. I haven't tested the impact of this.
-  const contextRef = usePropRef(context);
-  const updateApp = React.useMemo(
-    () => (f: (app: A.App) => A.App) => setAppState(contextRef.current!, f(contextRef.current!)),
-    [],
-  );
-  return updateApp;
-}
-
-function handleEditorEvent(context: Context, node: T.NodeRef, event: Editor.Event) {
-  const result = Editor.handling(context, node)(event);
-
-  setAppState(context, result.app);
-
-  if (result.effects?.url) context.openExternalUrl(result.effects.url);
-  if (result.effects?.search) context.send("search", {search: result.effects.search});
-}
-
-function useOnItemEvent(context: Context) {
-  const updateApp = useUpdateApp(context);
-  const contextRef = usePropRef(context);
+function useOnItemEvent({
+  updateApp,
+  openExternalUrl,
+  send,
+}: {
+  updateApp(f: (app: A.App) => A.App): void;
+  openExternalUrl(url: string): void;
+  send: Receiver<Message>["send"];
+}) {
   return React.useCallback((event: Item.ItemEvent) => {
     const node = (event: {id: number}): T.NodeRef => ({id: event.id});
 
@@ -389,7 +328,12 @@ function useOnItemEvent(context: Context) {
     } else if (event.type === "toggle-references") {
       updateApp((app) => A.merge(app, {tree: T.toggleBackreferences(app.state, app.tree, node(event))}));
     } else if (event.type === "edit") {
-      handleEditorEvent(contextRef.current!, node(event), event.event);
+      updateApp((app) => {
+        const result = Editor.handling(app, node(event))(event.event);
+        if (result.effects?.url) openExternalUrl(result.effects.url);
+        if (result.effects?.search) send("search", {search: result.effects.search});
+        return result.app;
+      });
     } else if (event.type === "unfold") {
       updateApp((app) => A.unfold(app, node(event)));
     } else {
