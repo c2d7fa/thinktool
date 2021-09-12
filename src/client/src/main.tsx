@@ -277,7 +277,7 @@ function App_({
         <TopBar {...topBarProps} />
         {isToolbarShown ? (
           <Toolbar
-            executeAction={(action) => receiver.send("action", {action})}
+            onToolbarButtonPressed={React.useCallback((action) => receiver.send("action", {action}), [receiver])}
             isEnabled={(action) => Actions.enabled(app, action)}
             isRelevant={(action) => Tutorial.isRelevant(app.tutorialState, action)}
             isNotIntroduced={(action) => Tutorial.isNotIntroduced(app.tutorialState, action)}
