@@ -12,7 +12,12 @@ import * as E from "./editing";
 import * as Editor from "./ui/Editor";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
 
-type Outline = {root: Item.ItemData; rootParents: Item.ItemData[]; isRootFolded: boolean};
+type Outline = {
+  root: Item.ItemData;
+  parents: Item.ItemData[];
+  references: Item.ItemData["references"];
+  isFolded: boolean;
+};
 
 export function fromApp(app: A.App): Outline {
   function dataItemizeNode(app: A.App, node: T.NodeRef, parent?: T.NodeRef): Item.ItemData {
@@ -50,10 +55,13 @@ export function fromApp(app: A.App): Outline {
     };
   }
 
+  const rootDataItem = dataItemizeNode(app, T.root(app.tree));
+
   return {
-    root: dataItemizeNode(app, T.root(app.tree)),
-    rootParents: T.otherParentsChildren(app.tree, T.root(app.tree)).map((n) => dataItemizeNode(app, n)),
-    isRootFolded: isFolded(app),
+    root: {...rootDataItem, references: {state: "empty"}},
+    parents: T.otherParentsChildren(app.tree, T.root(app.tree)).map((n) => dataItemizeNode(app, n)),
+    isFolded: isFolded(app),
+    references: rootDataItem.references,
   };
 }
 
@@ -66,11 +74,11 @@ export const Outline = React.memo(function ({
 }) {
   return (
     <div className={style.outer}>
-      <ParentsOutline parents={outline.rootParents} onItemEvent={onItemEvent} />
+      <ParentsOutline parents={outline.parents} onItemEvent={onItemEvent} />
       <div className={style.inner}>
         <SelectedItem
           onEditEvent={(event) => onItemEvent({type: "edit", id: outline.root.id, event})}
-          isFolded={outline.isRootFolded}
+          isFolded={outline.isFolded}
           unfold={() => onItemEvent({type: "unfold", id: outline.root.id})}
           editor={outline.root.editor}
           hasFocus={outline.root.hasFocus}
@@ -79,11 +87,11 @@ export const Outline = React.memo(function ({
           <Item.Subtree parent={outline.root} onItemEvent={onItemEvent} />
         </div>
       </div>
-      {outline.root.references.state !== "empty" && (
+      {outline.references.state !== "empty" && (
         <>
           <div className={style.references}>
             <h1 className={style.referencesheader}>References</h1>
-            <ReferencesOutline references={outline.root.references} onItemEvent={onItemEvent} />
+            <ReferencesOutline references={outline.references} onItemEvent={onItemEvent} />
           </div>
         </>
       )}

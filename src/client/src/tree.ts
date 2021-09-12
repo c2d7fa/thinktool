@@ -25,8 +25,8 @@ export function fromRoot(state: D.State, thing: string): Tree {
 
   let result = I.fromRoot(thing);
   result = expand(state, result, {id: 0});
-  result = toggleOtherParents(state, result, {id: 0});
-  result = toggleBackreferences(state, result, {id: 0});
+  if (!otherParentsExpanded(result, {id: 0})) result = toggleOtherParents(state, result, {id: 0});
+  if (!backreferencesExpanded(result, {id: 0})) result = toggleBackreferences(state, result, {id: 0});
   return result;
 }
 
