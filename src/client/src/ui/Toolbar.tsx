@@ -86,7 +86,11 @@ const ToolbarGroup = React.memo(
         <h6>{props.group.title}</h6>
         <div>
           {props.group.actions.map((button) => (
-            <ToolbarButton onToolbarButtonPressed={props.onToolbarButtonPressed} button={button} />
+            <ToolbarButton
+              key={button.action}
+              onToolbarButtonPressed={props.onToolbarButtonPressed}
+              button={button}
+            />
           ))}
         </div>
       </div>
@@ -199,7 +203,7 @@ export const Toolbar = React.memo(
     return (
       <div className="toolbar">
         {props.toolbar.groups.map((group) => (
-          <ToolbarGroup onToolbarButtonPressed={props.onToolbarButtonPressed} group={group} />
+          <ToolbarGroup key={group.title} onToolbarButtonPressed={props.onToolbarButtonPressed} group={group} />
         ))}
       </div>
     );
