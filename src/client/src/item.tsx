@@ -1,16 +1,16 @@
 import * as React from "react";
 import * as Misc from "@johv/miscjs";
 
-import * as T from "../tree";
-import * as U from "../tutorial";
-import {App, merge, jump} from "../app";
+import * as T from "./tree";
+import * as U from "./tutorial";
+import {App, merge, jump} from "./app";
 
-import Bullet from "./Bullet";
+import Bullet from "./ui/Bullet";
 
-import * as Editor from "./Editor";
-import * as E from "../editing";
-import {OtherParents} from "./OtherParents";
-import {PlaceholderItem} from "./PlaceholderItem";
+import * as Editor from "./ui/Editor";
+import * as E from "./editing";
+import {OtherParents} from "./ui/OtherParents";
+import {PlaceholderItem} from "./ui/PlaceholderItem";
 
 export type ItemKind = "child" | "reference" | "opened-link" | "parent";
 export type ItemStatus = "expanded" | "collapsed" | "terminal";

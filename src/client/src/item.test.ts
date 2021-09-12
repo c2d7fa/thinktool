@@ -1,12 +1,12 @@
 /// <reference types="@types/jest" />
 
-import * as Item from "../src/ui/Item";
+import * as Item from "./item";
 
-import * as App from "../src/app";
-import * as W from "../src/wrapap";
+import * as App from "./app";
+import * as W from "./wrapap";
 
-import * as D from "../src/data";
-import * as T from "../src/tree";
+import * as D from "./data";
+import * as T from "./tree";
 
 /// <reference types="@types/jest" />
 

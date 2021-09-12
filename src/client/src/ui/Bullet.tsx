@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import type {ItemStatus} from "./Item";
+import type {ItemStatus} from "../item";
 
 function useStickyDrag(beginDrag: (ev?: React.MouseEvent<never>) => void) {
   const [down, setDown] = React.useState<boolean>(false);

@@ -4,9 +4,9 @@ import * as Data from "./data";
 import * as T from "./tree";
 import * as A from "./app";
 import * as Drag from "./drag";
+import * as Item from "./item";
 
 import * as Editor from "./ui/Editor";
-import * as Item from "./ui/Item";
 import * as SelectedItem from "./ui/SelectedItem";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
 

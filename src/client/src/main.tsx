@@ -24,7 +24,7 @@ import Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
-import * as Item from "./ui/Item";
+import * as Item from "./item";
 import UserPage from "./ui/UserPage";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
 import * as Outline from "./outline";
