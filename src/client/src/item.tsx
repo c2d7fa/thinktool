@@ -12,7 +12,7 @@ import * as E from "./editing";
 import {OtherParents} from "./ui/OtherParents";
 import {PlaceholderItem} from "./ui/PlaceholderItem";
 
-export type ItemKind = "child" | "reference" | "opened-link" | "parent";
+export type ItemKind = "child" | "reference" | "opened-link" | "parent" | "root";
 export type ItemStatus = "expanded" | "collapsed" | "terminal";
 
 export function click(app: App, node: T.NodeRef): App {
@@ -72,13 +72,12 @@ export function status(tree: T.Tree, node: T.NodeRef): ItemStatus {
 }
 
 export function kind(tree: T.Tree, node: T.NodeRef): ItemKind {
-  const maybeResult = T.kind(tree, node);
-  if (maybeResult === undefined) {
-    // [TODO] Why can this be undefined!?
-    console.warn("We couldn't get the kind of an item. That may be a problem.");
+  const kind_ = T.kind(tree, node);
+  if (!kind_) {
+    console.error("Was asked to find kind of non-existent node. This should never happen!");
     return "child";
   }
-  return maybeResult;
+  return kind_;
 }
 
 export type ItemData = {
@@ -175,7 +174,7 @@ export const Item = React.memo(
             altClick={(thing) => onItemEvent({type: "click-parent", thing, alt: true})}
           />
           <Bullet
-            specialType={item.kind === "child" ? undefined : item.kind}
+            specialType={item.kind === "child" || item.kind === "root" ? undefined : item.kind}
             beginDrag={() => onItemEvent({type: "drag", id: item.id})}
             status={item.status}
             toggle={() => onItemEvent({type: "click-bullet", id: item.id, alt: false})}
