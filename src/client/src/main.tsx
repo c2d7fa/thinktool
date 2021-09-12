@@ -274,15 +274,14 @@ function App_({
 
   const onItemEvent = useOnItemEvent({updateApp, openExternalUrl: openExternalUrl, send: receiver.send});
 
+  const onToolbarButtonPressed = React.useCallback((action) => receiver.send("action", {action}), [receiver]);
+
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
       <div className="app-header">
         <TopBar {...topBarProps} />
         {isToolbarShown ? (
-          <Toolbar.Toolbar
-            onToolbarButtonPressed={React.useCallback((action) => receiver.send("action", {action}), [receiver])}
-            toolbar={Toolbar.toolbar(app)}
-          />
+          <Toolbar.Toolbar onToolbarButtonPressed={onToolbarButtonPressed} toolbar={Toolbar.toolbar(app)} />
         ) : null}
       </div>
       {!showSplash && (
