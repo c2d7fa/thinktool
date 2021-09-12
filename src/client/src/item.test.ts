@@ -1,14 +1,12 @@
 /// <reference types="@types/jest" />
 
-import * as Item from "../src/ui/Item";
+import * as Item from "./item";
 
-import * as App from "../src/app";
-import * as W from "../src/wrapap";
+import * as App from "./app";
+import * as W from "./wrapap";
 
-import * as D from "../src/data";
-import * as T from "../src/tree";
-
-/// <reference types="@types/jest" />
+import * as D from "./data";
+import * as T from "./tree";
 
 describe("item status", () => {
   test("a node with no connections except from its parent is terminal", () => {
@@ -64,7 +62,7 @@ describe("item kind", () => {
       }),
     );
 
-    const node = w.root.child(0);
+    const node = w.root.child(0)!;
 
     expect(node.thing).toBe("1");
     expect(Item.kind(w.tree, node.ref)).toBe("child");
@@ -78,7 +76,7 @@ describe("item kind", () => {
       }),
     );
 
-    const node = w.root.parent(0);
+    const node = w.root.parent(0)!;
 
     expect(node.thing).toBe("1");
     expect(Item.kind(w.tree, node.ref)).toBe("parent");
@@ -92,7 +90,7 @@ describe("item kind", () => {
       }),
     );
 
-    const node = w.root.reference(0);
+    const node = w.root.reference(0)!;
 
     expect(node.thing).toBe("1");
     expect(Item.kind(w.tree, node.ref)).toBe("reference");
@@ -174,10 +172,10 @@ describe("clicking on an item's bullet", () => {
       data = D.addChild(data, "0", "1")[0];
 
       const w = W.from(App.from(data, T.fromRoot(data, "0")));
-      expect(w.root.child(0).expanded).toBe(true);
+      expect(w.root.child(0)!.expanded).toBe(true);
 
-      const x = w.map((app) => Item.click(app, w.root.child(0).ref));
-      expect(x.root.child(0).expanded).toBe(true);
+      const x = w.map((app) => Item.click(app, w.root.child(0)!.ref));
+      expect(x.root.child(0)!.expanded).toBe(true);
     });
 
     describe("if it has children, a normal click", () => {
@@ -187,11 +185,11 @@ describe("clicking on an item's bullet", () => {
       data = D.addChild(data, "1", "2")[0];
 
       const w = W.from(App.from(data, T.fromRoot(data, "0")));
-      const x = w.map((app) => Item.click(app, w.root.child(0).ref));
+      const x = w.map((app) => Item.click(app, w.root.child(0)!.ref));
 
       it("expands the item", () => {
-        expect(w.root.child(0).expanded).toBe(false);
-        expect(x.root.child(0).expanded).toBe(true);
+        expect(w.root.child(0)!.expanded).toBe(false);
+        expect(x.root.child(0)!.expanded).toBe(true);
       });
 
       it("completes the 'expand-item' goal", () => {
@@ -208,7 +206,7 @@ describe("clicking on an item's bullet", () => {
       const w = W.from(App.from(data, T.fromRoot(data, "0")));
       expect(w.root.thing).toBe("0");
 
-      const x = w.map((app) => Item.altClick(app, w.root.child(0).ref));
+      const x = w.map((app) => Item.altClick(app, w.root.child(0)!.ref));
       expect(x.root.thing).toBe("1");
 
       test("jumps to it", () => {
@@ -234,14 +232,14 @@ describe("clicking on an item's bullet", () => {
       data = D.setContent(data, "2", ["This is a link to ", {link: "1"}, "."]);
 
       let w = W.from(App.from(data, T.fromRoot(data, "0")));
-      w = w.root.child(0).expand();
+      w = w.root.child(0)!.expand();
 
-      const r1 = w.root.child(0).reference(0);
+      const r1 = w.root.child(0)!.reference(0)!;
       expect(r1.thing).toBe("2");
       expect(r1.expanded).toBe(false);
 
       w = w.map((app) => Item.click(app, r1.ref));
-      const r2 = w.root.child(0).reference(0);
+      const r2 = w.root.child(0)!.reference(0)!;
       expect(r2.thing).toBe("2");
       expect(r2.expanded).toBe(true);
     });
@@ -256,9 +254,9 @@ describe("clicking on an item's bullet", () => {
       data = D.setContent(data, "2", ["This is a link to ", {link: "1"}, "."]);
 
       let w = W.from(App.from(data, T.fromRoot(data, "0")));
-      w = w.root.child(0).expand();
+      w = w.root.child(0)!.expand();
 
-      const r1 = w.root.child(0).reference(0);
+      const r1 = w.root.child(0)!.reference(0)!;
       expect(r1.thing).toBe("2");
 
       expect(w.root.thing).toBe("0");
@@ -278,9 +276,9 @@ describe("clicking on an item's bullet", () => {
 
       const w1 = W.from(App.from(data, T.fromRoot(data, "0")));
 
-      expect(w1.root.parent(0).thing).toBe("1");
+      expect(w1.root.parent(0)!.thing).toBe("1");
 
-      const w2 = w1.map((app) => Item.click(app, w1.root.parent(0).ref));
+      const w2 = w1.map((app) => Item.click(app, w1.root.parent(0)!.ref));
 
       test("jumps to the item", () => {
         expect(w1.root.thing).toBe("0");
@@ -302,12 +300,12 @@ describe("clicking on an item's bullet", () => {
 
       let w = W.from(App.from(data, T.fromRoot(data, "0")));
 
-      expect(w.root.parent(0).thing).toBe("1");
-      expect(w.root.parent(0).expanded).toBe(false);
+      expect(w.root.parent(0)!.thing).toBe("1");
+      expect(w.root.parent(0)!.expanded).toBe(false);
 
-      w = w.map((app) => Item.altClick(app, w.root.parent(0).ref));
+      w = w.map((app) => Item.altClick(app, w.root.parent(0)!.ref));
 
-      expect(w.root.parent(0).expanded).toBe(true);
+      expect(w.root.parent(0)!.expanded).toBe(true);
     });
   });
 });

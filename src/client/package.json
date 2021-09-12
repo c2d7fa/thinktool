@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/client",
-  "version": "4.1.3",
+  "version": "4.1.4",
   "description": "Client code for Thinktool, shared between web and desktop client.",
   "license": "UNLICENSED",
   "repository": {
@@ -25,6 +25,7 @@
     "@types/react-dom": "^17.0.0",
     "babel-loader": "^8.2.2",
     "css-loader": "^5.2.4",
+    "identity-obj-proxy": "^3.0.0",
     "jest": "^27.0.4",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
@@ -55,6 +56,11 @@
     "watch": "webpack --watch --mode=development",
     "test": "jest --roots tests --roots src",
     "test-watch": "jest --watchAll --roots tests --roots src"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "\\.(css|scss)$": "identity-obj-proxy"
+    }
   },
   "files": [
     "dist/"

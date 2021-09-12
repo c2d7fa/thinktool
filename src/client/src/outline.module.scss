@@ -1,0 +1,65 @@
+@use "../general";
+@use "../style/base";
+@use "../style/components";
+
+.outer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2em;
+}
+
+.inner {
+  margin: 1rem 0;
+  max-width: general.$outline-width;
+  width: 100%;
+
+  .root {
+    display: flex;
+    flex-direction: row;
+    position: relative;
+
+    font-size: 1em;
+    font-weight: bold;
+
+    .unfold {
+      font-size: 1.2em;
+
+      align-self: center;
+
+      position: absolute;
+      left: -2em;
+      color: hsl(0, 0%, 80%);
+      @include base.subtle-button(hsl(0, 0%, 80%));
+
+      &:disabled {
+        opacity: 0%;
+      }
+    }
+  }
+}
+
+.parents {
+  max-width: general.$outline-width;
+  width: 100%;
+}
+
+.referencesheader {
+  @include components.ui-heading;
+
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+
+  color: #808080;
+}
+
+.children {
+  margin-top: 2rem;
+}
+
+.references {
+  max-width: general.$outline-width;
+  width: 100%;
+
+  color: #404040;
+}

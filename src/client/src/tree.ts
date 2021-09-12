@@ -25,8 +25,8 @@ export function fromRoot(state: D.State, thing: string): Tree {
 
   let result = I.fromRoot(thing);
   result = expand(state, result, {id: 0});
-  result = toggleOtherParents(state, result, {id: 0});
-  result = toggleBackreferences(state, result, {id: 0});
+  if (!otherParentsExpanded(result, {id: 0})) result = toggleOtherParents(state, result, {id: 0});
+  if (!backreferencesExpanded(result, {id: 0})) result = toggleBackreferences(state, result, {id: 0});
   return result;
 }
 
@@ -51,10 +51,6 @@ function refEq(x: NodeRef, y: NodeRef): boolean {
 // 1. If the node simply does not exist, it returns undefined and prints a
 //    warning. Don't call this function unless you know that the node exists.
 //
-// 2. If it's the root node, it also returns undefined, even though I.source()
-//    correctly tells us that it's the root node. We should probably update the
-//    interface of this function to include this possibility.
-//
 // 3. If the source that is directly associated with the node does not agree
 //    with its logical parent then it's parent and type is undefined. Instead of
 //    checking this explicitly, we should probably just clean up old nodes, and
@@ -62,7 +58,7 @@ function refEq(x: NodeRef, y: NodeRef): boolean {
 function parentAndType(
   tree: Tree,
   child: NodeRef,
-): [NodeRef, "child" | "opened-link" | "reference" | "parent"] | undefined {
+): [NodeRef, "child" | "opened-link" | "reference" | "parent"] | [null, "root"] | undefined {
   const source = I.source(tree, child);
 
   if (source === undefined) {
@@ -101,13 +97,16 @@ function parentAndType(
     return [source.parent, "parent"];
   }
 
-  if (source.type === "root") return undefined;
+  if (source.type === "root") {
+    return [null, "root"];
+  }
 
   console.error("Unexpected case while getting parent and type!");
   return undefined;
 }
 
-export function parent(tree: Tree, child: NodeRef): NodeRef | undefined {
+// Returns 'null' for the root node, and 'undefined' for nodes that don't exist.
+export function parent(tree: Tree, child: NodeRef): NodeRef | null | undefined {
   const parentAndType_ = parentAndType(tree, child);
   if (parentAndType_ === undefined) return undefined;
   return parentAndType_[0];
@@ -115,7 +114,7 @@ export function parent(tree: Tree, child: NodeRef): NodeRef | undefined {
 
 function indexInParent(tree: Tree, node: NodeRef): number | undefined {
   const parent_ = parent(tree, node);
-  if (parent_ === undefined) return undefined;
+  if (!parent_) return undefined;
   return childIndex(tree, parent_, node);
 }
 
@@ -133,7 +132,7 @@ function nextSibling(tree: Tree, node: NodeRef): NodeRef | null {
 
 function previousVisibleItem(tree: Tree, node: NodeRef): NodeRef {
   const parent_ = parent(tree, node);
-  if (parent_ === undefined) return node;
+  if (!parent_) return node;
 
   if (indexInParent(tree, node) === 0) return parent_;
 
@@ -355,10 +354,10 @@ export function indent(state: D.State, tree: Tree, node: NodeRef): [D.State, Tre
 
 export function unindent(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {
   const parent_ = parent(tree, node);
-  if (parent_ === undefined) return [state, tree];
+  if (!parent_) return [state, tree];
 
   const grandparent = parent(tree, parent_);
-  if (grandparent === undefined) return [state, tree];
+  if (!grandparent) return [state, tree];
 
   return move(state, tree, node, {parent: grandparent, index: childIndex(tree, grandparent, parent_) + 1});
 }
@@ -387,8 +386,7 @@ function similar(tree: Tree, node: NodeRef) {
 // expanded in the tree yet.
 export function move(state: D.State, tree: Tree, node: NodeRef, destination: Destination): [D.State, Tree] {
   const parent_ = parent(tree, node);
-
-  if (parent_ === undefined) return [state, tree]; // Can't move root
+  if (!parent_) return [state, tree]; // Can't move root
 
   let newState = state;
   let newTree = tree;
@@ -438,20 +436,19 @@ export function moveToAbove(
   destinationNode: NodeRef,
 ): [D.State, Tree] {
   const parent_ = parent(tree, destinationNode);
-  if (parent_ === undefined) return [state, tree];
+  if (!parent_) return [state, tree];
   return move(state, tree, sourceNode, {parent: parent_, index: childIndex(tree, parent_, destinationNode)});
 }
 
 export function moveUp(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {
   const parent_ = parent(tree, node);
-  if (parent_ === undefined || childIndex(tree, parent_, node) === 0) return [state, tree];
+  if (!parent_ || childIndex(tree, parent_, node) === 0) return [state, tree];
   return move(state, tree, node, {parent: parent_, index: childIndex(tree, parent_, node) - 1});
 }
 
 export function moveDown(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {
   const parent_ = parent(tree, node);
-  if (parent_ === undefined || childIndex(tree, parent_, node) === children(tree, parent_).length - 1)
-    return [state, tree];
+  if (!parent_ || childIndex(tree, parent_, node) === children(tree, parent_).length - 1) return [state, tree];
   return move(state, tree, node, {parent: parent_, index: childIndex(tree, parent_, node) + 1});
 }
 
@@ -478,7 +475,7 @@ export function copyToAbove(
   destinationNode: NodeRef,
 ): [D.State, Tree, NodeRef] {
   const parent_ = parent(tree, destinationNode);
-  if (parent_ === undefined) return [state, tree, sourceNode];
+  if (!parent_) return [state, tree, sourceNode];
   return copy(state, tree, sourceNode, {parent: parent_, index: childIndex(tree, parent_, destinationNode)});
 }
 
@@ -489,7 +486,7 @@ export function createSiblingBefore(state: D.State, tree: Tree, node: NodeRef): 
   newState = newState_;
 
   const parent_ = parent(tree, node);
-  if (parent_ === undefined) throw "Cannot create sibling before item with no parent";
+  if (!parent_) throw "Cannot create sibling before item with no parent";
 
   const parentThing = thing(tree, parent_);
   const index = childIndex(tree, parent_, node);
@@ -518,7 +515,7 @@ export function createSiblingAfter(state: D.State, tree: Tree, node: NodeRef): [
   newState = newState_;
 
   const parent_ = parent(tree, node);
-  if (parent_ === undefined) throw "Cannot create sibling after item with no parent";
+  if (!parent_) throw "Cannot create sibling after item with no parent";
 
   const parentThing = thing(tree, parent_);
   const index = childIndex(tree, parent_, node) + 1;
@@ -549,7 +546,7 @@ export function createChild(state: D.State, tree: Tree, node: NodeRef): [D.State
 export function remove(state: D.State, tree: Tree, node: NodeRef): [D.State, Tree] {
   if (kind(tree, node) === "parent") {
     const parent_ = parent(tree, node);
-    if (parent_ === undefined) {
+    if (!parent_) {
       console.log("Tried to remove node with no parent. Ignoring.");
       return [state, tree];
     }
@@ -569,7 +566,7 @@ export function remove(state: D.State, tree: Tree, node: NodeRef): [D.State, Tre
     return [state, tree];
   } else {
     const parent_ = parent(tree, node);
-    if (parent_ === undefined) {
+    if (!parent_) {
       console.log("Tried to remove node with no parent. Ignoring.");
       return [state, tree];
     }
@@ -678,7 +675,7 @@ export function removeThing(state: D.State, tree: Tree, node: NodeRef): [D.State
   // Remove nodes from tree to match state
   for (const n of similar(newTree, node)) {
     const p = parent(tree, n);
-    if (p !== undefined) {
+    if (p) {
       newTree = I.updateChildren(newTree, p, (ch) => Misc.splice(ch, indexInParent(newTree, n)!, 1));
     }
   }
@@ -725,7 +722,7 @@ function refreshOtherParentsChildren(state: D.State, tree: Tree, node: NodeRef):
   return genericRefreshChildren({
     getStateChildren: (state, thing_) => {
       const parent_ = parent(tree, node);
-      return D.otherParents(state, thing_, parent_ && thing(tree, parent_));
+      return D.otherParents(state, thing_, (parent_ && thing(tree, parent_)) ?? undefined);
     },
     getTreeChildren: I.otherParentsChildren,
     updateChildren: I.updateOtherParentsChildren,
@@ -776,12 +773,11 @@ export function toggleLink(state: D.State, tree: Tree, node: NodeRef, link: stri
 
 export const openedLinksChildren = I.openedLinksChildren;
 
-// Given a node, we may want to figure out what kind of node it is and inspect
-// its parents as they appear to the user, even if the parent-child relationship
-// is not represented in the data state.
-
-// Returns undefined if we can't figure it out.
-export function kind(tree: Tree, node: NodeRef): "opened-link" | "child" | "reference" | "parent" | undefined {
+// Returns undefined if the node does not exist.
+export function kind(
+  tree: Tree,
+  node: NodeRef,
+): "opened-link" | "child" | "reference" | "parent" | "root" | undefined {
   const parentAndType_ = parentAndType(tree, node);
   if (parentAndType_ === undefined) return undefined;
   return parentAndType_[1];

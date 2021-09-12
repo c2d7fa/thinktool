@@ -74,7 +74,7 @@ export function useSearchBarProps(
     isThingActive: (thing) => P.isThingActive(app.popup, thing),
     onActivate: () => send("action", {action}),
     query: P.isOpen(app.popup) ? P.query(app.popup) : "",
-    isNewItemActive: P.isThingActive(app.popup, null),
+    isNewItemActive: P.isOpen(app.popup) && P.isThingActive(app.popup, null),
     onQuery(query: string) {
       updatePopup((popup) => P.setQuery(popup, query));
       search(query);
