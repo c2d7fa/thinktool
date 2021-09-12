@@ -35,7 +35,7 @@ import * as ReactDOM from "react-dom";
 
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
-import {usePropRef} from "./react-utils";
+import {useMemoWarning, usePropRef} from "./react-utils";
 import {OrphanList, useOrphanListProps} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 
@@ -166,27 +166,30 @@ function App_({
     },
   });
 
-  const updateApp = React.useMemo(() => {
-    console.warn("Creating 'updateApp'. This should only happen once.");
-    return (f: (app: A.App) => A.App) => {
-      updateAppWithoutSaving((app) => {
-        const newApp = f(app);
+  const updateApp = useMemoWarning(
+    "updateApp",
+    () => {
+      return (f: (app: A.App) => A.App) => {
+        updateAppWithoutSaving((app) => {
+          const newApp = f(app);
 
-        // Push changes to server
-        const effects = Storage.Diff.effects(app, newApp);
-        Storage.execute(storage, effects, {
-          setContent(thing, content) {
-            batched.update(thing, () => {
-              storage.setContent(thing, content);
-            });
-          },
+          // Push changes to server
+          const effects = Storage.Diff.effects(app, newApp);
+          Storage.execute(storage, effects, {
+            setContent(thing, content) {
+              batched.update(thing, () => {
+                storage.setContent(thing, content);
+              });
+            },
+          });
+
+          // Update actual app
+          return newApp;
         });
-
-        // Update actual app
-        return newApp;
-      });
-    };
-  }, [storage]);
+      };
+    },
+    [storage],
+  );
 
   const search = React.useMemo<Search>(() => {
     const search = new Search([]);

@@ -13,3 +13,13 @@ export function usePropRef<T>(prop: T): React.RefObject<T> {
   }, [prop]);
   return ref;
 }
+
+// Like 'useMemo', but prints a warning if the memoized value is replaced.
+export function useMemoWarning<T>(label: string, refresh: () => T, dependencies?: React.DependencyList) {
+  const wasInitializedRef = React.useRef(false);
+  return React.useMemo(() => {
+    if (wasInitializedRef.current) console.warn("Refreshing %o.", label);
+    wasInitializedRef.current = true;
+    return refresh();
+  }, dependencies);
+}
