@@ -112,7 +112,9 @@ export type ItemEvent =
 function References({linkedItem, onItemEvent}: {linkedItem: ItemData; onItemEvent: (event: ItemEvent) => void}) {
   if (linkedItem.references.state === "empty") return null;
 
-  const text = `${linkedItem.references.count} References${linkedItem.references.state === "collapsed" && "..."}`;
+  const text = `${linkedItem.references.count} References${
+    linkedItem.references.state === "collapsed" ? "..." : ""
+  }`;
 
   const items =
     linkedItem.references.state !== "expanded"
