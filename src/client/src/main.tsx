@@ -20,7 +20,7 @@ import * as P from "./popup";
 import * as Sync from "./sync";
 
 import * as Editor from "./ui/Editor";
-import Toolbar from "./ui/Toolbar";
+import * as Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
@@ -276,11 +276,9 @@ function App_({
       <div className="app-header">
         <TopBar {...topBarProps} />
         {isToolbarShown ? (
-          <Toolbar
+          <Toolbar.Toolbar
             onToolbarButtonPressed={React.useCallback((action) => receiver.send("action", {action}), [receiver])}
-            isEnabled={(action) => Actions.enabled(app, action)}
-            isRelevant={(action) => Tutorial.isRelevant(app.tutorialState, action)}
-            isNotIntroduced={(action) => Tutorial.isNotIntroduced(app.tutorialState, action)}
+            toolbar={Toolbar.toolbar(app)}
           />
         ) : null}
       </div>
