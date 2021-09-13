@@ -1,6 +1,7 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import * as ReactDOMServer from "react-dom/server";
+
+const style = require("../editor.module.scss").default;
 
 import * as PS from "prosemirror-state";
 import * as PV from "prosemirror-view";
@@ -30,7 +31,7 @@ function buildInternalLink(args: {
   // then manually attach the event listeners.
 
   const markup = ReactDOMServer.renderToStaticMarkup(
-    <span className="internal-link">
+    <span className={style.itemlink}>
       <Bullet
         specialType="link"
         status="collapsed"
@@ -41,7 +42,7 @@ function buildInternalLink(args: {
         }}
       />
       &nbsp;
-      <span className="link-content">
+      <span className={style.linkcontent}>
         {typeof args.content === "string" ? (
           args.content
         ) : (

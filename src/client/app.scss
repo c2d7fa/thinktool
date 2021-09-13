@@ -196,32 +196,6 @@ a.plain-text-link:hover {
 
 /* #endregion */
 
-/* #region Internal links */
-
-.internal-link {
-  cursor: pointer;
-
-  padding: 2px 4px;
-  border-radius: 6px;
-
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-
-  border: 1px solid hsl(40, 80%, 60%);
-
-  transition: border base.$quick-transition-time;
-}
-
-.internal-link:hover {
-  border-color: hsl(40, 80%, 60%);
-}
-
-.internal-link .empty-content {
-  color: #c0c0c0;
-}
-
-/* #endregion */
-
 /* #endregion */
 
 /* #region Editor */
@@ -365,76 +339,6 @@ a.plain-text-link:hover {
 
 .bullet.reference-bullet:hover .bullet-hover-rect {
   opacity: 1;
-}
-
-/* #endregion */
-
-/* #region Opened link bullets */
-
-.bullet.opened-link-bullet .bullet-circle {
-  fill: hsl(40, 80%, 60%);
-  stroke: hsl(40, 80%, 60%);
-}
-
-.bullet.opened-link-bullet .bullet-hover-rect {
-  opacity: 0;
-  fill: hsl(40, 80%, 90%);
-}
-
-.bullet.opened-link-bullet path.bullet-circle {
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.bullet.opened-link-bullet:hover .bullet-hover-rect {
-  opacity: 1;
-}
-
-/* #endregion */
-
-/* #region (Inline) link bullets */
-
-.bullet.link-bullet {
-  cursor: pointer;
-
-  margin: 0;
-  margin-bottom: 3px;
-  margin-right: 0px;
-  margin-left: -1px;
-}
-
-.bullet.link-bullet .bullet-circle {
-  fill: hsl(40, 80%, 60%);
-  stroke: hsl(40, 80%, 60%);
-}
-
-.bullet.link-bullet .bullet-hover-rect {
-  fill: hsl(40, 80%, 90%);
-}
-
-.bullet.link-bullet.expanded .bullet-hover-rect {
-  opacity: 0.5;
-}
-
-.bullet.link-bullet path.bullet-circle {
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.internal-link:hover > .bullet.link-bullet .bullet-hover-rect {
-  opacity: 1;
-}
-
-/* Don't break between bullet and first word. */
-
-.internal-link {
-  white-space: nowrap;
-}
-
-.link-content {
-  white-space: normal;
 }
 
 /* #endregion */
