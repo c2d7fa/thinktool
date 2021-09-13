@@ -94,3 +94,7 @@
 }
 
 /* #endregion */
+
+:global(.opened-link) {
+  color: hsl(205, 45%, 30%);
+}
