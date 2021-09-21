@@ -1,0 +1,81 @@
+@use "../../style/base";
+
+.link {
+  cursor: pointer;
+
+  padding: 2px 4px;
+  border-radius: 6px;
+
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+
+  border: 1px solid hsl(210, 0%, 70%);
+
+  /* Don't break between bullet and first word. */
+  white-space: nowrap;
+
+  .content {
+    color: #444;
+    white-space: normal;
+  }
+
+  :global(.bullet.link-bullet) {
+    cursor: pointer;
+
+    margin: 0;
+    margin-bottom: 3px;
+    margin-right: 0px;
+    margin-left: -1px;
+
+    :global(.bullet-circle) {
+      fill: hsl(205, 0%, 75%);
+      stroke: hsl(205, 0%, 75%);
+    }
+
+    :global(path.bullet-circle) {
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    :global(.bullet-hover-rect) {
+      fill: hsl(205, 45%, 95%);
+    }
+  }
+
+  &:hover {
+    border-color: hsl(205, 10%, 50%);
+
+    .content {
+      color: hsl(205, 50%, 25%);
+    }
+
+    :global(.bullet.link-bullet) {
+      :global(.bullet-hover-rect) {
+        opacity: 0; // Never show rect
+      }
+
+      :global(.bullet-circle) {
+        fill: hsl(205, 10%, 50%);
+        stroke: hsl(205, 10%, 50%);
+      }
+    }
+  }
+}
+
+:global(.bullet.opened-link-bullet) {
+  :global(.bullet-circle) {
+    fill: hsl(205, 10%, 50%);
+    stroke: hsl(205, 10%, 50%);
+  }
+
+  :global(.bullet-hover-rect) {
+    fill: hsl(205, 0%, 87%);
+  }
+  
+  :global(path.bullet-circle) {
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
