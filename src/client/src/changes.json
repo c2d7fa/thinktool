@@ -471,6 +471,10 @@
     {
       "date": "2021-08-10",
       "title": "The app now remembers whether the toolbar menu is shown or hidden."
+    },
+    {
+      "date": "2021-09-21",
+      "title": "Tweaked appearance of links between items (from yellow to blue and grey)."
     }
   ]
 }
