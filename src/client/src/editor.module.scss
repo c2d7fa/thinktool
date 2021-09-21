@@ -1,6 +1,6 @@
 @use "../../style/base";
 
-.itemlink {
+.link {
   cursor: pointer;
 
   padding: 2px 4px;
@@ -10,87 +10,72 @@
   -webkit-box-decoration-break: clone;
 
   border: 1px solid hsl(210, 0%, 70%);
-}
 
-.linkcontent {
-  color: #444;
-}
-
-.itemlink:hover {
-  border-color: hsl(205, 10%, 50%);
-}
-
-.itemlink:hover .linkcontent {
-  color: hsl(205, 50%, 25%);
-}
-
-:global(.bullet.link-bullet) {
-  cursor: pointer;
-
-  margin: 0;
-  margin-bottom: 3px;
-  margin-right: 0px;
-  margin-left: -1px;
-}
-
-:global(.bullet.link-bullet .bullet-circle) {
-  fill: hsl(205, 0%, 75%);
-  stroke: hsl(205, 0%, 75%);
-}
-
-.itemlink:hover > :global(.bullet.link-bullet .bullet-circle) {
-  fill: hsl(205, 10%, 50%);
-  stroke: hsl(205, 10%, 50%);
-}
-
-:global(.bullet.link-bullet.expanded .bullet-hover-rect) {
-  opacity: 0.5;
-}
-
-:global(.bullet.link-bullet path.bullet-circle) {
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-:global(.bullet.link-bullet .bullet-hover-rect) {
-  fill: hsl(205, 45%, 95%);
-}
-
-.itemlink:hover > :global(.bullet.link-bullet .bullet-hover-rect) {
-  opacity: 0; // Never show rect
-}
-
-/* Don't break between bullet and first word. */
-
-.itemlink {
+  /* Don't break between bullet and first word. */
   white-space: nowrap;
+
+  .content {
+    color: #444;
+    white-space: normal;
+  }
+
+  :global(.bullet.link-bullet) {
+    cursor: pointer;
+
+    margin: 0;
+    margin-bottom: 3px;
+    margin-right: 0px;
+    margin-left: -1px;
+
+    :global(.bullet-circle) {
+      fill: hsl(205, 0%, 75%);
+      stroke: hsl(205, 0%, 75%);
+    }
+
+    :global(path.bullet-circle) {
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    :global(.bullet-hover-rect) {
+      fill: hsl(205, 45%, 95%);
+    }
+  }
+
+  &:hover {
+    border-color: hsl(205, 10%, 50%);
+
+    .content {
+      color: hsl(205, 50%, 25%);
+    }
+
+    :global(.bullet.link-bullet) {
+      :global(.bullet-hover-rect) {
+        opacity: 0; // Never show rect
+      }
+
+      :global(.bullet-circle) {
+        fill: hsl(205, 10%, 50%);
+        stroke: hsl(205, 10%, 50%);
+      }
+    }
+  }
 }
 
-.linkcontent {
-  white-space: normal;
+:global(.bullet.opened-link-bullet) {
+  :global(.bullet-circle) {
+    fill: hsl(205, 10%, 50%);
+    stroke: hsl(205, 10%, 50%);
+  }
+
+  :global(.bullet-hover-rect) {
+    fill: hsl(205, 0%, 87%);
+  }
+  
+  :global(path.bullet-circle) {
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 }
-
-/* #region Opened link bullets */
-
-:global(.bullet.opened-link-bullet .bullet-circle) {
-  fill: hsl(205, 10%, 50%);
-  stroke: hsl(205, 10%, 50%);
-}
-
-:global(.bullet.opened-link-bullet .bullet-hover-rect) {
-  opacity: 0;
-  fill: hsl(205, 0%, 87%);
-}
-
-:global(.bullet.opened-link-bullet path.bullet-circle) {
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-:global(.bullet.opened-link-bullet:hover .bullet-hover-rect) {
-  opacity: 1;
-}
-
-/* #endregion */

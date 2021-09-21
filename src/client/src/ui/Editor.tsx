@@ -31,7 +31,7 @@ function buildInternalLink(args: {
   // then manually attach the event listeners.
 
   const markup = ReactDOMServer.renderToStaticMarkup(
-    <span className={style.itemlink}>
+    <span className={style.link}>
       <Bullet
         specialType="link"
         status="collapsed"
@@ -42,7 +42,7 @@ function buildInternalLink(args: {
         }}
       />
       &nbsp;
-      <span className={style.linkcontent}>
+      <span className={style.content}>
         {typeof args.content === "string" ? (
           args.content
         ) : (
