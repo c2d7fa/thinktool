@@ -475,6 +475,10 @@
     {
       "date": "2021-09-21",
       "title": "Tweaked appearance of links between items (from yellow to blue and grey)."
+    },
+    {
+      "date": "2021-09-22",
+      "title": "Fixed issue where search bar would move slightly when focusing in some browsers."
     }
   ]
 }

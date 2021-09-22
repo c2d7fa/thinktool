@@ -24,6 +24,8 @@
 
   .placeholder {
     @include general.placeholder-text(#aaa);
+    box-sizing: border-box;
+    height: 1.6em;
   }
 
   transition: opacity base.$quick-transition-time;
@@ -69,6 +71,9 @@
   }
 
   input {
+    box-sizing: border-box;
+    height: 1.6em;
+
     font: inherit;
     border: none;
     background: none;
