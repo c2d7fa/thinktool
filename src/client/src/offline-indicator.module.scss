@@ -1,0 +1,23 @@
+.offline {
+  position: fixed;
+  top: 10vh;
+  left: 10vw;
+  width: 80vw;
+
+  z-index: 9999;
+
+  padding: 1em;
+  border-radius: 0.5em;
+
+  background-color: #ebc;
+  color: #533;
+
+  border: 2px solid #a89;
+  box-shadow: 0 3px 6px -3px #a89;
+
+  cursor: default;
+
+  font-size: 1.3em;
+  font-weight: bold;
+  text-align: center;
+}

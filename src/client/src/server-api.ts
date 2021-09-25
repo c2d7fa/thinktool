@@ -70,10 +70,15 @@ export function initialize(apiHost: string) {
     return () => socket.close();
   }
 
-  async function getThingData(thing: string): Promise<Communication.ThingData | null> {
-    const response = await api(`state/things/${thing}`);
-    if (response.status === 404) return null;
-    return (await response.json()) as Communication.ThingData;
+  async function getThingData(thing: string): Promise<Communication.ThingData | null | {error: "connection"}> {
+    try {
+      const response = await api(`state/things/${thing}`);
+      if (response.status === 404) return null;
+      return (await response.json()) as Communication.ThingData;
+    } catch (e) {
+      console.error("Connection error: %o", e);
+      return {error: "connection"};
+    }
   }
 
   const logOutUrl = `${apiHost}/logout`;

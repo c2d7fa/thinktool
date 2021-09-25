@@ -6,9 +6,19 @@ import * as T from "./tree";
 
 export function receiveChangedThingsFromServer(
   app: A.App,
-  changedThings: {thing: string; data: Communication.ThingData | null}[],
+  changedThings: {thing: string; data: Communication.ThingData | null | {error: unknown}}[],
 ): A.App {
   let state = app.state;
+
+  // First check for any errors.
+  for (const {thing, data} of changedThings) {
+    if (data !== null && "error" in data) {
+      console.warn("Error while reading changes from server!");
+      return A.serverDisconnected(app);
+    }
+  }
+
+  // There were no errors, continue as normal:
 
   for (const {thing, data} of changedThings) {
     if (data === null) {
@@ -21,6 +31,8 @@ export function receiveChangedThingsFromServer(
       // A new item was created
       state = D.create(state, thing)[0];
     }
+
+    if ("error" in data) throw "invalid state"; // We already checked for this!
 
     state = D.setContent(state, thing, data.content);
 

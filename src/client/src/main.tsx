@@ -29,6 +29,7 @@ import UserPage from "./ui/UserPage";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
 import * as Outline from "./outline";
 import {TopBar, useTopBarProps} from "./ui/TopBar";
+import {OfflineIndicator} from "./offline-indicator";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -278,6 +279,7 @@ function App_({
 
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
+      {<OfflineIndicator isDisconnected={A.isDisconnected(app)} />}
       <div className="app-header">
         <TopBar {...topBarProps} />
         {isToolbarShown ? (
