@@ -6,7 +6,6 @@ import * as ChangelogData from "./changes.json";
 
 import {State} from "./data";
 import {extractThingFromURL, useThingUrl} from "./url";
-import {useBatched} from "./batched";
 
 import * as T from "./tree";
 import * as Tutorial from "./tutorial";
@@ -156,8 +155,6 @@ function App_({
     }),
   );
 
-  const batched = useBatched(200);
-
   const changelog = ChangelogData;
 
   useThingUrl({
@@ -170,21 +167,17 @@ function App_({
   const updateApp = useMemoWarning(
     "updateApp",
     () => {
+      const storageExecutionContext = new Storage.StorageExecutionContext(storage, window);
+
       return (f: (app: A.App) => A.App) => {
         updateAppWithoutSaving((app) => {
           const newApp = f(app);
 
-          // Push changes to server
-          const effects = Storage.Diff.changes(app, newApp);
-          Storage.execute(storage, effects, {
-            setContent(thing, content) {
-              batched.update(thing, () => {
-                storage.setContent(thing, content);
-              });
-            },
-          });
+          // Push changes to storage or server
+          const changes = Storage.Diff.changes(app, newApp);
+          storageExecutionContext.pushChanges(changes);
 
-          // Update actual app
+          // Update local app state
           return newApp;
         });
       };

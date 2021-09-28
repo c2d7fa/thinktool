@@ -1,6 +1,7 @@
 import {Communication} from "@thinktool/shared";
 import * as API from "./server-api";
 import {Changes} from "./diff";
+import {Content} from "../data";
 export * as Diff from "./diff";
 
 export interface Storage {
@@ -39,21 +40,63 @@ export function ignore(): Storage {
   };
 }
 
-export function execute(
-  storage: Storage,
-  effects: Changes,
-  args: {setContent(thing: string, content: Communication.Content): void},
-) {
-  for (const deleted of effects.deleted) {
-    storage.deleteThing(deleted);
+class BatchedUpdates {
+  private cooldown: {ms: number};
+  private timeouts: Record<string, number> = {};
+  private callbacks: Record<string, () => void> = {};
+
+  constructor(cooldown: {ms: number}) {
+    this.cooldown = cooldown;
   }
-  if (effects.updated.length > 0) {
-    storage.updateThings(effects.updated);
+
+  update(key: string, callback: () => void): void {
+    if (this.timeouts[key] !== undefined) {
+      clearTimeout(this.timeouts[key]);
+      delete this.timeouts[key];
+    }
+    this.callbacks[key] = callback;
+    this.timeouts[key] = window.setTimeout(() => {
+      callback();
+      delete this.callbacks[key];
+    }, this.cooldown.ms);
   }
-  for (const edited of effects.edited) {
-    args.setContent(edited.thing, edited.content);
+
+  flushPending(): void {
+    for (const key in this.callbacks) {
+      this.callbacks[key]();
+    }
   }
-  if (effects.tutorialFinished) {
-    storage.setTutorialFinished();
+}
+
+export class StorageExecutionContext {
+  private batched: BatchedUpdates;
+  private storage: Storage;
+
+  constructor(storage: Storage, window: Window) {
+    this.batched = new BatchedUpdates({ms: 200});
+    this.storage = storage;
+
+    window.addEventListener("beforeunload", () => {
+      this.batched.flushPending();
+    });
+  }
+
+  pushChanges(changes: Changes) {
+    for (const deleted of changes.deleted) {
+      this.storage.deleteThing(deleted);
+    }
+    if (changes.updated.length > 0) {
+      this.storage.updateThings(changes.updated);
+    }
+    for (const edited of changes.edited) {
+      this.pushContentUpdate(edited.thing, edited.content);
+    }
+    if (changes.tutorialFinished) {
+      this.storage.setTutorialFinished();
+    }
+  }
+
+  private pushContentUpdate(thing: string, content: Content) {
+    this.batched.update(thing, () => this.storage.setContent(thing, content));
   }
 }
