@@ -1,6 +1,6 @@
 import {Communication} from "@thinktool/shared";
 import * as API from "./server-api";
-import {Effects} from "./diff";
+import {Changes} from "./diff";
 export * as Diff from "./diff";
 
 export interface Storage {
@@ -41,7 +41,7 @@ export function ignore(): Storage {
 
 export function execute(
   storage: Storage,
-  effects: Effects,
+  effects: Changes,
   args: {setContent(thing: string, content: Communication.Content): void},
 ) {
   for (const deleted of effects.deleted) {

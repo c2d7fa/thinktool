@@ -175,7 +175,7 @@ function App_({
           const newApp = f(app);
 
           // Push changes to server
-          const effects = Storage.Diff.effects(app, newApp);
+          const effects = Storage.Diff.changes(app, newApp);
           Storage.execute(storage, effects, {
             setContent(thing, content) {
               batched.update(thing, () => {
