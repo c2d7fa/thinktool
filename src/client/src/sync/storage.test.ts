@@ -1,11 +1,11 @@
 /// <reference types="@types/jest" />
 
-import * as Storage from "../src/storage";
+import * as Storage from "./storage";
 
-import * as W from "../src/wrapap";
-import * as A from "../src/app";
-import * as D from "../src/data";
-import * as Tu from "../src/tutorial";
+import * as W from "../wrapap";
+import * as A from "../app";
+import * as D from "../data";
+import * as Tu from "../tutorial";
 
 describe("calculating effects of updates", () => {
   describe("deleting an item", () => {
@@ -16,7 +16,7 @@ describe("calculating effects of updates", () => {
       }),
     );
 
-    const after = before.root.child(0).destroy();
+    const after = before.root.child(0)!.destroy();
 
     const effects = Storage.Diff.effects(before.app, after.app);
 
@@ -38,7 +38,7 @@ describe("calculating effects of updates", () => {
 
     const after = before.map((app) => A.createChild(app, before.root.ref));
 
-    const child = after.root.child(0).thing;
+    const child = after.root.child(0)!.thing;
     const connection = D.childConnections(after.state, after.root.thing)[0].connectionId;
 
     const effects = Storage.Diff.effects(before.app, after.app);
@@ -65,7 +65,7 @@ describe("calculating effects of updates", () => {
       }),
     );
 
-    const after = before.root.child(0).edit({content: ["Edited"], selection: {from: 6, to: 6}});
+    const after = before.root.child(0)!.edit({content: ["Edited"], selection: {from: 6, to: 6}});
 
     const effects = Storage.Diff.effects(before.app, after.app);
 

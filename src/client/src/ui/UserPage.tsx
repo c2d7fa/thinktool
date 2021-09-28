@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import * as API from "../server-api";
+import * as API from "../sync/server-api";
 import * as ExportRoam from "../export-roam";
 
 import {ExternalLink} from "./ExternalLink";

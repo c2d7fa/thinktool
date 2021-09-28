@@ -1,9 +1,7 @@
-import * as API from "./server-api";
 import {Communication} from "@thinktool/shared";
-
-import {Effects} from "./storage/diff";
-
-export * as Diff from "./storage/diff";
+import * as API from "./server-api";
+import {Effects} from "./diff";
+export * as Diff from "./diff";
 
 export interface Storage {
   getFullState(): Promise<Communication.FullStateResponse>;

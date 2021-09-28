@@ -10,8 +10,8 @@ import {useBatched} from "./batched";
 
 import * as T from "./tree";
 import * as Tutorial from "./tutorial";
-import * as API from "./server-api";
-import * as Storage from "./storage";
+import * as API from "./sync/server-api";
+import * as Storage from "./sync/storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
@@ -418,5 +418,5 @@ export function User(props: {apiHost: string}) {
   return <UserPage server={API.initialize(props.apiHost)} />;
 }
 
-export * as Storage from "./storage";
+export * as Storage from "./sync/storage";
 export {Communication} from "@thinktool/shared";

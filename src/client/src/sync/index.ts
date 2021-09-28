@@ -1,8 +1,8 @@
 import {Communication} from "@thinktool/shared";
 
-import * as A from "./app";
-import * as D from "./data";
-import * as T from "./tree";
+import * as A from "../app";
+import * as D from "../data";
+import * as T from "../tree";
 
 export function receiveChangedThingsFromServer(
   app: A.App,

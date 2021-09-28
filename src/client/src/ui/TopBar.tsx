@@ -2,7 +2,7 @@ import * as React from "react";
 
 import {ExternalLink} from "./ExternalLink";
 import {SearchBar, useSearchBarProps} from "../search-bar";
-import {Server} from "../server-api";
+import {Server} from "../sync/server-api";
 import {Send} from "../messages";
 import {App, UpdateApp} from "../app";
 

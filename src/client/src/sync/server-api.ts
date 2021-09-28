@@ -2,7 +2,7 @@ import {Communication} from "@thinktool/shared";
 
 export type Server = ReturnType<typeof initialize>;
 
-import {transformFullStateResponseIntoState} from "./data";
+import {transformFullStateResponseIntoState} from "../data";
 export {transformFullStateResponseIntoState};
 
 export function initialize(apiHost: string) {
