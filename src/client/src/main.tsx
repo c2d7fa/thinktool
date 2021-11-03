@@ -9,7 +9,7 @@ import {extractThingFromURL, useThingUrl} from "./url";
 
 import * as T from "./tree";
 import * as Tutorial from "./tutorial";
-import * as API from "./sync/server-api";
+import {ServerApi, transformFullStateResponseIntoState} from "./sync/server-api";
 import * as Storage from "./sync/storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
@@ -58,7 +58,7 @@ function useGlobalShortcuts(sendEvent: Receiver<Message>["send"]) {
   }, [sendEvent]);
 }
 
-function useServerChanges(server: API.Server | null, updateApp: (f: (app: A.App) => A.App) => void) {
+function useServerChanges(server: ServerApi | null, updateApp: (f: (app: A.App) => A.App) => void) {
   React.useEffect(() => {
     if (server === null) return;
 
@@ -142,7 +142,7 @@ function App_({
   initialTutorialFinished: boolean;
   username?: string;
   storage: Storage.Storage;
-  server?: API.Server;
+  server?: ServerApi;
   openExternalUrl(url: string): void;
 }) {
   const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
@@ -352,7 +352,7 @@ export function LocalApp(props: {
       setApp(
         <ExternalLinkProvider value={props.ExternalLink}>
           <App_
-            initialState={API.transformFullStateResponseIntoState(await props.storage.getFullState())}
+            initialState={transformFullStateResponseIntoState(await props.storage.getFullState())}
             initialTutorialFinished={await props.storage.getTutorialFinished()}
             storage={props.storage}
             openExternalUrl={props.openExternalUrl}
@@ -366,7 +366,7 @@ export function LocalApp(props: {
 }
 
 export function App({apiHost}: {apiHost: string}) {
-  const server = API.initialize(apiHost);
+  const server = new ServerApi({apiHost});
 
   const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
 
@@ -382,7 +382,7 @@ export function App({apiHost}: {apiHost: string}) {
 
       setApp(
         <App_
-          initialState={API.transformFullStateResponseIntoState(await storage.getFullState())}
+          initialState={transformFullStateResponseIntoState(await storage.getFullState())}
           initialTutorialFinished={await storage.getTutorialFinished()}
           username={username ?? "<error>"}
           storage={storage}
@@ -399,7 +399,7 @@ export function App({apiHost}: {apiHost: string}) {
 export function Demo(props: {data: Communication.FullStateResponse}) {
   return (
     <App_
-      initialState={API.transformFullStateResponseIntoState(props.data)}
+      initialState={transformFullStateResponseIntoState(props.data)}
       initialTutorialFinished={false}
       storage={Storage.ignore()}
       openExternalUrl={(url) => window.open(url, "_blank")}
@@ -408,7 +408,7 @@ export function Demo(props: {data: Communication.FullStateResponse}) {
 }
 
 export function User(props: {apiHost: string}) {
-  return <UserPage server={API.initialize(props.apiHost)} />;
+  return <UserPage server={new ServerApi({apiHost: props.apiHost})} />;
 }
 
 export * as Storage from "./sync/storage";

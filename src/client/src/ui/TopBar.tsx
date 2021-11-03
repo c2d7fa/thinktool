@@ -2,7 +2,7 @@ import * as React from "react";
 
 import {ExternalLink} from "./ExternalLink";
 import {SearchBar, useSearchBarProps} from "../search-bar";
-import {Server} from "../sync/server-api";
+import {ServerApi} from "../sync/server-api";
 import {Send} from "../messages";
 import {App, UpdateApp} from "../app";
 
@@ -12,7 +12,7 @@ export function useTopBarProps(args: {
   updateApp: UpdateApp;
   isToolbarShown: boolean;
   setIsToolbarShown(b: boolean): void;
-  server?: Server;
+  server?: ServerApi;
   username?: string;
   search(query: string): void;
 }): Parameters<typeof TopBar>[0] {

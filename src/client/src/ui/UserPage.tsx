@@ -1,11 +1,11 @@
 import * as React from "react";
 
-import * as API from "../sync/server-api";
+import {ServerApi, transformFullStateResponseIntoState} from "../sync/server-api";
 import * as ExportRoam from "../export-roam";
 
 import {ExternalLink} from "./ExternalLink";
 
-export default function UserPage(props: {server: API.Server}) {
+export default function UserPage(props: {server: ServerApi}) {
   const [username, setUsername] = React.useState<string | null>(null);
   const [emailField, setEmailField] = React.useState<string>("(Loading...)");
   const [passwordField, setPasswordField] = React.useState<string>("");
@@ -83,7 +83,7 @@ export default function UserPage(props: {server: API.Server}) {
               document.body.removeChild(element);
             }
 
-            const state = API.transformFullStateResponseIntoState(await props.server.getFullState());
+            const state = transformFullStateResponseIntoState(await props.server.getFullState());
             download("thinktool-export-for-roam.json", ExportRoam.exportString(state));
           }}
         >

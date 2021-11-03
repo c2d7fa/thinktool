@@ -1,5 +1,5 @@
 import {Communication} from "@thinktool/shared";
-import * as API from "./server-api";
+import {ServerApi} from "./server-api";
 import {Changes} from "./diff";
 import {Content} from "../data";
 export * as Diff from "./diff";
@@ -17,7 +17,7 @@ export interface Storage {
   setTutorialFinished(): Promise<void>;
 }
 
-export function server(server: API.Server): Storage {
+export function server(server: ServerApi): Storage {
   return {
     getFullState: server.getFullState.bind(server),
     setContent: server.setContent.bind(server),
