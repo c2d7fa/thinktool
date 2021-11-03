@@ -4,12 +4,12 @@ import {Communication} from "@thinktool/shared";
 
 import * as ChangelogData from "./changes.json";
 
-import {State} from "./data";
+import {State, transformFullStateResponseIntoState} from "./data";
 import {extractThingFromURL, useThingUrl} from "./url";
 
 import * as T from "./tree";
 import * as Tutorial from "./tutorial";
-import {ServerApi, transformFullStateResponseIntoState} from "./sync/server-api";
+import {ServerApi} from "./sync/server-api";
 import * as Storage from "./sync/storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";

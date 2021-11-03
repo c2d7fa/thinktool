@@ -1,9 +1,10 @@
 import * as React from "react";
 
-import {ServerApi, transformFullStateResponseIntoState} from "../sync/server-api";
+import {ServerApi} from "../sync/server-api";
 import * as ExportRoam from "../export-roam";
 
 import {ExternalLink} from "./ExternalLink";
+import {transformFullStateResponseIntoState} from "../data";
 
 export default function UserPage(props: {server: ServerApi}) {
   const [username, setUsername] = React.useState<string | null>(null);

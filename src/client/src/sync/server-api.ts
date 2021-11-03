@@ -1,8 +1,5 @@
 import {Communication} from "@thinktool/shared";
 
-import {transformFullStateResponseIntoState} from "../data";
-export {transformFullStateResponseIntoState};
-
 export class ServerApi {
   private clientId: string;
   private apiHost: string;
