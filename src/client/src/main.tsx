@@ -4,14 +4,13 @@ import {Communication} from "@thinktool/shared";
 
 import * as ChangelogData from "./changes.json";
 
-import {State} from "./data";
+import {State, transformFullStateResponseIntoState} from "./data";
 import {extractThingFromURL, useThingUrl} from "./url";
-import {useBatched} from "./batched";
 
 import * as T from "./tree";
 import * as Tutorial from "./tutorial";
-import * as API from "./server-api";
-import * as Storage from "./storage";
+import {ServerApi} from "./sync/server-api";
+import * as Storage from "./sync/storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
@@ -29,6 +28,7 @@ import UserPage from "./ui/UserPage";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
 import * as Outline from "./outline";
 import {TopBar, useTopBarProps} from "./ui/TopBar";
+import {OfflineIndicator} from "./offline-indicator";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -58,7 +58,7 @@ function useGlobalShortcuts(sendEvent: Receiver<Message>["send"]) {
   }, [sendEvent]);
 }
 
-function useServerChanges(server: API.Server | null, updateApp: (f: (app: A.App) => A.App) => void) {
+function useServerChanges(server: ServerApi | null, updateApp: (f: (app: A.App) => A.App) => void) {
   React.useEffect(() => {
     if (server === null) return;
 
@@ -142,7 +142,7 @@ function App_({
   initialTutorialFinished: boolean;
   username?: string;
   storage: Storage.Storage;
-  server?: API.Server;
+  server?: ServerApi;
   openExternalUrl(url: string): void;
 }) {
   const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
@@ -155,8 +155,6 @@ function App_({
     }),
   );
 
-  const batched = useBatched(200);
-
   const changelog = ChangelogData;
 
   useThingUrl({
@@ -166,24 +164,42 @@ function App_({
     },
   });
 
+  React.useEffect(() => {
+    server?.onError((error) => {
+      if (error.error === "disconnected") {
+        updateAppWithoutSaving(A.serverDisconnected);
+      } else if (error.error === "error") {
+        // [TODO] Add special handling for this case!
+        console.error(error);
+        updateAppWithoutSaving(A.serverDisconnected);
+      }
+    });
+
+    if (server !== null) {
+      window.addEventListener("offline", () => {
+        updateAppWithoutSaving(A.serverDisconnected);
+      });
+
+      window.addEventListener("online", () => {
+        updateAppWithoutSaving(A.serverReconnected);
+      });
+    }
+  }, []);
+
   const updateApp = useMemoWarning(
     "updateApp",
     () => {
+      const storageExecutionContext = new Storage.StorageExecutionContext(storage, window);
+
       return (f: (app: A.App) => A.App) => {
         updateAppWithoutSaving((app) => {
           const newApp = f(app);
 
-          // Push changes to server
-          const effects = Storage.Diff.effects(app, newApp);
-          Storage.execute(storage, effects, {
-            setContent(thing, content) {
-              batched.update(thing, () => {
-                storage.setContent(thing, content);
-              });
-            },
-          });
+          // Push changes to storage or server
+          const changes = Storage.Diff.changes(app, newApp);
+          storageExecutionContext.pushChanges(changes);
 
-          // Update actual app
+          // Update local app state
           return newApp;
         });
       };
@@ -278,6 +294,7 @@ function App_({
 
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
+      {<OfflineIndicator isDisconnected={A.isDisconnected(app)} />}
       <div className="app-header">
         <TopBar {...topBarProps} />
         {isToolbarShown ? (
@@ -357,7 +374,7 @@ export function LocalApp(props: {
       setApp(
         <ExternalLinkProvider value={props.ExternalLink}>
           <App_
-            initialState={API.transformFullStateResponseIntoState(await props.storage.getFullState())}
+            initialState={transformFullStateResponseIntoState(await props.storage.getFullState())}
             initialTutorialFinished={await props.storage.getTutorialFinished()}
             storage={props.storage}
             openExternalUrl={props.openExternalUrl}
@@ -371,7 +388,7 @@ export function LocalApp(props: {
 }
 
 export function App({apiHost}: {apiHost: string}) {
-  const server = API.initialize(apiHost);
+  const server = new ServerApi({apiHost});
 
   const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
 
@@ -387,7 +404,7 @@ export function App({apiHost}: {apiHost: string}) {
 
       setApp(
         <App_
-          initialState={API.transformFullStateResponseIntoState(await storage.getFullState())}
+          initialState={transformFullStateResponseIntoState(await storage.getFullState())}
           initialTutorialFinished={await storage.getTutorialFinished()}
           username={username ?? "<error>"}
           storage={storage}
@@ -404,7 +421,7 @@ export function App({apiHost}: {apiHost: string}) {
 export function Demo(props: {data: Communication.FullStateResponse}) {
   return (
     <App_
-      initialState={API.transformFullStateResponseIntoState(props.data)}
+      initialState={transformFullStateResponseIntoState(props.data)}
       initialTutorialFinished={false}
       storage={Storage.ignore()}
       openExternalUrl={(url) => window.open(url, "_blank")}
@@ -413,8 +430,8 @@ export function Demo(props: {data: Communication.FullStateResponse}) {
 }
 
 export function User(props: {apiHost: string}) {
-  return <UserPage server={API.initialize(props.apiHost)} />;
+  return <UserPage server={new ServerApi({apiHost: props.apiHost})} />;
 }
 
-export * as Storage from "./storage";
+export * as Storage from "./sync/storage";
 export {Communication} from "@thinktool/shared";

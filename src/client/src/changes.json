@@ -479,6 +479,10 @@
     {
       "date": "2021-09-22",
       "title": "Fixed issue where search bar would move slightly when focusing in some browsers."
+    },
+    {
+      "date": "2021-11-06",
+      "title": "Added indicator when connection to server is lost."
     }
   ]
 }

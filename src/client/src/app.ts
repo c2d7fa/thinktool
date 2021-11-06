@@ -9,6 +9,8 @@ import {Communication} from "@thinktool/shared";
 import * as Tutorial from "./tutorial";
 import {GoalId} from "./goal";
 
+const _isOnline = Symbol("isOnline");
+
 export interface App {
   state: D.State;
   tutorialState: Tutorial.State;
@@ -20,6 +22,7 @@ export interface App {
   drag: R.Drag;
   tab: "outline" | "orphans";
   orphans: O.Orphans;
+  [_isOnline]: boolean;
 }
 
 export type UpdateApp = (f: (app: App) => App) => void;
@@ -36,6 +39,7 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     drag: R.empty,
     tab: "outline",
     orphans: O.scan(O.fromState(data)),
+    [_isOnline]: true,
   };
 }
 
@@ -169,4 +173,16 @@ export function replace(app: App, node: T.NodeRef, thing: string): App {
   const [state, tree, newNode] = T.replace(app.state, app.tree, node, thing);
   let app_ = merge(app, {state, tree});
   return edit(app_, newNode, E.placeSelectionAtEnd(editor(app_, newNode)!));
+}
+
+export function serverDisconnected(app: App): App {
+  return {...app, [_isOnline]: false};
+}
+
+export function serverReconnected(app: App): App {
+  return {...app, [_isOnline]: true};
+}
+
+export function isDisconnected(app: App): boolean {
+  return !app[_isOnline];
 }
