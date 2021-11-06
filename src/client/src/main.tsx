@@ -164,6 +164,18 @@ function App_({
     },
   });
 
+  React.useEffect(() => {
+    server?.onError((error) => {
+      if (error.error === "disconnected") {
+        updateAppWithoutSaving(A.serverDisconnected);
+      } else if (error.error === "error") {
+        // [TODO] Add special handling for this case!
+        console.error(error);
+        updateAppWithoutSaving(A.serverDisconnected);
+      }
+    });
+  }, []);
+
   const updateApp = useMemoWarning(
     "updateApp",
     () => {
