@@ -174,6 +174,16 @@ function App_({
         updateAppWithoutSaving(A.serverDisconnected);
       }
     });
+
+    if (server !== null) {
+      window.addEventListener("offline", () => {
+        updateAppWithoutSaving(A.serverDisconnected);
+      });
+
+      window.addEventListener("online", () => {
+        updateAppWithoutSaving(A.serverReconnected);
+      });
+    }
   }, []);
 
   const updateApp = useMemoWarning(
