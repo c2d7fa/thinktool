@@ -141,13 +141,11 @@ export async function updateThing({
   thing,
   content,
   children,
-  isPage,
 }: {
   userId: UserId;
   thing: string;
   content: Communication.Content;
   children: {name: string; child: string}[];
-  isPage: boolean;
 }): Promise<void> {
   await withClient(async (client) => {
     return await withTransaction(client, async (client) => {
@@ -160,7 +158,7 @@ export async function updateThing({
           last_modified = EXCLUDED.last_modified,
           is_page = EXCLUDED.is_page
         `,
-        [userId.name, thing, JSON.stringify(content), isPage],
+        [userId.name, thing, JSON.stringify(content), false],
       );
 
       // Delete old connections
