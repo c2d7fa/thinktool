@@ -196,7 +196,7 @@ function App_({
           const newApp = f(app);
 
           // Push changes to storage or server
-          const changes = Sync.changes(app, newApp);
+          const changes = Sync.changes(Sync.storedStateFromApp(app), Sync.storedStateFromApp(newApp));
           storageExecutionContext.pushChanges(changes);
 
           // Update local app state

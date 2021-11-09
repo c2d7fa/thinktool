@@ -62,32 +62,48 @@ export type Changes = {
   tutorialFinished: boolean | null;
 };
 
-// [TODO] Generalize first argument to be StorageState, instead of requiring an
-// actual App.
-export function changes(before: A.App, after: A.App): Changes {
-  const diff = D.diff(before.state, after.state);
+const _state = Symbol("state");
+const _tutorialFinished = Symbol("tutorialFinished");
+type StoredState = {[_state]: D.State; [_tutorialFinished]: boolean};
+
+export function storedStateFromApp(app: A.App): StoredState {
+  return {
+    [_state]: app.state,
+    [_tutorialFinished]: !Tu.isActive(app.tutorialState),
+  };
+}
+
+// Return changes that must be applied to bring the stored state from 'from' to
+// 'to'.
+export function changes(from: StoredState, to: StoredState): Changes {
+  const fromState = from[_state];
+  const toState = to[_state];
+
+  const diff = D.diff(fromState, toState);
 
   const deleted = diff.deleted;
 
   const edited = diff.changedContent.map((thing) => ({
     thing,
-    content: D.content(after.state, thing),
+    content: D.content(toState, thing),
   }));
 
   let updated = [...diff.added, ...diff.changed].map((thing) => ({
     name: thing,
-    content: D.content(after.state, thing),
-    children: D.childConnections(after.state, thing).map((c) => ({
+    content: D.content(toState, thing),
+    children: D.childConnections(toState, thing).map((c) => ({
       name: c.connectionId,
-      child: D.connectionChild(after.state, c)!,
+      child: D.connectionChild(toState, c)!,
     })),
     isPage: false,
   }));
+
+  const tutorialFinished = from[_tutorialFinished] !== to[_tutorialFinished] ? to[_tutorialFinished] : null;
 
   return {
     deleted,
     edited,
     updated,
-    tutorialFinished: (Tu.isActive(before.tutorialState) && !Tu.isActive(after.tutorialState)) || null,
+    tutorialFinished,
   };
 }
