@@ -4,7 +4,6 @@ import {Communication} from "@thinktool/shared";
 
 import * as ChangelogData from "./changes.json";
 
-import {State, transformFullStateResponseIntoState} from "./data";
 import {extractThingFromURL, useThingUrl} from "./url";
 
 import * as T from "./tree";
@@ -131,15 +130,13 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
 }
 
 function App_({
-  initialState,
-  initialTutorialFinished,
+  storedState,
   username,
   storage,
   server,
   openExternalUrl,
 }: {
-  initialState: State;
-  initialTutorialFinished: boolean;
+  storedState: Sync.StoredState;
   username?: string;
   storage: Storage.Storage;
   server?: ServerApi;
@@ -149,11 +146,12 @@ function App_({
 
   const receiver = React.useMemo(() => createReceiver<Message>(), []);
 
-  const [app, updateAppWithoutSaving] = React.useState<A.App>(() =>
-    A.from(initialState, T.fromRoot(initialState, extractThingFromURL()), {
-      tutorialFinished: isDevelopment || initialTutorialFinished,
-    }),
-  );
+  const [app, updateAppWithoutSaving] = React.useState<A.App>(() => {
+    let result = Sync.loadAppFromStoredState(storedState);
+    result = A.jump(result, extractThingFromURL());
+    if (isDevelopment) result = A.merge(result, {tutorialState: Tutorial.initialize(true)});
+    return result;
+  });
 
   const changelog = ChangelogData;
 
@@ -374,8 +372,7 @@ export function LocalApp(props: {
       setApp(
         <ExternalLinkProvider value={props.ExternalLink}>
           <App_
-            initialState={transformFullStateResponseIntoState(await props.storage.getFullState())}
-            initialTutorialFinished={await props.storage.getTutorialFinished()}
+            storedState={await Sync.loadStoredStateFromStorage(props.storage)}
             storage={props.storage}
             openExternalUrl={props.openExternalUrl}
           />
@@ -404,8 +401,7 @@ export function App({apiHost}: {apiHost: string}) {
 
       setApp(
         <App_
-          initialState={transformFullStateResponseIntoState(await storage.getFullState())}
-          initialTutorialFinished={await storage.getTutorialFinished()}
+          storedState={await Sync.loadStoredStateFromStorage(storage)}
           username={username ?? "<error>"}
           storage={storage}
           server={server}
@@ -419,14 +415,21 @@ export function App({apiHost}: {apiHost: string}) {
 }
 
 export function Demo(props: {data: Communication.FullStateResponse}) {
-  return (
-    <App_
-      initialState={transformFullStateResponseIntoState(props.data)}
-      initialTutorialFinished={false}
-      storage={Storage.ignore()}
-      openExternalUrl={(url) => window.open(url, "_blank")}
-    />
-  );
+  const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
+
+  React.useEffect(() => {
+    (async () => {
+      setApp(
+        <App_
+          storedState={await Sync.loadStoredStateFromStorage(Storage.ignore(props.data))}
+          storage={Storage.ignore()}
+          openExternalUrl={(url) => window.open(url, "_blank")}
+        />,
+      );
+    })();
+  }, []);
+
+  return app;
 }
 
 export function User(props: {apiHost: string}) {

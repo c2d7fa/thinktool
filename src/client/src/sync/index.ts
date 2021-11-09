@@ -3,6 +3,9 @@ import {Communication} from "@thinktool/shared";
 import * as A from "../app";
 import * as D from "../data";
 import * as T from "../tree";
+import * as Tu from "../tutorial";
+
+import type {Storage} from "./storage";
 
 export function receiveChangedThingsFromServer(
   app: A.App,
@@ -49,8 +52,6 @@ export function receiveChangedThingsFromServer(
   return A.merge(app, {state, tree});
 }
 
-import * as Tu from "../tutorial";
-
 export type Changes = {
   deleted: string[];
   edited: {thing: string; content: Communication.Content}[];
@@ -64,13 +65,24 @@ export type Changes = {
 
 const _state = Symbol("state");
 const _tutorialFinished = Symbol("tutorialFinished");
-type StoredState = {[_state]: D.State; [_tutorialFinished]: boolean};
+export type StoredState = {[_state]: D.State; [_tutorialFinished]: boolean};
 
 export function storedStateFromApp(app: A.App): StoredState {
   return {
     [_state]: app.state,
     [_tutorialFinished]: !Tu.isActive(app.tutorialState),
   };
+}
+
+export async function loadStoredStateFromStorage(storage: Storage): Promise<StoredState> {
+  return {
+    [_state]: D.transformFullStateResponseIntoState(await storage.getFullState()),
+    [_tutorialFinished]: await storage.getTutorialFinished(),
+  };
+}
+
+export function loadAppFromStoredState(storedState: StoredState): A.App {
+  return A.from(storedState[_state], T.fromRoot(storedState[_state], "0"));
 }
 
 // Return changes that must be applied to bring the stored state from 'from' to
