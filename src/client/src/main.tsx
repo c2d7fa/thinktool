@@ -184,6 +184,8 @@ function App_({
     }
   }, []);
 
+  const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(storedState);
+
   const updateApp = useMemoWarning(
     "updateApp",
     () => {
@@ -193,11 +195,21 @@ function App_({
         updateAppWithoutSaving((app) => {
           const newApp = f(app);
 
-          // Push changes to storage or server
-          const changes = Sync.changes(Sync.storedStateFromApp(app), Sync.storedStateFromApp(newApp));
-          storageExecutionContext.pushChanges(changes);
+          // Synchronize with storage.
+          setLastSyncedState((lastSyncedState) => {
+            const nextAppState = Sync.storedStateFromApp(newApp);
 
-          // Update local app state
+            if (server && A.isDisconnected(newApp)) {
+              console.log("Won't try to push changes because we're offline.");
+              return lastSyncedState;
+            }
+
+            const changes = Sync.changes(lastSyncedState, nextAppState);
+            storageExecutionContext.pushChanges(changes);
+
+            return nextAppState;
+          });
+
           return newApp;
         });
       };
