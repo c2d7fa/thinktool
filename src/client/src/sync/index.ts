@@ -7,6 +7,9 @@ import * as Tu from "../tutorial";
 
 import type {Storage} from "./storage";
 
+import * as Dialog from "./dialog";
+export {Dialog};
+
 export function receiveChangedThingsFromServer(
   app: A.App,
   changedThings: {thing: string; data: Communication.ThingData | null | {error: unknown}}[],

@@ -4,12 +4,14 @@ import * as E from "./editing";
 import * as P from "./popup";
 import * as R from "./drag";
 import * as O from "./orphans";
+import * as Sy from "./sync";
 import {Communication} from "@thinktool/shared";
 
 import * as Tutorial from "./tutorial";
 import {GoalId} from "./goal";
 
 const _isOnline = Symbol("isOnline");
+const _syncDialog = Symbol("syncDialog");
 
 export interface App {
   state: D.State;
@@ -23,6 +25,7 @@ export interface App {
   tab: "outline" | "orphans";
   orphans: O.Orphans;
   [_isOnline]: boolean;
+  [_syncDialog]: Sy.Dialog.SyncDialog | null;
 }
 
 export type UpdateApp = (f: (app: App) => App) => void;
@@ -40,6 +43,7 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     tab: "outline",
     orphans: O.scan(O.fromState(data)),
     [_isOnline]: true,
+    [_syncDialog]: null,
   };
 }
 
@@ -180,7 +184,12 @@ export function serverDisconnected(app: App): App {
 }
 
 export function serverReconnected(app: App): App {
-  return {...app, [_isOnline]: true};
+  const syncDialog = Sy.Dialog.initialize(5, 2, 6);
+  return {...app, [_isOnline]: true, [_syncDialog]: syncDialog};
+}
+
+export function syncDialog(app: App): Sy.Dialog.SyncDialog | null {
+  return app[_syncDialog];
 }
 
 export function isDisconnected(app: App): boolean {
