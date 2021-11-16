@@ -129,6 +129,74 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
   }, [Drag.isActive(app.drag), updateApp]);
 }
 
+function useSync({
+  updateAppWithoutSaving,
+  server,
+  initialState,
+  storage,
+}: {
+  updateAppWithoutSaving: (f: (app: A.App) => A.App) => void;
+  server: ServerApi | undefined;
+  initialState: Sync.StoredState;
+  storage: Storage.Storage;
+}): {updateApp: (f: (app: A.App) => A.App) => void} {
+  React.useEffect(() => {
+    server?.onError((error) => {
+      if (error.error === "disconnected") {
+        updateAppWithoutSaving(A.serverDisconnected);
+      } else if (error.error === "error") {
+        // [TODO] Add special handling for this case!
+        console.error(error);
+        updateAppWithoutSaving(A.serverDisconnected);
+      }
+    });
+
+    if (server !== null) {
+      window.addEventListener("offline", () => {
+        updateAppWithoutSaving(A.serverDisconnected);
+      });
+
+      window.addEventListener("online", () => {
+        updateAppWithoutSaving(A.serverReconnected);
+      });
+    }
+  }, []);
+
+  const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(initialState);
+
+  const updateApp = useMemoWarning(
+    "updateApp",
+    () => {
+      const storageExecutionContext = new Storage.StorageExecutionContext(storage, window);
+
+      return (f: (app: A.App) => A.App) => {
+        updateAppWithoutSaving((app) => {
+          const newApp = f(app);
+
+          setLastSyncedState((lastSyncedState) => {
+            const nextAppState = Sync.storedStateFromApp(newApp);
+
+            if (server && A.isDisconnected(newApp)) {
+              console.log("Won't try to push changes because we're offline.");
+              return lastSyncedState;
+            }
+
+            const changes = Sync.changes(lastSyncedState, nextAppState);
+            storageExecutionContext.pushChanges(changes);
+
+            return nextAppState;
+          });
+
+          return newApp;
+        });
+      };
+    },
+    [storage],
+  );
+
+  return {updateApp};
+}
+
 function App_({
   storedState,
   username,
@@ -155,67 +223,14 @@ function App_({
 
   const changelog = ChangelogData;
 
+  const {updateApp} = useSync({initialState: storedState, server, storage, updateAppWithoutSaving});
+
   useThingUrl({
     current: T.thing(app.tree, T.root(app.tree)),
     jump(thing: string) {
       updateAppWithoutSaving(A.merge(app, {tree: T.fromRoot(app.state, thing)}));
     },
   });
-
-  React.useEffect(() => {
-    server?.onError((error) => {
-      if (error.error === "disconnected") {
-        updateAppWithoutSaving(A.serverDisconnected);
-      } else if (error.error === "error") {
-        // [TODO] Add special handling for this case!
-        console.error(error);
-        updateAppWithoutSaving(A.serverDisconnected);
-      }
-    });
-
-    if (server !== null) {
-      window.addEventListener("offline", () => {
-        updateAppWithoutSaving(A.serverDisconnected);
-      });
-
-      window.addEventListener("online", () => {
-        updateAppWithoutSaving(A.serverReconnected);
-      });
-    }
-  }, []);
-
-  const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(storedState);
-
-  const updateApp = useMemoWarning(
-    "updateApp",
-    () => {
-      const storageExecutionContext = new Storage.StorageExecutionContext(storage, window);
-
-      return (f: (app: A.App) => A.App) => {
-        updateAppWithoutSaving((app) => {
-          const newApp = f(app);
-
-          // Synchronize with storage.
-          setLastSyncedState((lastSyncedState) => {
-            const nextAppState = Sync.storedStateFromApp(newApp);
-
-            if (server && A.isDisconnected(newApp)) {
-              console.log("Won't try to push changes because we're offline.");
-              return lastSyncedState;
-            }
-
-            const changes = Sync.changes(lastSyncedState, nextAppState);
-            storageExecutionContext.pushChanges(changes);
-
-            return nextAppState;
-          });
-
-          return newApp;
-        });
-      };
-    },
-    [storage],
-  );
 
   const search = React.useMemo<Search>(() => {
     const search = new Search([]);
