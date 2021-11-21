@@ -2,8 +2,8 @@ import * as React from "react";
 
 const style = require("./icons.module.scss").default;
 
-type IconId = "home" | "find" | "jump" | "unfold" | "reddit";
-const knownIds = ["home", "find", "jump", "unfold", "reddit"];
+const knownIds = ["home", "find", "jump", "unfold", "reddit", "offline"] as const;
+type IconId = typeof knownIds[number];
 
 function fontAwesomeId(id: IconId): string {
   return {
@@ -12,11 +12,12 @@ function fontAwesomeId(id: IconId): string {
     jump: "hand-point-right",
     unfold: "stream",
     reddit: "reddit-alien",
+    offline: "power-off",
   }[id];
 }
 
 function isKnownId(id: string): id is IconId {
-  return knownIds.includes(id);
+  return knownIds.includes(id as IconId);
 }
 
 export function IconLabel(props: {icon: IconId | string; children: React.ReactNode}) {
