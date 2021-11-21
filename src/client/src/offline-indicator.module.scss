@@ -26,3 +26,22 @@
 .offline strong {
   margin-right: 0.25em;
 }
+
+@keyframes show {
+  from {
+    opacity: 0;
+    transform: translateY(1em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.offline.showing {
+  animation: show 500ms ease-in-out forwards;
+}
+
+.offline.hiding {
+  animation: show 500ms ease-in-out reverse forwards;
+}
