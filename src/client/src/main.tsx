@@ -129,6 +129,28 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
   }, [Drag.isActive(app.drag), updateApp]);
 }
 
+function useRepeatedlyCheck(f: () => Promise<"continue" | "stop">, ms: number): {start(): void} {
+  const [timeout, setTimeout] = React.useState<number | null>(null);
+  const [isRunning, setIsRunning] = React.useState(false);
+
+  function start(): void {
+    if (isRunning) return;
+    setIsRunning(true);
+    setTimeout(
+      window.setTimeout(async () => {
+        const result = await f();
+        if (result === "stop") {
+          setIsRunning(false);
+          return;
+        }
+        start();
+      }, ms),
+    );
+  }
+
+  return {start};
+}
+
 function useSync({
   updateAppWithoutSaving,
   server,
@@ -142,11 +164,26 @@ function useSync({
 }): {updateApp: (f: (app: A.App) => A.App) => void; syncCommit(): void; syncAbort(): void} {
   const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(initialState);
 
+  const resyncInterval = useRepeatedlyCheck(async () => {
+    if (server === undefined) return "stop";
+    try {
+      console.log(await server.getFullState());
+      console.log("Reconnected successfully.");
+      const remoteState = await Sync.loadStoredStateFromStorage(storage);
+      updateAppWithoutSaving((app) => A.serverReconnected(app, remoteState));
+      return "stop";
+    } catch (e) {
+      console.log("Still could not contact server.");
+      return "continue";
+    }
+  }, 2000);
+
   React.useEffect(() => {
     if (server === undefined) return;
 
     server.onError((error) => {
       if (error.error === "disconnected") {
+        resyncInterval.start();
         updateAppWithoutSaving(A.serverDisconnected);
       } else if (error.error === "error") {
         // [TODO] Add special handling for this case!
