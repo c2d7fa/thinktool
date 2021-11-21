@@ -1,19 +1,21 @@
 import * as React from "react";
 
+import * as Sync from ".";
+
 const style = require("./dialog.module.scss").default;
 
-const _deletedAmount = Symbol("deletedAmount");
-const _addedAmount = Symbol("addedAmount");
-const _updatedAmount = Symbol("updatedAmount");
+const _changes = Symbol("changes");
 
-export type SyncDialog = {[_deletedAmount]: number; [_addedAmount]: number; [_updatedAmount]: number};
+export type SyncDialog = {[_changes]: Sync.Changes};
 
-export function initialize(deleted: number, added: number, updated: number): SyncDialog {
+export function initialize(changes: Sync.Changes): SyncDialog {
   return {
-    [_deletedAmount]: deleted,
-    [_addedAmount]: added,
-    [_updatedAmount]: updated,
+    [_changes]: changes,
   };
+}
+
+export function changes(dialog: SyncDialog): Sync.Changes {
+  return dialog[_changes];
 }
 
 export function SyncDialog(props: {
@@ -21,23 +23,22 @@ export function SyncDialog(props: {
   onAbort: () => void;
   onCommit: () => void;
 }): React.ReactElement {
-  console.log({style});
-  const {onAbort: onClose, onCommit: onSync} = props;
-  const deletedAmount = props.dialog[_deletedAmount];
-  const addedAmount = props.dialog[_addedAmount];
-  const updatedAmount = props.dialog[_updatedAmount];
+  const deletedAmount = props.dialog[_changes].deleted.length;
+  const updatedAmount = props.dialog[_changes].updated.length;
+  const editedAmount = props.dialog[_changes].edited.length;
+
   return (
     <div className={style.dialog}>
       <div className={style.content}>
         <div className={style.title}>Sync</div>
         <div className={style.text}>
-          {deletedAmount} deleted, {addedAmount} added, {updatedAmount} updated
+          {deletedAmount} deleted, {updatedAmount} updated, {editedAmount} edited
         </div>
         <div className={style.buttons}>
-          <button className={style.button} onClick={onClose}>
+          <button className={style.button} onClick={props.onAbort}>
             Cancel
           </button>
-          <button className={style.button} onClick={onSync}>
+          <button className={style.button} onClick={props.onCommit}>
             Sync
           </button>
         </div>

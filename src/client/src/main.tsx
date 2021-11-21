@@ -201,15 +201,20 @@ function useSync({
   const syncCommit = React.useCallback(() => {
     if (server === undefined) return;
     updateAppWithoutSaving((app) => {
-      const changes = Sync.changes(lastSyncedState, Sync.storedStateFromApp(app));
-      storageExecutionContext.pushChanges(changes);
-      return A.dismissSyncDialog(app);
+      return A.dismissSyncDialogWithChanges(app, (changes) => {
+        storageExecutionContext.pushChanges(changes);
+        return app;
+      });
     });
   }, [updateAppWithoutSaving, lastSyncedState, setLastSyncedState]);
 
   const syncAbort = React.useCallback(() => {
     if (server === undefined) return;
-    updateAppWithoutSaving((app) => A.dismissSyncDialog(app));
+    updateAppWithoutSaving((app) =>
+      A.dismissSyncDialogWithChanges(app, (changes) => {
+        return app;
+      }),
+    );
   }, []);
 
   return {updateApp, syncCommit, syncAbort};
