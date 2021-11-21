@@ -1,10 +1,15 @@
+@use "../../../style/components";
+@use "../../../style/base";
+
 .dialog {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+
+  @include components.overlay;
+
   z-index: 9999;
   display: flex;
   justify-content: center;
@@ -12,24 +17,51 @@
 }
 
 .content {
-  max-width: 500px;
-  background: #fff;
-  border-radius: 5px;
-  padding: 20px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  max-width: 55ex;
+  padding: 2em;
+  background: #fcfcfc;
+  @include components.popup-with-shadow;
+  
+  display: flex;
+  flex-direction: column;
+  row-gap: 1em;
 }
 
-.title {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 20px;
+.content h1 {
+  @include components.ui-heading;
+  font-size: 1.2em;
+  margin: 0;
+}
+
+.content p {
+  margin: 0;
+  font-size: 0.9em;
+}
+
+.content hr {
+  border: 0;
+  border-top: 1px solid #ccc;
+  width: 100%;
+}
+
+.content .destructive {
+  color: #953;
 }
 
 .buttons {
   display: flex;
   justify-content: flex-end;
+  column-gap: 2em;
 }
 
-.button {
-  margin-left: 10px;
+.cancel {
+  @include components.button;
+  @include base.subtle-button(#808080);
+  font-size: 0.9em;
+}
+
+.sync {
+  @include components.button;
+  @include base.subtle-button(#f0a040);
+  font-size: 0.9em;
 }

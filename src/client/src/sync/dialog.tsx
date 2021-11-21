@@ -30,16 +30,27 @@ export function SyncDialog(props: {
   return (
     <div className={style.dialog}>
       <div className={style.content}>
-        <div className={style.title}>Sync</div>
-        <div className={style.text}>
-          {deletedAmount} deleted, {updatedAmount} updated, {editedAmount} edited
-        </div>
+        <h1>Reconnected</h1>
+        <p>
+          Connection to the server was re-established. Do you want to push the local state to the server, keeping
+          the local state but overriding remote changes?
+        </p>
+        <p>
+          If you choose to push the local state, it will delete{" "}
+          <strong className={deletedAmount !== 0 ? style.destructive : ""}>{deletedAmount} items</strong>, reset
+          connections of{" "}
+          <strong className={updatedAmount !== 0 ? style.destructive : ""}>{updatedAmount} items</strong>, and
+          change the content of{" "}
+          <strong className={editedAmount !== 0 ? style.destructive : ""}>{editedAmount} items</strong>. After
+          pushing, the state on the server will match the state on this client.
+        </p>
+        <hr />
         <div className={style.buttons}>
-          <button className={style.button} onClick={props.onAbort}>
-            Cancel
+          <button className={[style.button, style.cancel].join(" ")} onClick={props.onAbort}>
+            Keep Remote
           </button>
-          <button className={style.button} onClick={props.onCommit}>
-            Sync
+          <button className={[style.button, style.sync].join(" ")} onClick={props.onCommit}>
+            Push Local
           </button>
         </div>
       </div>
