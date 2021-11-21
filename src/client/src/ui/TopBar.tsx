@@ -47,8 +47,7 @@ export function TopBar(props: {
           Thinktool
         </ExternalLink>
         <button onClick={() => props.onToggleToolbar()}>
-          <i className="icon fas fa-bars" />
-          {props.isToolbarShown ? "Hide" : "Show"} Menu
+          <Icons.IconLabel icon="bars">{props.isToolbarShown ? "Hide" : "Show"} Menu</Icons.IconLabel>
         </button>
       </div>
       <div className="middle">
@@ -58,10 +57,10 @@ export function TopBar(props: {
         {props.login && (
           <div id="current-user">
             <ExternalLink className="username" href="/user.html">
-              {props.login.username}
+              <Icons.IconLabel icon="user">{props.login.username}</Icons.IconLabel>
             </ExternalLink>
             <a className="log-out" href={props.login.logOutUrl}>
-              Log Out
+              <Icons.IconLabel icon="sign-out-alt">Log Out</Icons.IconLabel>
             </a>
           </div>
         )}
