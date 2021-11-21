@@ -159,8 +159,11 @@ function useSync({
       updateAppWithoutSaving(A.serverDisconnected);
     });
 
-    window.addEventListener("online", () => {
-      updateAppWithoutSaving(A.serverReconnected);
+    window.addEventListener("online", async () => {
+      const remoteState = await Sync.loadStoredStateFromStorage(storage);
+      updateAppWithoutSaving((app) => {
+        return A.serverReconnected(app, remoteState);
+      });
     });
   }, []);
 

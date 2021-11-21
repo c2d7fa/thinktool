@@ -12,7 +12,6 @@ import {GoalId} from "./goal";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
-const _lastSyncedState = Symbol("lastSyncedState");
 
 export interface App {
   state: D.State;
@@ -27,7 +26,6 @@ export interface App {
   orphans: O.Orphans;
   [_isOnline]: boolean;
   [_syncDialog]: Sy.Dialog.SyncDialog | null;
-  [_lastSyncedState]: Sy.StoredState | null;
 }
 
 export type UpdateApp = (f: (app: App) => App) => void;
@@ -182,17 +180,13 @@ export function replace(app: App, node: T.NodeRef, thing: string): App {
 }
 
 export function serverDisconnected(app: App): App {
-  return {...app, [_isOnline]: false, [_lastSyncedState]: Sy.storedStateFromApp(app)};
+  return {...app, [_isOnline]: false};
 }
 
-export function serverReconnected(app: App): App {
-  if (app[_lastSyncedState] === null) {
-    console.warn("Reconnected to server, but no last synced state!");
-    return app;
-  }
-  const changes = Sy.changes(app[_lastSyncedState]!, Sy.storedStateFromApp(app));
+export function serverReconnected(app: App, remoteState: Sy.StoredState): App {
+  const changes = Sy.changes(remoteState, Sy.storedStateFromApp(app));
   const syncDialog = Sy.Dialog.initialize(changes);
-  return {...app, [_isOnline]: true, [_syncDialog]: syncDialog, [_lastSyncedState]: null};
+  return {...app, [_isOnline]: true, [_syncDialog]: syncDialog};
 }
 
 export function syncDialog(app: App): Sy.Dialog.SyncDialog | null {
