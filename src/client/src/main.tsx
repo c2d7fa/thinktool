@@ -387,14 +387,12 @@ function App_({
 
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
-      {<OfflineIndicator isDisconnected={A.isDisconnected(app)} />}
-      {A.syncDialog(app) && (
-        <Sync.Dialog.SyncDialog
-          dialog={A.syncDialog(app)!}
-          onAbort={() => syncAbort()}
-          onCommit={() => syncCommit()}
-        />
-      )}
+      <OfflineIndicator isDisconnected={A.isDisconnected(app)} />
+      <Sync.Dialog.SyncDialog
+        dialog={A.syncDialog(app)}
+        onAbort={() => syncAbort()}
+        onCommit={() => syncCommit()}
+      />
       <div className="app-header">
         <TopBar {...topBarProps} />
         {isToolbarShown ? (

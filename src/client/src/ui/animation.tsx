@@ -54,3 +54,17 @@ export function useAnimation(durationMs: number): {
     isHiding,
   };
 }
+
+export function useSticky(f: () => React.ReactNode | null, dependencies: any[]): React.ReactNode | null {
+  const [node, setNode] = React.useState<React.ReactNode | null>(null);
+
+  React.useEffect(() => {
+    setNode((node) => {
+      const newNode = f();
+      if (newNode === null) return node;
+      return newNode;
+    });
+  }, dependencies);
+
+  return node;
+}

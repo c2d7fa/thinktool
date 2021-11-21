@@ -16,6 +16,23 @@
   align-items: center;
 }
 
+@keyframes show-dialog {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.showing .dialog {
+  animation: show-dialog 500ms ease-in-out forwards;
+}
+
+.hiding .dialog {
+  animation: show-dialog 500ms ease-in-out reverse forwards;
+}
+
 .content {
   max-width: 55ex;
   padding: 2em;
@@ -25,6 +42,23 @@
   display: flex;
   flex-direction: column;
   row-gap: 1em;
+}
+
+@keyframes show-content {
+  from {
+    transform: translateY(1em);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.showing .content {
+  animation: show-content 500ms ease-in-out forwards;
+}
+
+.hiding .content {
+  animation: show-content 500ms ease-in-out reverse forwards;
 }
 
 .content h1 {
