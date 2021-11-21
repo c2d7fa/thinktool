@@ -483,6 +483,10 @@
     {
       "date": "2021-11-06",
       "title": "Added indicator when connection to server is lost."
+    },
+    {
+      "date": "2021-11-21",
+      "title": "When coming back online, the app will now automatically try to reconnect to the server and let you push your changes."
     }
   ]
 }
