@@ -85,7 +85,9 @@ export async function loadStoredStateFromStorage(storage: Storage): Promise<Stor
 }
 
 export function loadAppFromStoredState(storedState: StoredState): A.App {
-  return A.from(storedState[_state], T.fromRoot(storedState[_state], "0"));
+  return A.from(storedState[_state], T.fromRoot(storedState[_state], "0"), {
+    tutorialFinished: storedState[_tutorialFinished],
+  });
 }
 
 // Return changes that must be applied to bring the stored state from 'from' to
