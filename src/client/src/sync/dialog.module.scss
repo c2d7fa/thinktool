@@ -1,0 +1,101 @@
+@use "../../../style/components";
+@use "../../../style/base";
+
+.dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  @include components.overlay;
+
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@keyframes show-dialog {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.showing .dialog {
+  animation: show-dialog 500ms ease-in-out forwards;
+}
+
+.hiding .dialog {
+  animation: show-dialog 500ms ease-in-out reverse forwards;
+}
+
+.content {
+  max-width: 55ex;
+  padding: 2em;
+  background: #fcfcfc;
+  @include components.popup-with-shadow;
+  
+  display: flex;
+  flex-direction: column;
+  row-gap: 1em;
+}
+
+@keyframes show-content {
+  from {
+    transform: translateY(1em);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.showing .content {
+  animation: show-content 500ms ease-in-out forwards;
+}
+
+.hiding .content {
+  animation: show-content 500ms ease-in-out reverse forwards;
+}
+
+.content h1 {
+  @include components.ui-heading;
+  font-size: 1.2em;
+  margin: 0;
+}
+
+.content p {
+  margin: 0;
+  font-size: 0.9em;
+}
+
+.content hr {
+  border: 0;
+  border-top: 1px solid #ccc;
+  width: 100%;
+}
+
+.content .destructive {
+  color: #953;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  column-gap: 2em;
+}
+
+.cancel {
+  @include components.button;
+  @include base.subtle-button(#808080);
+  font-size: 0.9em;
+}
+
+.sync {
+  @include components.button;
+  @include base.subtle-button(#f0a040);
+  font-size: 0.9em;
+}

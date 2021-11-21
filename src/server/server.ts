@@ -260,13 +260,29 @@ app.post("/state/things", requireSession, requireClientId, async (req, res) => {
   const data: unknown = req.body;
   if (!isValid($updateContent, data)) return res.sendStatus(400);
 
+  // If we just updated things in the order received, we would risk referring to
+  // a child that didn't yet exist. So first we add any new things, then we set
+  // their children.
+  //
+  // This is obviously inefficient, but I can't be bothered to improve it.
+
+  for (const thing of data) {
+    if (!(await DB.getThingData(req.user!, thing.name))) {
+      await DB.updateThing({
+        userId: req.user!,
+        thing: thing.name,
+        content: thing.content,
+        children: [],
+      });
+    }
+  }
+
   for (const thing of data) {
     await DB.updateThing({
       userId: req.user!,
       thing: thing.name,
       content: thing.content,
       children: thing.children,
-      isPage: false, // [TODO] Unused. We can just remove this.
     });
   }
 

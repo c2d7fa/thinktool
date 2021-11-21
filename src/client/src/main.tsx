@@ -4,7 +4,6 @@ import {Communication} from "@thinktool/shared";
 
 import * as ChangelogData from "./changes.json";
 
-import {State, transformFullStateResponseIntoState} from "./data";
 import {extractThingFromURL, useThingUrl} from "./url";
 
 import * as T from "./tree";
@@ -130,16 +129,145 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
   }, [Drag.isActive(app.drag), updateApp]);
 }
 
-function App_({
+function useRepeatedlyCheck(f: () => Promise<"continue" | "stop">, ms: number): {start(): void} {
+  const [timeout, setTimeout] = React.useState<number | null>(null);
+  const [isRunning, setIsRunning] = React.useState(false);
+
+  function start(): void {
+    if (isRunning) return;
+    setIsRunning(true);
+    setTimeout(
+      window.setTimeout(async () => {
+        const result = await f();
+        if (result === "stop") {
+          setIsRunning(false);
+          return;
+        }
+        start();
+      }, ms),
+    );
+  }
+
+  return {start};
+}
+
+function useSync({
+  updateAppWithoutSaving,
+  server,
   initialState,
-  initialTutorialFinished,
+  storage,
+}: {
+  updateAppWithoutSaving: (f: (app: A.App) => A.App) => void;
+  server: ServerApi | undefined;
+  initialState: Sync.StoredState;
+  storage: Storage.Storage;
+}): {updateApp: (f: (app: A.App) => A.App) => void; syncCommit(): void; syncAbort(): void} {
+  const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(initialState);
+
+  const resyncInterval = useRepeatedlyCheck(async () => {
+    if (server === undefined) return "stop";
+    try {
+      console.log(await server.getFullState());
+      console.log("Reconnected successfully.");
+      const remoteState = await Sync.loadStoredStateFromStorage(storage);
+      updateAppWithoutSaving((app) => A.serverReconnected(app, remoteState));
+      return "stop";
+    } catch (e) {
+      console.log("Still could not contact server.");
+      return "continue";
+    }
+  }, 2000);
+
+  React.useEffect(() => {
+    if (server === undefined) return;
+
+    server.onError((error) => {
+      if (error.error === "disconnected") {
+        resyncInterval.start();
+        updateAppWithoutSaving(A.serverDisconnected);
+      } else if (error.error === "error") {
+        // [TODO] Add special handling for this case!
+        console.error(error);
+        updateAppWithoutSaving(A.serverDisconnected);
+      }
+    });
+
+    window.addEventListener("offline", () => {
+      updateAppWithoutSaving(A.serverDisconnected);
+    });
+
+    window.addEventListener("online", async () => {
+      const remoteState = await Sync.loadStoredStateFromStorage(storage);
+      updateAppWithoutSaving((app) => {
+        return A.serverReconnected(app, remoteState);
+      });
+    });
+  }, []);
+
+  const storageExecutionContext = useMemoWarning(
+    "storageExecutionContext",
+    () => new Storage.StorageExecutionContext(storage, window),
+    [storage],
+  );
+
+  const updateApp = useMemoWarning(
+    "updateApp",
+    () => {
+      return (f: (app: A.App) => A.App) => {
+        updateAppWithoutSaving((app) => {
+          const newApp = f(app);
+
+          setLastSyncedState((lastSyncedState) => {
+            const nextAppState = Sync.storedStateFromApp(newApp);
+
+            if (server && A.isDisconnected(newApp)) {
+              console.log("Won't try to push changes because we're offline.");
+              return lastSyncedState;
+            }
+
+            const changes = Sync.changes(lastSyncedState, nextAppState);
+            storageExecutionContext.pushChanges(changes);
+
+            return nextAppState;
+          });
+
+          return newApp;
+        });
+      };
+    },
+    [storage],
+  );
+
+  const syncCommit = React.useCallback(() => {
+    if (server === undefined) return;
+    updateAppWithoutSaving((app) => {
+      return A.dismissSyncDialogWithChanges(app, (changes) => {
+        storageExecutionContext.pushChanges(changes);
+        return app;
+      });
+    });
+  }, [updateAppWithoutSaving, lastSyncedState, setLastSyncedState]);
+
+  const syncAbort = React.useCallback(() => {
+    if (server === undefined) return;
+    updateAppWithoutSaving((app) =>
+      A.dismissSyncDialogWithChanges(app, (changes) => {
+        return app;
+      }),
+    );
+  }, []);
+
+  return {updateApp, syncCommit, syncAbort};
+}
+
+function App_({
+  storedState,
   username,
   storage,
   server,
   openExternalUrl,
 }: {
-  initialState: State;
-  initialTutorialFinished: boolean;
+  storedState: Sync.StoredState;
   username?: string;
   storage: Storage.Storage;
   server?: ServerApi;
@@ -149,13 +277,21 @@ function App_({
 
   const receiver = React.useMemo(() => createReceiver<Message>(), []);
 
-  const [app, updateAppWithoutSaving] = React.useState<A.App>(() =>
-    A.from(initialState, T.fromRoot(initialState, extractThingFromURL()), {
-      tutorialFinished: isDevelopment || initialTutorialFinished,
-    }),
-  );
+  const [app, updateAppWithoutSaving] = React.useState<A.App>(() => {
+    let result = Sync.loadAppFromStoredState(storedState);
+    result = A.jump(result, extractThingFromURL());
+    if (isDevelopment) result = A.merge(result, {tutorialState: Tutorial.initialize(true)});
+    return result;
+  });
 
   const changelog = ChangelogData;
+
+  const {updateApp, syncCommit, syncAbort} = useSync({
+    initialState: storedState,
+    server,
+    storage,
+    updateAppWithoutSaving,
+  });
 
   useThingUrl({
     current: T.thing(app.tree, T.root(app.tree)),
@@ -163,49 +299,6 @@ function App_({
       updateAppWithoutSaving(A.merge(app, {tree: T.fromRoot(app.state, thing)}));
     },
   });
-
-  React.useEffect(() => {
-    server?.onError((error) => {
-      if (error.error === "disconnected") {
-        updateAppWithoutSaving(A.serverDisconnected);
-      } else if (error.error === "error") {
-        // [TODO] Add special handling for this case!
-        console.error(error);
-        updateAppWithoutSaving(A.serverDisconnected);
-      }
-    });
-
-    if (server !== null) {
-      window.addEventListener("offline", () => {
-        updateAppWithoutSaving(A.serverDisconnected);
-      });
-
-      window.addEventListener("online", () => {
-        updateAppWithoutSaving(A.serverReconnected);
-      });
-    }
-  }, []);
-
-  const updateApp = useMemoWarning(
-    "updateApp",
-    () => {
-      const storageExecutionContext = new Storage.StorageExecutionContext(storage, window);
-
-      return (f: (app: A.App) => A.App) => {
-        updateAppWithoutSaving((app) => {
-          const newApp = f(app);
-
-          // Push changes to storage or server
-          const changes = Storage.Diff.changes(app, newApp);
-          storageExecutionContext.pushChanges(changes);
-
-          // Update local app state
-          return newApp;
-        });
-      };
-    },
-    [storage],
-  );
 
   const search = React.useMemo<Search>(() => {
     const search = new Search([]);
@@ -294,7 +387,12 @@ function App_({
 
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
-      {<OfflineIndicator isDisconnected={A.isDisconnected(app)} />}
+      <OfflineIndicator isDisconnected={A.isDisconnected(app)} />
+      <Sync.Dialog.SyncDialog
+        dialog={A.syncDialog(app)}
+        onAbort={() => syncAbort()}
+        onCommit={() => syncCommit()}
+      />
       <div className="app-header">
         <TopBar {...topBarProps} />
         {isToolbarShown ? (
@@ -374,8 +472,7 @@ export function LocalApp(props: {
       setApp(
         <ExternalLinkProvider value={props.ExternalLink}>
           <App_
-            initialState={transformFullStateResponseIntoState(await props.storage.getFullState())}
-            initialTutorialFinished={await props.storage.getTutorialFinished()}
+            storedState={await Sync.loadStoredStateFromStorage(props.storage)}
             storage={props.storage}
             openExternalUrl={props.openExternalUrl}
           />
@@ -404,8 +501,7 @@ export function App({apiHost}: {apiHost: string}) {
 
       setApp(
         <App_
-          initialState={transformFullStateResponseIntoState(await storage.getFullState())}
-          initialTutorialFinished={await storage.getTutorialFinished()}
+          storedState={await Sync.loadStoredStateFromStorage(storage)}
           username={username ?? "<error>"}
           storage={storage}
           server={server}
@@ -419,14 +515,21 @@ export function App({apiHost}: {apiHost: string}) {
 }
 
 export function Demo(props: {data: Communication.FullStateResponse}) {
-  return (
-    <App_
-      initialState={transformFullStateResponseIntoState(props.data)}
-      initialTutorialFinished={false}
-      storage={Storage.ignore()}
-      openExternalUrl={(url) => window.open(url, "_blank")}
-    />
-  );
+  const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
+
+  React.useEffect(() => {
+    (async () => {
+      setApp(
+        <App_
+          storedState={await Sync.loadStoredStateFromStorage(Storage.ignore(props.data))}
+          storage={Storage.ignore()}
+          openExternalUrl={(url) => window.open(url, "_blank")}
+        />,
+      );
+    })();
+  }, []);
+
+  return app;
 }
 
 export function User(props: {apiHost: string}) {

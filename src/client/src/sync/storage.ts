@@ -1,8 +1,8 @@
 import {Communication} from "@thinktool/shared";
 import {ServerApi} from "./server-api";
-import {Changes} from "./diff";
-import {Content} from "../data";
-export * as Diff from "./diff";
+import {Changes} from "./index";
+import {Content, State} from "../data";
+import {FullStateResponse} from "@thinktool/shared/dist/communication";
 
 export interface Storage {
   getFullState(): Promise<Communication.FullStateResponse>;
@@ -29,9 +29,9 @@ export function server(server: ServerApi): Storage {
 }
 
 // Don't store anything
-export function ignore(): Storage {
+export function ignore(data?: FullStateResponse): Storage {
   return {
-    getFullState: async () => ({things: []}),
+    getFullState: async () => data ?? {things: []},
     async setContent(thing: string, content: Communication.Content) {},
     async deleteThing(thing: string) {},
     async updateThings(things: any) {},
