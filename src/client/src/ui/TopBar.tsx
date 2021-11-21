@@ -6,6 +6,8 @@ import {ServerApi} from "../sync/server-api";
 import {Send} from "../messages";
 import {App, UpdateApp} from "../app";
 
+import * as Icons from "./icons";
+
 export function useTopBarProps(args: {
   app: App;
   send: Send;

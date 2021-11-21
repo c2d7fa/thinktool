@@ -5,6 +5,7 @@ import {App} from "../app";
 import * as Ac from "../actions";
 import * as Sh from "../shortcuts";
 import * as Tu from "../tutorial";
+import * as Ic from "./icons";
 
 export type State = {
   groups: {
@@ -27,9 +28,6 @@ const ToolbarButton = React.memo(
     button: State["groups"][number]["actions"][number];
   }) {
     const shortcut = Sh.format(Ac.shortcut(props.button.action));
-
-    const iconClasses =
-      props.button.icon === "reddit" ? "fab fa-fw fa-reddit-alien" : `fas fa-fw fa-${props.button.icon}`;
 
     return (
       <button
@@ -66,8 +64,7 @@ const ToolbarButton = React.memo(
         title={props.button.description + (shortcut === "" ? "" : ` [${shortcut}]`)}
         disabled={!props.button.isEnabled}
       >
-        <span className={`icon ${iconClasses}`}></span>
-        {props.button.label}
+        <Ic.IconLabel icon={props.button.icon}>{props.button.label}</Ic.IconLabel>
       </button>
     );
   },
@@ -104,11 +101,11 @@ const ToolbarGroup = React.memo(
 export function toolbar(app: App): State {
   const knownActions = {
     "home": {description: "Jump back to the default item.", icon: "home", label: "Home"},
-    "find": {description: "Search for a specific item by its content.", icon: "search", label: "Find"},
+    "find": {description: "Search for a specific item by its content.", icon: "find", label: "Find"},
     "zoom": {
       description:
         "Jump to the currently selected item. To select an item, just click somewhere inside that item's text.",
-      icon: "hand-point-right",
+      icon: "jump",
       label: "Jump",
     },
     "new": {
@@ -159,7 +156,7 @@ export function toolbar(app: App): State {
     "forum": {description: "Open the subreddit.", icon: "reddit", label: "Forum"},
     "tutorial": {description: "Go through the tutorial again.", icon: "info", label: "Tutorial"},
     "changelog": {description: "Show list of updates to Thinktool.", icon: "list", label: "Updates"},
-    "unfold": {description: "Recursively show all children of selected item.", icon: "stream", label: "Unfold"},
+    "unfold": {description: "Recursively show all children of selected item.", icon: "unfold", label: "Unfold"},
     "view-outline": {description: "Switch to the outline view", icon: "list-alt", label: "Outline"},
     "view-orphans": {
       description: "Switch to the inbox view, which shows all items that aren't part of the outline",
