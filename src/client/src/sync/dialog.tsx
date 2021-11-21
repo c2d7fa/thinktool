@@ -2,7 +2,6 @@ import * as React from "react";
 
 const style = require("./dialog.module.scss").default;
 
-const _isShown = Symbol("isShown");
 const _deletedAmount = Symbol("deletedAmount");
 const _addedAmount = Symbol("addedAmount");
 const _updatedAmount = Symbol("updatedAmount");

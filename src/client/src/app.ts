@@ -192,6 +192,10 @@ export function syncDialog(app: App): Sy.Dialog.SyncDialog | null {
   return app[_syncDialog];
 }
 
+export function dismissSyncDialog(app: App): App {
+  return {...app, [_syncDialog]: null};
+}
+
 export function isDisconnected(app: App): boolean {
   return !app[_isOnline];
 }

@@ -139,9 +139,13 @@ function useSync({
   server: ServerApi | undefined;
   initialState: Sync.StoredState;
   storage: Storage.Storage;
-}): {updateApp: (f: (app: A.App) => A.App) => void} {
+}): {updateApp: (f: (app: A.App) => A.App) => void; syncCommit(): void; syncAbort(): void} {
+  const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(initialState);
+
   React.useEffect(() => {
-    server?.onError((error) => {
+    if (server === undefined) return;
+
+    server.onError((error) => {
       if (error.error === "disconnected") {
         updateAppWithoutSaving(A.serverDisconnected);
       } else if (error.error === "error") {
@@ -151,24 +155,24 @@ function useSync({
       }
     });
 
-    if (server !== null) {
-      window.addEventListener("offline", () => {
-        updateAppWithoutSaving(A.serverDisconnected);
-      });
+    window.addEventListener("offline", () => {
+      updateAppWithoutSaving(A.serverDisconnected);
+    });
 
-      window.addEventListener("online", () => {
-        updateAppWithoutSaving(A.serverReconnected);
-      });
-    }
+    window.addEventListener("online", () => {
+      updateAppWithoutSaving(A.serverReconnected);
+    });
   }, []);
 
-  const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(initialState);
+  const storageExecutionContext = useMemoWarning(
+    "storageExecutionContext",
+    () => new Storage.StorageExecutionContext(storage, window),
+    [storage],
+  );
 
   const updateApp = useMemoWarning(
     "updateApp",
     () => {
-      const storageExecutionContext = new Storage.StorageExecutionContext(storage, window);
-
       return (f: (app: A.App) => A.App) => {
         updateAppWithoutSaving((app) => {
           const newApp = f(app);
@@ -194,7 +198,21 @@ function useSync({
     [storage],
   );
 
-  return {updateApp};
+  const syncCommit = React.useCallback(() => {
+    if (server === undefined) return;
+    updateAppWithoutSaving((app) => {
+      const changes = Sync.changes(lastSyncedState, Sync.storedStateFromApp(app));
+      storageExecutionContext.pushChanges(changes);
+      return A.dismissSyncDialog(app);
+    });
+  }, [updateAppWithoutSaving, lastSyncedState, setLastSyncedState]);
+
+  const syncAbort = React.useCallback(() => {
+    if (server === undefined) return;
+    updateAppWithoutSaving((app) => A.dismissSyncDialog(app));
+  }, []);
+
+  return {updateApp, syncCommit, syncAbort};
 }
 
 function App_({
@@ -223,7 +241,12 @@ function App_({
 
   const changelog = ChangelogData;
 
-  const {updateApp} = useSync({initialState: storedState, server, storage, updateAppWithoutSaving});
+  const {updateApp, syncCommit, syncAbort} = useSync({
+    initialState: storedState,
+    server,
+    storage,
+    updateAppWithoutSaving,
+  });
 
   useThingUrl({
     current: T.thing(app.tree, T.root(app.tree)),
@@ -323,8 +346,8 @@ function App_({
       {A.syncDialog(app) && (
         <Sync.Dialog.SyncDialog
           dialog={A.syncDialog(app)!}
-          onAbort={() => console.log("abort")}
-          onCommit={() => console.log("commit")}
+          onAbort={() => syncAbort()}
+          onCommit={() => syncCommit()}
         />
       )}
       <div className="app-header">
