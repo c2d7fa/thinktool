@@ -160,7 +160,7 @@ export function toolbar(app: App): State {
     "view-outline": {description: "Switch to the outline view", icon: "list-alt", label: "Outline"},
     "view-orphans": {
       description: "Switch to the inbox view, which shows all items that aren't part of the outline",
-      icon: "sticky-note",
+      icon: "inbox",
       label: "Inbox",
     },
   };
