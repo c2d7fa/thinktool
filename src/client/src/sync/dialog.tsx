@@ -2,7 +2,7 @@ import * as React from "react";
 
 import * as Sync from ".";
 
-import {useAnimation, useSticky} from "../ui/animation";
+import {Animated, useSticky} from "../ui/animation";
 const style = require("./dialog.module.scss").default;
 
 const _local = Symbol("local");
@@ -71,14 +71,9 @@ export function SyncDialog(props: {dialog: SyncDialog | null; onSelect(option: "
     );
   }, [props.dialog, props.onSelect]);
 
-  const animation = useAnimation(500);
-
-  if (props.dialog === null) animation.setHidden();
-  else animation.setShown();
-
-  if (animation.isHidden()) return null;
-
-  const animationClass = animation.isShowing() ? style.showing : animation.isHiding() ? style.hiding : "";
-
-  return <div className={[style.container, animationClass].join(" ")}>{inner}</div>;
+  return (
+    <Animated durationMs={500} isHidden={props.dialog === null} classes={style}>
+      <div className={style.container}>{inner}</div>
+    </Animated>
+  );
 }
