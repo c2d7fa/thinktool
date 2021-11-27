@@ -258,21 +258,26 @@ export function otherParents(state: State, child: string, parent?: string): stri
 export function transformFullStateResponseIntoState(response: FullStateResponse): State {
   if (response.things.length === 0) return empty;
 
-  let state: State = empty;
+  // Re-initializing empty state so we can mutate it in this function for
+  // performance reasons.
+  let state: State = {
+    _things: {"0": {content: [""], children: [], parents: []}},
+    _connections: {},
+    _links: BinaryRelation<string, string>(),
+  };
 
   for (const thing of response.things) {
-    if (!exists(state, thing.name)) {
-      state._things[thing.name] = {children: [], content: [], parents: []};
-    }
+    if (!state._things[thing.name]) state._things[thing.name] = {children: [], content: [], parents: []};
     state._things[thing.name]!.content = [];
     state = setContent(state, thing.name, thing.content);
     for (const connection of thing.children) {
       state._connections[connection.name] = {parent: thing.name, child: connection.child};
-      if (state._things[connection.child] === undefined) {
+      if (!state._things[connection.child])
         state._things[connection.child] = {children: [], content: [], parents: []};
-      }
-      state._things[connection.child]!.parents.push({connectionId: connection.name});
-      state._things[thing.name]!.children.push({connectionId: connection.name});
+      if (!state._things[connection.child]!.parents.map((p) => p.connectionId).includes(connection.name))
+        state._things[connection.child]!.parents.push({connectionId: connection.name});
+      if (!state._things[thing.name]!.children.map((p) => p.connectionId).includes(connection.name))
+        state._things[thing.name]!.children.push({connectionId: connection.name});
     }
   }
 

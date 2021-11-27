@@ -38,10 +38,10 @@
   }
 }
 
-.offline.showing {
+.showing .offline {
   animation: show 500ms ease-in-out forwards;
 }
 
-.offline.hiding {
+.hiding .offline {
   animation: show 500ms ease-in-out reverse forwards;
 }

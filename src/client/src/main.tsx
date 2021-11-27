@@ -130,23 +130,20 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
 }
 
 function useRepeatedlyCheck(f: () => Promise<"continue" | "stop">, ms: number): {start(): void} {
-  const [timeout, setTimeout] = React.useState<number | null>(null);
-  const [isRunning, setIsRunning] = React.useState(false);
+  const timeoutRef = React.useRef<number | null>(null);
+  const isRunningRef = React.useRef(false);
 
-  function start(): void {
-    if (isRunning) return;
-    setIsRunning(true);
-    setTimeout(
-      window.setTimeout(async () => {
-        const result = await f();
-        if (result === "stop") {
-          setIsRunning(false);
-          return;
-        }
+  const start = React.useCallback(() => {
+    if (isRunningRef.current) return;
+    isRunningRef.current = true;
+    timeoutRef.current = window.setTimeout(async () => {
+      const result = await f();
+      isRunningRef.current = false;
+      if (result === "continue") {
         start();
-      }, ms),
-    );
-  }
+      }
+    }, ms);
+  }, []);
 
   return {start};
 }
@@ -161,15 +158,14 @@ function useSync({
   server: ServerApi | undefined;
   initialState: Sync.StoredState;
   storage: Storage.Storage;
-}): {updateApp: (f: (app: A.App) => A.App) => void; syncCommit(): void; syncAbort(): void} {
+}): {updateApp: (f: (app: A.App) => A.App) => void} {
   const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(initialState);
 
   const resyncInterval = useRepeatedlyCheck(async () => {
     if (server === undefined) return "stop";
     try {
-      console.log(await server.getFullState());
-      console.log("Reconnected successfully.");
       const remoteState = await Sync.loadStoredStateFromStorage(storage);
+      console.log("Reconnected successfully.");
       updateAppWithoutSaving((app) => A.serverReconnected(app, remoteState));
       return "stop";
     } catch (e) {
@@ -198,6 +194,7 @@ function useSync({
 
     window.addEventListener("online", async () => {
       const remoteState = await Sync.loadStoredStateFromStorage(storage);
+      setLastSyncedState(remoteState);
       updateAppWithoutSaving((app) => {
         return A.serverReconnected(app, remoteState);
       });
@@ -238,26 +235,7 @@ function useSync({
     [storage],
   );
 
-  const syncCommit = React.useCallback(() => {
-    if (server === undefined) return;
-    updateAppWithoutSaving((app) => {
-      return A.dismissSyncDialogWithChanges(app, (changes) => {
-        storageExecutionContext.pushChanges(changes);
-        return app;
-      });
-    });
-  }, [updateAppWithoutSaving, lastSyncedState, setLastSyncedState]);
-
-  const syncAbort = React.useCallback(() => {
-    if (server === undefined) return;
-    updateAppWithoutSaving((app) =>
-      A.dismissSyncDialogWithChanges(app, (changes) => {
-        return app;
-      }),
-    );
-  }, []);
-
-  return {updateApp, syncCommit, syncAbort};
+  return {updateApp};
 }
 
 function App_({
@@ -286,7 +264,7 @@ function App_({
 
   const changelog = ChangelogData;
 
-  const {updateApp, syncCommit, syncAbort} = useSync({
+  const {updateApp} = useSync({
     initialState: storedState,
     server,
     storage,
@@ -390,8 +368,7 @@ function App_({
       <OfflineIndicator isDisconnected={A.isDisconnected(app)} />
       <Sync.Dialog.SyncDialog
         dialog={A.syncDialog(app)}
-        onAbort={() => syncAbort()}
-        onCommit={() => syncCommit()}
+        onSelect={(option) => updateApp((app) => A.syncDialogSelect(app, option))}
       />
       <div className="app-header">
         <TopBar {...topBarProps} />

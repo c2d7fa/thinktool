@@ -68,3 +68,25 @@ export function useSticky(f: () => React.ReactNode | null, dependencies: any[]):
 
   return node;
 }
+
+export function Animated(props: {
+  children: React.ReactNode;
+  durationMs: number;
+  isHidden: boolean;
+  classes: {showing: string; hiding: string};
+}) {
+  const animation = useAnimation(props.durationMs);
+
+  if (props.isHidden) animation.setHidden();
+  else animation.setShown();
+
+  if (animation.isHidden()) return null;
+
+  const animationClass = animation.isShowing()
+    ? props.classes.showing
+    : animation.isHiding()
+    ? props.classes.hiding
+    : "";
+
+  return <div className={animationClass}>{props.children}</div>;
+}

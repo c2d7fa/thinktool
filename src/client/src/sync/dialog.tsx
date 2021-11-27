@@ -2,30 +2,47 @@ import * as React from "react";
 
 import * as Sync from ".";
 
-import {useAnimation, useSticky} from "../ui/animation";
+import {Animated, useSticky} from "../ui/animation";
 const style = require("./dialog.module.scss").default;
 
-const _changes = Symbol("changes");
+const _local = Symbol("local");
+const _remote = Symbol("remote");
 
-export type SyncDialog = {[_changes]: Sync.Changes};
+export type SyncDialog = {[_local]: Sync.StoredState; [_remote]: Sync.StoredState};
 
-export function initialize(changes: Sync.Changes): SyncDialog {
+export function initialize({local, remote}: {local: Sync.StoredState; remote: Sync.StoredState}): SyncDialog {
   return {
-    [_changes]: changes,
+    [_local]: local,
+    [_remote]: remote,
   };
 }
 
-export function changes(dialog: SyncDialog): Sync.Changes {
-  return dialog[_changes];
+function summary(dialog: SyncDialog): {deleted: number; updated: number; edited: number} {
+  const local = dialog[_local];
+  const remote = dialog[_remote];
+
+  const changes = Sync.changes(remote, local);
+
+  return {
+    deleted: changes.deleted.length,
+    updated: changes.updated.length,
+    edited: changes.edited.length,
+  };
 }
 
-export function SyncDialog(props: {dialog: SyncDialog | null; onAbort: () => void; onCommit: () => void}) {
+export function storedStateAfter(dialog: SyncDialog, option: "commit" | "abort"): Sync.StoredState {
+  return option === "commit" ? dialog[_local] : dialog[_remote];
+}
+
+export function SyncDialog(props: {dialog: SyncDialog | null; onSelect(option: "commit" | "abort"): void}) {
   const inner = useSticky(() => {
     if (props.dialog === null) return null;
 
-    const deletedAmount = props.dialog[_changes].deleted.length;
-    const updatedAmount = props.dialog[_changes].updated.length;
-    const editedAmount = props.dialog[_changes].edited.length;
+    const {deleted, updated, edited} = summary(props.dialog);
+
+    function Changes(props: {amount: number}) {
+      return <strong className={props.amount !== 0 ? style.destructive : ""}>{props.amount} items</strong>;
+    }
 
     return (
       <div className={style.dialog}>
@@ -36,36 +53,27 @@ export function SyncDialog(props: {dialog: SyncDialog | null; onAbort: () => voi
             the local state but overriding remote changes?
           </p>
           <p>
-            If you choose to push the local state, it will delete{" "}
-            <strong className={deletedAmount !== 0 ? style.destructive : ""}>{deletedAmount} items</strong>, reset
-            connections of{" "}
-            <strong className={updatedAmount !== 0 ? style.destructive : ""}>{updatedAmount} items</strong>, and
-            change the content of{" "}
-            <strong className={editedAmount !== 0 ? style.destructive : ""}>{editedAmount} items</strong>. After
-            pushing, the state on the server will match the state on this client.
+            If you choose to push the local state, it will delete <Changes amount={deleted} />, reset connections
+            of <Changes amount={updated} />, and change the content of <Changes amount={edited} />. After pushing,
+            the state on the server will match the state on this client.
           </p>
           <hr />
           <div className={style.buttons}>
-            <button className={[style.button, style.cancel].join(" ")} onClick={props.onAbort}>
+            <button className={[style.button, style.cancel].join(" ")} onClick={() => props.onSelect("abort")}>
               Keep Remote
             </button>
-            <button className={[style.button, style.sync].join(" ")} onClick={props.onCommit}>
+            <button className={[style.button, style.sync].join(" ")} onClick={() => props.onSelect("commit")}>
               Push Local
             </button>
           </div>
         </div>
       </div>
     );
-  }, [props.dialog, props.onAbort, props.onCommit]);
+  }, [props.dialog, props.onSelect]);
 
-  const animation = useAnimation(500);
-
-  if (props.dialog === null) animation.setHidden();
-  else animation.setShown();
-
-  if (animation.isHidden()) return null;
-
-  const animationClass = animation.isShowing() ? style.showing : animation.isHiding() ? style.hiding : "";
-
-  return <div className={[style.container, animationClass].join(" ")}>{inner}</div>;
+  return (
+    <Animated durationMs={500} isHidden={props.dialog === null} classes={style}>
+      <div className={style.container}>{inner}</div>
+    </Animated>
+  );
 }
