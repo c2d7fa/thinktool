@@ -487,6 +487,10 @@
     {
       "date": "2021-11-21",
       "title": "When coming back online, the app will now automatically try to reconnect to the server and let you push your changes."
+    },
+    {
+      "date": "2021-11-28",
+      "title": "After coming back online, you can now choose to pull in the server's changes instead of pushing the local changes."
     }
   ]
 }
