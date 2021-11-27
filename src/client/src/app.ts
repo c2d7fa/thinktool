@@ -184,8 +184,8 @@ export function serverDisconnected(app: App): App {
 }
 
 export function serverReconnected(app: App, remoteState: Sy.StoredState): App {
-  const changes = Sy.changes(remoteState, Sy.storedStateFromApp(app));
-  const syncDialog = Sy.Dialog.initialize(changes);
+  if (!isDisconnected(app)) return app;
+  const syncDialog = Sy.Dialog.initialize({local: Sy.storedStateFromApp(app), remote: remoteState});
   return {...app, [_isOnline]: true, [_syncDialog]: syncDialog};
 }
 
@@ -193,9 +193,13 @@ export function syncDialog(app: App): Sy.Dialog.SyncDialog | null {
   return app[_syncDialog];
 }
 
-export function dismissSyncDialogWithChanges(app: App, f: (changes: Sy.Changes) => App): App {
-  const changes = Sy.Dialog.changes(app[_syncDialog]!);
-  return {...f(changes), [_syncDialog]: null};
+export function syncDialogSelect(app: App, option: "commit" | "abort"): App {
+  if (app[_syncDialog] === null) {
+    console.error("Tried to select sync dialog option when no dialog was open!");
+    return app;
+  }
+
+  return Sy.loadAppFromStoredState(Sy.Dialog.storedStateAfter(app[_syncDialog]!, option));
 }
 
 export function isDisconnected(app: App): boolean {
