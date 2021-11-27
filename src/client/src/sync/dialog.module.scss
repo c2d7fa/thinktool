@@ -90,12 +90,14 @@
 
 .cancel {
   @include components.button;
-  @include base.subtle-button(#808080);
+  @include base.subtle-button(#606060);
+  color: #404040;
   font-size: 0.9em;
 }
 
 .sync {
   @include components.button;
-  @include base.subtle-button(#f0a040);
+  @include base.subtle-button(#e48c21);
+  color: #404040;
   font-size: 0.9em;
 }
