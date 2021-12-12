@@ -6,15 +6,15 @@ windows:
       - shell_command:
           - source .env
           - cd src/web
-          - npm run dev
+          - yarn run dev
       - shell_command:
           - source .env
           - cd src/client
-          - npm run watch
+          - yarn run watch
       - shell_command:
           - source .env
           - cd src/client
-          - npm run test-watch
+          - yarn run test-watch
   - layout: even-vertical
     panes:
       - shell_command:
@@ -28,10 +28,10 @@ windows:
       - shell_command:
           - source .env
           - cd src/server
-          - npm run watch
+          - yarn run watch
   - layout: even-vertical
     panes:
       - shell_command:
           - source .env
           - cd src/search
-          - npm run watch
+          - yarn run watch
