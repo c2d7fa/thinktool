@@ -13,11 +13,13 @@ Electron.app.whenReady().then(async () => {
 
   window.setMenu(null);
 
-  Electron.ipcMain.handle("open-file", () => {
-    return Electron.dialog.showSaveDialogSync(window, {
-      title: "Open or Create File",
-      buttonLabel: "Open",
-    });
+  Electron.ipcMain.handle("open-file", async () => {
+    return (
+      await Electron.dialog.showSaveDialog(window, {
+        title: "Open or Create File",
+        buttonLabel: "Open",
+      })
+    ).filePath;
   });
 
   // [TODO] We need to do build/whatever only when using electron-builder for
