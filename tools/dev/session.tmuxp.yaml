@@ -4,27 +4,34 @@ windows:
   - layout: even-vertical
     panes:
       - shell_command:
+          - source .env
           - cd src/web
           - npm run dev
       - shell_command:
+          - source .env
           - cd src/client
           - npm run watch
       - shell_command:
+          - source .env
           - cd src/client
           - npm run test-watch
   - layout: even-vertical
     panes:
       - shell_command:
+          - source .env
           - cd src/server
           - node dist/server.js
       - shell_command:
+          - source .env
           - cd src/server
           - npx jest --watch-all
       - shell_command:
+          - source .env
           - cd src/server
           - npm run watch
   - layout: even-vertical
     panes:
       - shell_command:
+          - source .env
           - cd src/search
           - npm run watch
