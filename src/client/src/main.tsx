@@ -36,7 +36,7 @@ import {Message} from "./messages";
 import {useMemoWarning, usePropRef} from "./react-utils";
 import {OrphanList, useOrphanListProps} from "./orphans/ui";
 import {Search} from "@thinktool/search";
-import {Outline} from "./outline";
+import {Outline} from "./ui/outline";
 
 function useGlobalShortcuts(sendEvent: Receiver<Message>["send"]) {
   React.useEffect(() => {

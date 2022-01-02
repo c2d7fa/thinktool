@@ -1,14 +1,14 @@
 /// <reference types="@types/jest" />
 
-import * as W from "./wrapap";
-import * as A from "./app";
-import * as O from "./outline";
+import * as W from "../wrapap";
+import * as A from ".";
+import * as Ou from "./outline";
 
 describe("when an item with a reference is selected", () => {
   let w = W.of({"0": {content: ["This item links to ", {link: "1"}, "."]}, "1": {content: ["Item 1"]}});
   w = w.map((a) => A.jump(a, "1"));
 
-  const outline = O.fromApp(w.app);
+  const outline = Ou.fromApp(w.app);
 
   test("the in-line references of the root data item is never shown", () => {
     expect(outline.root.references).toEqual({state: "empty"});
