@@ -1,37 +1,31 @@
 /// <reference types="@types/jest" />
 
-import * as W from "../wrapap";
 import * as A from ".";
-import * as Ou from "./outline";
+import {construct} from "./test-utils";
 
-describe("when an item with a reference is selected", () => {
-  let w = W.of({"0": {content: ["This item links to ", {link: "1"}, "."]}, "1": {content: ["Item 1"]}});
-  w = w.map((a) => A.jump(a, "1"));
+describe("in an outline where the root item is referenced by another item", () => {
+  const base = construct({id: "root", content: "The root item"}, [
+    {id: "another", content: ["This item links to ", {link: "root"}, "."]},
+  ]);
 
-  const outline = Ou.fromApp(w.app);
+  const baseOutline = A.outline(base);
 
   test("the in-line references of the root data item is never shown", () => {
-    expect(outline.root.references).toEqual({state: "empty"});
+    expect(baseOutline.root).toMatchObject({references: {state: "empty"}});
   });
 
   test("the references section in the outline shows that reference", () => {
-    expect(outline.references.state).toEqual("expanded");
-    if (outline.references.state !== "expanded") throw undefined;
-    expect(outline.references.items[0].editor.content).toEqual([
-      "This item links to ",
-      {link: "1", title: "Item 1"},
-      ".",
-    ]);
+    expect(baseOutline).toMatchObject({
+      references: {
+        state: "expanded",
+        items: [{editor: {content: ["This item links to ", {link: "root", title: "The root item"}, "."]}}],
+      },
+    });
   });
 });
 
 describe("in an app with two items", () => {
-  const base = W.of({
-    "0": {children: ["1", "2"], content: []},
-    "1": {content: ["Item 1"]},
-    "2": {content: ["Item 2"]},
-  }).app;
-
+  const base = construct({children: [{content: "Item 1"}, {content: "Item 2"}]});
   const baseOutline = A.outline(base);
 
   test("the items appear in the outline", () => {
