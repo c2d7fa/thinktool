@@ -33,11 +33,12 @@ export function drop(app: A.App, type: "move" | "copy"): A.App {
 
   if (type === "copy") {
     const [state, tree, node] = T.copyToAbove(app.state, app.tree, app.drag.dragging, app.drag.hovering);
-    return A.merge(app, {drag: empty, state: state, tree: T.focus(tree, node)});
+    return A.update(A.merge(app, {drag: empty, state, tree}), {type: "focus", id: node.id});
   } else if (type === "move") {
     const [state, tree] = T.moveToAbove(app.state, app.tree, app.drag.dragging, app.drag.hovering);
     return A.merge(app, {drag: empty, state: state, tree});
   } else {
-    throw "logic error";
+    const unreachable: never = type;
+    return unreachable;
   }
 }

@@ -213,3 +213,14 @@ export type Outline = Ou.Outline;
 export function outline(app: App): Outline {
   return Ou.fromApp(app);
 }
+
+export type AppOperation = {type: "focus"; id: number} | {type: never};
+
+export function update(app: App, operation: AppOperation): App {
+  if (operation.type === "focus") {
+    return merge(app, {tree: T.focus(app.tree, {id: operation.id})});
+  } else {
+    const unreachable: never = operation;
+    return unreachable;
+  }
+}

@@ -281,7 +281,7 @@ export function handling(app: App, node: T.NodeRef) {
   } => {
     if (ev.tag === "edit") {
       let result = app;
-      if (ev.focused) result = A.merge(app, {tree: T.focus(app.tree, node)});
+      if (ev.focused) result = A.update(app, {type: "focus", id: node.id});
       if (!ev.focused && T.hasFocus(app.tree, node)) result = A.merge(app, {tree: T.unfocus(app.tree)});
       result = A.edit(result, node, ev.editor);
       return {app: result};

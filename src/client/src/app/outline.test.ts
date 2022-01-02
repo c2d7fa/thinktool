@@ -24,3 +24,32 @@ describe("when an item with a reference is selected", () => {
     ]);
   });
 });
+
+describe("in an app with two items", () => {
+  const base = W.of({
+    "0": {children: ["1", "2"], content: []},
+    "1": {content: ["Item 1"]},
+    "2": {content: ["Item 2"]},
+  }).app;
+
+  const baseOutline = A.outline(base);
+
+  test("the items appear in the outline", () => {
+    expect(baseOutline.root.children).toMatchObject([
+      {editor: {content: ["Item 1"]}},
+      {editor: {content: ["Item 2"]}},
+    ]);
+  });
+
+  test("no items are focused", () => {
+    expect(baseOutline.root.children).toMatchObject([{hasFocus: false}, {hasFocus: false}]);
+  });
+
+  describe("after focusing the first item", () => {
+    const afterFocus = A.outline(A.update(base, {type: "focus", id: baseOutline.root.children[0].id}));
+
+    test("that item becomes focused", () => {
+      expect(afterFocus.root.children).toMatchObject([{hasFocus: true}, {hasFocus: false}]);
+    });
+  });
+});

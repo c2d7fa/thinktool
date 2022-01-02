@@ -1,7 +1,6 @@
 /// <reference types="@types/jest" />
 
 import * as A from "../app";
-import * as T from "../tree";
 import * as E from "../editing";
 import * as P from ".";
 
@@ -13,13 +12,11 @@ describe("when opening popup while text is selected", () => {
   });
 
   // Focus item "1"
-  app = A.merge(app, {tree: T.focus(app.tree, T.children(app.tree, T.root(app.tree))[0])});
-  const node = T.focused(app.tree);
-  expect(node && T.thing(app.tree, node)).toBe("1");
-  if (!node) throw "logic error";
+  app = A.update(app, {type: "focus", id: A.outline(app).root.children[0].id});
+  const item = A.outline(app).root.children[0];
 
   // Select the text "Another item":
-  app = A.edit(app, node, E.select(A.editor(app, node)!, {from: 21, to: 33}));
+  app = A.edit(app, item, E.select(A.editor(app, item)!, {from: 21, to: 33}));
   expect(A.selectedText(app)).toBe("Another item");
 
   // Open a popup:
