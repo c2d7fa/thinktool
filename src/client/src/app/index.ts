@@ -1,16 +1,16 @@
-import * as D from "./data";
-import * as T from "./tree";
-import * as E from "./editing";
-import * as P from "./popup";
-import * as R from "./drag";
-import * as O from "./orphans";
-import * as Sy from "./sync";
-import * as Ou from "./outline";
+import * as D from "../data";
+import * as T from "../tree";
+import * as E from "../editing";
+import * as P from "../popup";
+import * as R from "../drag";
+import * as O from "../orphans";
+import * as Sy from "../sync";
+import * as Ou from "../outline";
 
 import {Communication} from "@thinktool/shared";
 
-import * as Tutorial from "./tutorial";
-import {GoalId} from "./goal";
+import * as Tutorial from "../tutorial";
+import {GoalId} from "../goal";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
