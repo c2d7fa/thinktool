@@ -13,7 +13,7 @@ This repository contains the source code of [**Thinktool**](https://thinktool.io
 
 ## Project status
 
-No-one else is working on Thinktool, so development is slow. However, I use Thinktool for all my note-taking (after switching from [Obsidian](https://obsidian.md)), and I'm still actively working on it (as of November 2021).
+No-one else is working on Thinktool, so development is slow. However, I use Thinktool for all my note-taking (after switching from [Obsidian](https://obsidian.md)), and I'm still actively working on it (as of January 2022).
 
 Currently, the main priorities are improving the desktop client and offline-only support for improved privacy and data security as well as improving the UX and "learnability". There is no specific roadmap or time estimates.
 
