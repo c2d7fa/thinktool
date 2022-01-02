@@ -5,6 +5,8 @@ import * as P from "./popup";
 import * as R from "./drag";
 import * as O from "./orphans";
 import * as Sy from "./sync";
+import * as Ou from "./outline";
+
 import {Communication} from "@thinktool/shared";
 
 import * as Tutorial from "./tutorial";
@@ -204,4 +206,8 @@ export function syncDialogSelect(app: App, option: "commit" | "abort"): App {
 
 export function isDisconnected(app: App): boolean {
   return !app[_isOnline];
+}
+
+export function outline(app: App): Ou.Outline {
+  return Ou.fromApp(app);
 }

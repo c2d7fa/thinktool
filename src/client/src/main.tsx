@@ -25,7 +25,6 @@ import {ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
 import * as Item from "./item";
 import UserPage from "./ui/UserPage";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
-import * as Outline from "./outline";
 import {TopBar, useTopBarProps} from "./ui/TopBar";
 import {OfflineIndicator} from "./offline-indicator";
 
@@ -37,6 +36,7 @@ import {Message} from "./messages";
 import {useMemoWarning, usePropRef} from "./react-utils";
 import {OrphanList, useOrphanListProps} from "./orphans/ui";
 import {Search} from "@thinktool/search";
+import {Outline} from "./outline";
 
 function useGlobalShortcuts(sendEvent: Receiver<Message>["send"]) {
   React.useEffect(() => {
@@ -390,7 +390,7 @@ function App_({
       {app.tab === "orphans" ? (
         <OrphanList {...useOrphanListProps(app, updateApp)} />
       ) : (
-        <Outline.Outline outline={Outline.fromApp(app)} onItemEvent={onItemEvent} />
+        <Outline outline={A.outline(app)} onItemEvent={onItemEvent} />
       )}
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>

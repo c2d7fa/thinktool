@@ -12,7 +12,7 @@ import * as E from "./editing";
 import * as Editor from "./ui/Editor";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
 
-type Outline = {
+export type Outline = {
   root: Item.ItemData;
   parents: Item.ItemData[];
   references: Item.ItemData["references"];
