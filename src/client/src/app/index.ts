@@ -5,12 +5,17 @@ import * as P from "../popup";
 import * as R from "../drag";
 import * as O from "../orphans";
 import * as Sy from "../sync";
+
 import * as Ou from "./outline";
+import * as I from "./item";
 
 import {Communication} from "@thinktool/shared";
 
 import * as Tutorial from "../tutorial";
 import {GoalId} from "../goal";
+
+import * as PlaceholderItem from "../ui/PlaceholderItem";
+import * as Editor from "../ui/Editor";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
@@ -208,17 +213,61 @@ export function isDisconnected(app: App): boolean {
   return !app[_isOnline];
 }
 
+export type Item = I.Item;
+export type ItemKind = I.Kind;
+export type ItemStatus = I.Status;
+export type ItemEvent = I.Event;
+
 export type Outline = Ou.Outline;
 
 export function outline(app: App): Outline {
   return Ou.fromApp(app);
 }
 
-export type AppOperation = {type: "focus"; id: number} | {type: never};
+export type AppOperation = {type: "focus"; id: number} | {type: "item"; event: ItemEvent};
+
+function handleItemEvent(
+  app: App,
+  event: ItemEvent,
+): {app: App; effects?: {search?: {items: {thing: string; content: string}[]; query: string}; url?: string}} {
+  const node = (event: {id: number}): T.NodeRef => ({id: event.id});
+
+  if (event.type === "drag") {
+    return {app: merge(app, {drag: R.drag(app.tree, node(event))})};
+  } else if (event.type === "click-bullet") {
+    return {app: (event.alt ? I.altClick : I.click)(app, node(event))};
+  } else if (event.type === "click-parent") {
+    return {app: jump(app, event.thing)};
+  } else if (event.type === "click-placeholder") {
+    return {app: PlaceholderItem.create(app)};
+  } else if (event.type === "toggle-references") {
+    return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, node(event))})};
+  } else if (event.type === "edit") {
+    return Editor.handling(app, node(event))(event.event);
+  } else if (event.type === "unfold") {
+    return {app: unfold(app, node(event))};
+  } else {
+    const unreachable: never = event;
+    return unreachable;
+  }
+}
+
+export function effects(
+  app: App,
+  operation: AppOperation,
+): {search?: {items: {thing: string; content: string}[]; query: string}; url?: string} {
+  if (operation.type === "item") {
+    return handleItemEvent(app, operation.event).effects ?? {};
+  } else {
+    return {};
+  }
+}
 
 export function update(app: App, operation: AppOperation): App {
   if (operation.type === "focus") {
     return merge(app, {tree: T.focus(app.tree, {id: operation.id})});
+  } else if (operation.type === "item") {
+    return handleItemEvent(app, operation.event).app;
   } else {
     const unreachable: never = operation;
     return unreachable;

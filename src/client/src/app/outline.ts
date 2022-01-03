@@ -2,21 +2,19 @@ import * as Data from "../data";
 import * as T from "../tree";
 import * as A from "../app";
 import * as Drag from "../drag";
-import * as It from "../item";
 import * as Editor from "../ui/Editor";
 import * as PlaceholderItem from "../ui/PlaceholderItem";
-
-export type Item = It.ItemData;
+import * as I from "./item";
 
 export type Outline = {
-  root: Item;
-  parents: Item[];
-  references: Item["references"];
+  root: I.Item;
+  parents: I.Item[];
+  references: I.Item["references"];
   isFolded: boolean;
 };
 
 export function fromApp(app: A.App): Outline {
-  function dataItemizeNode(app: A.App, node: T.NodeRef, parent?: T.NodeRef): Item {
+  function dataItemizeNode(app: A.App, node: T.NodeRef, parent?: T.NodeRef): I.Item {
     const otherParents = Data.otherParents(
       app.state,
       T.thing(app.tree, node),
@@ -29,10 +27,10 @@ export function fromApp(app: A.App): Outline {
 
     return {
       id: node.id,
-      kind: It.kind(app.tree, node),
+      kind: I.kind(app.tree, node),
       dragState: Drag.node(app.drag, node),
       hasFocus: editor.hasFocus,
-      status: It.status(app.tree, node),
+      status: I.status(app.tree, node),
       editor: editor.editor,
       otherParents: otherParents,
       openedLinks: T.openedLinksChildren(app.tree, node).map((n) => dataItemizeNode(app, n, node)),

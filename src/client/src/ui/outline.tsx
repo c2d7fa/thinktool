@@ -3,9 +3,9 @@ import * as React from "react";
 const style = require("./outline.module.scss").default;
 
 import * as A from "../app";
-import * as Item from "../item";
 import * as E from "../editing";
 
+import * as Item from "./item";
 import * as Editor from "./Editor";
 
 export const Outline = React.memo(function ({
@@ -13,7 +13,7 @@ export const Outline = React.memo(function ({
   onItemEvent,
 }: {
   outline: A.Outline;
-  onItemEvent(event: Item.ItemEvent): void;
+  onItemEvent(event: A.ItemEvent): void;
 }) {
   return (
     <div className={style.outer}>
@@ -59,10 +59,7 @@ const SelectedItem = React.memo(function SelectedItem(props: {
   );
 });
 
-function ReferencesOutline(props: {
-  references: Item.ItemData["references"];
-  onItemEvent: (event: Item.ItemEvent) => void;
-}) {
+function ReferencesOutline(props: {references: A.Item["references"]; onItemEvent: (event: A.ItemEvent) => void}) {
   if (props.references.state === "empty" || props.references.state === "collapsed") return null;
 
   const referenceItems = props.references.items.map((item) => {
@@ -72,7 +69,7 @@ function ReferencesOutline(props: {
   return <ul className="subtree">{referenceItems}</ul>;
 }
 
-function ParentsOutline(props: {parents: Item.ItemData[]; onItemEvent: (event: Item.ItemEvent) => void}) {
+function ParentsOutline(props: {parents: A.Item[]; onItemEvent: (event: A.ItemEvent) => void}) {
   if (props.parents.length === 0) return null;
 
   const parentItems = props.parents.map((item) => (

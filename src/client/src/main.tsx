@@ -22,7 +22,6 @@ import * as Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
-import * as Item from "./item";
 import UserPage from "./ui/UserPage";
 import * as PlaceholderItem from "./ui/PlaceholderItem";
 import {TopBar, useTopBarProps} from "./ui/TopBar";
@@ -406,32 +405,13 @@ function useOnItemEvent({
   openExternalUrl(url: string): void;
   send: Receiver<Message>["send"];
 }) {
-  return React.useCallback((event: Item.ItemEvent) => {
-    const node = (event: {id: number}): T.NodeRef => ({id: event.id});
-
-    if (event.type === "drag") {
-      updateApp((app) => A.merge(app, {drag: Drag.drag(app.tree, node(event))}));
-    } else if (event.type === "click-bullet") {
-      updateApp((app) => (event.alt ? Item.altClick : Item.click)(app, node(event)));
-    } else if (event.type === "click-parent") {
-      updateApp((app) => A.jump(app, event.thing));
-    } else if (event.type === "click-placeholder") {
-      updateApp(PlaceholderItem.create);
-    } else if (event.type === "toggle-references") {
-      updateApp((app) => A.merge(app, {tree: T.toggleBackreferences(app.state, app.tree, node(event))}));
-    } else if (event.type === "edit") {
-      updateApp((app) => {
-        const result = Editor.handling(app, node(event))(event.event);
-        if (result.effects?.url) openExternalUrl(result.effects.url);
-        if (result.effects?.search) send("search", {search: result.effects.search});
-        return result.app;
-      });
-    } else if (event.type === "unfold") {
-      updateApp((app) => A.unfold(app, node(event)));
-    } else {
-      const unreachable: never = event;
-      console.error("Unknown item event type: %o", unreachable);
-    }
+  return React.useCallback((event: A.ItemEvent) => {
+    updateApp((app) => {
+      const effects = A.effects(app, {type: "item", event});
+      if (effects?.url) openExternalUrl(effects.url);
+      if (effects?.search) send("search", {search: effects.search});
+      return A.update(app, {type: "item", event});
+    });
   }, []);
 }
 
