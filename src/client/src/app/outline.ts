@@ -1,7 +1,7 @@
 import * as Data from "../data";
 import * as T from "../tree";
 import * as A from "../app";
-import * as Drag from "../drag";
+import * as Drag from "./drag";
 import * as E from "../editor";
 import * as PlaceholderItem from "../ui/PlaceholderItem";
 import * as I from "./item";

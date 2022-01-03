@@ -1,5 +1,5 @@
-import * as T from "./tree";
-import * as A from "./app";
+import * as T from "../tree";
+import * as A from ".";
 
 export type Drag = {active: false} | {active: true; dragging: T.NodeRef; hovering: T.NodeRef | null};
 

@@ -13,7 +13,6 @@ import * as Storage from "./sync/storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
-import * as Drag from "./drag";
 import * as P from "./popup";
 import * as Sync from "./sync";
 
@@ -76,7 +75,7 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
   // becomes inactive. We do this to avoid performance issues due to constantly
   // listening to mouse movements. Is it necessary? Is there a cleaner solution?
   React.useEffect(() => {
-    if (!Drag.isActive(app.drag)) return;
+    if (!A.isDragging(app)) return;
 
     // We do it this way to override other cursors. For example, just setting
     // document.body.style.cursor would still give a pointer cursor when
@@ -97,19 +96,19 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
 
     function mousemove(ev: MouseEvent): void {
       const {clientX: x, clientY: y} = ev;
-      updateApp((app) => A.merge(app, {drag: Drag.hover(app.drag, findNodeAt({x, y}))}));
+      updateApp((app) => A.update(app, {type: "drag", subtype: "hover", id: findNodeAt({x, y})?.id ?? null}));
     }
 
     function touchmove(ev: TouchEvent): void {
       const {clientX: x, clientY: y} = ev.changedTouches[0];
-      updateApp((app) => A.merge(app, {drag: Drag.hover(app.drag, findNodeAt({x, y}))}));
+      updateApp((app) => A.update(app, {type: "drag", subtype: "hover", id: findNodeAt({x, y})?.id ?? null}));
     }
 
     window.addEventListener("mousemove", mousemove);
     window.addEventListener("touchmove", touchmove);
 
     function mouseup(ev: MouseEvent | TouchEvent): void {
-      updateApp((app) => Drag.drop(app, ev.ctrlKey ? "copy" : "move"));
+      updateApp((app) => A.update(app, {type: "drag", subtype: "drop", modifier: ev.ctrlKey ? "copy" : "move"}));
     }
 
     window.addEventListener("mouseup", mouseup);
@@ -123,7 +122,7 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
       window.removeEventListener("mouseup", mouseup);
       window.removeEventListener("touchend", mouseup);
     };
-  }, [Drag.isActive(app.drag), updateApp]);
+  }, [A.isDragging(app), updateApp]);
 }
 
 function useRepeatedlyCheck(f: () => Promise<"continue" | "stop">, ms: number): {start(): void} {

@@ -2,7 +2,7 @@ import * as D from "../data";
 import * as T from "../tree";
 import * as E from "../editor";
 import * as P from "../popup";
-import * as R from "../drag";
+import * as R from "./drag";
 import * as O from "../orphans";
 import * as Sy from "../sync";
 
@@ -223,7 +223,14 @@ export function outline(app: App): Outline {
   return Ou.fromApp(app);
 }
 
-export type AppOperation = {type: "focus"; id: number} | {type: "item"; event: ItemEvent};
+export type Event =
+  | {type: "focus"; id: number}
+  | {type: "item"; event: ItemEvent}
+  | ({type: "drag"} & (
+      | {subtype: "drag"; id: number}
+      | {subtype: "hover"; id: number | null}
+      | {subtype: "drop"; modifier: "move" | "copy"}
+    ));
 
 function handleItemEvent(
   app: App,
@@ -253,22 +260,35 @@ function handleItemEvent(
 
 export function effects(
   app: App,
-  operation: AppOperation,
+  event: Event,
 ): {search?: {items: {thing: string; content: string}[]; query: string}; url?: string} {
-  if (operation.type === "item") {
-    return handleItemEvent(app, operation.event).effects ?? {};
+  if (event.type === "item") {
+    return handleItemEvent(app, event.event).effects ?? {};
   } else {
     return {};
   }
 }
 
-export function update(app: App, operation: AppOperation): App {
-  if (operation.type === "focus") {
-    return merge(app, {tree: T.focus(app.tree, {id: operation.id})});
-  } else if (operation.type === "item") {
-    return handleItemEvent(app, operation.event).app;
+function unreachable(x: never): never {
+  return x;
+}
+
+export function update(app: App, event: Event): App {
+  if (event.type === "focus") {
+    return merge(app, {tree: T.focus(app.tree, {id: event.id})});
+  } else if (event.type === "item") {
+    return handleItemEvent(app, event.event).app;
+  } else if (event.type === "drag") {
+    if (event.subtype === "drag") return merge(app, {drag: R.drag(app.tree, {id: event.id})});
+    else if (event.subtype === "hover")
+      return merge(app, {drag: R.hover(app.drag, event.id ? {id: event.id} : null)});
+    else if (event.subtype === "drop") return R.drop(app, event.modifier);
+    else return unreachable(event);
   } else {
-    const unreachable: never = operation;
-    return unreachable;
+    return unreachable(event);
   }
+}
+
+export function isDragging(app: App): boolean {
+  return R.isActive(app.drag);
 }
