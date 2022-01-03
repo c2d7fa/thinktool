@@ -83,8 +83,7 @@ describe("in an app with two items", () => {
           expect(A.outline(afterDown).root.children).toMatchObject([{hasFocus: false}, {hasFocus: true}]);
         });
 
-        // Bug: Cursor position is currently *not* preserved across moves
-        test.skip("the cursor position is still reflected in the outline", () => {
+        test("the cursor position is still reflected in the outline", () => {
           expect(A.outline(afterDown).root.children).toMatchObject([
             {editor: {content: ["Item 2"]}},
             {editor: {content: ["Item 1"], selection: {from: 5, to: 5}}},

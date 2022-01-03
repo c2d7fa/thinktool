@@ -426,6 +426,11 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
     newTree = focus(newTree, children(newTree, destination.parent)[destination.index]);
   }
 
+  // We now relabel the new node so it has the same ID as the last node. For
+  // example, this is necessary to preserve the editor state when moving items
+  // around in the outline.
+  newTree = I.repurposeId(newTree, children(newTree, destination.parent)[destination.index], node.id);
+
   return [newState, newTree];
 }
 

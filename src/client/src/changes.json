@@ -491,6 +491,10 @@
     {
       "date": "2021-11-28",
       "title": "After coming back online, you can now choose to pull in the server's changes instead of pushing the local changes."
+    },
+    {
+      "date": "UNRELEASED",
+      "title": "When moving items around in the outline, the selection in the editor is now preserved."
     }
   ]
 }
