@@ -2,7 +2,7 @@ import * as Data from "../data";
 import * as T from "../tree";
 import * as A from "../app";
 import * as Drag from "../drag";
-import * as Editor from "../ui/Editor";
+import * as E from "../editing";
 import * as PlaceholderItem from "../ui/PlaceholderItem";
 import * as I from "./item";
 
@@ -23,7 +23,7 @@ export function fromApp(app: A.App): Outline {
 
     const backreferences = Data.backreferences(app.state, T.thing(app.tree, node));
 
-    const editor = Editor.forNode(app, node);
+    const editor = E.forNode(app, node);
 
     return {
       id: node.id,

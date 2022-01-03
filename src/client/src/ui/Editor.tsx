@@ -8,12 +8,11 @@ import * as PV from "prosemirror-view";
 import * as PM from "prosemirror-model";
 import ProseMirror from "./ProseMirror";
 
-import * as D from "../data";
 import * as T from "../tree";
 import * as E from "../editing";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
-import {App, merge} from "../app";
+import {App} from "../app";
 import * as A from "../app";
 import {usePropRef} from "../react-utils";
 
@@ -243,79 +242,6 @@ function fromProseMirror(proseMirrorEditorState: PS.EditorState<typeof schema>):
   return {content, selection};
 }
 
-export function onPastedParagraphs(app: App, node: T.NodeRef, paragraphs: string[]) {
-  let [state, tree] = [app.state, app.tree];
-  let lastNode = node;
-
-  for (const paragraph of paragraphs) {
-    const [state_, tree_, thing, lastNode_] = T.createSiblingAfter(state, tree, lastNode);
-    [state, tree, lastNode] = [state_, tree_, lastNode_];
-
-    state = D.setContent(state, thing, [paragraph]);
-  }
-
-  return merge(app, {state, tree});
-}
-
-export interface EditorState {
-  selection: string;
-  replace(link: string, textContent: string): void;
-}
-
-export type Event =
-  | {tag: "action"; action: Ac.ActionName}
-  | {tag: "open"; link: string}
-  | {tag: "jump"; link: string}
-  | {tag: "edit"; editor: E.Editor; focused: boolean}
-  | {tag: "paste"; paragraphs: string[]}
-  | {tag: "openUrl"; url: string};
-
-// Side-effects aren't handled in this function. Instead, they are described by
-// 'effects' in the return value and must be handled by the caller.
-export function handling(app: App, node: T.NodeRef) {
-  return (
-    ev: Event,
-  ): {
-    app: App;
-    effects?: {search?: {items: {thing: string; content: string}[]; query: string}; url?: string};
-  } => {
-    if (ev.tag === "edit") {
-      let result = app;
-      if (ev.focused) result = A.update(app, {type: "focus", id: node.id});
-      if (!ev.focused && T.hasFocus(app.tree, node)) result = A.merge(app, {tree: T.unfocus(app.tree)});
-      result = A.edit(result, node, ev.editor);
-      return {app: result};
-    } else if (ev.tag === "open") {
-      return {app: A.toggleLink(app, node, ev.link)};
-    } else if (ev.tag === "jump") {
-      return {app: A.jump(app, ev.link)};
-    } else if (ev.tag === "paste") {
-      return {app: onPastedParagraphs(app, node, ev.paragraphs)};
-    } else if (ev.tag === "action") {
-      const result = Ac.update(app, ev.action);
-      if (result.url) return {app: result.app, effects: {url: result.url}};
-      if (result.search) return {app: result.app, effects: {search: result.search}};
-      return {app: result.app};
-    } else if (ev.tag === "openUrl") {
-      return {app: app, effects: {url: ev.url}};
-    } else {
-      throw "unhandled case";
-    }
-  };
-}
-
-export function forNode(app: App, node: T.NodeRef): {editor: E.Editor; hasFocus: boolean} {
-  function require<T>(x: T | null): T {
-    if (x === null) throw "unexpected null";
-    return x;
-  }
-
-  return {
-    editor: require(A.editor(app, node)),
-    hasFocus: T.hasFocus(app.tree, node),
-  };
-}
-
 export function StaticContent(props: {content: E.EditorContent}) {
   return (
     <Editor editor={{selection: {from: 0, to: 0}, content: props.content}} hasFocus={false} onEvent={() => {}} />
@@ -323,7 +249,7 @@ export function StaticContent(props: {content: E.EditorContent}) {
 }
 
 export const Editor = React.memo(
-  function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(event: Event): void}) {
+  function Editor(props: {editor: E.Editor; hasFocus: boolean; onEvent(event: E.Event): void}) {
     const onEventRef = usePropRef(props.onEvent);
     const editorRef = usePropRef(props.editor);
 

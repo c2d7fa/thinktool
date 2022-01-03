@@ -15,7 +15,6 @@ import * as Tutorial from "../tutorial";
 import {GoalId} from "../goal";
 
 import * as PlaceholderItem from "../ui/PlaceholderItem";
-import * as Editor from "../ui/Editor";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
@@ -243,7 +242,7 @@ function handleItemEvent(
   } else if (event.type === "toggle-references") {
     return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, node(event))})};
   } else if (event.type === "edit") {
-    return Editor.handling(app, node(event))(event.event);
+    return E.handle(app, node(event), event.event);
   } else if (event.type === "unfold") {
     return {app: unfold(app, node(event))};
   } else {

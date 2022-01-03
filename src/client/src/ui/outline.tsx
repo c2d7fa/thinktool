@@ -6,7 +6,7 @@ import * as A from "../app";
 import * as E from "../editing";
 
 import * as Item from "./item";
-import * as Editor from "./Editor";
+import {Editor} from "./Editor";
 
 export const Outline = React.memo(function ({
   outline,
@@ -45,7 +45,7 @@ export const Outline = React.memo(function ({
 const SelectedItem = React.memo(function SelectedItem(props: {
   editor: E.Editor;
   hasFocus: boolean;
-  onEditEvent(event: Editor.Event): void;
+  onEditEvent(event: E.Event): void;
   isFolded: boolean;
   unfold(): void;
 }) {
@@ -54,7 +54,7 @@ const SelectedItem = React.memo(function SelectedItem(props: {
       <button className={style.unfold} onClick={props.unfold} disabled={!props.isFolded}>
         <span className="fas fa-fw fa-stream" />
       </button>
-      <Editor.Editor editor={props.editor} hasFocus={props.hasFocus} onEvent={props.onEditEvent} />
+      <Editor editor={props.editor} hasFocus={props.hasFocus} onEvent={props.onEditEvent} />
     </div>
   );
 });

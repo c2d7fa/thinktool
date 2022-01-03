@@ -2,8 +2,6 @@ import * as T from "../tree";
 import * as U from "../tutorial";
 import {App, merge, jump} from ".";
 
-import * as Editor from "../ui/Editor";
-
 import * as E from "../editing";
 
 export type Kind = "child" | "reference" | "opened-link" | "parent" | "root";
@@ -98,4 +96,4 @@ export type Event =
   | {type: "click-placeholder"}
   | {type: "toggle-references"; id: number}
   | {type: "unfold"; id: number}
-  | {type: "edit"; id: number; event: Editor.Event};
+  | {type: "edit"; id: number; event: E.Event};

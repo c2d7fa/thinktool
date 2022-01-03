@@ -17,13 +17,11 @@ import * as Drag from "./drag";
 import * as P from "./popup";
 import * as Sync from "./sync";
 
-import * as Editor from "./ui/Editor";
 import * as Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
 import UserPage from "./ui/UserPage";
-import * as PlaceholderItem from "./ui/PlaceholderItem";
 import {TopBar, useTopBarProps} from "./ui/TopBar";
 import {OfflineIndicator} from "./offline-indicator";
 
