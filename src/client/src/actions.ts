@@ -81,27 +81,18 @@ export function enabled(state: App, action: ActionName): boolean {
   }
 }
 
-export interface UpdateResult {
-  app: App;
+export type ActionEffects = {
   url?: string;
   undo?: boolean;
   search?: {items: {thing: string; content: string}[]; query: string};
-}
+};
 
-export function update(app: App, action: keyof typeof updates): UpdateResult {
+export function update(app: App, action: keyof typeof updates): {app: App} & ActionEffects {
   if (!enabled(app, action)) {
     console.error("The action %o should not be enabled! Continuing anyway...", action);
   }
 
-  return updateOn(app, action, T.focused(app.tree));
-}
-
-function updateOn(app: App, action: keyof typeof updates, target: NodeRef | null): UpdateResult {
-  if (!enabled(app, action)) {
-    console.warn("The action %o appears not to be enabled.", action);
-  }
-
-  return updates[action]({app, target});
+  return updates[action]({app, target: T.focused(app.tree)});
 }
 
 function require<T>(x: T | null): T {
