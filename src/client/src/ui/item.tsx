@@ -5,7 +5,7 @@ import * as A from "../app";
 
 import Bullet from "./Bullet";
 
-import * as Editor from "./Editor";
+import * as Editor from "./editor";
 import {OtherParents} from "./OtherParents";
 import {PlaceholderItem} from "./PlaceholderItem";
 

@@ -1,19 +1,16 @@
 import * as React from "react";
 import * as ReactDOMServer from "react-dom/server";
 
-const style = require("../editor.module.scss").default;
+const style = require("./editor.module.scss").default;
 
 import * as PS from "prosemirror-state";
 import * as PV from "prosemirror-view";
 import * as PM from "prosemirror-model";
 import ProseMirror from "./ProseMirror";
 
-import * as T from "../tree";
-import * as E from "../editing";
+import * as E from "../editor";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
-import {App} from "../app";
-import * as A from "../app";
 import {usePropRef} from "../react-utils";
 
 import Bullet from "./Bullet";

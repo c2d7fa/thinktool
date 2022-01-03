@@ -2,7 +2,7 @@ import * as T from "../tree";
 import * as U from "../tutorial";
 import {App, merge, jump} from ".";
 
-import * as E from "../editing";
+import * as E from "../editor";
 
 export type Kind = "child" | "reference" | "opened-link" | "parent" | "root";
 export type Status = "expanded" | "collapsed" | "terminal";

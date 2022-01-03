@@ -1,7 +1,7 @@
 /// <reference types="@types/jest" />
 
 import * as A from "../app";
-import * as E from "../editing";
+import * as E from "../editor";
 import * as P from ".";
 
 describe("when opening popup while text is selected", () => {

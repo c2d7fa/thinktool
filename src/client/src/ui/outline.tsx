@@ -3,10 +3,10 @@ import * as React from "react";
 const style = require("./outline.module.scss").default;
 
 import * as A from "../app";
-import * as E from "../editing";
+import * as E from "../editor";
 
 import * as Item from "./item";
-import {Editor} from "./Editor";
+import {Editor} from "./editor";
 
 export const Outline = React.memo(function ({
   outline,

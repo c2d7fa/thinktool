@@ -1,6 +1,6 @@
 import * as D from "../data";
 import * as T from "../tree";
-import * as E from "../editing";
+import * as E from "../editor";
 import * as P from "../popup";
 import * as R from "../drag";
 import * as O from "../orphans";

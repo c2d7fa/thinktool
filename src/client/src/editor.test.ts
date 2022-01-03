@@ -1,10 +1,10 @@
 /// <reference types="@types/jest" />
 
-import * as D from "../src/data";
-import * as T from "../src/tree";
-import * as A from "../src/app";
+import * as D from "./data";
+import * as T from "./tree";
+import * as A from "./app";
 
-import * as E from "../src/editing";
+import * as E from "./editor";
 
 describe("paragraphs", () => {
   test("Single line is not paragraph formatted", () => {

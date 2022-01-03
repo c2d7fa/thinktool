@@ -11,7 +11,7 @@ import * as P from "../popup";
 import * as M from "../messages";
 
 import {OtherParents} from "../ui/OtherParents";
-import {StaticContent} from "../ui/Editor";
+import {StaticContent} from "../ui/editor";
 import Bullet from "../ui/Bullet";
 
 const Result = React.memo(
