@@ -93,3 +93,93 @@ describe("in an app with two items", () => {
     });
   });
 });
+
+describe("moving focus with arrow key commands", () => {
+  const base = construct({
+    children: [{content: "Item 1", children: [{content: "Item 1.1"}]}, {content: "Item 2"}],
+  });
+
+  describe("after focusing Item 1 and expanding it", () => {
+    const afterFocus = A.update(base, {type: "focus", id: A.outline(base).root.children[0].id});
+    const afterToggle = A.update(afterFocus, {
+      type: "item",
+      event: {
+        id: A.outline(afterFocus).root.children[0].id,
+        type: "edit",
+        event: {tag: "action", action: "toggle"},
+      },
+    });
+    const afterToggleOutline = A.outline(afterToggle);
+
+    test("the children of Item 1 are shown", () => {
+      expect(afterToggleOutline.root.children).toMatchObject([
+        {editor: {content: ["Item 1"]}, children: [{editor: {content: ["Item 1.1"]}}]},
+        {editor: {content: ["Item 2"]}},
+      ]);
+    });
+
+    test("the first item still has focus", () => {
+      expect(afterToggleOutline.root.children).toMatchObject([
+        {hasFocus: true, children: [{hasFocus: false}]},
+        {hasFocus: false},
+      ]);
+    });
+
+    describe("after moving focus down", () => {
+      const afterFocusDownOnce = A.update(afterToggle, {
+        type: "item",
+        event: {
+          id: afterToggleOutline.root.children[0].id,
+          type: "edit",
+          event: {tag: "action", action: "focus-down"},
+        },
+      });
+
+      test("focus moves to Item 1.1", () => {
+        expect(A.outline(afterFocusDownOnce).root.children).toMatchObject([
+          {hasFocus: false, children: [{hasFocus: true}]},
+          {hasFocus: false},
+        ]);
+      });
+
+      describe("after moving focus down again", () => {
+        const afterFocusDownTwice = A.update(afterFocusDownOnce, {
+          type: "item",
+          event: {
+            id: afterToggleOutline.root.children[0].id,
+            type: "edit",
+            event: {tag: "action", action: "focus-down"},
+          },
+        });
+
+        test("focus moves to Item 2", () => {
+          expect(A.outline(afterFocusDownTwice).root.children).toMatchObject([
+            {hasFocus: false, children: [{hasFocus: false}]},
+            {hasFocus: true},
+          ]);
+        });
+
+        // Bug: Trying to move focus off outline causes a crash.
+        /*
+        describe("after trying to move focus down again", () => {
+          const afterFocusDownThreeTimes = A.update(afterFocusDownTwice, {
+            type: "item",
+            event: {
+              id: afterToggleOutline.root.children[0].id,
+              type: "edit",
+              event: {tag: "action", action: "focus-down"},
+            },
+          });
+
+          test("focus stays on Item 2", () => {
+            expect(A.outline(afterFocusDownThreeTimes).root.children).toMatchObject([
+              {hasFocus: false, children: [{hasFocus: false}]},
+              {hasFocus: true},
+            ]);
+          });
+        });
+        */
+      });
+    });
+  });
+});
