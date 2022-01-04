@@ -159,8 +159,6 @@ describe("moving focus with arrow key commands", () => {
           ]);
         });
 
-        // Bug: Trying to move focus off outline causes a crash.
-        /*
         describe("after trying to move focus down again", () => {
           const afterFocusDownThreeTimes = A.update(afterFocusDownTwice, {
             type: "item",
@@ -178,7 +176,6 @@ describe("moving focus with arrow key commands", () => {
             ]);
           });
         });
-        */
       });
     });
   });

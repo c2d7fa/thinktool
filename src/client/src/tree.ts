@@ -144,28 +144,36 @@ function previousVisibleItem(tree: Tree, node: NodeRef): NodeRef {
   return result;
 }
 
-function nextVisibleItem(tree: Tree, node: NodeRef): NodeRef {
-  if (children(tree, node).length !== 0) return children(tree, node)[0];
+function nthChild(tree: Tree, parent: NodeRef, index: number): NodeRef | null {
+  return children(tree, parent)[index] ?? null;
+}
 
-  // Recursively traverse tree upwards until we hit a parent with a sibling
-  let nparent = node;
-  while (nparent !== tree._root) {
-    const nextSibling_ = nextSibling(tree, nparent);
-    if (nextSibling_ !== null) return nextSibling_;
-    nparent = parent(tree, nparent)!; // Non-null because nparent !== tree.root
+function nextVisibleItem(tree: Tree, node: NodeRef): NodeRef {
+  function* eachAncestorInclusive(node: NodeRef): Iterable<NodeRef> {
+    yield node;
+    const parent_ = parent(tree, node);
+    if (parent_) yield* eachAncestorInclusive(parent_);
   }
-  return nparent;
+
+  const child_ = nthChild(tree, node, 0);
+  if (child_) return child_;
+
+  for (const ancestor of eachAncestorInclusive(node)) {
+    const nextSibling_ = nextSibling(tree, ancestor);
+    if (nextSibling_) return nextSibling_;
+  }
+
+  return node;
 }
 
 export function focusUp(tree: Tree): Tree {
-  if (I.getFocus(tree) === null) throw "Cannot move focus because nothing is focused";
-  return focus(tree, previousVisibleItem(tree, I.getFocus(tree)!));
+  const focused = I.getFocus(tree);
+  return focused === null ? tree : focus(tree, previousVisibleItem(tree, focused));
 }
 
 export function focusDown(tree: Tree): Tree {
-  if (I.getFocus(tree) === null) throw "Cannot move focus because nothing is focused";
-
-  return focus(tree, nextVisibleItem(tree, I.getFocus(tree)!));
+  const focused = I.getFocus(tree);
+  return focused === null ? tree : focus(tree, nextVisibleItem(tree, focused));
 }
 
 function genericRefreshChildren({
