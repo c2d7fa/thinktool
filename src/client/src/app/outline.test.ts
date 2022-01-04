@@ -196,8 +196,7 @@ describe("moving focus with arrow key commands", () => {
                 action: "focus-down",
               });
 
-              // Bug: Focus doesn't move over collapsed children
-              test.skip("focus moves directly to Item 2", () => {
+              test("focus moves directly to Item 2", () => {
                 expect(A.outline(afterFocusDownAgain).root.children).toMatchObject([
                   {hasFocus: false},
                   {hasFocus: true},

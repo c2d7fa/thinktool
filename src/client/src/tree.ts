@@ -130,6 +130,15 @@ function nextSibling(tree: Tree, node: NodeRef): NodeRef | null {
   return children(tree, parent(tree, node)!)[index + 1];
 }
 
+function nthVisibleChild(tree: Tree, parent: NodeRef, index: number): NodeRef | null {
+  if (!expanded(tree, parent)) return null;
+  return children(tree, parent)[index] ?? null;
+}
+
+function lastVisibleChild(tree: Tree, parent: NodeRef): NodeRef | null {
+  return nthVisibleChild(tree, parent, children(tree, parent).length - 1);
+}
+
 function previousVisibleItem(tree: Tree, node: NodeRef): NodeRef {
   const parent_ = parent(tree, node);
   if (!parent_) return node;
@@ -138,14 +147,10 @@ function previousVisibleItem(tree: Tree, node: NodeRef): NodeRef {
 
   let result = previousSibling(tree, node);
   if (result === null) throw "logic error";
-  while (children(tree, result).length !== 0) {
-    result = children(tree, result)[children(tree, result).length - 1];
+  while (lastVisibleChild(tree, result!) !== null) {
+    result = lastVisibleChild(tree, result!);
   }
-  return result;
-}
-
-function nthChild(tree: Tree, parent: NodeRef, index: number): NodeRef | null {
-  return children(tree, parent)[index] ?? null;
+  return result!;
 }
 
 function nextVisibleItem(tree: Tree, node: NodeRef): NodeRef {
@@ -155,7 +160,7 @@ function nextVisibleItem(tree: Tree, node: NodeRef): NodeRef {
     if (parent_) yield* eachAncestorInclusive(parent_);
   }
 
-  const child_ = nthChild(tree, node, 0);
+  const child_ = nthVisibleChild(tree, node, 0);
   if (child_) return child_;
 
   for (const ancestor of eachAncestorInclusive(node)) {

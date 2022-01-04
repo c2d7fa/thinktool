@@ -499,6 +499,10 @@
     {
       "date": "UNRELEASED",
       "title": "Fixed crash when trying to move focus off end of outline by pressing Down on the last item"
+    },
+    {
+      "date": "UNRELEASED",
+      "title": "Fixed bug where trying to move focus past collapsed items would cause the editor to lose focus."
     }
   ]
 }
