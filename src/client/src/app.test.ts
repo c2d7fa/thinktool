@@ -1,10 +1,10 @@
 /// <reference types="@types/jest" />
 
-import * as W from "../src/wrapap";
-import * as A from "../src/app";
-import * as D from "../src/data";
-import * as T from "../src/tree";
-import * as E from "../src/editing";
+import * as W from "./wrapap";
+import * as A from "./app";
+import * as D from "./data";
+import * as T from "./tree";
+import * as E from "./editor";
 
 describe("initializing app from scratch with 'of'", () => {
   const app: A.App = A.of({
@@ -104,12 +104,12 @@ describe("reading selected text in focused editor", () => {
 
   test("with text selected returns that text", () => {
     const focused = A.merge(base, {tree: T.focus(base.tree, T.children(base.tree, T.root(base.tree))[0])});
-    expect(T.thing(focused.tree, T.focused(focused.tree))).toBe("1");
+    expect(T.thing(focused.tree, T.focused(focused.tree)!)).toBe("1");
 
     const selected = A.edit(
       focused,
-      T.focused(focused.tree),
-      E.select(A.editor(focused, T.focused(focused.tree)), {from: 8, to: 14}),
+      T.focused(focused.tree)!,
+      E.select(A.editor(focused, T.focused(focused.tree)!)!, {from: 8, to: 14}),
     );
 
     expect(A.selectedText(selected)).toBe("item 1");
@@ -126,14 +126,14 @@ describe("inserting a link in an editor", () => {
       "0": {content: ["This is item 0."]},
       "1": {content: ["This is item 1."]},
     });
-    app = A.edit(app, T.root(app.tree), E.select(A.editor(app, T.root(app.tree)), {from: 8, to: 14}));
+    app = A.edit(app, T.root(app.tree), E.select(A.editor(app, T.root(app.tree))!, {from: 8, to: 14}));
     return app;
   })();
 
   const after = A.editInsertLink(before, T.root(before.tree), "1");
 
-  const editorBefore = A.editor(before, T.root(before.tree));
-  const editorAfter = A.editor(after, T.root(after.tree));
+  const editorBefore = A.editor(before, T.root(before.tree))!;
+  const editorAfter = A.editor(after, T.root(after.tree))!;
 
   it("updates the content so the selection is replaced with the link", () => {
     expect(editorBefore.content).toEqual(["This is item 0."]);
@@ -159,7 +159,7 @@ describe("after creating a new child", () => {
   });
 
   test("the child is focused", () => {
-    const child = W.from(after).root.child(0).ref;
+    const child = W.from(after).root.child(0)!.ref;
     expect(T.hasFocus(after.tree, child)).toBe(true);
   });
 });
@@ -186,10 +186,10 @@ describe("unfolding an item", () => {
         "2": {content: []},
       });
 
-      const after = before.map((app) => A.unfold(app, before.root.child(0).ref));
+      const after = before.map((app) => A.unfold(app, before.root.child(0)!.ref));
 
-      expect(before.root.child(0).expanded).toBe(false);
-      expect(after.root.child(0).expanded).toBe(true);
+      expect(before.root.child(0)!.expanded).toBe(false);
+      expect(after.root.child(0)!.expanded).toBe(true);
     });
 
     it("expands each of the children", () => {
@@ -202,15 +202,15 @@ describe("unfolding an item", () => {
         "5": {content: []},
       });
 
-      const after = before.map((app) => A.unfold(app, before.root.child(0).ref));
+      const after = before.map((app) => A.unfold(app, before.root.child(0)!.ref));
 
       const node = after.root.child(0);
 
-      expect(node.thing).toBe("1");
-      expect(node.child(0).thing).toBe("2");
-      expect(node.child(0).child(0).thing).toBe("4");
-      expect(node.child(1).thing).toBe("3");
-      expect(node.child(1).child(0).thing).toBe("5");
+      expect(node!.thing).toBe("1");
+      expect(node!.child(0)!.thing).toBe("2");
+      expect(node!.child(0)!.child(0)!.thing).toBe("4");
+      expect(node!.child(1)!.thing).toBe("3");
+      expect(node!.child(1)!.child(0)!.thing).toBe("5");
     });
   });
 
@@ -222,14 +222,14 @@ describe("unfolding an item", () => {
     });
 
     it("doesn't unfold the past the root", () => {
-      const after = before.map((app) => A.unfold(app, before.root.child(0).ref));
+      const after = before.map((app) => A.unfold(app, before.root.child(0)!.ref));
       const node = after.root.child(0);
 
-      expect(node.thing).toBe("1");
-      expect(node.child(0).thing).toBe("2");
-      expect(node.child(0).child(0).thing).toBe("0");
-      expect(node.child(0).child(0).child(0).thing).toBe("1");
-      expect(node.child(0).child(0).child(0).expanded).toBe(false);
+      expect(node!.thing).toBe("1");
+      expect(node!.child(0)!.thing).toBe("2");
+      expect(node!.child(0)!.child(0)!.thing).toBe("0");
+      expect(node!.child(0)!.child(0)!.child(0)!.thing).toBe("1");
+      expect(node!.child(0)!.child(0)!.child(0)!.expanded).toBe(false);
     });
   });
 });

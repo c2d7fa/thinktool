@@ -148,6 +148,52 @@ export function loadThing(tree: Tree, thing: string, source: Source, connection?
   ];
 }
 
+export function repurposeId(tree: Tree, node: NodeRef, id: number): Tree {
+  let result = {
+    ...tree,
+    _nodes: tree._nodes.set(id, tree._nodes.get(node.id)!),
+    _things: tree._things.set(id, tree._things.get(node.id)!),
+    _focus: tree._focus?.id === node.id ? {id} : tree._focus,
+  };
+
+  const source_ = source(tree, node);
+
+  if (source_ !== undefined) {
+    if (source_.type === "child") {
+      result = updateNode(result, source_.parent, (n) => ({
+        ...n,
+        _children: n._children.map((child) => (child.id === node.id ? {id: id} : child)),
+      }));
+    } else if (source_.type === "other-parent") {
+      result = updateNode(result, source_.parent, (n) => ({
+        ...n,
+        _otherParents: {
+          ...n._otherParents,
+          children: n._otherParents.children.map((child) => (child.id === node.id ? {id: id} : child)),
+        },
+      }));
+    } else if (source_.type === "reference") {
+      result = updateNode(result, source_.parent, (n) => ({
+        ...n,
+        _backreferences: {
+          ...n._backreferences,
+          children: n._backreferences.children.map((child) => (child.id === node.id ? {id: id} : child)),
+        },
+      }));
+    } else if (source_.type === "opened-link") {
+      result = updateNode(result, source_.parent, (n) => ({
+        ...n,
+        _openedLinks: {
+          ...n._openedLinks,
+          [thing(tree, source_.parent)]: {id: id},
+        },
+      }));
+    }
+  }
+
+  return result;
+}
+
 export function* allNodes(tree: Tree): Generator<NodeRef> {
   for (const id of tree._nodes.keys()) {
     yield {id};

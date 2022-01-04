@@ -7,7 +7,7 @@ import * as D from "./data";
 import * as T from "./tree";
 import * as G from "./goal";
 import * as U from "./tutorial";
-import * as E from "./editing";
+import * as E from "./editor";
 
 export interface Wrapap {
   root: Node;

@@ -81,27 +81,18 @@ export function enabled(state: App, action: ActionName): boolean {
   }
 }
 
-export interface UpdateResult {
-  app: App;
+export type ActionEffects = {
   url?: string;
   undo?: boolean;
   search?: {items: {thing: string; content: string}[]; query: string};
-}
+};
 
-export function update(app: App, action: keyof typeof updates): UpdateResult {
+export function update(app: App, action: keyof typeof updates): {app: App} & ActionEffects {
   if (!enabled(app, action)) {
     console.error("The action %o should not be enabled! Continuing anyway...", action);
   }
 
-  return updateOn(app, action, T.focused(app.tree));
-}
-
-function updateOn(app: App, action: keyof typeof updates, target: NodeRef | null): UpdateResult {
-  if (!enabled(app, action)) {
-    console.warn("The action %o appears not to be enabled.", action);
-  }
-
-  return updates[action]({app, target});
+  return updates[action]({app, target: T.focused(app.tree)});
 }
 
 function require<T>(x: T | null): T {
@@ -184,9 +175,8 @@ const updates = {
     if (target === null) {
       result = A.createChild(app, T.root(app.tree));
     } else {
-      let [newState, newTree, _, newId] = T.createSiblingAfter(app.state, app.tree, target);
-      newTree = T.focus(newTree, newId);
-      result = A.merge(result, {state: newState, tree: newTree});
+      let [newState, newTree, _, newNode] = T.createSiblingAfter(app.state, app.tree, target);
+      result = A.update(A.merge(result, {state: newState, tree: newTree}), {type: "focus", id: newNode.id});
     }
     result = applyActionEvent(result, {action: "created-item"});
     return {app: result};

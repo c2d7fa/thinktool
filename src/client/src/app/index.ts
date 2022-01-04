@@ -1,14 +1,20 @@
-import * as D from "./data";
-import * as T from "./tree";
-import * as E from "./editing";
-import * as P from "./popup";
+import * as D from "../data";
+import * as T from "../tree";
+import * as E from "../editor";
+import * as P from "../popup";
 import * as R from "./drag";
-import * as O from "./orphans";
-import * as Sy from "./sync";
+import * as O from "../orphans";
+import * as Sy from "../sync";
+
+import * as Ou from "./outline";
+import * as I from "./item";
+
 import {Communication} from "@thinktool/shared";
 
-import * as Tutorial from "./tutorial";
-import {GoalId} from "./goal";
+import * as Tutorial from "../tutorial";
+import {GoalId} from "../goal";
+
+import * as PlaceholderItem from "../ui/PlaceholderItem";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
@@ -204,4 +210,94 @@ export function syncDialogSelect(app: App, option: "commit" | "abort"): App {
 
 export function isDisconnected(app: App): boolean {
   return !app[_isOnline];
+}
+
+export type Item = I.Item;
+export type ItemKind = I.Kind;
+export type ItemStatus = I.Status;
+export type ItemEvent = I.Event;
+
+export type Outline = Ou.Outline;
+
+export function outline(app: App): Outline {
+  return Ou.fromApp(app);
+}
+
+export type Event =
+  | {type: "focus"; id: number}
+  | {type: "item"; event: ItemEvent}
+  | ({type: "drag"} & (
+      | {subtype: "drag"; id: number}
+      | {subtype: "hover"; id: number | null}
+      | {subtype: "drop"; modifier: "move" | "copy"}
+    ));
+
+function handleItemEvent(
+  app: App,
+  event: ItemEvent,
+): {app: App; effects?: {search?: {items: {thing: string; content: string}[]; query: string}; url?: string}} {
+  const item = (event: {id: number}) => ({id: event.id, hasFocus: T.hasFocus(app.tree, {id: event.id})});
+
+  if (event.type === "drag") {
+    return {app: merge(app, {drag: R.drag(app.tree, item(event))})};
+  } else if (event.type === "click-bullet") {
+    return {app: (event.alt ? I.altClick : I.click)(app, item(event))};
+  } else if (event.type === "click-parent") {
+    return {app: jump(app, event.thing)};
+  } else if (event.type === "click-placeholder") {
+    return {app: PlaceholderItem.create(app)};
+  } else if (event.type === "toggle-references") {
+    return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, item(event))})};
+  } else if (event.type === "edit") {
+    return E.handle(app, item(event), event.event);
+  } else if (event.type === "unfold") {
+    return {app: unfold(app, item(event))};
+  } else {
+    const unreachable: never = event;
+    return unreachable;
+  }
+}
+
+export function effects(
+  app: App,
+  event: Event,
+): {search?: {items: {thing: string; content: string}[]; query: string}; url?: string} {
+  if (event.type === "item") {
+    return handleItemEvent(app, event.event).effects ?? {};
+  } else {
+    return {};
+  }
+}
+
+function unreachable(x: never): never {
+  return x;
+}
+
+export function update(app: App, event: Event): App {
+  if (event.type === "focus") {
+    return merge(app, {tree: T.focus(app.tree, {id: event.id})});
+  } else if (event.type === "item") {
+    return handleItemEvent(app, event.event).app;
+  } else if (event.type === "drag") {
+    if (event.subtype === "drag") return merge(app, {drag: R.drag(app.tree, {id: event.id})});
+    else if (event.subtype === "hover")
+      return merge(app, {drag: R.hover(app.drag, event.id ? {id: event.id} : null)});
+    else if (event.subtype === "drop") return R.drop(app, event.modifier);
+    else return unreachable(event);
+  } else {
+    return unreachable(event);
+  }
+}
+
+export function isDragging(app: App): boolean {
+  return R.isActive(app.drag);
+}
+
+export function focus(app: App, id: number | null): App {
+  if (id === null) return merge(app, {tree: T.unfocus(app.tree)});
+  else return merge(app, {tree: T.focus(app.tree, {id})});
+}
+
+export function focusedId(app: App): number | null {
+  return T.focused(app.tree)?.id ?? null;
 }

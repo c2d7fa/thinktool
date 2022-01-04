@@ -491,6 +491,18 @@
     {
       "date": "2021-11-28",
       "title": "After coming back online, you can now choose to pull in the server's changes instead of pushing the local changes."
+    },
+    {
+      "date": "2022-01-04",
+      "title": "When moving items around in the outline, the selection in the editor is now preserved."
+    },
+    {
+      "date": "2022-01-04",
+      "title": "Fixed crash when trying to move focus off end of outline by pressing Down on the last item"
+    },
+    {
+      "date": "2022-01-04",
+      "title": "Fixed bug where trying to move focus past collapsed items would cause the editor to lose focus."
     }
   ]
 }

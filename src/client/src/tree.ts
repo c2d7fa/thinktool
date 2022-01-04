@@ -130,6 +130,15 @@ function nextSibling(tree: Tree, node: NodeRef): NodeRef | null {
   return children(tree, parent(tree, node)!)[index + 1];
 }
 
+function nthVisibleChild(tree: Tree, parent: NodeRef, index: number): NodeRef | null {
+  if (!expanded(tree, parent)) return null;
+  return children(tree, parent)[index] ?? null;
+}
+
+function lastVisibleChild(tree: Tree, parent: NodeRef): NodeRef | null {
+  return nthVisibleChild(tree, parent, children(tree, parent).length - 1);
+}
+
 function previousVisibleItem(tree: Tree, node: NodeRef): NodeRef {
   const parent_ = parent(tree, node);
   if (!parent_) return node;
@@ -138,34 +147,38 @@ function previousVisibleItem(tree: Tree, node: NodeRef): NodeRef {
 
   let result = previousSibling(tree, node);
   if (result === null) throw "logic error";
-  while (children(tree, result).length !== 0) {
-    result = children(tree, result)[children(tree, result).length - 1];
+  while (lastVisibleChild(tree, result!) !== null) {
+    result = lastVisibleChild(tree, result!);
   }
-  return result;
+  return result!;
 }
 
 function nextVisibleItem(tree: Tree, node: NodeRef): NodeRef {
-  if (children(tree, node).length !== 0) return children(tree, node)[0];
-
-  // Recursively traverse tree upwards until we hit a parent with a sibling
-  let nparent = node;
-  while (nparent !== tree._root) {
-    const nextSibling_ = nextSibling(tree, nparent);
-    if (nextSibling_ !== null) return nextSibling_;
-    nparent = parent(tree, nparent)!; // Non-null because nparent !== tree.root
+  function* eachAncestorInclusive(node: NodeRef): Iterable<NodeRef> {
+    yield node;
+    const parent_ = parent(tree, node);
+    if (parent_) yield* eachAncestorInclusive(parent_);
   }
-  return nparent;
+
+  const child_ = nthVisibleChild(tree, node, 0);
+  if (child_) return child_;
+
+  for (const ancestor of eachAncestorInclusive(node)) {
+    const nextSibling_ = nextSibling(tree, ancestor);
+    if (nextSibling_) return nextSibling_;
+  }
+
+  return node;
 }
 
 export function focusUp(tree: Tree): Tree {
-  if (I.getFocus(tree) === null) throw "Cannot move focus because nothing is focused";
-  return focus(tree, previousVisibleItem(tree, I.getFocus(tree)!));
+  const focused = I.getFocus(tree);
+  return focused === null ? tree : focus(tree, previousVisibleItem(tree, focused));
 }
 
 export function focusDown(tree: Tree): Tree {
-  if (I.getFocus(tree) === null) throw "Cannot move focus because nothing is focused";
-
-  return focus(tree, nextVisibleItem(tree, I.getFocus(tree)!));
+  const focused = I.getFocus(tree);
+  return focused === null ? tree : focus(tree, nextVisibleItem(tree, focused));
 }
 
 function genericRefreshChildren({
@@ -425,6 +438,11 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
   if (hasFocus(tree, node)) {
     newTree = focus(newTree, children(newTree, destination.parent)[destination.index]);
   }
+
+  // We now relabel the new node so it has the same ID as the last node. For
+  // example, this is necessary to preserve the editor state when moving items
+  // around in the outline.
+  newTree = I.repurposeId(newTree, children(newTree, destination.parent)[destination.index], node.id);
 
   return [newState, newTree];
 }

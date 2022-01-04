@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import {App, merge} from "../app";
+import {App, merge, update} from "../app";
 import Bullet from "./Bullet";
 
 import * as T from "../tree";
@@ -10,9 +10,8 @@ export function isVisible(app: App): boolean {
 }
 
 export function create(app: App): App {
-  let [state, tree, _, id] = T.createChild(app.state, app.tree, T.root(app.tree));
-  tree = T.focus(tree, id);
-  return merge(app, {state, tree});
+  let [state, tree, _, node] = T.createChild(app.state, app.tree, T.root(app.tree));
+  return update(merge(app, {state, tree}), {type: "focus", id: node.id});
 }
 
 export function PlaceholderItem(props: {onCreate(): void}) {

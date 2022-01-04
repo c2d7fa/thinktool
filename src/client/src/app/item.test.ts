@@ -2,11 +2,11 @@
 
 import * as Item from "./item";
 
-import * as App from "./app";
-import * as W from "./wrapap";
+import * as App from ".";
+import * as W from "../wrapap";
 
-import * as D from "./data";
-import * as T from "./tree";
+import * as D from "../data";
+import * as T from "../tree";
 
 describe("item status", () => {
   test("a node with no connections except from its parent is terminal", () => {

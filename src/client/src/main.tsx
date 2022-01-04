@@ -13,19 +13,14 @@ import * as Storage from "./sync/storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
-import * as Drag from "./drag";
 import * as P from "./popup";
 import * as Sync from "./sync";
 
-import * as Editor from "./ui/Editor";
 import * as Toolbar from "./ui/Toolbar";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
-import * as Item from "./item";
 import UserPage from "./ui/UserPage";
-import * as PlaceholderItem from "./ui/PlaceholderItem";
-import * as Outline from "./outline";
 import {TopBar, useTopBarProps} from "./ui/TopBar";
 import {OfflineIndicator} from "./offline-indicator";
 
@@ -37,6 +32,7 @@ import {Message} from "./messages";
 import {useMemoWarning, usePropRef} from "./react-utils";
 import {OrphanList, useOrphanListProps} from "./orphans/ui";
 import {Search} from "@thinktool/search";
+import {Outline} from "./ui/outline";
 
 function useGlobalShortcuts(sendEvent: Receiver<Message>["send"]) {
   React.useEffect(() => {
@@ -79,7 +75,7 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
   // becomes inactive. We do this to avoid performance issues due to constantly
   // listening to mouse movements. Is it necessary? Is there a cleaner solution?
   React.useEffect(() => {
-    if (!Drag.isActive(app.drag)) return;
+    if (!A.isDragging(app)) return;
 
     // We do it this way to override other cursors. For example, just setting
     // document.body.style.cursor would still give a pointer cursor when
@@ -100,19 +96,19 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
 
     function mousemove(ev: MouseEvent): void {
       const {clientX: x, clientY: y} = ev;
-      updateApp((app) => A.merge(app, {drag: Drag.hover(app.drag, findNodeAt({x, y}))}));
+      updateApp((app) => A.update(app, {type: "drag", subtype: "hover", id: findNodeAt({x, y})?.id ?? null}));
     }
 
     function touchmove(ev: TouchEvent): void {
       const {clientX: x, clientY: y} = ev.changedTouches[0];
-      updateApp((app) => A.merge(app, {drag: Drag.hover(app.drag, findNodeAt({x, y}))}));
+      updateApp((app) => A.update(app, {type: "drag", subtype: "hover", id: findNodeAt({x, y})?.id ?? null}));
     }
 
     window.addEventListener("mousemove", mousemove);
     window.addEventListener("touchmove", touchmove);
 
     function mouseup(ev: MouseEvent | TouchEvent): void {
-      updateApp((app) => Drag.drop(app, ev.ctrlKey ? "copy" : "move"));
+      updateApp((app) => A.update(app, {type: "drag", subtype: "drop", modifier: ev.ctrlKey ? "copy" : "move"}));
     }
 
     window.addEventListener("mouseup", mouseup);
@@ -126,7 +122,7 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
       window.removeEventListener("mouseup", mouseup);
       window.removeEventListener("touchend", mouseup);
     };
-  }, [Drag.isActive(app.drag), updateApp]);
+  }, [A.isDragging(app), updateApp]);
 }
 
 function useRepeatedlyCheck(f: () => Promise<"continue" | "stop">, ms: number): {start(): void} {
@@ -390,7 +386,7 @@ function App_({
       {app.tab === "orphans" ? (
         <OrphanList {...useOrphanListProps(app, updateApp)} />
       ) : (
-        <Outline.Outline outline={Outline.fromApp(app)} onItemEvent={onItemEvent} />
+        <Outline outline={A.outline(app)} onItemEvent={onItemEvent} />
       )}
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
@@ -406,32 +402,13 @@ function useOnItemEvent({
   openExternalUrl(url: string): void;
   send: Receiver<Message>["send"];
 }) {
-  return React.useCallback((event: Item.ItemEvent) => {
-    const node = (event: {id: number}): T.NodeRef => ({id: event.id});
-
-    if (event.type === "drag") {
-      updateApp((app) => A.merge(app, {drag: Drag.drag(app.tree, node(event))}));
-    } else if (event.type === "click-bullet") {
-      updateApp((app) => (event.alt ? Item.altClick : Item.click)(app, node(event)));
-    } else if (event.type === "click-parent") {
-      updateApp((app) => A.jump(app, event.thing));
-    } else if (event.type === "click-placeholder") {
-      updateApp(PlaceholderItem.create);
-    } else if (event.type === "toggle-references") {
-      updateApp((app) => A.merge(app, {tree: T.toggleBackreferences(app.state, app.tree, node(event))}));
-    } else if (event.type === "edit") {
-      updateApp((app) => {
-        const result = Editor.handling(app, node(event))(event.event);
-        if (result.effects?.url) openExternalUrl(result.effects.url);
-        if (result.effects?.search) send("search", {search: result.effects.search});
-        return result.app;
-      });
-    } else if (event.type === "unfold") {
-      updateApp((app) => A.unfold(app, node(event)));
-    } else {
-      const unreachable: never = event;
-      console.error("Unknown item event type: %o", unreachable);
-    }
+  return React.useCallback((event: A.ItemEvent) => {
+    updateApp((app) => {
+      const effects = A.effects(app, {type: "item", event});
+      if (effects?.url) openExternalUrl(effects.url);
+      if (effects?.search) send("search", {search: effects.search});
+      return A.update(app, {type: "item", event});
+    });
   }, []);
 }
 

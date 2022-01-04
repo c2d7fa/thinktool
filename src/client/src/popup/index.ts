@@ -1,6 +1,6 @@
 import * as A from "../app";
 import * as D from "../data";
-import * as E from "../editing";
+import * as E from "../editor";
 
 const _isOpen = Symbol("active");
 const _query = Symbol("query");

@@ -1,6 +1,6 @@
-@use "../general";
-@use "../style/base";
-@use "../style/components";
+@use "../../general";
+@use "../../../style/base";
+@use "../../../style/components";
 
 .outer {
   display: flex;

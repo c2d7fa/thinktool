@@ -1,6 +1,7 @@
 import * as D from "./data";
 import * as A from "./app";
 import * as T from "./tree";
+import * as Ac from "./actions";
 
 export interface Editor {
   content: EditorContent;
@@ -227,3 +228,66 @@ export function paragraphs(text: string): string[] {
 }
 
 // #endregion
+
+export type Event =
+  | {tag: "action"; action: Ac.ActionName}
+  | {tag: "open"; link: string}
+  | {tag: "jump"; link: string}
+  | {tag: "edit"; editor: Editor; focused: boolean}
+  | {tag: "paste"; paragraphs: string[]}
+  | {tag: "openUrl"; url: string};
+
+export function pasteParagraphs(app: A.App, node: T.NodeRef, paragraphs: string[]): A.App {
+  let [state, tree] = [app.state, app.tree];
+  let lastNode = node;
+
+  for (const paragraph of paragraphs) {
+    const [state_, tree_, thing, lastNode_] = T.createSiblingAfter(state, tree, lastNode);
+    [state, tree, lastNode] = [state_, tree_, lastNode_];
+
+    state = D.setContent(state, thing, [paragraph]);
+  }
+
+  return A.merge(app, {state, tree});
+}
+
+function updateFocus(app: A.App, item: {id: number; hasFocus: boolean}, focused: boolean): A.App {
+  return focused ? A.focus(app, item.id) : item.hasFocus ? A.focus(app, null) : app;
+}
+
+export function handle(
+  app: A.App,
+  item: {id: number; hasFocus: boolean},
+  ev: Event,
+): {
+  app: A.App;
+  effects?: {search?: {items: {thing: string; content: string}[]; query: string}; url?: string};
+} {
+  if (ev.tag === "edit") {
+    return {app: updateFocus(A.edit(app, item, ev.editor), item, ev.focused)};
+  } else if (ev.tag === "open") {
+    return {app: A.toggleLink(app, item, ev.link)};
+  } else if (ev.tag === "jump") {
+    return {app: A.jump(app, ev.link)};
+  } else if (ev.tag === "paste") {
+    return {app: pasteParagraphs(app, item, ev.paragraphs)};
+  } else if (ev.tag === "action") {
+    return Ac.update(app, ev.action);
+  } else if (ev.tag === "openUrl") {
+    return {app: app, effects: {url: ev.url}};
+  } else {
+    throw "unhandled case";
+  }
+}
+
+export function forNode(app: A.App, node: T.NodeRef): {editor: Editor; hasFocus: boolean} {
+  function require<T>(x: T | null): T {
+    if (x === null) throw "unexpected null";
+    return x;
+  }
+
+  return {
+    editor: require(A.editor(app, node)),
+    hasFocus: T.hasFocus(app.tree, node),
+  };
+}
