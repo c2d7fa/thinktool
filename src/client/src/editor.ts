@@ -251,32 +251,26 @@ export function pasteParagraphs(app: A.App, node: T.NodeRef, paragraphs: string[
   return A.merge(app, {state, tree});
 }
 
-function updateFocus(app: A.App, node: T.NodeRef, focused: boolean): A.App {
-  if (focused) {
-    return A.merge(app, {tree: T.focus(app.tree, node)});
-  } else if (!focused && T.hasFocus(app.tree, node)) {
-    return A.merge(app, {tree: T.unfocus(app.tree)});
-  } else {
-    return app;
-  }
+function updateFocus(app: A.App, item: {id: number; hasFocus: boolean}, focused: boolean): A.App {
+  return focused ? A.focus(app, item.id) : item.hasFocus ? A.focus(app, null) : app;
 }
 
 export function handle(
   app: A.App,
-  node: T.NodeRef,
+  item: {id: number; hasFocus: boolean},
   ev: Event,
 ): {
   app: A.App;
   effects?: {search?: {items: {thing: string; content: string}[]; query: string}; url?: string};
 } {
   if (ev.tag === "edit") {
-    return {app: updateFocus(A.edit(app, node, ev.editor), node, ev.focused)};
+    return {app: updateFocus(A.edit(app, item, ev.editor), item, ev.focused)};
   } else if (ev.tag === "open") {
-    return {app: A.toggleLink(app, node, ev.link)};
+    return {app: A.toggleLink(app, item, ev.link)};
   } else if (ev.tag === "jump") {
     return {app: A.jump(app, ev.link)};
   } else if (ev.tag === "paste") {
-    return {app: pasteParagraphs(app, node, ev.paragraphs)};
+    return {app: pasteParagraphs(app, item, ev.paragraphs)};
   } else if (ev.tag === "action") {
     return Ac.update(app, ev.action);
   } else if (ev.tag === "openUrl") {

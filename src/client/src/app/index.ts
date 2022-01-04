@@ -236,22 +236,22 @@ function handleItemEvent(
   app: App,
   event: ItemEvent,
 ): {app: App; effects?: {search?: {items: {thing: string; content: string}[]; query: string}; url?: string}} {
-  const node = (event: {id: number}): T.NodeRef => ({id: event.id});
+  const item = (event: {id: number}) => ({id: event.id, hasFocus: T.hasFocus(app.tree, {id: event.id})});
 
   if (event.type === "drag") {
-    return {app: merge(app, {drag: R.drag(app.tree, node(event))})};
+    return {app: merge(app, {drag: R.drag(app.tree, item(event))})};
   } else if (event.type === "click-bullet") {
-    return {app: (event.alt ? I.altClick : I.click)(app, node(event))};
+    return {app: (event.alt ? I.altClick : I.click)(app, item(event))};
   } else if (event.type === "click-parent") {
     return {app: jump(app, event.thing)};
   } else if (event.type === "click-placeholder") {
     return {app: PlaceholderItem.create(app)};
   } else if (event.type === "toggle-references") {
-    return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, node(event))})};
+    return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, item(event))})};
   } else if (event.type === "edit") {
-    return E.handle(app, node(event), event.event);
+    return E.handle(app, item(event), event.event);
   } else if (event.type === "unfold") {
-    return {app: unfold(app, node(event))};
+    return {app: unfold(app, item(event))};
   } else {
     const unreachable: never = event;
     return unreachable;
@@ -291,4 +291,9 @@ export function update(app: App, event: Event): App {
 
 export function isDragging(app: App): boolean {
   return R.isActive(app.drag);
+}
+
+export function focus(app: App, id: number | null): App {
+  if (id === null) return merge(app, {tree: T.unfocus(app.tree)});
+  else return merge(app, {tree: T.focus(app.tree, {id})});
 }
