@@ -94,6 +94,24 @@ describe("in an app with two items", () => {
   });
 });
 
+function updateEditFocused(
+  app: A.App,
+  ...events: ((A.Event & {type: "item"})["event"] & {type: "edit"})["event"][]
+) {
+  return events.reduce(
+    (app, event) =>
+      A.update(app, {
+        type: "item",
+        event: {
+          id: A.focusedId(app)!,
+          type: "edit",
+          event,
+        },
+      }),
+    app,
+  );
+}
+
 describe("moving focus with arrow key commands", () => {
   const base = construct({
     children: [{content: "Item 1", children: [{content: "Item 1.1"}]}, {content: "Item 2"}],
@@ -101,39 +119,24 @@ describe("moving focus with arrow key commands", () => {
 
   describe("after focusing Item 1 and expanding it", () => {
     const afterFocus = A.update(base, {type: "focus", id: A.outline(base).root.children[0].id});
-    const afterToggle = A.update(afterFocus, {
-      type: "item",
-      event: {
-        id: A.outline(afterFocus).root.children[0].id,
-        type: "edit",
-        event: {tag: "action", action: "toggle"},
-      },
-    });
-    const afterToggleOutline = A.outline(afterToggle);
+    const afterToggle = updateEditFocused(afterFocus, {tag: "action", action: "toggle"});
 
     test("the children of Item 1 are shown", () => {
-      expect(afterToggleOutline.root.children).toMatchObject([
+      expect(A.outline(afterToggle).root.children).toMatchObject([
         {editor: {content: ["Item 1"]}, children: [{editor: {content: ["Item 1.1"]}}]},
         {editor: {content: ["Item 2"]}},
       ]);
     });
 
     test("the first item still has focus", () => {
-      expect(afterToggleOutline.root.children).toMatchObject([
+      expect(A.outline(afterToggle).root.children).toMatchObject([
         {hasFocus: true, children: [{hasFocus: false}]},
         {hasFocus: false},
       ]);
     });
 
     describe("after moving focus down", () => {
-      const afterFocusDownOnce = A.update(afterToggle, {
-        type: "item",
-        event: {
-          id: afterToggleOutline.root.children[0].id,
-          type: "edit",
-          event: {tag: "action", action: "focus-down"},
-        },
-      });
+      const afterFocusDownOnce = updateEditFocused(afterToggle, {tag: "action", action: "focus-down"});
 
       test("focus moves to Item 1.1", () => {
         expect(A.outline(afterFocusDownOnce).root.children).toMatchObject([
@@ -143,14 +146,7 @@ describe("moving focus with arrow key commands", () => {
       });
 
       describe("after moving focus down again", () => {
-        const afterFocusDownTwice = A.update(afterFocusDownOnce, {
-          type: "item",
-          event: {
-            id: afterToggleOutline.root.children[0].id,
-            type: "edit",
-            event: {tag: "action", action: "focus-down"},
-          },
-        });
+        const afterFocusDownTwice = updateEditFocused(afterFocusDownOnce, {tag: "action", action: "focus-down"});
 
         test("focus moves to Item 2", () => {
           expect(A.outline(afterFocusDownTwice).root.children).toMatchObject([
@@ -160,20 +156,54 @@ describe("moving focus with arrow key commands", () => {
         });
 
         describe("after trying to move focus down again", () => {
-          const afterFocusDownThreeTimes = A.update(afterFocusDownTwice, {
-            type: "item",
-            event: {
-              id: afterToggleOutline.root.children[0].id,
-              type: "edit",
-              event: {tag: "action", action: "focus-down"},
-            },
+          const afterFocusDownThrice = updateEditFocused(afterFocusDownTwice, {
+            tag: "action",
+            action: "focus-down",
           });
 
           test("focus stays on Item 2", () => {
-            expect(A.outline(afterFocusDownThreeTimes).root.children).toMatchObject([
+            expect(A.outline(afterFocusDownThrice).root.children).toMatchObject([
               {hasFocus: false, children: [{hasFocus: false}]},
               {hasFocus: true},
             ]);
+          });
+
+          describe("after moving focus back up to Item 1 and toggling it again", () => {
+            const afterFocusBackUp = updateEditFocused(
+              afterFocusDownThrice,
+              {tag: "action", action: "focus-up"},
+              {tag: "action", action: "focus-up"},
+              {tag: "action", action: "toggle"},
+            );
+
+            test("tthe first item is focused again", () => {
+              expect(A.outline(afterFocusBackUp).root.children).toMatchObject([
+                {hasFocus: true},
+                {hasFocus: false},
+              ]);
+            });
+
+            test("the children of Item 1 are hidden", () => {
+              expect(A.outline(afterFocusBackUp).root.children).toMatchObject([
+                {editor: {content: ["Item 1"]}, children: []},
+                {editor: {content: ["Item 2"]}},
+              ]);
+            });
+
+            describe("after moving focus down again", () => {
+              const afterFocusDownAgain = updateEditFocused(afterFocusBackUp, {
+                tag: "action",
+                action: "focus-down",
+              });
+
+              // Bug: Focus doesn't move over collapsed children
+              test.skip("focus moves directly to Item 2", () => {
+                expect(A.outline(afterFocusDownAgain).root.children).toMatchObject([
+                  {hasFocus: false},
+                  {hasFocus: true},
+                ]);
+              });
+            });
           });
         });
       });

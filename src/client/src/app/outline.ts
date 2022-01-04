@@ -35,7 +35,10 @@ export function fromApp(app: A.App): Outline {
       otherParents: otherParents,
       openedLinks: T.openedLinksChildren(app.tree, node).map((n) => dataItemizeNode(app, n, node)),
       isPlaceholderShown: PlaceholderItem.isVisible(app) && T.root(app.tree).id === node.id,
-      children: T.children(app.tree, node).map((n) => dataItemizeNode(app, n, node)),
+      children:
+        I.status(app.tree, node) === "expanded"
+          ? T.children(app.tree, node).map((n) => dataItemizeNode(app, n, node))
+          : [],
       references:
         backreferences.length === 0
           ? {state: "empty"}

@@ -297,3 +297,7 @@ export function focus(app: App, id: number | null): App {
   if (id === null) return merge(app, {tree: T.unfocus(app.tree)});
   else return merge(app, {tree: T.focus(app.tree, {id})});
 }
+
+export function focusedId(app: App): number | null {
+  return T.focused(app.tree)?.id ?? null;
+}
