@@ -13,6 +13,7 @@ import * as M from "../messages";
 import {OtherParents} from "../ui/OtherParents";
 import {StaticContent} from "../ui/editor";
 import Bullet from "../ui/Bullet";
+import {ItemLayout} from "../ui/item";
 
 const Result = React.memo(
   function (props: {result: P.Result; isSelected: boolean; onSelect(): void}) {
@@ -27,14 +28,18 @@ const Result = React.memo(
           props.onSelect();
         }}
       >
-        <OtherParents otherParents={props.result.parents} click={() => {}} altClick={() => {}} />
-        <Bullet
-          beginDrag={() => {}}
-          status={props.result.hasChildren ? "collapsed" : "terminal"}
-          toggle={() => {}}
-          onMiddleClick={() => {}}
+        <ItemLayout
+          otherParents={<OtherParents otherParents={props.result.parents} click={() => {}} altClick={() => {}} />}
+          bullet={
+            <Bullet
+              beginDrag={() => {}}
+              status={props.result.hasChildren ? "collapsed" : "terminal"}
+              toggle={() => {}}
+              onMiddleClick={() => {}}
+            />
+          }
+          editor={<StaticContent content={props.result.content} />}
         />
-        <StaticContent content={props.result.content} />
       </div>
     );
   },

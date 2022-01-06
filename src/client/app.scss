@@ -60,23 +60,6 @@ body {
 
 /* #endregion */
 
-/* #region Outline structure */
-
-.subtree {
-  @include base.reset-list;
-}
-
-.subtree-container > .subtree {
-  padding-left: 2rem;
-}
-
-.item {
-  margin-bottom: 1rem;
-  @include general.item-grid;
-}
-
-/* #endregion */
-
 /* #region Other parents list */
 
 .other-parents-small {
@@ -169,12 +152,6 @@ body {
   color: hsl(90, 30%, 30%);
 
   align-self: top;
-}
-
-button.backreferences-text {
-  @include components.ui-heading;
-  color: hsl(180, 30%, 30%);
-  @include base.subtle-button(hsl(180, 30%, 30%));
 }
 
 /* #endregion */
@@ -342,36 +319,6 @@ a.plain-text-link:hover {
 }
 
 /* #endregion */
-
-/* #endregion */
-
-/* #region Drag and drop */
-
-.item {
-  position: relative;
-}
-
-.drop-target::before {
-  content: "";
-  display: block;
-  position: absolute;
-
-  pointer-events: none;
-
-  left: 0;
-  right: 0;
-  height: 3px;
-
-  margin-bottom: 3px;
-
-  background-color: #d0d0d0;
-  border-radius: 1.5px;
-}
-
-.drag-source {
-  opacity: 0.5;
-  transition: opacity base.$quick-transition-time;
-}
 
 /* #endregion */
 

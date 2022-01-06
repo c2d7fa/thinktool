@@ -66,7 +66,7 @@ function ReferencesOutline(props: {references: A.Item["references"]; onItemEvent
     return <Item.Item key={item.id} item={item} onItemEvent={props.onItemEvent} />;
   });
 
-  return <ul className="subtree">{referenceItems}</ul>;
+  return <Item.SubtreeLayout>{referenceItems}</Item.SubtreeLayout>;
 }
 
 function ParentsOutline(props: {parents: A.Item[]; onItemEvent: (event: A.ItemEvent) => void}) {
@@ -79,7 +79,7 @@ function ParentsOutline(props: {parents: A.Item[]; onItemEvent: (event: A.ItemEv
   return (
     <div className={style.parents}>
       <h1 className={style.referencesheader}>Parents</h1>
-      <ul className="subtree">{parentItems}</ul>
+      <Item.SubtreeLayout>{parentItems}</Item.SubtreeLayout>
     </div>
   );
 }
