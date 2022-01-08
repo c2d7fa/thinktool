@@ -11,19 +11,21 @@ button.backreferencesText {
 .item {
   display: grid;
   grid: "empty parents" auto "bullet item" auto / 1em 1fr;
-  gap: 3px 1em;
+  gap: 3px (base.$font-size * base.$line-height * 0.35);
 }
+
+$outline-spacing: (base.$font-size * base.$line-height) * 0.35;
 
 .subtree {
   @include base.reset-list;
 
   display: flex;
   flex-direction: column;
-  row-gap: 1rem;
+  row-gap: $outline-spacing;
 }
 
 .itemContainer > .subtree {
-  margin-top: 1rem;
+  margin-top: $outline-spacing;
   padding-left: 2rem;
 }
 

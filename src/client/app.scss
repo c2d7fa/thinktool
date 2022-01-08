@@ -33,9 +33,9 @@ body {
   color: #303030;
 
   font-family: "Inter", sans-serif;
-  font-size: 1.1em;
+  font-size: base.$font-size;
   letter-spacing: -0.02em;
-  line-height: 150%;
+  line-height: base.$line-height;
 
   overflow-y: overlay;
 }
@@ -70,6 +70,11 @@ body {
 
   font-size: base.$other-parents-small-font-size;
 
+  &:not(:empty) {
+    // Extra spacing between items with other parents. Otherwise they look visually misaligned.
+    padding-top: (base.$font-size * base.$line-height - 0.3rem) * 0.3;
+  }
+
   li {
     display: inline-block;
     line-height: 100%;
@@ -88,16 +93,6 @@ body {
     white-space: nowrap;
 
     .bullet {
-      margin: 0;
-      margin-top: -2px;
-
-      width: 10px !important;
-      height: 10px !important;
-      min-width: 10px !important;
-      min-height: 10px !important;
-      max-width: 10px !important;
-      max-height: 10px !important;
-
       .bullet-hover-rect {
         opacity: 0;
       }
@@ -184,7 +179,7 @@ a.plain-text-link:hover {
   padding: 0;
   margin: 0;
 
-  line-height: 175%;
+  line-height: base.$line-height;
 
   .placeholder {
     @include general.placeholder-text;
@@ -215,10 +210,10 @@ a.plain-text-link:hover {
   user-select: none;
   display: inline-block;
 
-  width: 20px;
-  height: 20px;
+  margin-top: -1px;
+  width: 1em;
+  height: 1em;
 
-  margin-top: 6px;
   cursor: pointer;
 
   text-align: center;

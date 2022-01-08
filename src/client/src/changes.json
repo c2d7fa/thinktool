@@ -507,6 +507,10 @@
     {
       "date": "UNRELEASED",
       "title": "Changed font used for buttons to better match the rest of the UI."
+    },
+    {
+      "date": "UNRELEASED",
+      "title": "Changed appearance of outline so everything is a little more compact."
     }
   ]
 }
