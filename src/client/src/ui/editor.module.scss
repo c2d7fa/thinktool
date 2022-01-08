@@ -11,7 +11,6 @@
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 
-  transition: border-color base.$quick-transition-time;
   border: 1px solid hsl(210, 0%, 80%);
 
   /* Don't break between bullet and first word. */
@@ -23,8 +22,6 @@
   }
 
   :global(.bullet.link-bullet) {
-    transition: transform base.$quick-transition-time;
-
     cursor: pointer;
 
     margin: 0;
@@ -56,8 +53,6 @@
     }
 
     :global(.bullet.link-bullet) {
-      transform: translateX(3px);
-
       :global(.bullet-hover-rect) {
         opacity: 0; // Never show rect
       }
@@ -71,10 +66,6 @@
 
   &:active {
     border-color: hsl(205, 0%, 50%);
-
-    :global(.bullet.link-bullet) {
-      transform: translateX(2px);
-    }
   }
 }
 
