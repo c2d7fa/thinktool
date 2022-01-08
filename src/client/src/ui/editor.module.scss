@@ -6,12 +6,13 @@
   cursor: pointer;
 
   padding: 2px 4px;
-  border-radius: 6px;
+  border-radius: 3px;
 
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 
-  border: 1px solid hsl(210, 0%, 70%);
+  transition: border-color base.$quick-transition-time;
+  border: 1px solid hsl(210, 0%, 80%);
 
   /* Don't break between bullet and first word. */
   white-space: nowrap;
@@ -22,11 +23,13 @@
   }
 
   :global(.bullet.link-bullet) {
+    transition: transform base.$quick-transition-time;
+
     cursor: pointer;
 
     margin: 0;
     margin-bottom: 3px;
-    margin-right: -2px;
+    margin-right: 0px;
     margin-left: -1px;
 
     :global(.bullet-circle) {
@@ -46,13 +49,15 @@
   }
 
   &:hover {
-    border-color: hsl(205, 10%, 50%);
+    border-color: hsl(205, 0%, 70%);
 
     .content {
       color: hsl(205, 50%, 25%);
     }
 
     :global(.bullet.link-bullet) {
+      transform: translateX(3px);
+
       :global(.bullet-hover-rect) {
         opacity: 0; // Never show rect
       }
@@ -61,6 +66,14 @@
         fill: hsl(205, 10%, 50%);
         stroke: hsl(205, 10%, 50%);
       }
+    }
+  }
+
+  &:active {
+    border-color: hsl(205, 0%, 50%);
+
+    :global(.bullet.link-bullet) {
+      transform: translateX(2px);
     }
   }
 }
