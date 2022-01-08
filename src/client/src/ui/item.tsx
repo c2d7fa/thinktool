@@ -47,20 +47,17 @@ export function SubtreeLayout(props: {children: React.ReactNode}) {
 }
 
 export function ItemLayout(props: {
-  attributes?: React.HTMLAttributes<HTMLLIElement> & {[key in `data-${string}`]?: string};
-  Element?: React.ElementType;
+  attributes?: React.HTMLAttributes<HTMLDivElement> & {[key in `data-${string}`]?: string};
   bullet: React.ReactNode;
   otherParents: React.ReactNode;
   editor: React.ReactNode;
 }) {
-  const Element_ = props.Element ?? ((props) => <li {...props} />);
-
   return (
-    <Element_ {...props.attributes} className={`${styles.item} ${props.attributes?.className ?? ""}`}>
+    <div {...props.attributes} className={`${styles.item} ${props.attributes?.className ?? ""}`}>
       <div style={{gridArea: "bullet"}}>{props.bullet}</div>
       <div style={{gridArea: "parents"}}>{props.otherParents}</div>
       <div style={{gridArea: "item"}}>{props.editor}</div>
-    </Element_>
+    </div>
   );
 }
 
