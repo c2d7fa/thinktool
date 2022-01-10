@@ -7,6 +7,7 @@ import * as E from "../editor";
 
 import * as Item from "./item";
 import {Editor} from "./editor";
+import {Icon} from "./icons";
 
 export const Outline = React.memo(function ({
   outline,
@@ -52,7 +53,7 @@ const SelectedItem = React.memo(function SelectedItem(props: {
   return (
     <div className={style.root}>
       <button className={style.unfold} onClick={props.unfold} disabled={!props.isFolded}>
-        <span className="fas fa-fw fa-stream" />
+        <Icon icon="mdiDotsHorizontal" />
       </button>
       <Editor editor={props.editor} hasFocus={props.hasFocus} onEvent={props.onEditEvent} />
     </div>

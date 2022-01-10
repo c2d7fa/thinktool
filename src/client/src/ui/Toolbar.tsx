@@ -100,67 +100,75 @@ const ToolbarGroup = React.memo(
 
 export function toolbar(app: App): State {
   const knownActions = {
-    "home": {description: "Jump back to the default item.", icon: "home", label: "Home"},
-    "find": {description: "Search for a specific item by its content.", icon: "find", label: "Find"},
+    "home": {description: "Jump back to the default item.", icon: "mdiHomeOutline", label: "Home"},
+    "find": {description: "Search for a specific item by its content.", icon: "mdiMagnify", label: "Find"},
     "zoom": {
       description:
         "Jump to the currently selected item. To select an item, just click somewhere inside that item's text.",
-      icon: "jump",
+      icon: "mdiArrowURightBottom",
       label: "Jump",
     },
     "new": {
       description: "Create a new item as a sibling of the currently selected item",
-      icon: "plus-square",
+      icon: "mdiPlusBoxOutline",
       label: "New",
     },
     "new-child": {
       description: "Create a new child of the selected item",
-      icon: "caret-square-down",
+      icon: "mdiChevronDownBoxOutline",
       label: "New Child",
     },
     "remove": {
       description: "Remove the selected item from its parent. This does not delete the item.",
-      icon: "minus-square",
+      icon: "mdiMinusCircleOutline",
       label: "Remove",
     },
     "destroy": {
       description:
         "Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents.",
-      icon: "trash",
+      icon: "mdiCloseBoxOutline",
       label: "Destroy",
     },
-    "unindent": {description: "Unindent the selected item", icon: "chevron-left", label: "Unindent"},
-    "indent": {description: "Indent the selected item", icon: "chevron-right", label: "Indent"},
-    "up": {description: "Move the selected item up", icon: "chevron-up", label: "Up"},
-    "down": {description: "Move the selected item down", icon: "chevron-down", label: "Down"},
+    "unindent": {description: "Unindent the selected item", icon: "mdiChevronDoubleLeft", label: "Unindent"},
+    "indent": {description: "Indent the selected item", icon: "mdiChevronDoubleRight", label: "Indent"},
+    "up": {description: "Move the selected item up", icon: "mdiChevronDoubleUp", label: "Up"},
+    "down": {description: "Move the selected item down", icon: "mdiChevronDoubleDown", label: "Down"},
     "insert-sibling": {
       description: "Insert an existing item as a sibling after the currently selected item.",
-      icon: "plus-circle",
+      icon: "mdiPlusCircleOutline",
       label: "Sibling",
     },
     "insert-child": {
       description: "Insert an existing item as a child of the currently selected item.",
-      icon: "chevron-circle-down",
+      icon: "mdiChevronDownCircleOutline",
       label: "Child",
     },
     "insert-parent": {
       description: "Insert an existing item as a parent of the currently selected item.",
-      icon: "chevron-circle-up",
+      icon: "mdiChevronUpCircleOutline",
       label: "Parent",
     },
     "insert-link": {
       description: "Insert a reference to an existing item at the position of the text.",
-      icon: "link",
+      icon: "mdiArrowRightCircleOutline",
       label: "Link",
     },
-    "forum": {description: "Open the subreddit.", icon: "reddit", label: "Forum"},
-    "tutorial": {description: "Go through the tutorial again.", icon: "info", label: "Tutorial"},
-    "changelog": {description: "Show list of updates to Thinktool.", icon: "list", label: "Updates"},
-    "unfold": {description: "Recursively show all children of selected item.", icon: "unfold", label: "Unfold"},
-    "view-outline": {description: "Switch to the outline view", icon: "list-alt", label: "Outline"},
+    "forum": {description: "Open the subreddit.", icon: "mdiForumOutline", label: "Forum"},
+    "tutorial": {description: "Go through the tutorial again.", icon: "mdiSchoolOutline", label: "Tutorial"},
+    "changelog": {
+      description: "Show list of updates to Thinktool.",
+      icon: "mdiNewspaperVariantOutline",
+      label: "Updates",
+    },
+    "unfold": {
+      description: "Recursively show all children of selected item.",
+      icon: "mdiDotsHorizontal",
+      label: "Unfold",
+    },
+    "view-outline": {description: "Switch to the outline view", icon: "mdiFileTree", label: "Outline"},
     "view-orphans": {
       description: "Switch to the inbox view, which shows all items that aren't part of the outline",
-      icon: "inbox",
+      icon: "mdiTrayFull",
       label: "Inbox",
     },
   };

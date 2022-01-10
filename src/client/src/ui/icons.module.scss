@@ -1,3 +1,6 @@
-.iconLabel :global(.fa-fw) {
-  padding-right: 0.5em;
+.iconLabel {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 0.5em;
 }
