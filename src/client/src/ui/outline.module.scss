@@ -2,15 +2,18 @@
 @use "../../../style/base";
 @use "../../../style/components";
 
+$section-gap: 3em;
+$header-margin: 0.5em;
+
 .outer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2em;
+  padding: 2rem;
+  row-gap: $section-gap;
 }
 
 .inner {
-  margin: 1rem 0;
   max-width: general.$outline-width;
   width: 100%;
 
@@ -18,6 +21,8 @@
     display: flex;
     flex-direction: row;
     position: relative;
+
+    margin-bottom: $header-margin;
 
     font-size: 1em;
     font-weight: bold;
@@ -44,17 +49,16 @@
   width: 100%;
 }
 
-.referencesheader {
+.sectionHeader {
   @include components.ui-heading;
 
   margin-top: 0;
-  margin-bottom: 0.5rem;
+  margin-bottom: $header-margin;
 
   color: #808080;
 }
 
 .children {
-  margin-top: 2rem;
 }
 
 .references {

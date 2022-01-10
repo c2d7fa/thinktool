@@ -33,7 +33,7 @@ export const Outline = React.memo(function ({
       {outline.references.state !== "empty" && (
         <>
           <div className={style.references}>
-            <h1 className={style.referencesheader}>References</h1>
+            <h1 className={style.sectionHeader}>References</h1>
             <ReferencesOutline references={outline.references} onItemEvent={onItemEvent} />
           </div>
         </>
@@ -78,7 +78,7 @@ function ParentsOutline(props: {parents: A.Item[]; onItemEvent: (event: A.ItemEv
 
   return (
     <div className={style.parents}>
-      <h1 className={style.referencesheader}>Parents</h1>
+      <h1 className={style.sectionHeader}>Parents</h1>
       <Item.SubtreeLayout>{parentItems}</Item.SubtreeLayout>
     </div>
   );
