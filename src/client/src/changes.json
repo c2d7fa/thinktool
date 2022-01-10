@@ -506,15 +506,11 @@
     },
     {
       "date": "UNRELEASED",
-      "title": "Changed font used for buttons to better match the rest of the UI."
+      "title": "Changed icons, bullets and fonts."
     },
     {
       "date": "UNRELEASED",
       "title": "Changed appearance of outline so everything is a little more compact."
-    },
-    {
-      "date": "UNRELEASED",
-      "title": "Changed bullets for parents and references"
     }
   ]
 }
