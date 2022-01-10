@@ -14,7 +14,7 @@ const styles = require("./item.module.scss").default;
 function References({linkedItem, onItemEvent}: {linkedItem: A.Item; onItemEvent: (event: A.ItemEvent) => void}) {
   if (linkedItem.references.state === "empty") return null;
 
-  const text = `${linkedItem.references.count} References${
+  const text = `${linkedItem.references.count} reference${linkedItem.references.count === 1 ? "" : "s"}${
     linkedItem.references.state === "collapsed" ? "..." : ""
   }`;
 
