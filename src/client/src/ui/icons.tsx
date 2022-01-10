@@ -19,7 +19,7 @@ const mdiIcons = {
   insertSibling: MdiJs.mdiPlusCircleOutline,
   insertChild: MdiJs.mdiChevronDownCircleOutline,
   insertParent: MdiJs.mdiChevronUpCircleOutline,
-  insertLink: MdiJs.mdiArrowRightCircleOutline,
+  insertLink: MdiJs.mdiLinkVariant,
   forum: MdiJs.mdiForumOutline,
   tutorial: MdiJs.mdiSchoolOutline,
   changelog: MdiJs.mdiNewspaperVariantOutline,
