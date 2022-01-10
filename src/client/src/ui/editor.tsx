@@ -117,7 +117,7 @@ function createExternalLinkDecorationPlugin(args: {openExternalUrl(url: string):
           state.doc,
           ranges.map((range) =>
             PV.Decoration.inline(range.from, range.to, {
-              class: "plain-text-link",
+              class: style.externalLink,
               nodeName: "a",
               href: "#",
               style: "cursor: pointer;",

@@ -153,23 +153,6 @@ body {
 
 /* #endregion */
 
-/* #region External links */
-
-a.plain-text-link {
-  word-break: break-all;
-  color: inherit;
-  text-decoration: none;
-
-  border-bottom: 2px solid #00000028;
-  transition: border-color base.$quick-transition-time;
-}
-
-a.plain-text-link:hover {
-  border-color: #00000080;
-}
-
-/* #endregion */
-
 /* #endregion */
 
 /* #region Editor */

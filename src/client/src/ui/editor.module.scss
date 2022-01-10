@@ -85,3 +85,16 @@
     stroke-linejoin: round;
   }
 }
+
+a.externalLink {
+  word-break: break-all;
+
+  font-weight: 500;
+  color: #555;
+  text-decoration: underline #ccc;
+
+  &:hover {
+    color: #444;
+    text-decoration: underline #888;
+  }
+}
