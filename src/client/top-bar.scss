@@ -54,6 +54,9 @@
   }
 
   #current-user {
+    display: flex;
+    flex-direction: row;
+
     a {
       @extend button;
       text-decoration: inherit;
