@@ -4,10 +4,6 @@ import * as MdiJs from "@mdi/js";
 
 const style = require("./icons.module.scss").default;
 
-const faIcons = {
-  offline: "power-off",
-};
-
 const mdiIcons = {
   home: MdiJs.mdiHomeOutline,
   find: MdiJs.mdiMagnify,
@@ -33,26 +29,13 @@ const mdiIcons = {
   menu: MdiJs.mdiMenu,
   user: MdiJs.mdiAccountOutline,
   logOut: MdiJs.mdiLogout,
+  offline: MdiJs.mdiPowerPlugOffOutline,
 };
 
-export type IconId = keyof typeof mdiIcons | keyof typeof faIcons;
-
-function MdiIcon(props: {icon: keyof typeof mdiIcons}) {
-  return <MdiReact.Icon path={mdiIcons[props.icon]} size="1.2em" />;
-}
-
-function FontAwesomeIcon(props: {icon: keyof typeof faIcons}) {
-  const id = faIcons[props.icon];
-  const fas = id === "reddit-alien" ? "fab" : "fas";
-  return <i className={`${fas} fa-fw fa-${id}`} aria-hidden="true" />;
-}
+export type IconId = keyof typeof mdiIcons;
 
 export function Icon(props: {icon: IconId}) {
-  if (props.icon in mdiIcons) {
-    return <MdiIcon icon={props.icon as keyof typeof mdiIcons} />;
-  } else {
-    return <FontAwesomeIcon icon={props.icon as keyof typeof faIcons} />;
-  }
+  return <MdiReact.Icon path={mdiIcons[props.icon]} size="1.2em" />;
 }
 
 export function IconLabel(props: {icon: IconId; children: React.ReactNode}) {
