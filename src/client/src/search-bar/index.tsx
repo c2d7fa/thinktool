@@ -14,6 +14,7 @@ import {OtherParents} from "../ui/OtherParents";
 import {StaticContent} from "../ui/editor";
 import Bullet from "../ui/Bullet";
 import {ItemLayout} from "../ui/item";
+import {Icon} from "../ui/icons";
 
 const Result = React.memo(
   function (props: {result: P.Result; isSelected: boolean; onSelect(): void}) {
@@ -134,9 +135,6 @@ export function SearchBar(props: {
     <div
       className={classes({
         [Style["search-bar"]]: true,
-        [Style["find"]]: props.icon === "search",
-        [Style["link"]]: props.icon === "link",
-        [Style["connect"]]: props.icon === "insert",
         [Style["showresults"]]: props.isSearching && props.results.length > 0,
         [Style["new-item-selected"]]: props.isNewItemActive,
       })}
@@ -145,10 +143,19 @@ export function SearchBar(props: {
         props.onActivate();
       }}
     >
-      {/* We use FA, which apparently doesn't handle replacements very well, so we use this hack; see the CSS. */}
-      <span className={`icon fa-fw fas fa-search`} />
-      <span className={`icon fa-fw fas fa-link`} />
-      <span className={`icon fa-fw fas fa-plus-circle`} />
+      <span className={Style.icon}>
+        <Icon
+          icon={
+            props.icon === "search"
+              ? "find"
+              : props.icon === "insert"
+              ? "insertSibling"
+              : props.icon === "link"
+              ? "insertLink"
+              : "find"
+          }
+        />
+      </span>
       {props.isSearching ? (
         <input
           ref={inputRef}

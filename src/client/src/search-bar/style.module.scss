@@ -33,23 +33,12 @@
   display: flex;
   align-items: center;
 
-  :global(.icon) {
+  .icon {
+    display: flex;
     color: #bbb;
-    font-size: 0.8em;
-
-    display: none;
-  }
-
-  &.find :global(.fa-search) {
-    display: block;
-  }
-
-  &.link :global(.fa-link) {
-    display: block;
-  }
-
-  &.connect :global(.fa-plus-circle) {
-    display: block;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.2em;
   }
 
   &:hover {
