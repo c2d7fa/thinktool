@@ -72,7 +72,7 @@ body {
 
   &:not(:empty) {
     // Extra spacing between items with other parents. Otherwise they look visually misaligned.
-    padding-top: (base.$font-size * base.$line-height - 0.3rem) * 0.3;
+    padding-top: (base.$font-size * base.$line-height - base.$ui-tiny-font-size) * 0.5;
   }
 
   li {
