@@ -53,7 +53,7 @@ const SelectedItem = React.memo(function SelectedItem(props: {
   return (
     <div className={style.root}>
       <button className={style.unfold} onClick={props.unfold} disabled={!props.isFolded}>
-        <Icon icon="mdiDotsHorizontal" />
+        <Icon icon="unfold" />
       </button>
       <Editor editor={props.editor} hasFocus={props.hasFocus} onEvent={props.onEditEvent} />
     </div>
