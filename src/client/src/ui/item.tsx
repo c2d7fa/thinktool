@@ -27,7 +27,7 @@ function References({linkedItem, onItemEvent}: {linkedItem: A.Item; onItemEvent:
 
   return (
     <>
-      <li className={styles.item}>
+      <li>
         <div>
           <button
             onClick={() => onItemEvent({type: "toggle-references", id: linkedItem.id})}
