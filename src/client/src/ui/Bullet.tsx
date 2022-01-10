@@ -75,7 +75,7 @@ export default React.memo(function Bullet(props: {
       {props.specialType === "parent" ? (
         <path className="bullet-circle" d="M 13,7 12,14 6,9 z" />
       ) : props.specialType === "reference" ? (
-        <rect className="bullet-circle" x="4" y="7.5" width="12" height="5" rx="3" />
+        <rect className="bullet-circle" x="6" y="6" width="8" height="8" rx="2" />
       ) : props.specialType === "opened-link" ? (
         <path className="bullet-circle" d="M 13,10 7,15 7,5 z" />
       ) : props.specialType === "link" ? (

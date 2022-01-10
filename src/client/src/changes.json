@@ -511,6 +511,10 @@
     {
       "date": "UNRELEASED",
       "title": "Changed appearance of outline so everything is a little more compact."
+    },
+    {
+      "date": "UNRELEASED",
+      "title": "Changed bullets for parents and references"
     }
   ]
 }
