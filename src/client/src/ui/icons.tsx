@@ -30,6 +30,7 @@ const mdiIcons = {
   user: MdiJs.mdiAccountOutline,
   logOut: MdiJs.mdiLogout,
   offline: MdiJs.mdiPowerPlugOffOutline,
+  goal: MdiJs.mdiPencilBoxOutline,
 };
 
 export type IconId = keyof typeof mdiIcons;
