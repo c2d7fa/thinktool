@@ -22,7 +22,6 @@ export default function User(props: {apiHost: string}) {
         <title>Thinktool</title>
         <link rel="icon" href="/icon.png" type="image/png" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <script src="https://kit.fontawesome.com/d7c222beb5.js" crossOrigin="anonymous" />
       </Head>
       {mainElement}
       <script data-goatcounter="https://thinktool.goatcounter.com/count" async src="//gc.zgo.at/count.js" />
