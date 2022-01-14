@@ -1,0 +1,71 @@
+@use "../../style/base";
+@use "../../style/components";
+
+.topBar {
+  position: sticky;
+  top: 0;
+
+  @include components.overlay;
+  z-index: 9000;
+  border-bottom: base.$overlay-border;
+
+  padding: 1rem 1.5rem;
+
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  .logo {
+    @include components.logo;
+    font-size: 2rem;
+    margin-right: auto; // Left align
+
+    color: #404040;
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    column-gap: 1.5rem;
+  }
+
+  @media (max-width: 860px) {
+    #logo {
+      font-size: 1.2em;
+    }
+  }
+
+  @media (max-width: 960px) {
+    nav > *:nth-child(1) {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 760px) {
+    nav > *:nth-child(4) {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 620px) {
+    font-size: 0.8em;
+  }
+
+  @media (max-width: 530px) {
+    nav > *:nth-child(6) {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 430px) {
+    nav > *:nth-child(3) {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 360px) {
+    nav > *:nth-child(2) {
+      display: none !important;
+    }
+  }
+}

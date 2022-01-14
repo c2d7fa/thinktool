@@ -1,0 +1,58 @@
+@use "../../style/base";
+
+.linkButton {
+  text-decoration: none;
+  color: inherit;
+  font: inherit;
+
+  @include base.ui-font;
+
+  color: #444;
+  @include base.subtle-button(#444);
+}
+
+.demoLink {
+  text-decoration: none;
+  color: inherit;
+
+  @include base.ui-font;
+
+
+  display: inline-block;
+  width: max-content;
+  -webkit-user-drag: none;
+
+  padding: 6px 1rem;
+  border-radius: 6px;
+
+  @include base.ui-font;
+  font-weight: bold;
+
+  color: #ffffff;
+  background-color: hsl(6, 90%, 60%);
+  background: radial-gradient(hsl(12, 90%, 63%), hsl(6, 90%, 60%));
+  box-shadow: #00000040 0 0 6px;
+
+  transition: transform base.$slow-transition-time;
+
+  white-space: nowrap;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(1.05);
+  }
+}
+
+.navigationLink {
+  text-decoration: none;
+  color: inherit;
+  font: inherit;
+
+  @include base.ui-font;
+
+  color: #aaa;
+  @include base.subtle-button(#aaa);
+}

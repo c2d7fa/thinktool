@@ -1,5 +1,8 @@
 import Head from "next/head";
 import * as React from "react";
+import {DemoLinkButton, IconLinkButton, NavigationLink} from "./links";
+
+const styles = require("./StaticPage.module.scss");
 
 export default function StaticPage(props: {children: React.ReactNode}) {
   return (
@@ -9,48 +12,29 @@ export default function StaticPage(props: {children: React.ReactNode}) {
         <link rel="stylesheet" href="/index.css" />
         <link rel="icon" href="/icon.png" type="image/png" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link
-          rel="alternate"
-          title="Thinktool"
-          type="application/rss+xml"
-          href="https://thinktool.io/blog.rss"
-        />
-        <script src="https://kit.fontawesome.com/d7c222beb5.js" crossOrigin="anonymous"></script>
+        <link rel="alternate" title="Thinktool" type="application/rss+xml" href="https://thinktool.io/blog.rss" />
       </Head>
-      <div id="top-bar">
-        <a href="/" id="logo">
+      <div className={styles.topBar}>
+        <a href="/" className={styles.logo}>
           Thinktool
         </a>
         <nav>
-          <a href="https://github.com/c2d7fa/thinktool">
-            <i className="icon fab fa-github" />
-            Code
-          </a>
-          <a href="https://reddit.com/r/thinktool">
-            <i className="icon fab fa-reddit-alien"></i>Forum
-          </a>
-          <a href="/blog/">
-            <i className="icon fas fa-newspaper"></i>Blog
-          </a>
-          <a href="/download.html">
-            <i className="icon fas fa-desktop"></i>Download
-          </a>
-          <a href="/login.html">
-            <i className="icon fas fa-sign-in-alt"></i>Log in
-          </a>
-          <a href="/demo.html" className="demo demo-small">
-            <i className="icon fas fa-star"></i>Demo
-          </a>
+          <NavigationLink href="https://github.com/c2d7fa/thinktool" icon="sourceCode" label="Source" />
+          <NavigationLink href="https://reddit.com/r/thinktool" icon="forum" label="Forum" />
+          <NavigationLink icon="blog" href="/blog/" label="Blog" />
+          <NavigationLink icon="download" href="/download.html" label="Download" />
+          <NavigationLink icon="login" href="/login.html" label="Login" />
+          <DemoLinkButton href="/demo.html" />
         </nav>
       </div>
       {props.children}
       <footer>
         Made by{" "}
-        <a href="https://johv.dk/">
+        <a className="external-link" href="https://johv.dk/">
           <span>Jonas Hvid</span>
         </a>
         . Message me at{" "}
-        <a className="email" href="mailto:jonas@thinktool.io">
+        <a className="external-link email" href="mailto:jonas@thinktool.io">
           <span>jonas@thinktool.io</span>
         </a>
         .

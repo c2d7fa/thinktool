@@ -1,5 +1,6 @@
 import Head from "next/head";
 import * as React from "react";
+import {IconLabel} from "../lib/icons";
 
 import StaticPage from "../lib/StaticPage";
 
@@ -25,11 +26,11 @@ function LogInForm(props: {apiHost: string; forgotPassword(): void}) {
           required
         />
       </div>
-      <a className="forgot-password" href="#" onClick={props.forgotPassword}>
+      <a className="forgot-password external-link" href="#" onClick={props.forgotPassword}>
         Forgot your password?
       </a>
       <button className="submit" type="submit">
-        <i className="fas fa-sign-in-alt" /> Log in
+        <IconLabel icon="login">Log in</IconLabel>
       </button>
     </form>
   );
@@ -44,7 +45,7 @@ function ForgotPasswordForm(props: {apiHost: string}) {
         <input id="email" type="email" placeholder="e.g. 'user@example.com'" name="email" required />
       </div>
       <button className="submit" type="submit">
-        <i className="fas fa-unlock" /> Recover account
+        <IconLabel icon="recoverAccount">Recover account</IconLabel>
       </button>
     </form>
   );
@@ -123,7 +124,7 @@ export default function Login(props: {apiHost: string}) {
                   <label htmlFor="signup-newsletter">Also sign up for newsletter</label>
                 </div>
                 <button className="submit" type="submit">
-                  <i className="fas fa-user-check" /> Sign up
+                  <IconLabel icon="signup">Sign up</IconLabel>
                 </button>
               </form>
             </div>
