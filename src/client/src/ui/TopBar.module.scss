@@ -1,8 +1,8 @@
-@use "../style/base";
-@use "../style/components";
-@use "general";
+@use "../../../style/base";
+@use "../../../style/components";
+@use "../../general";
 
-.top-bar {
+.topBar {
   width: 100vw;
   box-sizing: border-box;
 
@@ -53,7 +53,7 @@
     @include base.subtle-button(base.$top-bar-ui-color);
   }
 
-  #current-user {
+  .currentUser {
     display: flex;
     flex-direction: row;
 
