@@ -60,6 +60,7 @@
     a {
       @extend button;
       text-decoration: inherit;
+      line-height: normal;
   
       font-size: base.$ui-small-font-size;
       color: base.$top-bar-ui-color;
