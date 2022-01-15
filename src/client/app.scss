@@ -5,7 +5,6 @@
 
 @use "tutorial";
 @use "inbox";
-@use "top-bar";
 
 /* #region General components */
 
@@ -33,9 +32,9 @@ body {
   color: #303030;
 
   font-family: "Inter", sans-serif;
-  font-size: 1.1em;
+  font-size: base.$font-size;
   letter-spacing: -0.02em;
-  line-height: 150%;
+  line-height: base.$line-height;
 
   overflow-y: overlay;
 }
@@ -60,23 +59,6 @@ body {
 
 /* #endregion */
 
-/* #region Outline structure */
-
-.subtree {
-  @include base.reset-list;
-}
-
-.subtree-container > .subtree {
-  padding-left: 2rem;
-}
-
-.item {
-  margin-bottom: 1rem;
-  @include general.item-grid;
-}
-
-/* #endregion */
-
 /* #region Other parents list */
 
 .other-parents-small {
@@ -86,6 +68,11 @@ body {
   @include base.reset-list;
 
   font-size: base.$other-parents-small-font-size;
+
+  &:not(:empty) {
+    // Extra spacing between items with other parents. Otherwise they look visually misaligned.
+    padding-top: (base.$font-size * base.$line-height - base.$ui-tiny-font-size) * 0.5;
+  }
 
   li {
     display: inline-block;
@@ -97,6 +84,8 @@ body {
   }
 
   .other-parent-small {
+    font-weight: 500;
+
     padding: 0 3px;
     color: hsl(90, 30%, 30%);
     border: 1px solid hsl(90, 20%, 80%);
@@ -105,16 +94,6 @@ body {
     white-space: nowrap;
 
     .bullet {
-      margin: 0;
-      margin-top: -2px;
-
-      width: 10px !important;
-      height: 10px !important;
-      min-width: 10px !important;
-      min-height: 10px !important;
-      max-width: 10px !important;
-      max-height: 10px !important;
-
       .bullet-hover-rect {
         opacity: 0;
       }
@@ -171,29 +150,6 @@ body {
   align-self: top;
 }
 
-button.backreferences-text {
-  @include components.ui-heading;
-  color: hsl(180, 30%, 30%);
-  @include base.subtle-button(hsl(180, 30%, 30%));
-}
-
-/* #endregion */
-
-/* #region External links */
-
-a.plain-text-link {
-  word-break: break-all;
-  color: inherit;
-  text-decoration: none;
-
-  border-bottom: 2px solid #00000028;
-  transition: border-color base.$quick-transition-time;
-}
-
-a.plain-text-link:hover {
-  border-color: #00000080;
-}
-
 /* #endregion */
 
 /* #endregion */
@@ -207,7 +163,7 @@ a.plain-text-link:hover {
   padding: 0;
   margin: 0;
 
-  line-height: 175%;
+  line-height: base.$line-height;
 
   .placeholder {
     @include general.placeholder-text;
@@ -238,10 +194,10 @@ a.plain-text-link:hover {
   user-select: none;
   display: inline-block;
 
-  width: 20px;
-  height: 20px;
+  margin-top: -1px;
+  width: 1em;
+  height: 1em;
 
-  margin-top: 6px;
   cursor: pointer;
 
   text-align: center;
@@ -305,7 +261,7 @@ a.plain-text-link:hover {
 }
 
 .bullet.parent-bullet path.bullet-circle {
-  stroke-width: 3;
+  stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -342,36 +298,6 @@ a.plain-text-link:hover {
 }
 
 /* #endregion */
-
-/* #endregion */
-
-/* #region Drag and drop */
-
-.item {
-  position: relative;
-}
-
-.drop-target::before {
-  content: "";
-  display: block;
-  position: absolute;
-
-  pointer-events: none;
-
-  left: 0;
-  right: 0;
-  height: 3px;
-
-  margin-bottom: 3px;
-
-  background-color: #d0d0d0;
-  border-radius: 1.5px;
-}
-
-.drag-source {
-  opacity: 0.5;
-  transition: opacity base.$quick-transition-time;
-}
 
 /* #endregion */
 
@@ -564,11 +490,6 @@ a.plain-text-link:hover {
 }
 
 .tutorial {
-  font-family: "Recursive", sans-serif !important;
-  font-weight: 400 !important;
-  font-variation-settings: "MONO" 0, "CASL" 0.5 !important;
-  letter-spacing: 0px !important;
-
   text-transform: none !important;
 }
 

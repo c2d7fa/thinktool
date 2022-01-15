@@ -8,6 +8,8 @@ import {App, UpdateApp} from "../app";
 
 import * as Icons from "./icons";
 
+const styles = require("./TopBar.module.scss").default;
+
 export function useTopBarProps(args: {
   app: App;
   send: Send;
@@ -41,26 +43,26 @@ export function TopBar(props: {
   searchBar: Parameters<typeof SearchBar>[0];
 }) {
   return (
-    <div className="top-bar">
-      <div className="left">
-        <ExternalLink className="logo" href="/">
+    <div className={styles.topBar}>
+      <div className={styles.left}>
+        <ExternalLink className={styles.logo} href="/">
           Thinktool
         </ExternalLink>
         <button onClick={() => props.onToggleToolbar()}>
-          <Icons.IconLabel icon="bars">{props.isToolbarShown ? "Hide" : "Show"} Menu</Icons.IconLabel>
+          <Icons.IconLabel icon="menu">{props.isToolbarShown ? "Hide" : "Show"} Menu</Icons.IconLabel>
         </button>
       </div>
-      <div className="middle">
+      <div className={styles.middle}>
         <SearchBar {...props.searchBar} />
       </div>
-      <div className="right">
+      <div className={styles.right}>
         {props.login && (
-          <div id="current-user">
-            <ExternalLink className="username" href="/user.html">
+          <div className={styles.currentUser}>
+            <ExternalLink className={styles.username} href="/user.html">
               <Icons.IconLabel icon="user">{props.login.username}</Icons.IconLabel>
             </ExternalLink>
-            <a className="log-out" href={props.login.logOutUrl}>
-              <Icons.IconLabel icon="sign-out-alt">Log Out</Icons.IconLabel>
+            <a href={props.login.logOutUrl}>
+              <Icons.IconLabel icon="logOut">Log Out</Icons.IconLabel>
             </a>
           </div>
         )}

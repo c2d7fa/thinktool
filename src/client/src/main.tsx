@@ -86,12 +86,12 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
 
     function findNodeAt({x, y}: {x: number; y: number}): {id: number} | null {
       let element: HTMLElement | null | undefined = document.elementFromPoint(x, y) as HTMLElement;
-      while (element && !element.classList.contains("item")) {
+      while (element && element.dataset.dragItemId === undefined) {
         element = element?.parentElement;
       }
       if (element === null) return null;
-      if (!element.dataset.id) return null;
-      return {id: +element.dataset.id};
+      if (!element.dataset.dragItemId) return null;
+      return {id: +element.dataset.dragItemId};
     }
 
     function mousemove(ev: MouseEvent): void {

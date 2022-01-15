@@ -3,6 +3,7 @@ import * as React from "react";
 
 import * as D from "./data";
 import * as T from "./tree";
+import {IconLabel} from "./ui/icons";
 
 export type ActionEvent =
   | {action: "created-item"}
@@ -162,8 +163,7 @@ export function EmbeddedGoal(props: {id: GoalId; state: State}) {
   const finished = props.state.finished.has(props.id);
   return (
     <span className={classes({"goal": true, "goal-finished": finished})}>
-      <i className="icon fa-fw fas fa-pen" />
-      <span>{title(props.id)}</span>
+      <IconLabel icon="goal">{title(props.id)}</IconLabel>
     </span>
   );
 }

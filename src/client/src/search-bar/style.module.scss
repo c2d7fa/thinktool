@@ -33,23 +33,12 @@
   display: flex;
   align-items: center;
 
-  :global(.icon) {
+  .icon {
+    display: flex;
     color: #bbb;
-    font-size: 0.8em;
-
-    display: none;
-  }
-
-  &.find :global(.fa-search) {
-    display: block;
-  }
-
-  &.link :global(.fa-link) {
-    display: block;
-  }
-
-  &.connect :global(.fa-plus-circle) {
-    display: block;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.2em;
   }
 
   &:hover {
@@ -141,19 +130,16 @@
         background-color: #f2f2f2;
       }
 
-      :global {
-        @include general.item-grid;
+      :global(.bullet) {
+        margin-top: -0.1em;
+        height: 1em;
+        width: 1em;
+      }
 
-        .bullet {
-          height: 1em;
-          width: 1em;
-        }
-
-        .other-parents-small:not(:empty) {
-          // Roughly match space above item without parents due to font size and
-          // line height differences.
-          padding-top: 0.5em;
-        }
+      :global(.other-parents-small:not(:empty)) {
+        // Roughly match space above item without parents due to font size and
+        // line height differences.
+        padding-top: 0.5em;
       }
     }
   }

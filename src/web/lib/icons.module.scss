@@ -2,5 +2,8 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  column-gap: 0.5em;
+
+  .icon {
+    margin-right: 0.35em;
+  }
 }

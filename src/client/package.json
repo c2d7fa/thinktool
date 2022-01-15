@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/client",
-  "version": "4.6.0",
+  "version": "4.7.0",
   "description": "Client code for Thinktool, shared between web and desktop client.",
   "license": "UNLICENSED",
   "repository": {
@@ -40,9 +40,12 @@
   "dependencies": {
     "@johv/immutable-extras": "^1.1.1",
     "@johv/miscjs": "^1.7.1",
+    "@mdi/js": "^6.5.95",
+    "@mdi/react": "^1.5.0",
     "@thinktool/search": "^1.1.2",
     "@thinktool/shared": "^2.0.1",
     "immutable": "^4.0.0",
+    "prop-types": "^15.8.1",
     "prosemirror-model": "^1.15.0",
     "prosemirror-state": "^1.3.4",
     "prosemirror-view": "^1.23.3"

@@ -1,0 +1,63 @@
+.posts {
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+
+  display: flex;
+  flex-direction: column;
+  row-gap: 1rem;
+}
+
+.post, .newsletter {
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+
+  display: list-item;
+  line-height: 150%;
+
+  padding: 1rem;
+  border-radius: 6px;
+  background: radial-gradient(circle at bottom, #f4f4f4 0%, #fcfcfc 150%);
+  box-shadow: 0 3px 6px -3px #c0c0c0;
+  border: 1px solid #f4f4f4;
+
+  transition: transform 150ms;
+
+  h1 {
+    font-size: 0.8em;
+    vertical-align: bottom;
+    display: inline;
+  }
+
+  &:hover {
+    transform: scale(1.05);
+  }
+  
+  &:active {
+    transform: scale(1.025);
+  }
+
+  p {
+    display: inline;
+    margin-left: 0.5em;
+  }
+
+  time {
+    color: #808080;
+    display: block;
+    font-size: 0.8em;
+    margin: 0;
+  }
+}
+
+.newsletter {
+  h1 {
+    color: #808080;
+  }
+
+  time {
+    display: inline;
+    margin-left: 0.5rem;
+  }
+}

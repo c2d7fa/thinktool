@@ -101,18 +101,18 @@ export default function Index(props: {apiHost: string}) {
             </p>
             <p>
               I'm{" "}
-              <a href="https://github.com/c2d7fa/thinktool/commits/master">
+              <a href="https://github.com/c2d7fa/thinktool/commits/main" className="external-link">
                 <span>actively working on Thinktool</span>
               </a>
               . It may become a paid service in the future (aiming for &le;$5/mo.), but currently you can use it
               for free.{" "}
-              <a href="/login.html">
+              <a href="/login.html" className="external-link">
                 <span>Sign up here.</span>
               </a>
             </p>
             <p>
               I'm also working on an offline app for Thinktool. You can{" "}
-              <a href="/download.html">
+              <a href="/download.html" className="external-link">
                 <span>download a early prototype</span>
               </a>
               .
@@ -124,15 +124,15 @@ export default function Index(props: {apiHost: string}) {
 
             <p>
               Thinktool is directly inspired by outliners like{" "}
-              <a href="https://orgmode.org/" rel="nofollow" className="external-app-link">
+              <a href="https://orgmode.org/" rel="nofollow" className="external-app-link external-link">
                 <span>Org mode</span>
               </a>
               ,{" "}
-              <a href="https://workflowy.com/" rel="nofollow" className="external-app-link">
+              <a href="https://workflowy.com/" rel="nofollow" className="external-app-link external-link">
                 <span>Workflowy</span>
               </a>{" "}
               and{" "}
-              <a href="https://dynalist.io/" rel="nofollow" className="external-app-link">
+              <a href="https://dynalist.io/" rel="nofollow" className="external-app-link external-link">
                 <span>Dynalist</span>
               </a>
               . The difference is that Thinktool lets you put one item in multiple places, so you're not limited to
@@ -140,7 +140,7 @@ export default function Index(props: {apiHost: string}) {
             </p>
 
             <p>
-              <a href="https://roamresearch.com/" rel="nofollow" className="external-app-link">
+              <a href="https://roamresearch.com/" rel="nofollow" className="external-app-link external-link">
                 <span>Roam Research</span>
               </a>
               is another associative note-taking application, and it's much more polished than Thinktool. Roam

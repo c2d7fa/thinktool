@@ -12,7 +12,7 @@ export type State = {
     title: string;
     actions: {
       action: Ac.ActionName;
-      icon: string;
+      icon: Ic.IconId;
       description: string;
       label: string;
       isEnabled: boolean;
@@ -99,7 +99,7 @@ const ToolbarGroup = React.memo(
 );
 
 export function toolbar(app: App): State {
-  const knownActions = {
+  const knownActions: {[action in Ac.ActionName]?: {description: string; icon: Ic.IconId; label: string}} = {
     "home": {description: "Jump back to the default item.", icon: "home", label: "Home"},
     "find": {description: "Search for a specific item by its content.", icon: "find", label: "Find"},
     "zoom": {
@@ -110,54 +110,50 @@ export function toolbar(app: App): State {
     },
     "new": {
       description: "Create a new item as a sibling of the currently selected item",
-      icon: "plus-square",
+      icon: "new",
       label: "New",
     },
-    "new-child": {
-      description: "Create a new child of the selected item",
-      icon: "caret-square-down",
-      label: "New Child",
-    },
+    "new-child": {description: "Create a new child of the selected item", icon: "newChild", label: "New Child"},
     "remove": {
       description: "Remove the selected item from its parent. This does not delete the item.",
-      icon: "minus-square",
+      icon: "remove",
       label: "Remove",
     },
     "destroy": {
       description:
         "Permanently delete the selected item. If this item has other parents, it will be removed from *all* parents.",
-      icon: "trash",
+      icon: "destroy",
       label: "Destroy",
     },
-    "unindent": {description: "Unindent the selected item", icon: "chevron-left", label: "Unindent"},
-    "indent": {description: "Indent the selected item", icon: "chevron-right", label: "Indent"},
-    "up": {description: "Move the selected item up", icon: "chevron-up", label: "Up"},
-    "down": {description: "Move the selected item down", icon: "chevron-down", label: "Down"},
+    "unindent": {description: "Unindent the selected item", icon: "unindent", label: "Unindent"},
+    "indent": {description: "Indent the selected item", icon: "indent", label: "Indent"},
+    "up": {description: "Move the selected item up", icon: "up", label: "Up"},
+    "down": {description: "Move the selected item down", icon: "down", label: "Down"},
     "insert-sibling": {
       description: "Insert an existing item as a sibling after the currently selected item.",
-      icon: "plus-circle",
+      icon: "insertSibling",
       label: "Sibling",
     },
     "insert-child": {
       description: "Insert an existing item as a child of the currently selected item.",
-      icon: "chevron-circle-down",
+      icon: "insertChild",
       label: "Child",
     },
     "insert-parent": {
       description: "Insert an existing item as a parent of the currently selected item.",
-      icon: "chevron-circle-up",
+      icon: "insertParent",
       label: "Parent",
     },
     "insert-link": {
       description: "Insert a reference to an existing item at the position of the text.",
-      icon: "link",
+      icon: "insertLink",
       label: "Link",
     },
-    "forum": {description: "Open the subreddit.", icon: "reddit", label: "Forum"},
-    "tutorial": {description: "Go through the tutorial again.", icon: "info", label: "Tutorial"},
-    "changelog": {description: "Show list of updates to Thinktool.", icon: "list", label: "Updates"},
+    "forum": {description: "Open the subreddit.", icon: "forum", label: "Forum"},
+    "tutorial": {description: "Go through the tutorial again.", icon: "tutorial", label: "Tutorial"},
+    "changelog": {description: "Show list of updates to Thinktool.", icon: "changelog", label: "Updates"},
     "unfold": {description: "Recursively show all children of selected item.", icon: "unfold", label: "Unfold"},
-    "view-outline": {description: "Switch to the outline view", icon: "list-alt", label: "Outline"},
+    "view-outline": {description: "Switch to the outline view", icon: "outline", label: "Outline"},
     "view-orphans": {
       description: "Switch to the inbox view, which shows all items that aren't part of the outline",
       icon: "inbox",
@@ -165,9 +161,11 @@ export function toolbar(app: App): State {
     },
   };
 
-  function lookup(action: keyof typeof knownActions) {
+  function lookup(action: keyof typeof knownActions): State["groups"][number]["actions"][number] {
+    const known = knownActions[action];
+    if (!known) throw new Error(`Unknown action ${action}`);
     return {
-      ...knownActions[action],
+      ...known,
       action,
       isEnabled: Ac.enabled(app, action),
       isRelevant: Tu.isRelevant(app.tutorialState, action),

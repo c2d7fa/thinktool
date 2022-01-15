@@ -7,7 +7,19 @@ module.exports = {
     rules: [
       {
         test: /\.scss$/,
-        use: ["style-loader", "css-loader", "sass-loader"],
+        use: [
+          "style-loader",
+          {
+            loader: "css-loader",
+            options: {
+              modules: {
+                auto: true,  // Use modules for *.module.[s]css files, but not *.[s]css
+                localIdentName: "[local]-[hash:base64:5]",
+              },
+            },
+          },
+          "sass-loader",
+        ],
       },
       {
         test: /\.tsx?$/,
@@ -37,5 +49,5 @@ module.exports = {
   externals: {
     "react": "react",
     "react-dom": "react-dom",
-  }
+  },
 };

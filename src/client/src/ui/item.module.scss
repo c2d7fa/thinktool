@@ -1,0 +1,58 @@
+@use "../../../style/components";
+@use "../../../style/base";
+@use "../../general";
+
+button.backreferencesText {
+  @include components.ui-heading;
+  color: hsl(180, 30%, 30%);
+  @include base.subtle-button(hsl(180, 30%, 30%));
+}
+
+.item {
+  display: grid;
+  grid: "empty parents" auto "bullet item" auto / 1em 1fr;
+  gap: 3px (base.$font-size * base.$line-height * 0.35);
+}
+
+$outline-spacing: (base.$font-size * base.$line-height) * 0.35;
+
+.subtree {
+  @include base.reset-list;
+
+  display: flex;
+  flex-direction: column;
+  row-gap: $outline-spacing;
+}
+
+.itemContainer > .subtree {
+  margin-top: $outline-spacing;
+  padding-left: 2rem;
+}
+
+// For drag and drop:
+
+.item {
+  position: relative;
+
+  &.dropTarget::before {
+    content: "";
+    display: block;
+    position: absolute;
+
+    pointer-events: none;
+
+    left: 0;
+    right: 0;
+    height: 3px;
+
+    margin-bottom: 3px;
+
+    background-color: #d0d0d0;
+    border-radius: 1.5px;
+  }
+
+  &.dragSource {
+    opacity: 0.5;
+    transition: opacity base.$quick-transition-time;
+  }
+}

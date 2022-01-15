@@ -4,6 +4,7 @@ import {App, merge, update} from "../app";
 import Bullet from "./Bullet";
 
 import * as T from "../tree";
+import {ItemLayout} from "./item";
 
 export function isVisible(app: App): boolean {
   return T.children(app.tree, T.root(app.tree)).length === 0;
@@ -22,8 +23,8 @@ export function PlaceholderItem(props: {onCreate(): void}) {
   }
 
   return (
-    <li className="subtree-container">
-      <div className="item">
+    <ItemLayout
+      bullet={
         <Bullet
           beginDrag={() => {
             return;
@@ -33,10 +34,13 @@ export function PlaceholderItem(props: {onCreate(): void}) {
             return;
           }}
         />
+      }
+      otherParents={null}
+      editor={
         <div className="editor content placeholder-child" onFocus={onFocus} tabIndex={0}>
           New Item
         </div>
-      </div>
-    </li>
+      }
+    />
   );
 }

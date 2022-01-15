@@ -73,13 +73,13 @@ export default React.memo(function Bullet(props: {
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" {...attrs}>
       <rect className="bullet-hover-rect" x="0" y="0" width="20" height="20" rx="5" />
       {props.specialType === "parent" ? (
-        <path className="bullet-circle" d="M 10,7 13,12 7,12 z" />
+        <path className="bullet-circle" d="M 13,7 12,14 6,9 z" />
       ) : props.specialType === "reference" ? (
-        <rect className="bullet-circle" x="5" y="8" width="10" height="4" rx="2" />
+        <rect className="bullet-circle" x="6" y="6" width="8" height="8" rx="2" />
       ) : props.specialType === "opened-link" ? (
-        <path className="bullet-circle" d="M 12,10 7,13 7,7 z" />
+        <path className="bullet-circle" d="M 13,10 7,15 7,5 z" />
       ) : props.specialType === "link" ? (
-        <path className="bullet-circle" d="M 12,10 7,13 7,7 z" />
+        <path className="bullet-circle" d="M 13,10 7,15 7,5 z" />
       ) : (
         <circle className="bullet-circle" cx="10" cy="10" r="5" />
       )}

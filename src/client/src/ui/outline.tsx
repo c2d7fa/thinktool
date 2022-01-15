@@ -7,6 +7,7 @@ import * as E from "../editor";
 
 import * as Item from "./item";
 import {Editor} from "./editor";
+import {Icon} from "./icons";
 
 export const Outline = React.memo(function ({
   outline,
@@ -33,7 +34,7 @@ export const Outline = React.memo(function ({
       {outline.references.state !== "empty" && (
         <>
           <div className={style.references}>
-            <h1 className={style.referencesheader}>References</h1>
+            <h1 className={style.sectionHeader}>References</h1>
             <ReferencesOutline references={outline.references} onItemEvent={onItemEvent} />
           </div>
         </>
@@ -52,7 +53,7 @@ const SelectedItem = React.memo(function SelectedItem(props: {
   return (
     <div className={style.root}>
       <button className={style.unfold} onClick={props.unfold} disabled={!props.isFolded}>
-        <span className="fas fa-fw fa-stream" />
+        <Icon icon="unfold" />
       </button>
       <Editor editor={props.editor} hasFocus={props.hasFocus} onEvent={props.onEditEvent} />
     </div>
@@ -66,7 +67,7 @@ function ReferencesOutline(props: {references: A.Item["references"]; onItemEvent
     return <Item.Item key={item.id} item={item} onItemEvent={props.onItemEvent} />;
   });
 
-  return <ul className="subtree">{referenceItems}</ul>;
+  return <Item.SubtreeLayout>{referenceItems}</Item.SubtreeLayout>;
 }
 
 function ParentsOutline(props: {parents: A.Item[]; onItemEvent: (event: A.ItemEvent) => void}) {
@@ -78,8 +79,8 @@ function ParentsOutline(props: {parents: A.Item[]; onItemEvent: (event: A.ItemEv
 
   return (
     <div className={style.parents}>
-      <h1 className={style.referencesheader}>Parents</h1>
-      <ul className="subtree">{parentItems}</ul>
+      <h1 className={style.sectionHeader}>Parents</h1>
+      <Item.SubtreeLayout>{parentItems}</Item.SubtreeLayout>
     </div>
   );
 }

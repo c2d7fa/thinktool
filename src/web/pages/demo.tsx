@@ -20,7 +20,6 @@ export default function Demo() {
         <title>Thinktool</title>
         <link rel="icon" href="/icon.png" type="image/png" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <script src="https://kit.fontawesome.com/d7c222beb5.js" crossOrigin="anonymous" />
       </Head>
       <noscript>This web app requires JavaScript.</noscript>
       {mainElement}

@@ -7,6 +7,7 @@ import * as A from "../app";
 import * as D from "../data";
 import * as P from "../popup";
 import * as O from ".";
+import {IconLabel} from "../ui/icons";
 
 export type OrphanListItem = {
   title: string;
@@ -83,13 +84,13 @@ export function OrphanList(props: {
           </div>
           <div className="buttons">
             <button onClick={() => props.onVisit(orphan.thing)}>
-              <span className="icon fas fa-fw fa-hand-point-right" /> Jump
+              <IconLabel icon="jump">Jump</IconLabel>
             </button>
             <button onClick={() => props.onAddParent(orphan.thing)}>
-              <span className="icon fas fa-fw fa-chevron-circle-up" /> Connect
+              <IconLabel icon="insertParent">Connect</IconLabel>
             </button>
             <button onClick={() => props.onDestroy(orphan.thing)}>
-              <span className="icon fas fa-fw fa-trash" /> Destroy
+              <IconLabel icon="destroy">Destroy</IconLabel>
             </button>
           </div>
         </div>
