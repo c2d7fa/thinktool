@@ -272,7 +272,8 @@ export function handle(
   } else if (ev.tag === "paste") {
     return {app: pasteParagraphs(app, item, ev.paragraphs)};
   } else if (ev.tag === "action") {
-    return Ac.update(app, ev.action);
+    const result = Ac.update(app, ev.action);
+    return {app: result.app, effects: {search: result.search, url: result.url}};
   } else if (ev.tag === "openUrl") {
     return {app: app, effects: {url: ev.url}};
   } else {

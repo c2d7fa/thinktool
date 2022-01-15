@@ -511,6 +511,10 @@
     {
       "date": "2022-01-15",
       "title": "Changed appearance of outline so everything is a little more compact."
+    },
+    {
+      "date": "2022-01-15",
+      "title": "Fixed a bug where search did not work when inserting a link until using Find"
     }
   ]
 }
