@@ -505,11 +505,11 @@
       "title": "Fixed bug where trying to move focus past collapsed items would cause the editor to lose focus."
     },
     {
-      "date": "UNRELEASED",
+      "date": "2022-01-15",
       "title": "Changed icons, bullets and fonts."
     },
     {
-      "date": "UNRELEASED",
+      "date": "2022-01-15",
       "title": "Changed appearance of outline so everything is a little more compact."
     }
   ]
