@@ -14,6 +14,7 @@ import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
 import * as P from "./popup";
+import * as O from "./orphans";
 import * as Sync from "./sync";
 
 import * as Toolbar from "./ui/Toolbar";
@@ -30,7 +31,7 @@ import * as ReactDOM from "react-dom";
 import {Receiver, receiver as createReceiver} from "./receiver";
 import {Message} from "./messages";
 import {useMemoWarning, usePropRef} from "./react-utils";
-import {OrphanList, useOrphanListProps} from "./orphans/ui";
+import {OrphanList} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 import {Outline} from "./ui/outline";
 
@@ -384,7 +385,7 @@ function App_({
         hide={() => updateApp((app) => A.merge(app, {changelogShown: false}))}
       />
       {app.tab === "orphans" ? (
-        <OrphanList {...useOrphanListProps(app, updateApp)} />
+        <OrphanList view={O.view(app.state, app.orphans)} send={(ev) => updateApp((app) => O.update(app, ev))} />
       ) : (
         <Outline outline={A.outline(app)} onItemEvent={onItemEvent} />
       )}

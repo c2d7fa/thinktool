@@ -1,5 +1,6 @@
 import * as A from "../app";
 import * as D from "../data";
+import * as P from "../popup";
 import * as Immutable from "immutable";
 
 const _ids = Symbol("ids");
@@ -14,6 +15,11 @@ export type OrphanListItem = {
 };
 
 export type OrphansView = {items: OrphanListItem[]};
+
+export type OrphansEvent =
+  | {type: "destroy"; thing: string}
+  | {type: "jump"; thing: string}
+  | {type: "addParent"; thing: string};
 
 // Find items not reacable from the root by following children, parents, links
 // and references.
@@ -38,17 +44,38 @@ function removeOrphanWithoutRefresh(orphans: OrphansState, id: string): OrphansS
   return {[_ids]: orphans[_ids].filter((id_) => id_ !== id)};
 }
 
-export function destroy(app: A.App, thing: string): A.App {
-  return A.merge(app, {
-    state: D.remove(app.state, thing),
-    orphans: removeOrphanWithoutRefresh(app.orphans, thing),
-  });
-}
+export function update(app: A.App, event: OrphansEvent): A.App {
+  function destroy(app: A.App, thing: string): A.App {
+    return A.merge(app, {
+      state: D.remove(app.state, thing),
+      orphans: removeOrphanWithoutRefresh(app.orphans, thing),
+    });
+  }
 
-export function addParent(app: A.App, thing: string, parent: string): A.App {
-  const state = D.addChild(app.state, parent, thing)[0];
-  const app_ = A.merge(app, {state, orphans: scan(state)});
-  return A.jump(A.switchTab(app_, "outline"), parent);
+  function addParent(app: A.App, thing: string, parent: string): A.App {
+    const state = D.addChild(app.state, parent, thing)[0];
+    const app_ = A.merge(app, {state, orphans: scan(state)});
+    return A.jump(A.switchTab(app_, "outline"), parent);
+  }
+
+  if (event.type === "destroy") {
+    return destroy(app, event.thing);
+  } else if (event.type === "addParent") {
+    return A.merge(app, {
+      popup: P.open(app.popup, {
+        query: "",
+        select(app, parent) {
+          return addParent(app, event.thing, parent);
+        },
+        icon: "insert",
+      }),
+    });
+  } else if (event.type === "jump") {
+    return A.jump(A.switchTab(app, "outline"), event.thing);
+  } else {
+    const unreachable: never = event;
+    return unreachable;
+  }
 }
 
 export function view(graph: D.State, state: OrphansState): OrphansView {
