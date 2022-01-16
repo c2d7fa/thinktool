@@ -385,7 +385,7 @@ function App_({
         hide={() => updateApp((app) => A.merge(app, {changelogShown: false}))}
       />
       {app.tab === "orphans" ? (
-        <OrphanList view={O.view(app.state, app.orphans)} send={(ev) => updateApp((app) => O.update(app, ev))} />
+        <OrphanList view={O.view(app)} send={(ev) => updateApp((app) => O.update(app, ev))} />
       ) : (
         <Outline outline={A.outline(app)} onItemEvent={onItemEvent} />
       )}

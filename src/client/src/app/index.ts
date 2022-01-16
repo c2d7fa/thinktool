@@ -47,7 +47,7 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     popup: P.initial,
     drag: R.empty,
     tab: "outline",
-    orphans: O.scan(data),
+    orphans: O.empty,
     [_isOnline]: true,
     [_syncDialog]: null,
   };
@@ -151,8 +151,7 @@ export function unfold(app: App, node: T.NodeRef): App {
 
 export function switchTab(app: App, tab: "outline" | "orphans"): App {
   if (tab === "orphans") {
-    const orphans = O.scan(app.state);
-    return merge(app, {tab, orphans});
+    return O.scan(merge(app, {tab}));
   } else if (tab === "outline") {
     return merge(app, {tab, tree: T.fromRoot(app.state, "0")});
   }

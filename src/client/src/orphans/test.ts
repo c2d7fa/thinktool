@@ -2,6 +2,7 @@
 
 import * as O from ".";
 import * as D from "../data";
+import * as A from "../app";
 
 function build(items: [string, {children?: string[]; links?: string[]}][]): D.State {
   let state = D.empty;
@@ -25,7 +26,8 @@ function build(items: [string, {children?: string[]; links?: string[]}][]): D.St
 }
 
 function render(items: [string, {children?: string[]; links?: string[]}][]): O.OrphansView {
-  return O.view(build(items), O.scan(build(items)));
+  return O.view(A.of({})); // [TODO]
+  //return O.view(O.scan(build(items)));
 }
 
 describe("when the root isn't connected to any items", () => {

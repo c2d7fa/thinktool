@@ -41,6 +41,7 @@ export const children = I.children;
 export const backreferencesExpanded = I.backreferencesExpanded;
 export const backreferencesChildren = I.backreferencesChildren;
 export const exists = I.exists;
+export const instances = I.instances;
 
 function refEq(x: NodeRef, y: NodeRef): boolean {
   return x.id === y.id;
