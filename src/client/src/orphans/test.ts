@@ -2,37 +2,28 @@
 
 import * as Immutable from "immutable";
 import * as O from "./core";
+import * as Orphans from ".";
+import * as D from "../data";
 
 function build(items: [O.Id, {children?: O.Id[]; links?: O.Id[]}][]): O.Graph {
-  return {
-    all() {
-      return Immutable.Set<O.Id>(items.map((item) => item[0]));
-    },
+  let state = D.empty;
 
-    root() {
-      return "0";
-    },
+  for (const [id] of items) {
+    state = D.create(state, id)[0];
+  }
 
-    children(id: O.Id) {
-      const item = items.find((item) => item[0] === id);
-      if (item === undefined || item[1].children === undefined) return Immutable.Set<O.Id>();
-      return Immutable.Set<O.Id>(item[1].children);
-    },
+  for (const [id, props] of items) {
+    if (props.children) for (const child of props.children) state = D.addChild(state, id, child)[0];
 
-    links(id: O.Id) {
-      const item = items.find((item) => item[0] === id);
-      if (item === undefined || item[1].links === undefined) return Immutable.Set<O.Id>();
-      return Immutable.Set<O.Id>(item[1].links);
-    },
+    if (props.links)
+      state = D.setContent(
+        state,
+        id,
+        props.links.map((link) => ({link})),
+      );
+  }
 
-    parents(item: O.Id) {
-      return Immutable.Set<O.Id>();
-    },
-
-    references(item: O.Id) {
-      return Immutable.Set<O.Id>();
-    },
-  };
+  return Orphans.fromState(state);
 }
 
 describe("when the root isn't connected to any items", () => {
