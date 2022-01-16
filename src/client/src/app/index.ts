@@ -53,6 +53,8 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
   };
 }
 
+export {itemFromNode} from "./item";
+
 export type ItemGraph = {[id: string]: {content: D.Content; children?: string[]}};
 export function of(items: ItemGraph): App {
   let state = D.empty;
