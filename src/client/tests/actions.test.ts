@@ -2,19 +2,12 @@
 
 import * as App from "../src/app";
 
-import * as C from "../src/context";
 import * as D from "../src/data";
 import * as Tu from "../src/tutorial";
 import * as T from "../src/tree";
 
 import * as A from "../src/actions";
 import {GoalId} from "../src/goal";
-
-const stubConfig = {
-  async input() {
-    throw "called unimplemented function in stubConfig";
-  },
-};
 
 describe.each(["find", "new"] as A.ActionName[])("an action that is always enabled", (action) => {
   let data_ = D.empty;
@@ -59,7 +52,7 @@ describe("new", () => {
       const app = App.from(data, tree);
       expect(D.children(app.state, "0").length).toBe(1);
 
-      const result = (await A.update(App.from(data, tree), "new", stubConfig)).app!;
+      const result = (await A.update(App.from(data, tree), "new")).app!;
       expect(D.children(result.state, "0").length).toBe(2);
     });
 
@@ -67,7 +60,7 @@ describe("new", () => {
       const app = App.from(data, tree);
       expect(T.children(app.tree, T.root(app.tree)).length).toBe(1);
 
-      const result = (await A.update(App.from(data, tree), "new", stubConfig)).app!;
+      const result = (await A.update(App.from(data, tree), "new")).app!;
       expect(T.children(result.tree, T.root(result.tree)).length).toBe(2);
     });
 
@@ -75,7 +68,7 @@ describe("new", () => {
       const app = App.from(data, tree);
       const old = D.children(app.state, "0")[0];
 
-      const result = (await A.update(app, "new", stubConfig)).app!;
+      const result = (await A.update(app, "new")).app!;
       expect(D.children(result.state, "0")[0]).not.toBe(old);
       expect(D.children(result.state, "0")[1]).toBe(old);
     });
@@ -95,7 +88,7 @@ describe("new", () => {
       expect(D.children(app.state, "0")[0]).toBe("1");
       expect(D.children(app.state, "0")[1]).toBe("2");
 
-      const result = (await A.update(app, "new", stubConfig)).app!;
+      const result = (await A.update(app, "new")).app!;
 
       expect(D.children(result.state, "0")[0]).toBe("1");
       expect(D.children(result.state, "0")[1]).not.toBe("1");
@@ -105,7 +98,7 @@ describe("new", () => {
   });
 
   it("completes the 'create-item' goal", async () => {
-    function completed(app: C.AppState, goal: GoalId): boolean {
+    function completed(app: App.App, goal: GoalId): boolean {
       return Tu.isGoalFinished(app.tutorialState, goal);
     }
 
@@ -116,7 +109,7 @@ describe("new", () => {
     const app = App.from(data, tree);
     expect(completed(app, "create-item")).toBe(false);
 
-    const result = (await A.update(app, "new", stubConfig)).app!;
+    const result = (await A.update(app, "new")).app!;
     expect(completed(result, "create-item")).toBe(true);
   });
 });

@@ -25,3 +25,9 @@ export {
 } from "./data/core";
 
 export {Content, references, backreferences, contentText, contentEq} from "./data/content";
+
+import {State} from "./data/representation";
+
+export function root(state: State): string {
+  return "0";
+}

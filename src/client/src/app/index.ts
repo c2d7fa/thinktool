@@ -29,7 +29,7 @@ export interface App {
   popup: P.State;
   drag: R.Drag;
   tab: "outline" | "orphans";
-  orphans: O.Orphans;
+  orphans: O.OrphansState;
   [_isOnline]: boolean;
   [_syncDialog]: Sy.Dialog.SyncDialog | null;
 }
@@ -47,7 +47,7 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     popup: P.initial,
     drag: R.empty,
     tab: "outline",
-    orphans: O.scan(O.fromState(data)),
+    orphans: O.scan(data),
     [_isOnline]: true,
     [_syncDialog]: null,
   };
@@ -151,7 +151,7 @@ export function unfold(app: App, node: T.NodeRef): App {
 
 export function switchTab(app: App, tab: "outline" | "orphans"): App {
   if (tab === "orphans") {
-    const orphans = O.scan(O.fromState(app.state));
+    const orphans = O.scan(app.state);
     return merge(app, {tab, orphans});
   } else if (tab === "outline") {
     return merge(app, {tab, tree: T.fromRoot(app.state, "0")});

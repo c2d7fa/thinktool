@@ -4,32 +4,16 @@ import Bullet from "../ui/Bullet";
 import {OtherParents} from "../ui/OtherParents";
 
 import * as A from "../app";
-import * as D from "../data";
 import * as P from "../popup";
 import * as O from ".";
 import {IconLabel} from "../ui/icons";
-
-export type OrphanListItem = {
-  title: string;
-  thing: string;
-  parents: {id: string; text: string}[];
-  hasChildren: boolean;
-};
 
 export function useOrphanListProps(
   app: A.App,
   updateApp: (f: (app: A.App) => A.App) => void,
 ): Parameters<typeof OrphanList>[0] {
   return {
-    items: O.ids(app.orphans)
-      .map((thing) => ({
-        title: D.contentText(app.state, thing),
-        thing,
-        parents: D.parents(app.state, thing).map((p) => ({id: p, text: D.contentText(app.state, p)})),
-        hasChildren: D.hasChildrenOrReferences(app.state, thing),
-      }))
-      .toArray()
-      .sort((a, b) => a.title.localeCompare(b.title)),
+    view: O.view(app.state, app.orphans),
 
     onDestroy(thing: string) {
       updateApp((app) => O.destroy(app, thing));
@@ -56,12 +40,12 @@ export function useOrphanListProps(
 }
 
 export function OrphanList(props: {
-  items: OrphanListItem[];
+  view: O.OrphansView;
   onDestroy(thing: string): void;
   onVisit(thing: string): void;
   onAddParent(thing: string): void;
 }) {
-  if (props.items.length === 0)
+  if (props.view.items.length === 0)
     return (
       <div className="inbox empty">
         If you have any items that are not accessible from the root item, they will be listed here.
@@ -70,7 +54,7 @@ export function OrphanList(props: {
 
   return (
     <div className="inbox">
-      {props.items.map((orphan) => (
+      {props.view.items.map((orphan) => (
         <div className="inbox-card">
           <div className="card-item">
             <OtherParents otherParents={orphan.parents} click={props.onVisit} altClick={props.onVisit} />
