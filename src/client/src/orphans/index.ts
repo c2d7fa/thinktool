@@ -34,7 +34,34 @@ export function scan(app: A.App): A.App {
 
   reach(D.root(app.state));
 
-  const ids = Immutable.Set(D.allThings(app.state)).subtract(reached);
+  let ids = Immutable.Set(D.allThings(app.state)).subtract(reached);
+
+  // Iteratively remove items that also have a parent in the inbox
+  let previousIds = ids;
+  let prunings = Immutable.Map<string, string>();
+  do {
+    previousIds = ids;
+    for (const id of ids) {
+      const parents = D.parents(app.state, id);
+      const parentsInInbox = parents.filter((parent) => ids.has(parent) || prunings.has(parent));
+      const parentsInInboxWithoutCycles = parentsInInbox.filter((parent) => {
+        function isLoop(parent: string): boolean {
+          if (parent === id) return true;
+          const prunedReason = prunings.get(parent);
+          if (!prunedReason) return false;
+          if (prunings.get(parent) === id) return true;
+          return isLoop(prunings.get(parent) || parent);
+        }
+        return !isLoop(parent);
+      });
+      if (parentsInInboxWithoutCycles.length > 0) {
+        prunings = prunings.set(id, parentsInInbox[0]);
+        ids = ids.delete(id);
+        break;
+      }
+    }
+  } while (ids.size < previousIds.size);
+
   let nodes = Immutable.Map<string, number>();
 
   let tree = app.tree;

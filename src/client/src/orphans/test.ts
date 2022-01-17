@@ -26,12 +26,12 @@ describe("in a graph that consists of two disconnected trees", () => {
     "b4": {},
   });
 
-  test("the orphans are exactly the items in the unrooted tree", () => {
-    expect(contents(view)).toEqual(["Item b0", "Item b1", "Item b2", "Item b3", "Item b4"]);
+  test("the orphans are exactly the roots of the disconnected tree", () => {
+    expect(contents(view)).toEqual(["Item b0"]);
   });
 });
 
-describe("in a graph that consists of a loop", () => {
+describe("in a graph that consists of a loop connected to the root item", () => {
   const view = render({
     "0": {children: ["1"]},
     "1": {children: ["2"]},
@@ -41,6 +41,27 @@ describe("in a graph that consists of a loop", () => {
 
   test("there are no orphans", () => {
     expect(contents(view)).toEqual([]);
+  });
+});
+
+describe("in a graph that consists of a disconnected loop", () => {
+  const view = render({
+    "0": {children: []},
+    "1": {children: ["2"]},
+    "2": {children: ["3"]},
+    "3": {children: ["1"]},
+  });
+
+  test("there is exactly one orphan", () => {
+    expect(contents(view).length).toEqual(1);
+  });
+
+  test("all orphans are in the unrooted tree", () => {
+    expect(
+      contents(view)
+        .map((item) => ["Item 1", "Item 2", "Item 3"].includes(item))
+        .reduce((a, b) => a && b),
+    ).toBe(true);
   });
 });
 
