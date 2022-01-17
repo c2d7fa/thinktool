@@ -13,44 +13,23 @@ export function OrphanList(props: {view: O.OrphansView; send(event: O.OrphansEve
       </div>
     );
 
-  const onJump = React.useCallback(
-    (item: A.Item) => {
-      props.send({type: "jump", id: item.id});
-    },
-    [props.send],
-  );
-
-  const onAddParent = React.useCallback(
-    (item: A.Item) => {
-      props.send({type: "addParent", id: item.id});
-    },
-    [props.send],
-  );
-
-  const onDestroy = React.useCallback(
-    (item: A.Item) => {
-      props.send({type: "destroy", id: item.id});
-    },
-    [props.send],
-  );
-
   return (
     <div className="inbox">
       {props.view.items.map((orphan) => (
         <div className="inbox-card">
           <div className="card-item">
             <SubtreeLayout>
-              <Item item={orphan} onItemEvent={() => {}} />
+              <Item item={orphan} onItemEvent={(event) => props.send({type: "item", event})} />
             </SubtreeLayout>
           </div>
           <div className="buttons">
-            <button onClick={() => onJump(orphan)}>
+            <button onClick={() => props.send({type: "jump", id: orphan.id})}>
               <IconLabel icon="jump">Jump</IconLabel>
             </button>
-            <button onClick={() => onAddParent(orphan)}>
+            <button onClick={() => props.send({type: "addParent", id: orphan.id})}>
               <IconLabel icon="insertParent">Connect</IconLabel>
             </button>
-            <button onClick={() => onDestroy(orphan)}>
+            <button onClick={() => props.send({type: "destroy", id: orphan.id})}>
               <IconLabel icon="destroy">Destroy</IconLabel>
             </button>
           </div>

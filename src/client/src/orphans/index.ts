@@ -16,7 +16,8 @@ export type OrphansView = {items: A.Item[]};
 export type OrphansEvent =
   | {type: "destroy"; id: number}
   | {type: "jump"; id: number}
-  | {type: "addParent"; id: number};
+  | {type: "addParent"; id: number}
+  | {type: "item"; event: A.ItemEvent};
 
 // Find items not reacable from the root by following children, parents, links
 // and references.
@@ -77,6 +78,8 @@ export function update(app: A.App, event: OrphansEvent): A.App {
     });
   } else if (event.type === "jump") {
     return A.jump(A.switchTab(app, "outline"), T.thing(app.tree, {id: event.id}));
+  } else if (event.type === "item") {
+    return A.update(app, event);
   } else {
     const unreachable: never = event;
     return unreachable;

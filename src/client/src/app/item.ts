@@ -53,7 +53,7 @@ export function click(app: App, node: T.NodeRef): App {
     return merge(app, {
       tree: T.toggleLink(app.state, app.tree, T.parent(app.tree, node)!, T.thing(app.tree, node)),
     });
-  } else if (kind === "child" || kind === "reference") {
+  } else if (kind === "child" || kind === "reference" || kind === "root") {
     const tree = T.toggle(app.state, app.tree, node);
     app = merge(app, {
       tutorialState: U.action(app.tutorialState, {
