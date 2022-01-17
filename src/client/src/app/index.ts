@@ -15,6 +15,7 @@ import * as Tutorial from "../tutorial";
 import {GoalId} from "../goal";
 
 import * as PlaceholderItem from "../ui/PlaceholderItem";
+import * as Ac from "../actions";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
@@ -231,7 +232,9 @@ export type Event =
       | {subtype: "drag"; id: number}
       | {subtype: "hover"; id: number | null}
       | {subtype: "drop"; modifier: "move" | "copy"}
-    ));
+    ))
+  | {type: "action"; action: Ac.ActionName}
+  | ({type: "edit"} & E.Event);
 
 function handleItemEvent(
   app: App,
@@ -285,6 +288,12 @@ export function update(app: App, event: Event): App {
       return merge(app, {drag: R.hover(app.drag, event.id ? {id: event.id} : null)});
     else if (event.subtype === "drop") return R.drop(app, event.modifier);
     else return unreachable(event);
+  } else if (event.type === "action") {
+    return Ac.update(app, event.action).app;
+  } else if (event.type === "edit") {
+    const node = T.focused(app.tree);
+    if (!node) return app;
+    return handleItemEvent(app, {id: node.id, type: "edit", event: event}).app;
   } else {
     return unreachable(event);
   }

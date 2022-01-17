@@ -43,3 +43,21 @@ describe("in a graph that consists of a loop", () => {
     expect(contents(view)).toEqual([]);
   });
 });
+
+test("creating an item and then removing it adds it to the inbox", () => {
+  let app = A.of({});
+  app = A.update(app, {type: "focus", id: A.outline(app).root.id});
+  app = A.update(app, {type: "action", action: "new-child"});
+  app = A.update(app, {
+    type: "edit",
+    tag: "edit",
+    focused: true,
+    editor: {content: ["Added item"], selection: {from: 0, to: 0}},
+  });
+  app = A.update(app, {type: "action", action: "remove"});
+  app = A.update(app, {type: "action", action: "view-orphans"});
+
+  expect(O.view(app).items).toMatchObject([
+    {kind: "root", status: "terminal", editor: {content: ["Added item"]}, children: []},
+  ]);
+});

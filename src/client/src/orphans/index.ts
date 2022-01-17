@@ -89,7 +89,12 @@ export function update(app: A.App, event: OrphansEvent): A.App {
 export function view(app: A.App): OrphansView {
   return {
     items: app.orphans[_ids]
-      .map((thing) => A.itemFromNode(app, {id: T.instances(app.tree, thing).first()!.id}))
+      .map((thing) => {
+        const instances = T.instances(app.tree, thing);
+        if (instances.size !== 1)
+          console.warn("Expected 1 instances of %o, but there were %o", thing, instances.size);
+        return A.itemFromNode(app, {id: instances.first()!.id});
+      })
       .toArray()
       .sort((a, b) => a.editor.content.join("").localeCompare(b.editor.content.join(""))),
   };
