@@ -11,20 +11,12 @@ export type OrphansState = {[_ids]: Immutable.Set<string>; [_tree]?: T.Tree};
 
 export const empty = {[_ids]: Immutable.Set<string>()};
 
-export type OrphanListItem = {
-  title: string;
-  thing: string;
-  id: number;
-  parents: {id: string; text: string}[];
-  hasChildren: boolean;
-};
-
-export type OrphansView = {items: OrphanListItem[]};
+export type OrphansView = {items: A.Item[]};
 
 export type OrphansEvent =
-  | {type: "destroy"; thing: string}
-  | {type: "jump"; thing: string}
-  | {type: "addParent"; thing: string};
+  | {type: "destroy"; id: number}
+  | {type: "jump"; id: number}
+  | {type: "addParent"; id: number};
 
 // Find items not reacable from the root by following children, parents, links
 // and references.
@@ -70,19 +62,21 @@ export function update(app: A.App, event: OrphansEvent): A.App {
   }
 
   if (event.type === "destroy") {
-    return destroy(app, event.thing);
+    return destroy(app, T.thing(app.tree, {id: event.id}));
   } else if (event.type === "addParent") {
+    // [TODO] This doesn't actually work, because we need to emit "search"
+    // effect too.
     return A.merge(app, {
       popup: P.open(app.popup, {
         query: "",
         select(app, parent) {
-          return addParent(app, event.thing, parent);
+          return addParent(app, T.thing(app.tree, {id: event.id}), parent);
         },
         icon: "insert",
       }),
     });
   } else if (event.type === "jump") {
-    return A.jump(A.switchTab(app, "outline"), event.thing);
+    return A.jump(A.switchTab(app, "outline"), T.thing(app.tree, {id: event.id}));
   } else {
     const unreachable: never = event;
     return unreachable;
@@ -92,14 +86,8 @@ export function update(app: A.App, event: OrphansEvent): A.App {
 export function view(app: A.App): OrphansView {
   return {
     items: app.orphans[_ids]
-      .map((thing) => ({
-        title: D.contentText(app.state, thing),
-        thing,
-        parents: D.parents(app.state, thing).map((p) => ({id: p, text: D.contentText(app.state, p)})),
-        hasChildren: D.hasChildrenOrReferences(app.state, thing),
-        id: T.instances(app.tree, thing).first()!.id,
-      }))
+      .map((thing) => A.itemFromNode(app, {id: T.instances(app.tree, thing).first()!.id}))
       .toArray()
-      .sort((a, b) => a.title.localeCompare(b.title)),
+      .sort((a, b) => a.editor.content.join("").localeCompare(b.editor.content.join(""))),
   };
 }

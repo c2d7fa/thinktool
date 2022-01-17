@@ -55,12 +55,12 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
 
 export {itemFromNode} from "./item";
 
-export type ItemGraph = {[id: string]: {content: D.Content; children?: string[]}};
+export type ItemGraph = {[id: string]: {content?: D.Content; children?: string[]}};
 export function of(items: ItemGraph): App {
   let state = D.empty;
   for (const id in items) {
     state = D.create(state, id)[0];
-    state = D.setContent(state, id, items[id].content);
+    state = D.setContent(state, id, items[id].content ?? ["Item " + id]);
   }
   for (const id in items) {
     for (const child of items[id].children ?? []) {

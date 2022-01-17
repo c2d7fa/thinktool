@@ -1,10 +1,9 @@
 import * as React from "react";
 
-import Bullet from "../ui/Bullet";
-import {OtherParents} from "../ui/OtherParents";
-
+import * as A from "../app";
 import * as O from ".";
 import {IconLabel} from "../ui/icons";
+import {Item, SubtreeLayout} from "../ui/item";
 
 export function OrphanList(props: {view: O.OrphansView; send(event: O.OrphansEvent): void}) {
   if (props.view.items.length === 0)
@@ -15,22 +14,22 @@ export function OrphanList(props: {view: O.OrphansView; send(event: O.OrphansEve
     );
 
   const onJump = React.useCallback(
-    (item: O.OrphanListItem) => {
-      props.send({type: "jump", thing: item.thing});
+    (item: A.Item) => {
+      props.send({type: "jump", id: item.id});
     },
     [props.send],
   );
 
   const onAddParent = React.useCallback(
-    (item: O.OrphanListItem) => {
-      props.send({type: "addParent", thing: item.thing});
+    (item: A.Item) => {
+      props.send({type: "addParent", id: item.id});
     },
     [props.send],
   );
 
   const onDestroy = React.useCallback(
-    (item: O.OrphanListItem) => {
-      props.send({type: "destroy", thing: item.thing});
+    (item: A.Item) => {
+      props.send({type: "destroy", id: item.id});
     },
     [props.send],
   );
@@ -40,18 +39,9 @@ export function OrphanList(props: {view: O.OrphansView; send(event: O.OrphansEve
       {props.view.items.map((orphan) => (
         <div className="inbox-card">
           <div className="card-item">
-            <OtherParents
-              otherParents={orphan.parents}
-              click={() => onJump(orphan)}
-              altClick={() => onJump(orphan)}
-            />
-            <Bullet
-              status={orphan.hasChildren ? "collapsed" : "terminal"}
-              beginDrag={() => {}}
-              toggle={() => onJump(orphan)}
-              onMiddleClick={() => onJump(orphan)}
-            />
-            <span className="title">{orphan.title}</span>
+            <SubtreeLayout>
+              <Item item={orphan} onItemEvent={() => {}} />
+            </SubtreeLayout>
           </div>
           <div className="buttons">
             <button onClick={() => onJump(orphan)}>

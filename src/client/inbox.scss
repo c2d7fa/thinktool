@@ -25,24 +25,6 @@
       grid-area: item;
 
       padding: 0.5em;
-
-      display: grid;
-      grid-template: "space parents" auto "bullet title" auto / 20px 1fr;
-
-      .other-parents-small {
-        grid-area: parents;
-        margin-bottom: 2px;
-      }
-
-      & > .bullet {
-        grid-area: bullet;
-        margin-top: 3px;
-      }
-  
-      .title {
-        grid-area: title;
-        margin-left: 0.5em;
-      }  
     }
 
     .buttons {
