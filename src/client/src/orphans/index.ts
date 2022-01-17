@@ -4,12 +4,11 @@ import * as P from "../popup";
 import * as T from "../tree";
 import * as Immutable from "immutable";
 
-const _ids = Symbol("ids");
-const _tree = Symbol("tree");
+const _nodes = Symbol("nodes");
 
-export type OrphansState = {[_ids]: Immutable.Set<string>; [_tree]?: T.Tree};
+export type OrphansState = {[_nodes]: Immutable.Map<string, number>};
 
-export const empty = {[_ids]: Immutable.Set<string>()};
+export const empty = {[_nodes]: Immutable.Map<string, number>()};
 
 export type OrphansView = {items: A.Item[]};
 
@@ -36,16 +35,20 @@ export function scan(app: A.App): A.App {
   reach(D.root(app.state));
 
   const ids = Immutable.Set(D.allThings(app.state)).subtract(reached);
+  let nodes = Immutable.Map<string, number>();
+
   let tree = app.tree;
   for (const id of ids) {
-    tree = T.load(app.state, tree, id, {type: "root"})[1];
+    let node: T.NodeRef;
+    [node, tree] = T.load(app.state, tree, id, {type: "root"});
+    nodes = nodes.set(id, node.id);
   }
 
-  return A.merge(app, {orphans: {[_ids]: ids}, tree});
+  return A.merge(app, {orphans: {[_nodes]: nodes}, tree});
 }
 
 function removeOrphanWithoutRefresh(orphans: OrphansState, id: string): OrphansState {
-  return {[_ids]: orphans[_ids].filter((id_) => id_ !== id)};
+  return {[_nodes]: orphans[_nodes].filter((_, thing) => thing !== id)};
 }
 
 export function update(app: A.App, event: OrphansEvent): A.App {
@@ -88,13 +91,9 @@ export function update(app: A.App, event: OrphansEvent): A.App {
 
 export function view(app: A.App): OrphansView {
   return {
-    items: app.orphans[_ids]
-      .map((thing) => {
-        const instances = T.instances(app.tree, thing);
-        if (instances.size !== 1)
-          console.warn("Expected 1 instances of %o, but there were %o", thing, instances.size);
-        return A.itemFromNode(app, {id: instances.first()!.id});
-      })
+    items: app.orphans[_nodes]
+      .valueSeq()
+      .map((id) => A.itemFromNode(app, {id}))
       .toArray()
       .sort((a, b) => a.editor.content.join("").localeCompare(b.editor.content.join(""))),
   };
