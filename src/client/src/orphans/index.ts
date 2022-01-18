@@ -122,6 +122,6 @@ export function view(app: A.App): OrphansView {
       .valueSeq()
       .map((id) => A.itemFromNode(app, {id}))
       .toArray()
-      .sort((a, b) => a.editor.content.join("").localeCompare(b.editor.content.join(""))),
+      .sort((a, b) => -T.thing(app.tree, {id: a.id}).localeCompare(T.thing(app.tree, {id: b.id}))),
   };
 }
