@@ -174,6 +174,8 @@ const updates = {
     let result = app;
     if (target === null) {
       result = A.createChild(app, T.root(app.tree));
+    } else if (T.kind(app.tree, target) === "root") {
+      result = A.createChild(app, target);
     } else {
       let [newState, newTree, _, newNode] = T.createSiblingAfter(app.state, app.tree, target);
       result = A.update(A.merge(result, {state: newState, tree: newTree}), {type: "focus", id: newNode.id});

@@ -118,3 +118,24 @@ describe("clicking on another parent in the inbox view jumps there", () => {
     });
   });
 });
+
+describe("executing 'new' action on an item in the inbox inserts a new child", () => {
+  const app = A.after(
+    {
+      "0": {content: ["Item 0"]},
+      "1": {content: ["Item 1"]},
+    },
+    [
+      {type: "action", action: "view-orphans"},
+      (view) => ({type: "focus", id: (view as O.OrphansView).items[0].id}),
+      {type: "action", action: "new"},
+    ],
+  );
+
+  test("creates an empty, focused item", () => {
+    expect((A.view(app) as O.OrphansView).items[0].children[0]).toMatchObject({
+      hasFocus: true,
+      editor: {content: [], selection: {from: 0, to: 0}},
+    });
+  });
+});

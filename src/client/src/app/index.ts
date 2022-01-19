@@ -298,6 +298,16 @@ export function update(app: App, event: Event): App {
   }
 }
 
+export function after(app: App | ItemGraph, events: (Event | ((view: View) => Event))[]): App {
+  return events.reduce(
+    (app_, event) => {
+      if (typeof event === "function") return update(app_, event(view(app_)));
+      else return update(app_, event);
+    },
+    _isOnline in app ? (app as App) : of(app as ItemGraph),
+  );
+}
+
 export function isDragging(app: App): boolean {
   return R.isActive(app.drag);
 }
@@ -311,7 +321,9 @@ export function focusedId(app: App): number | null {
   return T.focused(app.tree)?.id ?? null;
 }
 
-export function view(app: App): ({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView) {
+export type View = ({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView);
+
+export function view(app: App): View {
   if (app.tab === "orphans") return {...O.view(app), tab: "orphans"};
   else return {...Ou.fromApp(app), tab: "outline"};
 }
