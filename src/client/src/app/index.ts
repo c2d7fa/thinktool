@@ -221,10 +221,6 @@ export type ItemEvent = I.Event;
 
 export type Outline = Ou.Outline;
 
-export function outline(app: App): Outline {
-  return Ou.fromApp(app);
-}
-
 export type Event =
   | {type: "focus"; id: number}
   | {type: "item"; event: ItemEvent}
@@ -234,7 +230,8 @@ export type Event =
       | {subtype: "drop"; modifier: "move" | "copy"}
     ))
   | {type: "action"; action: Ac.ActionName}
-  | ({type: "edit"} & E.Event);
+  | ({type: "edit"} & E.Event)
+  | {type: "orphans"; event: O.OrphansEvent};
 
 function handleItemEvent(
   app: App,
@@ -294,6 +291,8 @@ export function update(app: App, event: Event): App {
     const node = T.focused(app.tree);
     if (!node) return app;
     return handleItemEvent(app, {id: node.id, type: "edit", event: event}).app;
+  } else if (event.type === "orphans") {
+    return O.update(app, event.event);
   } else {
     return unreachable(event);
   }
@@ -312,7 +311,7 @@ export function focusedId(app: App): number | null {
   return T.focused(app.tree)?.id ?? null;
 }
 
-export function view(app: App): (Outline | O.OrphansView) & {tab: "orphans" | "outline"} {
+export function view(app: App): ({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView) {
   if (app.tab === "orphans") return {...O.view(app), tab: "orphans"};
-  else return {...outline(app), tab: "outline"};
+  else return {...Ou.fromApp(app), tab: "outline"};
 }

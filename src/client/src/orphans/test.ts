@@ -67,7 +67,7 @@ describe("in a graph that consists of a disconnected loop", () => {
 
 test("creating an item and then removing it adds it to the inbox", () => {
   let app = A.of({});
-  app = A.update(app, {type: "focus", id: A.outline(app).root.id});
+  app = A.update(app, {type: "focus", id: (A.view(app) as A.Outline).root.id});
   app = A.update(app, {type: "action", action: "new-child"});
   app = A.update(app, {
     type: "edit",
@@ -108,12 +108,12 @@ describe("clicking on another parent in the inbox view jumps there", () => {
         event: {type: "click-parent", thing: "1", alt: false},
       });
 
-      test("the outline jumps to that parent", () => {
-        expect(A.outline(afterClick).root.editor.content).toMatchObject(["Item 1"]);
-      });
-
       test("the outline tab is shown", () => {
         expect(A.view(afterClick).tab).toEqual("outline");
+      });
+
+      test("the outline jumps to that parent", () => {
+        expect((A.view(afterClick) as A.Outline).root.editor.content).toMatchObject(["Item 1"]);
       });
     });
   });

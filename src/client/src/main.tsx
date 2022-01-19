@@ -356,7 +356,7 @@ function App_({
     search: (query) => search.query(query, 25),
   });
 
-  const onItemEvent = useOnItemEvent({updateApp, openExternalUrl: openExternalUrl, send: receiver.send});
+  const sendAppEvent = useSendAppEvent({updateApp, openExternalUrl: openExternalUrl, send: receiver.send});
 
   const onToolbarButtonPressed = React.useCallback((action) => receiver.send("action", {action}), [receiver]);
 
@@ -384,17 +384,21 @@ function App_({
         visible={app.changelogShown}
         hide={() => updateApp((app) => A.merge(app, {changelogShown: false}))}
       />
-      {app.tab === "orphans" ? (
-        <OrphanList view={O.view(app)} send={(ev) => updateApp((app) => O.update(app, ev))} />
-      ) : (
-        <Outline outline={A.outline(app)} onItemEvent={onItemEvent} />
-      )}
+      <MainView view={A.view(app)} send={sendAppEvent} />
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );
 }
 
-function useOnItemEvent({
+function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event): void}) {
+  return props.view.tab === "orphans" ? (
+    <OrphanList view={props.view} send={(event) => props.send({type: "orphans", event})} />
+  ) : (
+    <Outline outline={props.view} onItemEvent={(event) => props.send({type: "item", event})} />
+  );
+}
+
+function useSendAppEvent({
   updateApp,
   openExternalUrl,
   send,
@@ -403,12 +407,12 @@ function useOnItemEvent({
   openExternalUrl(url: string): void;
   send: Receiver<Message>["send"];
 }) {
-  return React.useCallback((event: A.ItemEvent) => {
+  return React.useCallback((event: A.Event) => {
     updateApp((app) => {
-      const effects = A.effects(app, {type: "item", event});
+      const effects = A.effects(app, event);
       if (effects?.url) openExternalUrl(effects.url);
       if (effects?.search) send("search", {search: effects.search});
-      return A.update(app, {type: "item", event});
+      return A.update(app, event);
     });
   }, []);
 }

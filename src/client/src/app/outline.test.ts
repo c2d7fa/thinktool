@@ -8,7 +8,7 @@ describe("in an outline where the root item is referenced by another item", () =
     {id: "another", content: ["This item links to ", {link: "root"}, "."]},
   ]);
 
-  const baseOutline = A.outline(base);
+  const baseOutline = A.view(base) as A.Outline;
 
   test("the in-line references of the root data item is never shown", () => {
     expect(baseOutline.root).toMatchObject({references: {state: "empty"}});
@@ -26,7 +26,7 @@ describe("in an outline where the root item is referenced by another item", () =
 
 describe("in an app with two items", () => {
   const base = construct({children: [{content: "Item 1"}, {content: "Item 2"}]});
-  const baseOutline = A.outline(base);
+  const baseOutline = A.view(base) as A.Outline;
 
   test("the items appear in the outline", () => {
     expect(baseOutline.root.children).toMatchObject([
@@ -41,7 +41,7 @@ describe("in an app with two items", () => {
 
   describe("after focusing the first item", () => {
     const afterFocus = A.update(base, {type: "focus", id: baseOutline.root.children[0].id});
-    const afterFocusOutline = A.outline(afterFocus);
+    const afterFocusOutline = A.view(afterFocus) as A.Outline;
 
     test("that item becomes focused", () => {
       expect(afterFocusOutline.root.children).toMatchObject([{hasFocus: true}, {hasFocus: false}]);
@@ -59,32 +59,35 @@ describe("in an app with two items", () => {
       });
 
       test("the cursor position is reflected in the outline", () => {
-        expect(A.outline(afterCursor).root.children).toMatchObject([
+        expect((A.view(afterCursor) as A.Outline).root.children).toMatchObject([
           {editor: {content: ["Item 1"], selection: {from: 5, to: 5}}},
           {editor: {content: ["Item 2"]}},
         ]);
       });
 
       describe("after moving the item down", () => {
-        const focusedId = A.outline(afterCursor).root.children.find((c) => c.hasFocus)!.id;
+        const focusedId = (A.view(afterCursor) as A.Outline).root.children.find((c) => c.hasFocus)!.id;
         const afterDown = A.update(afterCursor, {
           type: "item",
           event: {id: focusedId, type: "edit", event: {tag: "action", action: "down"}},
         });
 
         test("the positions of the items are swapped", () => {
-          expect(A.outline(afterDown).root.children).toMatchObject([
+          expect((A.view(afterDown) as A.Outline).root.children).toMatchObject([
             {editor: {content: ["Item 2"]}},
             {editor: {content: ["Item 1"]}},
           ]);
         });
 
         test("the previously focused item is still focused", () => {
-          expect(A.outline(afterDown).root.children).toMatchObject([{hasFocus: false}, {hasFocus: true}]);
+          expect((A.view(afterDown) as A.Outline).root.children).toMatchObject([
+            {hasFocus: false},
+            {hasFocus: true},
+          ]);
         });
 
         test("the cursor position is still reflected in the outline", () => {
-          expect(A.outline(afterDown).root.children).toMatchObject([
+          expect((A.view(afterDown) as A.Outline).root.children).toMatchObject([
             {editor: {content: ["Item 2"]}},
             {editor: {content: ["Item 1"], selection: {from: 5, to: 5}}},
           ]);
@@ -118,18 +121,18 @@ describe("moving focus with arrow key commands", () => {
   });
 
   describe("after focusing Item 1 and expanding it", () => {
-    const afterFocus = A.update(base, {type: "focus", id: A.outline(base).root.children[0].id});
+    const afterFocus = A.update(base, {type: "focus", id: (A.view(base) as A.Outline).root.children[0].id});
     const afterToggle = updateEditFocused(afterFocus, {tag: "action", action: "toggle"});
 
     test("the children of Item 1 are shown", () => {
-      expect(A.outline(afterToggle).root.children).toMatchObject([
+      expect((A.view(afterToggle) as A.Outline).root.children).toMatchObject([
         {editor: {content: ["Item 1"]}, children: [{editor: {content: ["Item 1.1"]}}]},
         {editor: {content: ["Item 2"]}},
       ]);
     });
 
     test("the first item still has focus", () => {
-      expect(A.outline(afterToggle).root.children).toMatchObject([
+      expect((A.view(afterToggle) as A.Outline).root.children).toMatchObject([
         {hasFocus: true, children: [{hasFocus: false}]},
         {hasFocus: false},
       ]);
@@ -139,7 +142,7 @@ describe("moving focus with arrow key commands", () => {
       const afterFocusDownOnce = updateEditFocused(afterToggle, {tag: "action", action: "focus-down"});
 
       test("focus moves to Item 1.1", () => {
-        expect(A.outline(afterFocusDownOnce).root.children).toMatchObject([
+        expect((A.view(afterFocusDownOnce) as A.Outline).root.children).toMatchObject([
           {hasFocus: false, children: [{hasFocus: true}]},
           {hasFocus: false},
         ]);
@@ -149,7 +152,7 @@ describe("moving focus with arrow key commands", () => {
         const afterFocusDownTwice = updateEditFocused(afterFocusDownOnce, {tag: "action", action: "focus-down"});
 
         test("focus moves to Item 2", () => {
-          expect(A.outline(afterFocusDownTwice).root.children).toMatchObject([
+          expect((A.view(afterFocusDownTwice) as A.Outline).root.children).toMatchObject([
             {hasFocus: false, children: [{hasFocus: false}]},
             {hasFocus: true},
           ]);
@@ -162,7 +165,7 @@ describe("moving focus with arrow key commands", () => {
           });
 
           test("focus stays on Item 2", () => {
-            expect(A.outline(afterFocusDownThrice).root.children).toMatchObject([
+            expect((A.view(afterFocusDownThrice) as A.Outline).root.children).toMatchObject([
               {hasFocus: false, children: [{hasFocus: false}]},
               {hasFocus: true},
             ]);
@@ -177,14 +180,14 @@ describe("moving focus with arrow key commands", () => {
             );
 
             test("tthe first item is focused again", () => {
-              expect(A.outline(afterFocusBackUp).root.children).toMatchObject([
+              expect((A.view(afterFocusBackUp) as A.Outline).root.children).toMatchObject([
                 {hasFocus: true},
                 {hasFocus: false},
               ]);
             });
 
             test("the children of Item 1 are hidden", () => {
-              expect(A.outline(afterFocusBackUp).root.children).toMatchObject([
+              expect((A.view(afterFocusBackUp) as A.Outline).root.children).toMatchObject([
                 {editor: {content: ["Item 1"]}, children: []},
                 {editor: {content: ["Item 2"]}},
               ]);
@@ -197,7 +200,7 @@ describe("moving focus with arrow key commands", () => {
               });
 
               test("focus moves directly to Item 2", () => {
-                expect(A.outline(afterFocusDownAgain).root.children).toMatchObject([
+                expect((A.view(afterFocusDownAgain) as A.Outline).root.children).toMatchObject([
                   {hasFocus: false},
                   {hasFocus: true},
                 ]);
