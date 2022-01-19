@@ -113,7 +113,7 @@ export function jump(app: App, thing: string): App {
     previouslyFocused: T.thing(app.tree, T.root(app.tree)),
     thing,
   });
-  return merge(app, {tree: T.fromRoot(app.state, thing), tutorialState, editors: {}});
+  return merge(app, {tree: T.fromRoot(app.state, thing), tutorialState, editors: {}, tab: "outline"});
 }
 
 export function toggleLink(app: App, node: T.NodeRef, link: string): App {
@@ -310,4 +310,9 @@ export function focus(app: App, id: number | null): App {
 
 export function focusedId(app: App): number | null {
   return T.focused(app.tree)?.id ?? null;
+}
+
+export function view(app: App): (Outline | O.OrphansView) & {tab: "orphans" | "outline"} {
+  if (app.tab === "orphans") return {...O.view(app), tab: "orphans"};
+  else return {...outline(app), tab: "outline"};
 }

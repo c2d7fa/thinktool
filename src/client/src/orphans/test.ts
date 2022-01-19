@@ -82,3 +82,39 @@ test("creating an item and then removing it adds it to the inbox", () => {
     {kind: "root", status: "terminal", editor: {content: ["Added item"]}, children: []},
   ]);
 });
+
+describe("clicking on another parent in the inbox view jumps there", () => {
+  let before = A.of({
+    "0": {content: ["Item 0"]},
+    "1": {children: ["3"], content: ["Item 1"]},
+    "2": {children: ["3"], content: ["Item 2"]},
+    "3": {content: ["Item 3"]},
+  });
+  before = A.update(before, {type: "action", action: "view-orphans"});
+
+  describe("after expanding the first item in the inbox", () => {
+    const id = O.view(before).items[0].id;
+    const afterExpanding = A.update(before, {type: "item", event: {type: "click-bullet", id, alt: false}});
+
+    test("the item at [0][0] has the other parent shown", () => {
+      expect(O.view(afterExpanding).items[0].children[0]).toMatchObject({
+        otherParents: [{text: "Item 1", id: "1"}],
+      });
+    });
+
+    describe("after clicking on the other parent", () => {
+      const afterClick = A.update(afterExpanding, {
+        type: "item",
+        event: {type: "click-parent", thing: "1", alt: false},
+      });
+
+      test("the outline jumps to that parent", () => {
+        expect(A.outline(afterClick).root.editor.content).toMatchObject(["Item 1"]);
+      });
+
+      test("the outline tab is shown", () => {
+        expect(A.view(afterClick).tab).toEqual("outline");
+      });
+    });
+  });
+});
