@@ -239,7 +239,7 @@ function unreachable(x: never): never {
   return x;
 }
 
-function handle(app: App, event: Event): {app: App; effects?: Effects} {
+export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   function handleItemEvent(app: App, event: ItemEvent): {app: App; effects?: Effects} {
     const item = (event: {id: number}) => ({id: event.id, hasFocus: T.hasFocus(app.tree, {id: event.id})});
 
@@ -280,7 +280,7 @@ function handle(app: App, event: Event): {app: App; effects?: Effects} {
     if (!node) return {app};
     return handleItemEvent(app, {id: node.id, type: "edit", event: event});
   } else if (event.type === "orphans") {
-    return {app: O.update(app, event.event)};
+    return O.handle(app, event.event);
   } else {
     return unreachable(event);
   }

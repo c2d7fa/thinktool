@@ -78,7 +78,7 @@ function removeOrphanWithoutRefresh(orphans: OrphansState, id: string): OrphansS
   return {[_nodes]: orphans[_nodes].filter((_, thing) => thing !== id)};
 }
 
-export function update(app: A.App, event: OrphansEvent): A.App {
+export function handle(app: A.App, event: OrphansEvent): {app: A.App; effects?: A.Effects} {
   function destroy(app: A.App, thing: string): A.App {
     return A.merge(app, {
       state: D.remove(app.state, thing),
@@ -93,23 +93,15 @@ export function update(app: A.App, event: OrphansEvent): A.App {
   }
 
   if (event.type === "destroy") {
-    return destroy(app, T.thing(app.tree, {id: event.id}));
+    return {app: destroy(app, T.thing(app.tree, {id: event.id}))};
   } else if (event.type === "addParent") {
-    // [TODO] This doesn't actually work, because we need to emit "search"
-    // effect too.
-    return A.merge(app, {
-      popup: P.open(app.popup, {
-        query: "",
-        select(app, parent) {
-          return addParent(app, T.thing(app.tree, {id: event.id}), parent);
-        },
-        icon: "insert",
-      }),
+    return A.openPopup(app, (app, parent) => addParent(app, T.thing(app.tree, {id: event.id}), parent), {
+      icon: "insert",
     });
   } else if (event.type === "jump") {
-    return A.jump(A.switchTab(app, "outline"), T.thing(app.tree, {id: event.id}));
+    return {app: A.jump(app, T.thing(app.tree, {id: event.id}))};
   } else if (event.type === "item") {
-    return A.update(app, event);
+    return A.handle(app, event);
   } else {
     const unreachable: never = event;
     return unreachable;
