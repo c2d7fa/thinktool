@@ -233,69 +233,65 @@ export type Event =
   | ({type: "edit"} & E.Event)
   | {type: "orphans"; event: O.OrphansEvent};
 
-function handleItemEvent(
-  app: App,
-  event: ItemEvent,
-): {app: App; effects?: {search?: {items: {thing: string; content: string}[]; query: string}; url?: string}} {
-  const item = (event: {id: number}) => ({id: event.id, hasFocus: T.hasFocus(app.tree, {id: event.id})});
-
-  if (event.type === "drag") {
-    return {app: merge(app, {drag: R.drag(app.tree, item(event))})};
-  } else if (event.type === "click-bullet") {
-    return {app: (event.alt ? I.altClick : I.click)(app, item(event))};
-  } else if (event.type === "click-parent") {
-    return {app: jump(app, event.thing)};
-  } else if (event.type === "click-placeholder") {
-    return {app: PlaceholderItem.create(app)};
-  } else if (event.type === "toggle-references") {
-    return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, item(event))})};
-  } else if (event.type === "edit") {
-    return E.handle(app, item(event), event.event);
-  } else if (event.type === "unfold") {
-    return {app: unfold(app, item(event))};
-  } else {
-    const unreachable: never = event;
-    return unreachable;
-  }
-}
-
-export function effects(
-  app: App,
-  event: Event,
-): {search?: {items: {thing: string; content: string}[]; query: string}; url?: string} {
-  if (event.type === "item") {
-    return handleItemEvent(app, event.event).effects ?? {};
-  } else {
-    return {};
-  }
-}
+export type Effects = {search?: {items: {thing: string; content: string}[]; query: string}; url?: string};
 
 function unreachable(x: never): never {
   return x;
 }
 
-export function update(app: App, event: Event): App {
+function handle(app: App, event: Event): {app: App; effects?: Effects} {
+  function handleItemEvent(app: App, event: ItemEvent): {app: App; effects?: Effects} {
+    const item = (event: {id: number}) => ({id: event.id, hasFocus: T.hasFocus(app.tree, {id: event.id})});
+
+    if (event.type === "drag") {
+      return {app: merge(app, {drag: R.drag(app.tree, item(event))})};
+    } else if (event.type === "click-bullet") {
+      return {app: (event.alt ? I.altClick : I.click)(app, item(event))};
+    } else if (event.type === "click-parent") {
+      return {app: jump(app, event.thing)};
+    } else if (event.type === "click-placeholder") {
+      return {app: PlaceholderItem.create(app)};
+    } else if (event.type === "toggle-references") {
+      return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, item(event))})};
+    } else if (event.type === "edit") {
+      return E.handle(app, item(event), event.event);
+    } else if (event.type === "unfold") {
+      return {app: unfold(app, item(event))};
+    } else {
+      const unreachable: never = event;
+      return unreachable;
+    }
+  }
+
   if (event.type === "focus") {
-    return merge(app, {tree: T.focus(app.tree, {id: event.id})});
+    return {app: merge(app, {tree: T.focus(app.tree, {id: event.id})}), effects: {}};
   } else if (event.type === "item") {
-    return handleItemEvent(app, event.event).app;
+    return handleItemEvent(app, event.event);
   } else if (event.type === "drag") {
-    if (event.subtype === "drag") return merge(app, {drag: R.drag(app.tree, {id: event.id})});
+    if (event.subtype === "drag") return {app: merge(app, {drag: R.drag(app.tree, {id: event.id})})};
     else if (event.subtype === "hover")
-      return merge(app, {drag: R.hover(app.drag, event.id ? {id: event.id} : null)});
-    else if (event.subtype === "drop") return R.drop(app, event.modifier);
+      return {app: merge(app, {drag: R.hover(app.drag, event.id ? {id: event.id} : null)})};
+    else if (event.subtype === "drop") return {app: R.drop(app, event.modifier)};
     else return unreachable(event);
   } else if (event.type === "action") {
-    return Ac.update(app, event.action).app;
+    return Ac.update(app, event.action);
   } else if (event.type === "edit") {
     const node = T.focused(app.tree);
-    if (!node) return app;
-    return handleItemEvent(app, {id: node.id, type: "edit", event: event}).app;
+    if (!node) return {app};
+    return handleItemEvent(app, {id: node.id, type: "edit", event: event});
   } else if (event.type === "orphans") {
-    return O.update(app, event.event);
+    return {app: O.update(app, event.event)};
   } else {
     return unreachable(event);
   }
+}
+
+export function effects(app: App, event: Event): Effects {
+  return handle(app, event).effects ?? {};
+}
+
+export function update(app: App, event: Event): App {
+  return handle(app, event).app;
 }
 
 export function after(app: App | ItemGraph, events: (Event | ((view: View) => Event))[]): App {
