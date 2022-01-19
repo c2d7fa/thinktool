@@ -76,7 +76,7 @@ export function click(app: App, node: T.NodeRef): App {
 export function altClick(app: App, node: T.NodeRef): App {
   const kind = T.kind(app.tree, node);
 
-  if (kind === "opened-link" || kind === "child" || kind === "reference") {
+  if (kind === "opened-link" || kind === "child" || kind === "reference" || kind === "root") {
     app = jump(app, T.thing(app.tree, node));
     return app;
   } else if (kind === "parent") {
