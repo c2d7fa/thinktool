@@ -14,7 +14,6 @@ import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
 import * as P from "./popup";
-import * as O from "./orphans";
 import * as Sync from "./sync";
 
 import * as Toolbar from "./ui/Toolbar";
@@ -28,21 +27,19 @@ import {OfflineIndicator} from "./offline-indicator";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import {Receiver, receiver as createReceiver} from "./receiver";
-import {Message} from "./messages";
-import {useMemoWarning, usePropRef} from "./react-utils";
+import {useMemoWarning} from "./react-utils";
 import {OrphanList} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 import {Outline} from "./ui/outline";
 
-function useGlobalShortcuts(sendEvent: Receiver<Message>["send"]) {
+function useGlobalShortcuts(send: (event: A.Event) => void) {
   React.useEffect(() => {
     function onTopLevelKeyDown(ev: KeyboardEvent) {
       if (Sh.matches(ev, Actions.shortcut("undo"))) {
-        sendEvent("action", {action: "undo"});
+        send({type: "action", action: "undo"});
         ev.preventDefault();
       } else if (Sh.matches(ev, Actions.shortcut("find"))) {
-        sendEvent("action", {action: "find"});
+        send({type: "action", action: "find"});
         ev.preventDefault();
       }
     }
@@ -51,7 +48,7 @@ function useGlobalShortcuts(sendEvent: Receiver<Message>["send"]) {
       console.warn("Unregistering global 'keydown' event listener. This should not normally happen.");
       document.removeEventListener("keydown", onTopLevelKeyDown);
     };
-  }, [sendEvent]);
+  }, [send]);
 }
 
 function useServerChanges(server: ServerApi | null, updateApp: (f: (app: A.App) => A.App) => void) {
@@ -250,8 +247,6 @@ function App_({
 }) {
   const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
 
-  const receiver = React.useMemo(() => createReceiver<Message>(), []);
-
   const [app, updateAppWithoutSaving] = React.useState<A.App>(() => {
     let result = Sync.loadAppFromStoredState(storedState);
     result = A.jump(result, extractThingFromURL());
@@ -291,25 +286,10 @@ function App_({
     return search;
   }, []);
 
-  React.useEffect(() => {
-    receiver.subscribe("action", (ev) => {
-      updateApp((app) => {
-        const result = Actions.update(app, ev.action);
-        if (result.undo) console.warn("Undo isn't currently supported.");
-        if (result.url) openExternalUrl(result.url);
-        if (result.search) receiver.send("search", {search: result.search});
-        return result.app;
-      });
-    });
-
-    receiver.subscribe("search", (ev) => {
-      search.reset(ev.search.items);
-      search.query(ev.search.query, 25);
-    });
-  }, []);
+  const send = useSendAppEvent({updateApp, openExternalUrl, search});
 
   useServerChanges(server ?? null, updateAppWithoutSaving);
-  useGlobalShortcuts(receiver.send);
+  useGlobalShortcuts(send);
 
   useDragAndDrop(app, updateApp);
 
@@ -347,8 +327,8 @@ function App_({
 
   const topBarProps = useTopBarProps({
     app,
+    send,
     updateApp,
-    send: receiver.send,
     isToolbarShown,
     setIsToolbarShown,
     username,
@@ -356,9 +336,7 @@ function App_({
     search: (query) => search.query(query, 25),
   });
 
-  const sendAppEvent = useSendAppEvent({updateApp, openExternalUrl: openExternalUrl, send: receiver.send});
-
-  const onToolbarButtonPressed = React.useCallback((action) => receiver.send("action", {action}), [receiver]);
+  const onToolbarButtonPressed = React.useCallback((action) => send({type: "action", action}), [send]);
 
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
@@ -384,7 +362,7 @@ function App_({
         visible={app.changelogShown}
         hide={() => updateApp((app) => A.merge(app, {changelogShown: false}))}
       />
-      <MainView view={A.view(app)} send={sendAppEvent} />
+      <MainView view={A.view(app)} send={send} />
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );
@@ -401,17 +379,20 @@ function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event):
 function useSendAppEvent({
   updateApp,
   openExternalUrl,
-  send,
+  search,
 }: {
   updateApp(f: (app: A.App) => A.App): void;
   openExternalUrl(url: string): void;
-  send: Receiver<Message>["send"];
+  search: Search;
 }) {
   return React.useCallback((event: A.Event) => {
     updateApp((app) => {
       const effects = A.effects(app, event);
       if (effects?.url) openExternalUrl(effects.url);
-      if (effects?.search) send("search", {search: effects.search});
+      if (effects?.search) {
+        search.reset(effects.search.items);
+        search.query(effects.search.query, 25);
+      }
       return A.update(app, event);
     });
   }, []);

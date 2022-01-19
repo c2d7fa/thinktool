@@ -3,8 +3,8 @@ import * as React from "react";
 import {ExternalLink} from "./ExternalLink";
 import {SearchBar, useSearchBarProps} from "../search-bar";
 import {ServerApi} from "../sync/server-api";
-import {Send} from "../messages";
 import {App, UpdateApp} from "../app";
+import * as A from "../app";
 
 import * as Icons from "./icons";
 
@@ -12,7 +12,7 @@ const styles = require("./TopBar.module.scss").default;
 
 export function useTopBarProps(args: {
   app: App;
-  send: Send;
+  send: (event: A.Event) => void;
   updateApp: UpdateApp;
   isToolbarShown: boolean;
   setIsToolbarShown(b: boolean): void;
