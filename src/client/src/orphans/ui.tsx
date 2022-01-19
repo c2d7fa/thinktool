@@ -16,7 +16,7 @@ export function OrphanList(props: {view: O.OrphansView; send(event: O.OrphansEve
   return (
     <div className="inbox">
       {props.view.items.map((orphan) => (
-        <div className="inbox-card">
+        <div className="inbox-card" key={orphan.id}>
           <div className="card-item">
             <SubtreeLayout>
               <Item item={orphan} onItemEvent={(event) => props.send({type: "item", event})} />
