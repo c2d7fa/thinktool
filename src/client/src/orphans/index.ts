@@ -88,8 +88,7 @@ export function handle(app: A.App, event: OrphansEvent): {app: A.App; effects?: 
 
   function addParent(app: A.App, thing: string, parent: string): A.App {
     const state = D.addChild(app.state, parent, thing)[0];
-    const app_ = scan(A.merge(app, {state}));
-    return A.jump(A.switchTab(app_, "outline"), parent);
+    return scan(A.merge(app, {state}));
   }
 
   if (event.type === "destroy") {

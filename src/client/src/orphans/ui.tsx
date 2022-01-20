@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import * as A from "../app";
 import * as O from ".";
 import {IconLabel} from "../ui/icons";
 import {Item, SubtreeLayout} from "../ui/item";
