@@ -166,7 +166,7 @@ export function openPopup(
   app: App,
   useSelection: (app: App, thing: string) => App,
   args?: {icon: "search" | "insert" | "link"},
-): {app: App; search: {query: string; items: {thing: string; content: string}[]}} {
+): {app: App; effects: Effects} {
   const items = D.allThings(app.state).map((thing) => ({thing, content: D.contentText(app.state, thing)}));
   const query = selectedText(app);
 
@@ -178,7 +178,7 @@ export function openPopup(
     }),
   });
 
-  return {app: app_, search: {items, query}};
+  return {app: app_, effects: {search: {items, query}}};
 }
 
 export function replace(app: App, node: T.NodeRef, thing: string): App {
@@ -274,7 +274,7 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     else if (event.subtype === "drop") return {app: R.drop(app, event.modifier)};
     else return unreachable(event);
   } else if (event.type === "action") {
-    return Ac.update(app, event.action);
+    return Ac.handle(app, event.action);
   } else if (event.type === "edit") {
     const node = T.focused(app.tree);
     if (!node) return {app};

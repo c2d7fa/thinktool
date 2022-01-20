@@ -87,7 +87,7 @@ export type ActionEffects = {
   search?: {items: {thing: string; content: string}[]; query: string};
 };
 
-export function update(app: App, action: keyof typeof updates): {app: App} & ActionEffects {
+export function handle(app: App, action: keyof typeof updates): {app: App; effects: ActionEffects} {
   if (!enabled(app, action)) {
     console.error("The action %o should not be enabled! Continuing anyway...", action);
   }
@@ -113,7 +113,7 @@ type UpdateArgs = {
 
 const updates = {
   "unfold"({target, app}: UpdateArgs) {
-    return {app: A.unfold(app, require(target))};
+    return {app: A.unfold(app, require(target)), effects: {}};
   },
 
   "insert-sibling"({app, target}: UpdateArgs) {
@@ -159,7 +159,7 @@ const updates = {
   "replace"({app, target}: UpdateArgs) {
     if (A.editor(app, require(target))!.content.length !== 0) {
       console.log("Refusing to replace item because it already has content");
-      return {app};
+      return {app, effects: {}};
     }
     return A.openPopup(
       app,
@@ -181,26 +181,29 @@ const updates = {
       result = A.update(A.merge(result, {state: newState, tree: newTree}), {type: "focus", id: newNode.id});
     }
     result = applyActionEvent(result, {action: "created-item"});
-    return {app: result};
+    return {app: result, effects: {}};
   },
 
   "new-before"({app, target}: UpdateArgs) {
     const [newState, newTree, _, newId] = T.createSiblingBefore(app.state, app.tree, require(target));
-    return {app: applyActionEvent(A.merge(app, {state: newState, tree: newTree}), {action: "created-item"})};
+    return {
+      app: applyActionEvent(A.merge(app, {state: newState, tree: newTree}), {action: "created-item"}),
+      effects: {},
+    };
   },
 
   "focus-up"({app}: UpdateArgs) {
-    return {app: A.merge(app, {tree: T.focusUp(app.tree)})};
+    return {app: A.merge(app, {tree: T.focusUp(app.tree)}), effects: {}};
   },
 
   "focus-down"({app}: UpdateArgs) {
-    return {app: A.merge(app, {tree: T.focusDown(app.tree)})};
+    return {app: A.merge(app, {tree: T.focusDown(app.tree)}), effects: {}};
   },
 
   "zoom"({app, target}: UpdateArgs) {
     let result = app;
     result = A.jump(result, T.thing(result.tree, require(target)));
-    return {app: result};
+    return {app: result, effects: {}};
   },
 
   "indent"({app, target}: UpdateArgs) {
@@ -208,7 +211,7 @@ const updates = {
     const [newState, newTree] = T.indent(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "moved"});
-    return {app: result};
+    return {app: result, effects: {}};
   },
 
   "unindent"({app, target}: UpdateArgs) {
@@ -216,7 +219,7 @@ const updates = {
     const [newState, newTree] = T.unindent(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "moved"});
-    return {app: result};
+    return {app: result, effects: {}};
   },
 
   "down"({app, target}: UpdateArgs) {
@@ -224,7 +227,7 @@ const updates = {
     const [newState, newTree] = T.moveDown(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "moved"});
-    return {app: result};
+    return {app: result, effects: {}};
   },
 
   "up"({app, target}: UpdateArgs) {
@@ -232,12 +235,12 @@ const updates = {
     const [newState, newTree] = T.moveUp(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "moved"});
-    return {app: result};
+    return {app: result, effects: {}};
   },
 
   "new-child"({app, target}: UpdateArgs) {
     const result = A.createChild(app, require(target));
-    return {app: applyActionEvent(result, {action: "created-item"})};
+    return {app: applyActionEvent(result, {action: "created-item"}), effects: {}};
   },
 
   "remove"({app, target}: UpdateArgs) {
@@ -245,7 +248,7 @@ const updates = {
     const [newState, newTree] = T.remove(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "removed"});
-    return {app: result};
+    return {app: result, effects: {}};
   },
 
   "destroy"({app, target}: UpdateArgs) {
@@ -253,17 +256,17 @@ const updates = {
     const [newState, newTree] = T.removeThing(result.state, result.tree, require(target));
     result = A.merge(result, {state: newState, tree: newTree});
     result = applyActionEvent(result, {action: "destroy"});
-    return {app: result};
+    return {app: result, effects: {}};
   },
 
   "tutorial"({app}: UpdateArgs) {
     let result = app;
     result = A.merge(result, {tutorialState: Tutorial.reset(result.tutorialState)});
-    return {app: result};
+    return {app: result, effects: {}};
   },
 
   "changelog"({app}: UpdateArgs) {
-    return {app: A.merge(app, {changelogShown: !app.changelogShown})};
+    return {app: A.merge(app, {changelogShown: !app.changelogShown}), effects: {}};
   },
 
   "toggle"({app, target}: UpdateArgs) {
@@ -271,7 +274,7 @@ const updates = {
     const newTree = T.toggle(result.state, result.tree, require(target));
     result = A.merge(result, {tree: newTree});
     result = applyActionEvent(result, {action: "toggled-item", newTree, node: require(target)});
-    return {app: result};
+    return {app: result, effects: {}};
   },
 
   "home"({app}: UpdateArgs) {
@@ -279,7 +282,7 @@ const updates = {
     const newTree = T.fromRoot(result.state, "0");
     result = applyActionEvent(result, {action: "home"});
     result = A.merge(result, {tree: newTree});
-    return {app: result};
+    return {app: result, effects: {}};
   },
 
   "find"({app}: UpdateArgs) {
@@ -308,19 +311,19 @@ const updates = {
   },
 
   "undo"({app}: UpdateArgs) {
-    return {app, undo: true};
+    return {app, effects: {undo: true}};
   },
 
   "forum"({app}: UpdateArgs) {
-    return {app, url: "https://old.reddit.com/r/thinktool/"};
+    return {app, effects: {url: "https://old.reddit.com/r/thinktool/"}};
   },
 
   "view-outline"({app}: UpdateArgs) {
-    return {app: A.switchTab(app, "outline")};
+    return {app: A.switchTab(app, "outline"), effects: {}};
   },
 
   "view-orphans"({app}: UpdateArgs) {
-    return {app: A.switchTab(app, "orphans")};
+    return {app: A.switchTab(app, "orphans"), effects: {}};
   },
 };
 

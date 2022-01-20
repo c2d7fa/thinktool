@@ -28,7 +28,9 @@ describe("when opening popup while text is selected", () => {
     popup: P.receiveResults(
       app.popup,
       app.state,
-      result.search.items.filter((item) => item.content.startsWith(result.search.query)).map((r) => r.thing),
+      result.effects
+        .search!.items.filter((item) => item.content.startsWith(result.effects.search!.query))
+        .map((r) => r.thing),
     ),
   });
 
