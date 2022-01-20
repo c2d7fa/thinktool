@@ -185,6 +185,7 @@ const updates = {
   },
 
   "new-before"({app, target}: UpdateArgs) {
+    if (T.kind(app.tree, require(target)) === "root") return {app, effects: {}};
     const [newState, newTree, _, newId] = T.createSiblingBefore(app.state, app.tree, require(target));
     return {
       app: applyActionEvent(A.merge(app, {state: newState, tree: newTree}), {action: "created-item"}),
