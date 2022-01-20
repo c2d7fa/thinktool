@@ -3,6 +3,7 @@ import * as U from "../tutorial";
 import * as D from "../data";
 import * as PlaceholderItem from "../ui/PlaceholderItem";
 import * as R from "./drag";
+import * as P from "../popup";
 import {App, merge, jump} from ".";
 
 import * as E from "../editor";
@@ -23,7 +24,7 @@ export function itemFromNode(app: App, node: T.NodeRef, parent?: T.NodeRef): Ite
     id: node.id,
     kind: kind(app.tree, node),
     dragState: R.node(app.drag, node),
-    hasFocus: editor.hasFocus,
+    hasFocus: editor.hasFocus && !P.isOpen(app.popup),
     status: status(app.tree, node),
     editor: editor.editor,
     otherParents: otherParents,
