@@ -1,109 +1,141 @@
 /// <reference types="@types/jest" />
 
-import * as Immutable from "immutable";
-import * as O from "./core";
+import * as O from ".";
+import * as A from "../app";
 
-function build(items: [O.Id, {children?: O.Id[]; links?: O.Id[]}][]): O.Graph {
-  return {
-    all() {
-      return Immutable.Set<O.Id>(items.map((item) => item[0]));
-    },
-
-    root() {
-      return "0";
-    },
-
-    children(id: O.Id) {
-      const item = items.find((item) => item[0] === id);
-      if (item === undefined || item[1].children === undefined) return Immutable.Set<O.Id>();
-      return Immutable.Set<O.Id>(item[1].children);
-    },
-
-    links(id: O.Id) {
-      const item = items.find((item) => item[0] === id);
-      if (item === undefined || item[1].links === undefined) return Immutable.Set<O.Id>();
-      return Immutable.Set<O.Id>(item[1].links);
-    },
-
-    parents(item: O.Id) {
-      return Immutable.Set<O.Id>();
-    },
-
-    references(item: O.Id) {
-      return Immutable.Set<O.Id>();
-    },
-  };
+function render(items: A.ItemGraph): O.OrphansView {
+  return O.view(O.scan(A.of(items)));
 }
 
-describe("when the root isn't connected to any items", () => {
-  describe("and there are no other items", () => {
-    const graph = build([]);
-
-    test("there are no orphans", () => {
-      expect(O.ids(O.scan(graph))).toEqual(Immutable.Set());
-    });
-  });
-
-  describe("but there are other items", () => {
-    const graph = build([
-      ["0", {}],
-      ["1", {}],
-      ["2", {}],
-    ]);
-
-    test("all non-root items are orphans", () => {
-      expect(O.ids(O.scan(graph))).toEqual(Immutable.Set(["1", "2"]));
-    });
-  });
-});
+function contents(view: O.OrphansView): string[] {
+  return view.items.map((item) => item.editor.content.join("")).sort();
+}
 
 describe("in a graph that consists of two disconnected trees", () => {
-  const graph = build([
-    ["0", {children: ["1", "2"]}],
-    ["1", {children: ["3"]}],
-    ["2", {children: ["4"]}],
-    ["3", {}],
-    ["4", {}],
+  const view = render({
+    "0": {children: ["1", "2"]},
+    "1": {children: ["3"]},
+    "2": {children: ["4"]},
+    "3": {},
+    "4": {},
 
-    ["b0", {children: ["b1", "b2"]}],
-    ["b1", {children: ["b3"]}],
-    ["b2", {children: ["b4"]}],
-    ["b3", {}],
-    ["b4", {}],
-  ]);
+    "b0": {children: ["b1", "b2"]},
+    "b1": {children: ["b3"]},
+    "b2": {children: ["b4"]},
+    "b3": {},
+    "b4": {},
+  });
 
-  test("the orphans are exactly the items in the unrooted tree", () => {
-    expect(O.ids(O.scan(graph))).toEqual(Immutable.Set(["b0", "b1", "b2", "b3", "b4"]));
+  test("the orphans are exactly the roots of the disconnected tree", () => {
+    expect(contents(view)).toEqual(["Item b0"]);
   });
 });
 
-describe("in a graph that consists of a loop", () => {
-  const graph = build([
-    ["0", {children: ["1"]}],
-    ["1", {children: ["2"]}],
-    ["2", {children: ["3"]}],
-    ["3", {children: ["0"]}],
-  ]);
+describe("in a graph that consists of a loop connected to the root item", () => {
+  const view = render({
+    "0": {children: ["1"]},
+    "1": {children: ["2"]},
+    "2": {children: ["3"]},
+    "3": {children: ["0"]},
+  });
 
   test("there are no orphans", () => {
-    expect(O.ids(O.scan(graph))).toEqual(Immutable.Set([]));
+    expect(contents(view)).toEqual([]);
   });
 });
 
-describe("in a graph with two components connected through child and link connections", () => {
-  const graph = build([
-    ["0", {children: ["1"]}],
-    ["1", {links: ["2"]}],
-    ["2", {children: ["3"]}],
-    ["3", {links: ["0"]}],
+describe("in a graph that consists of a disconnected loop", () => {
+  const view = render({
+    "0": {children: []},
+    "1": {children: ["2"]},
+    "2": {children: ["3"]},
+    "3": {children: ["1"]},
+  });
 
-    ["4", {children: ["5"]}],
-    ["5", {links: ["6"]}],
-    ["6", {children: ["7"]}],
-    ["7", {links: ["4"]}],
+  test("there is exactly one orphan", () => {
+    expect(contents(view).length).toEqual(1);
+  });
+
+  test("all orphans are in the unrooted tree", () => {
+    expect(
+      contents(view)
+        .map((item) => ["Item 1", "Item 2", "Item 3"].includes(item))
+        .reduce((a, b) => a && b),
+    ).toBe(true);
+  });
+});
+
+test("creating an item and then removing it adds it to the inbox", () => {
+  let app = A.of({});
+  app = A.update(app, {type: "focus", id: (A.view(app) as A.Outline).root.id});
+  app = A.update(app, {type: "action", action: "new-child"});
+  app = A.update(app, {
+    type: "edit",
+    tag: "edit",
+    focused: true,
+    editor: {content: ["Added item"], selection: {from: 0, to: 0}},
+  });
+  app = A.update(app, {type: "action", action: "remove"});
+  app = A.update(app, {type: "action", action: "view-orphans"});
+
+  expect(O.view(app).items).toMatchObject([
+    {kind: "root", status: "terminal", editor: {content: ["Added item"]}, children: []},
   ]);
+});
 
-  test("the orphans are exactly the nodes in the graph that does not contain the root item", () => {
-    expect(O.ids(O.scan(graph))).toEqual(Immutable.Set(["4", "5", "6", "7"]));
+describe("clicking on another parent in the inbox view jumps there", () => {
+  let before = A.of({
+    "0": {content: ["Item 0"]},
+    "1": {children: ["3"], content: ["Item 1"]},
+    "2": {children: ["3"], content: ["Item 2"]},
+    "3": {content: ["Item 3"]},
+  });
+  before = A.update(before, {type: "action", action: "view-orphans"});
+
+  describe("after expanding the first item in the inbox", () => {
+    const id = O.view(before).items[0].id;
+    const afterExpanding = A.update(before, {type: "item", event: {type: "click-bullet", id, alt: false}});
+
+    test("the item at [0][0] has the other parent shown", () => {
+      expect(O.view(afterExpanding).items[0].children[0]).toMatchObject({
+        otherParents: [{text: "Item 1", id: "1"}],
+      });
+    });
+
+    describe("after clicking on the other parent", () => {
+      const afterClick = A.update(afterExpanding, {
+        type: "item",
+        event: {type: "click-parent", thing: "1", alt: false},
+      });
+
+      test("the outline tab is shown", () => {
+        expect(A.view(afterClick).tab).toEqual("outline");
+      });
+
+      test("the outline jumps to that parent", () => {
+        expect((A.view(afterClick) as A.Outline).root.editor.content).toMatchObject(["Item 1"]);
+      });
+    });
+  });
+});
+
+describe("executing 'new' action on an item in the inbox inserts a new child", () => {
+  const app = A.after(
+    {
+      "0": {content: ["Item 0"]},
+      "1": {content: ["Item 1"]},
+    },
+    [
+      {type: "action", action: "view-orphans"},
+      (view) => ({type: "focus", id: (view as O.OrphansView).items[0].id}),
+      {type: "action", action: "new"},
+    ],
+  );
+
+  test("creates an empty, focused item", () => {
+    expect((A.view(app) as O.OrphansView).items[0].children[0]).toMatchObject({
+      hasFocus: true,
+      editor: {content: [], selection: {from: 0, to: 0}},
+    });
   });
 });

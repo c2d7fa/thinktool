@@ -1,49 +1,32 @@
 import * as Immutable from "immutable";
-
-export type Id = string;
-
-export interface Graph {
-  all(): Immutable.Set<Id>;
-  root(): Id;
-
-  children(item: Id): Immutable.Set<Id>;
-  parents(item: Id): Immutable.Set<Id>;
-  links(item: Id): Immutable.Set<Id>;
-  references(item: Id): Immutable.Set<Id>;
-}
-
-// We store the result of scanning for orphans in this indirect data structure.
-// The reason is that we will probably want to introduce some state later. For
-// example, instead of doing a full rescan when a child connection is created,
-// we could just incrementally update the state with this new connection.
+import * as D from "../data";
 
 const _ids = Symbol("ids");
-
-export type Orphans = {[_ids]: Immutable.Set<Id>};
+export type Orphans = {[_ids]: Immutable.Set<string>};
 
 // Find items not reacable from the root by following children, parents, links
 // and references.
-export function scan(graph: Graph): Orphans {
-  const reached = Immutable.Set<Id>([]).asMutable();
+export function scan(graph: D.State): Orphans {
+  const reached = Immutable.Set<string>([]).asMutable();
 
-  function reach(root: Id): void {
+  function reach(root: string): void {
     if (reached.has(root)) return;
     reached.add(root);
-    for (const child of graph.children(root)) reach(child);
-    for (const link of graph.links(root)) reach(link);
-    for (const parents of graph.parents(root)) reach(parents);
-    for (const reference of graph.references(root)) reach(reference);
+    for (const child of D.children(graph, root)) reach(child);
+    for (const link of D.references(graph, root)) reach(link);
+    for (const parents of D.parents(graph, root)) reach(parents);
+    for (const reference of D.backreferences(graph, root)) reach(reference);
   }
 
-  reach(graph.root());
+  reach(D.root(graph));
 
-  return {[_ids]: graph.all().subtract(reached)};
+  return {[_ids]: Immutable.Set(D.allThings(graph)).subtract(reached)};
 }
 
-export function ids(orphans: Orphans): Immutable.Set<Id> {
+function ids(orphans: Orphans): Immutable.Set<string> {
   return orphans[_ids];
 }
 
-export function removeOrphanWithoutRefresh(orphans: Orphans, id: string): Orphans {
+function removeOrphanWithoutRefresh(orphans: Orphans, id: string): Orphans {
   return {[_ids]: orphans[_ids].filter((id_) => id_ !== id)};
 }

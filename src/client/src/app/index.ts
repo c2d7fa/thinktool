@@ -15,6 +15,7 @@ import * as Tutorial from "../tutorial";
 import {GoalId} from "../goal";
 
 import * as PlaceholderItem from "../ui/PlaceholderItem";
+import * as Ac from "../actions";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
@@ -29,7 +30,7 @@ export interface App {
   popup: P.State;
   drag: R.Drag;
   tab: "outline" | "orphans";
-  orphans: O.Orphans;
+  orphans: O.OrphansState;
   [_isOnline]: boolean;
   [_syncDialog]: Sy.Dialog.SyncDialog | null;
 }
@@ -47,18 +48,20 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     popup: P.initial,
     drag: R.empty,
     tab: "outline",
-    orphans: O.scan(O.fromState(data)),
+    orphans: O.empty,
     [_isOnline]: true,
     [_syncDialog]: null,
   };
 }
 
-export type ItemGraph = {[id: string]: {content: D.Content; children?: string[]}};
+export {itemFromNode} from "./item";
+
+export type ItemGraph = {[id: string]: {content?: D.Content; children?: string[]}};
 export function of(items: ItemGraph): App {
   let state = D.empty;
   for (const id in items) {
     state = D.create(state, id)[0];
-    state = D.setContent(state, id, items[id].content);
+    state = D.setContent(state, id, items[id].content ?? ["Item " + id]);
   }
   for (const id in items) {
     for (const child of items[id].children ?? []) {
@@ -110,7 +113,7 @@ export function jump(app: App, thing: string): App {
     previouslyFocused: T.thing(app.tree, T.root(app.tree)),
     thing,
   });
-  return merge(app, {tree: T.fromRoot(app.state, thing), tutorialState, editors: {}});
+  return merge(app, {tree: T.fromRoot(app.state, thing), tutorialState, editors: {}, tab: "outline"});
 }
 
 export function toggleLink(app: App, node: T.NodeRef, link: string): App {
@@ -151,8 +154,7 @@ export function unfold(app: App, node: T.NodeRef): App {
 
 export function switchTab(app: App, tab: "outline" | "orphans"): App {
   if (tab === "orphans") {
-    const orphans = O.scan(O.fromState(app.state));
-    return merge(app, {tab, orphans});
+    return O.scan(merge(app, {tab}));
   } else if (tab === "outline") {
     return merge(app, {tab, tree: T.fromRoot(app.state, "0")});
   }
@@ -164,7 +166,7 @@ export function openPopup(
   app: App,
   useSelection: (app: App, thing: string) => App,
   args?: {icon: "search" | "insert" | "link"},
-): {app: App; search: {query: string; items: {thing: string; content: string}[]}} {
+): {app: App; effects: Effects} {
   const items = D.allThings(app.state).map((thing) => ({thing, content: D.contentText(app.state, thing)}));
   const query = selectedText(app);
 
@@ -176,7 +178,7 @@ export function openPopup(
     }),
   });
 
-  return {app: app_, search: {items, query}};
+  return {app: app_, effects: {search: {items, query}}};
 }
 
 export function replace(app: App, node: T.NodeRef, thing: string): App {
@@ -219,10 +221,6 @@ export type ItemEvent = I.Event;
 
 export type Outline = Ou.Outline;
 
-export function outline(app: App): Outline {
-  return Ou.fromApp(app);
-}
-
 export type Event =
   | {type: "focus"; id: number}
   | {type: "item"; event: ItemEvent}
@@ -230,63 +228,76 @@ export type Event =
       | {subtype: "drag"; id: number}
       | {subtype: "hover"; id: number | null}
       | {subtype: "drop"; modifier: "move" | "copy"}
-    ));
+    ))
+  | {type: "action"; action: Ac.ActionName}
+  | ({type: "edit"} & E.Event)
+  | {type: "orphans"; event: O.OrphansEvent};
 
-function handleItemEvent(
-  app: App,
-  event: ItemEvent,
-): {app: App; effects?: {search?: {items: {thing: string; content: string}[]; query: string}; url?: string}} {
-  const item = (event: {id: number}) => ({id: event.id, hasFocus: T.hasFocus(app.tree, {id: event.id})});
-
-  if (event.type === "drag") {
-    return {app: merge(app, {drag: R.drag(app.tree, item(event))})};
-  } else if (event.type === "click-bullet") {
-    return {app: (event.alt ? I.altClick : I.click)(app, item(event))};
-  } else if (event.type === "click-parent") {
-    return {app: jump(app, event.thing)};
-  } else if (event.type === "click-placeholder") {
-    return {app: PlaceholderItem.create(app)};
-  } else if (event.type === "toggle-references") {
-    return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, item(event))})};
-  } else if (event.type === "edit") {
-    return E.handle(app, item(event), event.event);
-  } else if (event.type === "unfold") {
-    return {app: unfold(app, item(event))};
-  } else {
-    const unreachable: never = event;
-    return unreachable;
-  }
-}
-
-export function effects(
-  app: App,
-  event: Event,
-): {search?: {items: {thing: string; content: string}[]; query: string}; url?: string} {
-  if (event.type === "item") {
-    return handleItemEvent(app, event.event).effects ?? {};
-  } else {
-    return {};
-  }
-}
+export type Effects = {search?: {items: {thing: string; content: string}[]; query: string}; url?: string};
 
 function unreachable(x: never): never {
   return x;
 }
 
-export function update(app: App, event: Event): App {
+export function handle(app: App, event: Event): {app: App; effects?: Effects} {
+  function handleItemEvent(app: App, event: ItemEvent): {app: App; effects?: Effects} {
+    const item = (event: {id: number}) => ({id: event.id, hasFocus: T.hasFocus(app.tree, {id: event.id})});
+
+    if (event.type === "drag") {
+      return {app: merge(app, {drag: R.drag(app.tree, item(event))})};
+    } else if (event.type === "click-bullet") {
+      return {app: (event.alt ? I.altClick : I.click)(app, item(event))};
+    } else if (event.type === "click-parent") {
+      return {app: jump(app, event.thing)};
+    } else if (event.type === "click-placeholder") {
+      return {app: PlaceholderItem.create(app)};
+    } else if (event.type === "toggle-references") {
+      return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, item(event))})};
+    } else if (event.type === "edit") {
+      return E.handle(app, item(event), event.event);
+    } else if (event.type === "unfold") {
+      return {app: unfold(app, item(event))};
+    } else {
+      const unreachable: never = event;
+      return unreachable;
+    }
+  }
+
   if (event.type === "focus") {
-    return merge(app, {tree: T.focus(app.tree, {id: event.id})});
+    return {app: merge(app, {tree: T.focus(app.tree, {id: event.id})}), effects: {}};
   } else if (event.type === "item") {
-    return handleItemEvent(app, event.event).app;
+    return handleItemEvent(app, event.event);
   } else if (event.type === "drag") {
-    if (event.subtype === "drag") return merge(app, {drag: R.drag(app.tree, {id: event.id})});
+    if (event.subtype === "drag") return {app: merge(app, {drag: R.drag(app.tree, {id: event.id})})};
     else if (event.subtype === "hover")
-      return merge(app, {drag: R.hover(app.drag, event.id ? {id: event.id} : null)});
-    else if (event.subtype === "drop") return R.drop(app, event.modifier);
+      return {app: merge(app, {drag: R.hover(app.drag, event.id ? {id: event.id} : null)})};
+    else if (event.subtype === "drop") return {app: R.drop(app, event.modifier)};
     else return unreachable(event);
+  } else if (event.type === "action") {
+    return Ac.handle(app, event.action);
+  } else if (event.type === "edit") {
+    const node = T.focused(app.tree);
+    if (!node) return {app};
+    return handleItemEvent(app, {id: node.id, type: "edit", event: event});
+  } else if (event.type === "orphans") {
+    return O.handle(app, event.event);
   } else {
     return unreachable(event);
   }
+}
+
+export function update(app: App, event: Event): App {
+  return handle(app, event).app;
+}
+
+export function after(app: App | ItemGraph, events: (Event | ((view: View) => Event))[]): App {
+  return events.reduce(
+    (app_, event) => {
+      if (typeof event === "function") return update(app_, event(view(app_)));
+      else return update(app_, event);
+    },
+    _isOnline in app ? (app as App) : of(app as ItemGraph),
+  );
 }
 
 export function isDragging(app: App): boolean {
@@ -300,4 +311,11 @@ export function focus(app: App, id: number | null): App {
 
 export function focusedId(app: App): number | null {
   return T.focused(app.tree)?.id ?? null;
+}
+
+export type View = ({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView);
+
+export function view(app: App): View {
+  if (app.tab === "orphans") return {...O.view(app), tab: "orphans"};
+  else return {...Ou.fromApp(app), tab: "outline"};
 }

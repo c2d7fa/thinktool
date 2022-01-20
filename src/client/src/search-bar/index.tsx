@@ -8,7 +8,6 @@ import * as A from "../app";
 import * as Sh from "../shortcuts";
 import * as Ac from "../actions";
 import * as P from "../popup";
-import * as M from "../messages";
 
 import {OtherParents} from "../ui/OtherParents";
 import {StaticContent} from "../ui/editor";
@@ -53,7 +52,7 @@ const Result = React.memo(
 export function useSearchBarProps(
   app: A.App,
   updateApp: A.UpdateApp,
-  send: M.Send,
+  send: (event: A.Event) => void,
   search: (query: string) => void,
 ): Parameters<typeof SearchBar>[0] {
   function updatePopup(f: (state: P.State) => P.State): void {
@@ -78,7 +77,7 @@ export function useSearchBarProps(
     isSearching: P.isOpen(app.popup),
     results: P.isOpen(app.popup) ? P.results(app.popup) : [],
     isThingActive: (thing) => P.isThingActive(app.popup, thing),
-    onActivate: () => send("action", {action}),
+    onActivate: () => send({type: "action", action}),
     query: P.isOpen(app.popup) ? P.query(app.popup) : "",
     isNewItemActive: P.isOpen(app.popup) && P.isThingActive(app.popup, null),
     onQuery(query: string) {

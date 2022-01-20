@@ -12,8 +12,8 @@ describe("when opening popup while text is selected", () => {
   });
 
   // Focus item "1"
-  app = A.update(app, {type: "focus", id: A.outline(app).root.children[0].id});
-  const item = A.outline(app).root.children[0];
+  app = A.update(app, {type: "focus", id: (A.view(app) as A.Outline).root.children[0].id});
+  const item = (A.view(app) as A.Outline).root.children[0];
 
   // Select the text "Another item":
   app = A.edit(app, item, E.select(A.editor(app, item)!, {from: 21, to: 33}));
@@ -28,7 +28,9 @@ describe("when opening popup while text is selected", () => {
     popup: P.receiveResults(
       app.popup,
       app.state,
-      result.search.items.filter((item) => item.content.startsWith(result.search.query)).map((r) => r.thing),
+      result.effects
+        .search!.items.filter((item) => item.content.startsWith(result.effects.search!.query))
+        .map((r) => r.thing),
     ),
   });
 

@@ -259,10 +259,7 @@ export function handle(
   app: A.App,
   item: {id: number; hasFocus: boolean},
   ev: Event,
-): {
-  app: A.App;
-  effects?: {search?: {items: {thing: string; content: string}[]; query: string}; url?: string};
-} {
+): {app: A.App; effects?: A.Effects} {
   if (ev.tag === "edit") {
     return {app: updateFocus(A.edit(app, item, ev.editor), item, ev.focused)};
   } else if (ev.tag === "open") {
@@ -272,8 +269,7 @@ export function handle(
   } else if (ev.tag === "paste") {
     return {app: pasteParagraphs(app, item, ev.paragraphs)};
   } else if (ev.tag === "action") {
-    const result = Ac.update(app, ev.action);
-    return {app: result.app, effects: {search: result.search, url: result.url}};
+    return Ac.handle(app, ev.action);
   } else if (ev.tag === "openUrl") {
     return {app: app, effects: {url: ev.url}};
   } else {
