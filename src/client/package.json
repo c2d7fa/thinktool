@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/client",
-  "version": "4.7.1",
+  "version": "4.8.0",
   "description": "Client code for Thinktool, shared between web and desktop client.",
   "license": "UNLICENSED",
   "repository": {

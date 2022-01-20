@@ -515,6 +515,14 @@
     {
       "date": "2022-01-15",
       "title": "Fixed a bug where search did not work when inserting a link until using Find"
+    },
+    {
+      "date": "2022-01-20",
+      "title": "Fixed bug where editor focus would sometimes jump around after clicking."
+    },
+    {
+      "date": "2022-01-20",
+      "title": "Improved inbox view so items are now represented as fully interactive subtrees, like in the main outline."
     }
   ]
 }
