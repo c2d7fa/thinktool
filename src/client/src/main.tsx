@@ -387,13 +387,13 @@ function useSendAppEvent({
 }) {
   return React.useCallback((event: A.Event) => {
     updateApp((app) => {
-      const effects = A.effects(app, event);
-      if (effects?.url) openExternalUrl(effects.url);
-      if (effects?.search) {
-        search.reset(effects.search.items);
-        search.query(effects.search.query, 25);
+      const result = A.handle(app, event);
+      if (result?.effects?.url) openExternalUrl(result.effects.url);
+      if (result?.effects?.search) {
+        search.reset(result.effects.search.items);
+        search.query(result.effects.search.query, 25);
       }
-      return A.update(app, event);
+      return result.app;
     });
   }, []);
 }

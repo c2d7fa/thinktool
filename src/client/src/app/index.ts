@@ -286,10 +286,6 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   }
 }
 
-export function effects(app: App, event: Event): Effects {
-  return handle(app, event).effects ?? {};
-}
-
 export function update(app: App, event: Event): App {
   return handle(app, event).app;
 }
