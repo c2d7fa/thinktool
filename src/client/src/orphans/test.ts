@@ -70,10 +70,16 @@ test("creating an item and then removing it adds it to the inbox", () => {
   app = A.update(app, {type: "focus", id: (A.view(app) as A.Outline).root.id});
   app = A.update(app, {type: "action", action: "new-child"});
   app = A.update(app, {
-    type: "edit",
-    tag: "edit",
-    focused: true,
-    editor: {content: ["Added item"], selection: {from: 0, to: 0}},
+    type: "item",
+    event: {
+      id: A.focusedId(app)!,
+      type: "edit",
+      event: {
+        tag: "edit",
+        focused: true,
+        editor: {content: ["Added item"], selection: {from: 0, to: 0}},
+      },
+    },
   });
   app = A.update(app, {type: "action", action: "remove"});
   app = A.update(app, {type: "action", action: "view-orphans"});

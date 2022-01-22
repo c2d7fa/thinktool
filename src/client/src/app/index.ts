@@ -230,7 +230,6 @@ export type Event =
       | {subtype: "drop"; modifier: "move" | "copy"}
     ))
   | {type: "action"; action: Ac.ActionName}
-  | ({type: "edit"} & E.Event)
   | {type: "orphans"; event: O.OrphansEvent};
 
 export type Effects = {search?: {items: {thing: string; content: string}[]; query: string}; url?: string};
@@ -302,10 +301,6 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     else return unreachable(event);
   } else if (event.type === "action") {
     return Ac.handle(app, event.action);
-  } else if (event.type === "edit") {
-    const node = T.focused(app.tree);
-    if (!node) return {app};
-    return handleItemEvent(app, {id: node.id, type: "edit", event: event});
   } else if (event.type === "orphans") {
     return O.handle(app, event.event);
   } else {
