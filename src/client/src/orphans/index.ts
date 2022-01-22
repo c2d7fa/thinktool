@@ -61,6 +61,14 @@ export function scan(app: A.App): A.App {
     }
   } while (ids.size < previousIds.size);
 
+  // Don't update unless necessary, so user doesn't lose tree state, like
+  // expanded/collapsed items or editor states when scan is called unnecssarily.
+  if (
+    ids.equals(app.orphans[_nodes].keySeq().toSet()) &&
+    app.orphans[_nodes].every((id) => T.exists(app.tree, {id}))
+  )
+    return app;
+
   let nodes = Immutable.Map<string, number>();
 
   let tree = app.tree;
@@ -94,6 +102,10 @@ export function handle(app: A.App, event: OrphansEvent): {app: A.App; effects?: 
     const unreachable: never = event;
     return unreachable;
   }
+}
+
+export function orphansMayBeStale(before: A.App, after: A.App): boolean {
+  return before.tab === "orphans" && after.tab === "orphans" && before.state !== after.state;
 }
 
 export function view(app: A.App): OrphansView {

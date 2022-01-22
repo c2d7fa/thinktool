@@ -224,7 +224,7 @@ describe("when both a parent and its child is in the inbox", () => {
       expect(view.items.length).toEqual(1);
     });
 
-    test("the item in the child", () => {
+    test("the item is the child", () => {
       expect(view.items[0]).toMatchObject({
         kind: "root",
         status: "terminal",
@@ -237,7 +237,7 @@ describe("when both a parent and its child is in the inbox", () => {
     });
   });
 
-  describe.skip("[known bug] after destroying the parent through the editor", () => {
+  describe("after destroying the parent through the editor", () => {
     const appAfter = A.after(app, [
       {type: "focus", id: (A.view(app) as O.OrphansView).items[0].id},
       {type: "action", action: "destroy"},
@@ -249,7 +249,7 @@ describe("when both a parent and its child is in the inbox", () => {
       expect(view.items.length).toEqual(1);
     });
 
-    test("the item in the child", () => {
+    test("the item is the child", () => {
       expect(view.items[0]).toMatchObject({
         kind: "root",
         status: "terminal",
@@ -261,4 +261,20 @@ describe("when both a parent and its child is in the inbox", () => {
       expect(view.items[0].otherParents).toEqual([]);
     });
   });
+});
+
+test("with an item in the outline and inbox, switching back and forth doesn't crash", () => {
+  A.after(
+    {
+      "0": {content: ["Root"], children: ["1"]},
+      "1": {content: ["Item"]},
+      "2": {content: ["Inbox"]},
+    },
+    [
+      (view) => ({type: "action", action: "view-orphans"}),
+      (view) => ({type: "action", action: "view-outline"}),
+      (view) => ({type: "action", action: "view-orphans"}),
+      (view) => ({type: "action", action: "view-outline"}),
+    ],
+  );
 });

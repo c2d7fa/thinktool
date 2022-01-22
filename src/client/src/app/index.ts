@@ -250,7 +250,9 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   } else if (event.type === "paste") {
     return {app: E.pasteParagraphs(app, {id: event.id}, event.paragraphs)};
   } else if (event.type === "action") {
-    return Ac.handle(app, event.action);
+    const result = Ac.handle(app, event.action);
+    if (O.orphansMayBeStale(app, result.app)) return {...result, app: O.scan(result.app)};
+    else return result;
   } else if (event.type === "openUrl") {
     return {app: app, effects: {url: event.url}};
   } else if (event.type === "startDrag") {
