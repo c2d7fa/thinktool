@@ -1,0 +1,48 @@
+name: Build and deploy desktop clients
+on:
+  push:
+    branches:
+      - main
+jobs:
+  desktop-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v1
+      - name: Set up Node 17.2.0
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17.2.0'
+      - name: Build desktop client for Linux
+        run: ./tools/build-desktop-linux.sh
+        env:
+          DIAFORM_API_HOST: ${{secrets.api_host}}
+      - name: Deploy to Azure Storage and purge Cloudflare cache
+        run: ./tools/deploy-static.sh
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
+          AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}
+          CLOUDFLARE_ZONE: ${{secrets.cloudflare_zone}}
+          CLOUDFLARE_TOKEN: ${{secrets.cloudflare_token}}
+  desktop-windows:
+    runs-on: windows-2019
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Set up Node 17.2.0
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17.2.0'
+      - name: Build desktop client for Windows
+        run: ./tools/build-desktop-windows.sh
+        shell: bash
+        env:
+          DIAFORM_API_HOST: ${{secrets.api_host}}
+      - name: Deploy to Azure Storage and purge Cloudflare cache
+        run: ./tools/deploy-static.sh
+        shell: bash
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
+          AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}
+          CLOUDFLARE_ZONE: ${{secrets.cloudflare_zone}}
+          CLOUDFLARE_TOKEN: ${{secrets.cloudflare_token}}
