@@ -223,14 +223,10 @@ export type Outline = Ou.Outline;
 
 export type Event =
   | {type: "focus"; id: number}
-  | {type: "item"; event: ItemEvent}
-  | ({type: "drag"} & (
-      | {subtype: "drag"; id: number}
-      | {subtype: "hover"; id: number | null}
-      | {subtype: "drop"; modifier: "move" | "copy"}
-    ))
+  | ItemEvent
+  | {type: "dragHover"; id: number | null}
+  | {type: "dragEnd"; modifier: "move" | "copy"}
   | {type: "action"; action: Ac.ActionName}
-  | ({type: "edit"} & E.Event)
   | {type: "orphans"; event: O.OrphansEvent};
 
 export type Effects = {search?: {items: {thing: string; content: string}[]; query: string}; url?: string};
@@ -240,45 +236,41 @@ function unreachable(x: never): never {
 }
 
 export function handle(app: App, event: Event): {app: App; effects?: Effects} {
-  function handleItemEvent(app: App, event: ItemEvent): {app: App; effects?: Effects} {
-    const item = (event: {id: number}) => ({id: event.id, hasFocus: T.hasFocus(app.tree, {id: event.id})});
-
-    if (event.type === "drag") {
-      return {app: merge(app, {drag: R.drag(app.tree, item(event))})};
-    } else if (event.type === "click-bullet") {
-      return {app: (event.alt ? I.altClick : I.click)(app, item(event))};
-    } else if (event.type === "click-parent") {
-      return {app: jump(app, event.thing)};
-    } else if (event.type === "click-placeholder") {
-      return {app: PlaceholderItem.create(app)};
-    } else if (event.type === "toggle-references") {
-      return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, item(event))})};
-    } else if (event.type === "edit") {
-      return E.handle(app, item(event), event.event);
-    } else if (event.type === "unfold") {
-      return {app: unfold(app, item(event))};
-    } else {
-      const unreachable: never = event;
-      return unreachable;
-    }
+  function updateFocus(app: App, id: number, focused: boolean): App {
+    const hasFocus = T.hasFocus(app.tree, {id});
+    return focused ? focus(app, id) : hasFocus ? focus(app, null) : app;
   }
 
-  if (event.type === "focus") {
-    return {app: merge(app, {tree: T.focus(app.tree, {id: event.id})}), effects: {}};
-  } else if (event.type === "item") {
-    return handleItemEvent(app, event.event);
-  } else if (event.type === "drag") {
-    if (event.subtype === "drag") return {app: merge(app, {drag: R.drag(app.tree, {id: event.id})})};
-    else if (event.subtype === "hover")
-      return {app: merge(app, {drag: R.hover(app.drag, event.id ? {id: event.id} : null)})};
-    else if (event.subtype === "drop") return {app: R.drop(app, event.modifier)};
-    else return unreachable(event);
+  if (event.type === "edit") {
+    return {app: updateFocus(edit(app, {id: event.id}, event.editor), event.id, event.focused)};
+  } else if (event.type === "open") {
+    return {app: toggleLink(app, {id: event.id}, event.link)};
+  } else if (event.type === "jump") {
+    return {app: jump(app, event.link)};
+  } else if (event.type === "paste") {
+    return {app: E.pasteParagraphs(app, {id: event.id}, event.paragraphs)};
   } else if (event.type === "action") {
     return Ac.handle(app, event.action);
-  } else if (event.type === "edit") {
-    const node = T.focused(app.tree);
-    if (!node) return {app};
-    return handleItemEvent(app, {id: node.id, type: "edit", event: event});
+  } else if (event.type === "openUrl") {
+    return {app: app, effects: {url: event.url}};
+  } else if (event.type === "startDrag") {
+    return {app: merge(app, {drag: R.drag(app.tree, {id: event.id})})};
+  } else if (event.type === "click-bullet") {
+    return {app: (event.alt ? I.altClick : I.click)(app, {id: event.id})};
+  } else if (event.type === "click-parent") {
+    return {app: jump(app, event.thing)};
+  } else if (event.type === "click-placeholder") {
+    return {app: PlaceholderItem.create(app)};
+  } else if (event.type === "toggle-references") {
+    return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, {id: event.id})})};
+  } else if (event.type === "unfold") {
+    return {app: unfold(app, {id: event.id})};
+  } else if (event.type === "focus") {
+    return {app: merge(app, {tree: T.focus(app.tree, {id: event.id})}), effects: {}};
+  } else if (event.type === "dragHover") {
+    return {app: merge(app, {drag: R.hover(app.drag, event.id ? {id: event.id} : null)})};
+  } else if (event.type === "dragEnd") {
+    return {app: R.drop(app, event.modifier)};
   } else if (event.type === "orphans") {
     return O.handle(app, event.event);
   } else {
@@ -304,7 +296,7 @@ export function isDragging(app: App): boolean {
   return R.isActive(app.drag);
 }
 
-export function focus(app: App, id: number | null): App {
+function focus(app: App, id: number | null): App {
   if (id === null) return merge(app, {tree: T.unfocus(app.tree)});
   else return merge(app, {tree: T.focus(app.tree, {id})});
 }

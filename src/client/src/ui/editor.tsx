@@ -254,7 +254,7 @@ export const Editor = React.memo(
       () =>
         createFocusPlugin({
           onFocus() {
-            onEventRef.current!({tag: "edit", editor: editorRef.current!, focused: true});
+            onEventRef.current!({type: "edit", editor: editorRef.current!, focused: true});
           },
         }),
       [],
@@ -275,19 +275,19 @@ export const Editor = React.memo(
 
               for (const action of Ac.allActionsWithShortcuts) {
                 if (Sh.matches(ev, Ac.shortcut(action), conditions)) {
-                  onEventRef.current!({tag: "action", action});
+                  onEventRef.current!({type: "action", action});
                   return true;
                 }
               }
 
               if (ev.key === "Backspace" && view.state.doc.childCount === 0) {
                 console.log("Destroying item due to backspace on empty item.");
-                onEventRef.current!({tag: "action", action: "destroy"});
+                onEventRef.current!({type: "action", action: "destroy"});
                 // [TODO] Shouldn't we also return here?
               }
 
               if (ev.key === "Escape") {
-                onEventRef.current!({tag: "edit", editor: editorRef.current!, focused: false});
+                onEventRef.current!({type: "edit", editor: editorRef.current!, focused: false});
                 return true;
               }
 
@@ -303,7 +303,7 @@ export const Editor = React.memo(
       () =>
         createExternalLinkDecorationPlugin({
           openExternalUrl(url: string) {
-            onEventRef.current!({tag: "openUrl", url});
+            onEventRef.current!({type: "openUrl", url});
           },
         }),
       [],
@@ -317,7 +317,7 @@ export const Editor = React.memo(
               const text = ev.clipboardData?.getData("text/plain");
 
               if (text !== undefined && E.isParagraphFormattedText(text)) {
-                onEventRef.current!({tag: "paste", paragraphs: E.paragraphs(text)});
+                onEventRef.current!({type: "paste", paragraphs: E.paragraphs(text)});
                 return true;
               }
 
@@ -331,8 +331,8 @@ export const Editor = React.memo(
     const proseMirrorState = React.useMemo(
       () =>
         toProseMirror(props.editor, {
-          openLink: (link) => onEventRef.current!({tag: "open", link}),
-          jumpLink: (link) => onEventRef.current!({tag: "jump", link}),
+          openLink: (link) => onEventRef.current!({type: "open", link}),
+          jumpLink: (link) => onEventRef.current!({type: "jump", link}),
           plugins: [focusPlugin, placeholderPlugin, keyPlugin, pastePlugin, externalLinkDecorationPlugin],
         }),
       [props.editor],
@@ -342,7 +342,7 @@ export const Editor = React.memo(
       <ProseMirror
         state={proseMirrorState}
         onStateUpdated={(state, {focused}) =>
-          onEventRef.current!({tag: "edit", editor: fromProseMirror(state), focused})
+          onEventRef.current!({type: "edit", editor: fromProseMirror(state), focused})
         }
         hasFocus={props.hasFocus}
       />

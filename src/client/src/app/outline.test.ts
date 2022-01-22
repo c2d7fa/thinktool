@@ -50,12 +50,10 @@ describe("in an app with two items", () => {
     describe("after setting the cursor position", () => {
       const focusedItem = afterFocusOutline.root.children.find((c) => c.hasFocus)!;
       const afterCursor = A.update(afterFocus, {
-        type: "item",
-        event: {
-          id: focusedItem.id,
-          type: "edit",
-          event: {tag: "edit", editor: {...focusedItem.editor, selection: {from: 5, to: 5}}, focused: true},
-        },
+        id: focusedItem.id,
+        type: "edit",
+        editor: {...focusedItem.editor, selection: {from: 5, to: 5}},
+        focused: true,
       });
 
       test("the cursor position is reflected in the outline", () => {
@@ -66,10 +64,9 @@ describe("in an app with two items", () => {
       });
 
       describe("after moving the item down", () => {
-        const focusedId = (A.view(afterCursor) as A.Outline).root.children.find((c) => c.hasFocus)!.id;
         const afterDown = A.update(afterCursor, {
-          type: "item",
-          event: {id: focusedId, type: "edit", event: {tag: "action", action: "down"}},
+          type: "action",
+          action: "down",
         });
 
         test("the positions of the items are swapped", () => {
@@ -97,24 +94,6 @@ describe("in an app with two items", () => {
   });
 });
 
-function updateEditFocused(
-  app: A.App,
-  ...events: ((A.Event & {type: "item"})["event"] & {type: "edit"})["event"][]
-) {
-  return events.reduce(
-    (app, event) =>
-      A.update(app, {
-        type: "item",
-        event: {
-          id: A.focusedId(app)!,
-          type: "edit",
-          event,
-        },
-      }),
-    app,
-  );
-}
-
 describe("moving focus with arrow key commands", () => {
   const base = construct({
     children: [{content: "Item 1", children: [{content: "Item 1.1"}]}, {content: "Item 2"}],
@@ -122,7 +101,7 @@ describe("moving focus with arrow key commands", () => {
 
   describe("after focusing Item 1 and expanding it", () => {
     const afterFocus = A.update(base, {type: "focus", id: (A.view(base) as A.Outline).root.children[0].id});
-    const afterToggle = updateEditFocused(afterFocus, {tag: "action", action: "toggle"});
+    const afterToggle = A.update(afterFocus, {type: "action", action: "toggle"});
 
     test("the children of Item 1 are shown", () => {
       expect((A.view(afterToggle) as A.Outline).root.children).toMatchObject([
@@ -139,7 +118,7 @@ describe("moving focus with arrow key commands", () => {
     });
 
     describe("after moving focus down", () => {
-      const afterFocusDownOnce = updateEditFocused(afterToggle, {tag: "action", action: "focus-down"});
+      const afterFocusDownOnce = A.update(afterToggle, {type: "action", action: "focus-down"});
 
       test("focus moves to Item 1.1", () => {
         expect((A.view(afterFocusDownOnce) as A.Outline).root.children).toMatchObject([
@@ -149,7 +128,7 @@ describe("moving focus with arrow key commands", () => {
       });
 
       describe("after moving focus down again", () => {
-        const afterFocusDownTwice = updateEditFocused(afterFocusDownOnce, {tag: "action", action: "focus-down"});
+        const afterFocusDownTwice = A.update(afterFocusDownOnce, {type: "action", action: "focus-down"});
 
         test("focus moves to Item 2", () => {
           expect((A.view(afterFocusDownTwice) as A.Outline).root.children).toMatchObject([
@@ -159,8 +138,8 @@ describe("moving focus with arrow key commands", () => {
         });
 
         describe("after trying to move focus down again", () => {
-          const afterFocusDownThrice = updateEditFocused(afterFocusDownTwice, {
-            tag: "action",
+          const afterFocusDownThrice = A.update(afterFocusDownTwice, {
+            type: "action",
             action: "focus-down",
           });
 
@@ -172,12 +151,11 @@ describe("moving focus with arrow key commands", () => {
           });
 
           describe("after moving focus back up to Item 1 and toggling it again", () => {
-            const afterFocusBackUp = updateEditFocused(
-              afterFocusDownThrice,
-              {tag: "action", action: "focus-up"},
-              {tag: "action", action: "focus-up"},
-              {tag: "action", action: "toggle"},
-            );
+            const afterFocusBackUp = A.after(afterFocusDownThrice, [
+              {type: "action", action: "focus-up"},
+              {type: "action", action: "focus-up"},
+              {type: "action", action: "toggle"},
+            ]);
 
             test("tthe first item is focused again", () => {
               expect((A.view(afterFocusBackUp) as A.Outline).root.children).toMatchObject([
@@ -194,8 +172,8 @@ describe("moving focus with arrow key commands", () => {
             });
 
             describe("after moving focus down again", () => {
-              const afterFocusDownAgain = updateEditFocused(afterFocusBackUp, {
-                tag: "action",
+              const afterFocusDownAgain = A.update(afterFocusBackUp, {
+                type: "action",
                 action: "focus-down",
               });
 

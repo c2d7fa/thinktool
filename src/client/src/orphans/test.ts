@@ -70,8 +70,8 @@ test("creating an item and then removing it adds it to the inbox", () => {
   app = A.update(app, {type: "focus", id: (A.view(app) as A.Outline).root.id});
   app = A.update(app, {type: "action", action: "new-child"});
   app = A.update(app, {
+    id: A.focusedId(app)!,
     type: "edit",
-    tag: "edit",
     focused: true,
     editor: {content: ["Added item"], selection: {from: 0, to: 0}},
   });
@@ -94,7 +94,7 @@ describe("clicking on another parent in the inbox view jumps there", () => {
 
   describe("after expanding the first item in the inbox", () => {
     const id = O.view(before).items[0].id;
-    const afterExpanding = A.update(before, {type: "item", event: {type: "click-bullet", id, alt: false}});
+    const afterExpanding = A.update(before, {type: "click-bullet", id, alt: false});
 
     test("the item at [0][0] has the other parent shown", () => {
       expect(O.view(afterExpanding).items[0].children[0]).toMatchObject({
@@ -104,8 +104,9 @@ describe("clicking on another parent in the inbox view jumps there", () => {
 
     describe("after clicking on the other parent", () => {
       const afterClick = A.update(afterExpanding, {
-        type: "item",
-        event: {type: "click-parent", thing: "1", alt: false},
+        type: "click-parent",
+        thing: "1",
+        alt: false,
       });
 
       test("the outline tab is shown", () => {
@@ -150,12 +151,10 @@ describe("after placing the cursor in an existing item, creating a new item", ()
     },
     [
       (view) => ({
-        type: "item",
-        event: {
-          type: "edit",
-          id: (view as A.Outline).root.children[0].id,
-          event: {tag: "edit", focused: true, editor: {content: ["Item"], selection: {from: 0, to: 0}}},
-        },
+        type: "edit",
+        id: (view as A.Outline).root.children[0].id,
+        focused: true,
+        editor: {content: ["Item"], selection: {from: 0, to: 0}},
       }),
       {type: "action", action: "new-before"},
     ],
@@ -189,8 +188,9 @@ describe.skip("[known bug] when both a parent and its child is in the inbox", ()
     [
       {type: "action", action: "view-orphans"},
       (view) => ({
-        type: "item",
-        event: {type: "click-bullet", id: (view as O.OrphansView).items[0].id, alt: false},
+        type: "click-bullet",
+        id: (view as O.OrphansView).items[0].id,
+        alt: false,
       }),
     ],
   );

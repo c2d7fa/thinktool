@@ -130,10 +130,10 @@ export type Item = {
 };
 
 export type Event =
-  | {type: "drag"; id: number}
+  | {type: "startDrag"; id: number}
   | {type: "click-bullet"; id: number; alt: boolean}
   | {type: "click-parent"; thing: string; alt: boolean}
   | {type: "click-placeholder"}
   | {type: "toggle-references"; id: number}
   | {type: "unfold"; id: number}
-  | {type: "edit"; id: number; event: E.Event};
+  | ({id: number} & E.Event);

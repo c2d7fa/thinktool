@@ -21,7 +21,7 @@ export const Outline = React.memo(function ({
       <ParentsOutline parents={outline.parents} onItemEvent={onItemEvent} />
       <div className={style.inner}>
         <SelectedItem
-          onEditEvent={(event) => onItemEvent({type: "edit", id: outline.root.id, event})}
+          onEditEvent={(event) => onItemEvent({id: outline.root.id, ...event})}
           isFolded={outline.isFolded}
           unfold={() => onItemEvent({type: "unfold", id: outline.root.id})}
           editor={outline.root.editor}
