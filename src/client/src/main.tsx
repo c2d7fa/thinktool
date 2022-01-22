@@ -94,19 +94,19 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
 
     function mousemove(ev: MouseEvent): void {
       const {clientX: x, clientY: y} = ev;
-      updateApp((app) => A.update(app, {type: "drag", subtype: "hover", id: findNodeAt({x, y})?.id ?? null}));
+      updateApp((app) => A.update(app, {type: "dragHover", id: findNodeAt({x, y})?.id ?? null}));
     }
 
     function touchmove(ev: TouchEvent): void {
       const {clientX: x, clientY: y} = ev.changedTouches[0];
-      updateApp((app) => A.update(app, {type: "drag", subtype: "hover", id: findNodeAt({x, y})?.id ?? null}));
+      updateApp((app) => A.update(app, {type: "dragHover", id: findNodeAt({x, y})?.id ?? null}));
     }
 
     window.addEventListener("mousemove", mousemove);
     window.addEventListener("touchmove", touchmove);
 
     function mouseup(ev: MouseEvent | TouchEvent): void {
-      updateApp((app) => A.update(app, {type: "drag", subtype: "drop", modifier: ev.ctrlKey ? "copy" : "move"}));
+      updateApp((app) => A.update(app, {type: "dragEnd", modifier: ev.ctrlKey ? "copy" : "move"}));
     }
 
     window.addEventListener("mouseup", mouseup);

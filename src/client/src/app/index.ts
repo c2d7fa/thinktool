@@ -224,11 +224,8 @@ export type Outline = Ou.Outline;
 export type Event =
   | {type: "focus"; id: number}
   | ItemEvent
-  | ({type: "drag"} & (
-      | {subtype: "drag"; id: number}
-      | {subtype: "hover"; id: number | null}
-      | {subtype: "drop"; modifier: "move" | "copy"}
-    ))
+  | {type: "dragHover"; id: number | null}
+  | {type: "dragEnd"; modifier: "move" | "copy"}
   | {type: "action"; action: Ac.ActionName}
   | {type: "orphans"; event: O.OrphansEvent};
 
@@ -270,12 +267,10 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return {app: unfold(app, {id: event.id})};
   } else if (event.type === "focus") {
     return {app: merge(app, {tree: T.focus(app.tree, {id: event.id})}), effects: {}};
-  } else if (event.type === "drag") {
-    if (event.subtype === "drag") return {app: merge(app, {drag: R.drag(app.tree, {id: event.id})})};
-    else if (event.subtype === "hover")
-      return {app: merge(app, {drag: R.hover(app.drag, event.id ? {id: event.id} : null)})};
-    else if (event.subtype === "drop") return {app: R.drop(app, event.modifier)};
-    else return unreachable(event);
+  } else if (event.type === "dragHover") {
+    return {app: merge(app, {drag: R.hover(app.drag, event.id ? {id: event.id} : null)})};
+  } else if (event.type === "dragEnd") {
+    return {app: R.drop(app, event.modifier)};
   } else if (event.type === "orphans") {
     return O.handle(app, event.event);
   } else {
