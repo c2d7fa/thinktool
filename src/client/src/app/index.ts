@@ -156,7 +156,7 @@ export function switchTab(app: App, tab: "outline" | "orphans"): App {
   if (tab === "orphans") {
     return O.scan(merge(app, {tab}));
   } else if (tab === "outline") {
-    return merge(app, {tab, tree: T.fromRoot(app.state, "0")});
+    return merge(app, {tab, tree: T.fromRoot(app.state, "0"), editors: {}});
   }
 
   throw "unknown tab!";

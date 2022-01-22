@@ -523,6 +523,10 @@
     {
       "date": "2022-01-20",
       "title": "Improved inbox view so items are now represented as fully interactive subtrees, like in the main outline."
+    },
+    {
+      "date": "2022-01-21",
+      "title": "Fixed bug where items would sometimes appear to have wrong content after switching view to outline."
     }
   ]
 }

@@ -139,3 +139,42 @@ describe("executing 'new' action on an item in the inbox inserts a new child", (
     });
   });
 });
+
+// Bug: The newly created item would have the wrong content after switching the
+// view back to the outline tab.
+describe("after placing the cursor in an existing item, creating a new item", () => {
+  const app = A.after(
+    {
+      "0": {content: ["Root"], children: ["1"]},
+      "1": {content: ["Item"]},
+    },
+    [
+      (view) => ({
+        type: "item",
+        event: {
+          type: "edit",
+          id: (view as A.Outline).root.children[0].id,
+          event: {tag: "edit", focused: true, editor: {content: ["Item"], selection: {from: 0, to: 0}}},
+        },
+      }),
+      {type: "action", action: "new-before"},
+    ],
+  );
+
+  const contentBefore = (A.view(app) as A.Outline).root.children[0].editor.content;
+
+  test("the new item is empty", () => {
+    expect(contentBefore).toEqual([]);
+  });
+
+  describe("after switching the view back and forth", () => {
+    const app2 = A.after(app, [
+      {type: "action", action: "view-orphans"},
+      {type: "action", action: "view-outline"},
+    ]);
+
+    test("the new item is still empty", () => {
+      expect((A.view(app2) as A.Outline).root.children[0].editor.content).toEqual([]);
+    });
+  });
+});
