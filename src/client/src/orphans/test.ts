@@ -178,3 +178,87 @@ describe("after placing the cursor in an existing item, creating a new item", ()
     });
   });
 });
+
+describe.skip("[known bug] when both a parent and its child is in the inbox", () => {
+  const app = A.after(
+    {
+      "0": {content: ["Root"]},
+      "1": {content: ["Inbox 1"], children: ["2"]},
+      "2": {content: ["Inbox 2"]},
+    },
+    [
+      {type: "action", action: "view-orphans"},
+      (view) => ({
+        type: "item",
+        event: {type: "click-bullet", id: (view as O.OrphansView).items[0].id, alt: false},
+      }),
+    ],
+  );
+
+  test("both the parent and child are shown and neither has any other parents", () => {
+    const view = A.view(app) as O.OrphansView;
+
+    expect(view.items[0]).toMatchObject({
+      kind: "root",
+      status: "expanded",
+      editor: {content: ["Inbox 1"]},
+      otherParents: [],
+    });
+
+    expect(view.items[0].children[0]).toMatchObject({
+      kind: "child",
+      status: "terminal",
+      editor: {content: ["Inbox 2"]},
+      otherParents: [],
+    });
+  });
+
+  describe("after destroying the parent item with the 'Destroy' button", () => {
+    const appAfter = A.after(app, [
+      {type: "orphans", event: {type: "destroy", id: (A.view(app) as O.OrphansView).items[0].id}},
+    ]);
+
+    const view = A.view(appAfter) as O.OrphansView;
+
+    test("there is only one item in the inbox", () => {
+      expect(view.items.length).toEqual(1);
+    });
+
+    test("the item in the child", () => {
+      expect(view.items[0]).toMatchObject({
+        kind: "root",
+        status: "terminal",
+        editor: {content: ["Inbox 2"]},
+      });
+    });
+
+    test("it has no other parents", () => {
+      expect(view.items[0].otherParents).toEqual([]);
+    });
+  });
+
+  describe("after destroying the parent through the editor", () => {
+    const appAfter = A.after(app, [
+      {type: "focus", id: (A.view(app) as O.OrphansView).items[0].id},
+      {type: "action", action: "destroy"},
+    ]);
+
+    const view = A.view(appAfter) as O.OrphansView;
+
+    test("there is only one item in the inbox", () => {
+      expect(view.items.length).toEqual(1);
+    });
+
+    test("the item in the child", () => {
+      expect(view.items[0]).toMatchObject({
+        kind: "root",
+        status: "terminal",
+        editor: {content: ["Inbox 2"]},
+      });
+    });
+
+    test("it has no other parents", () => {
+      expect(view.items[0].otherParents).toEqual([]);
+    });
+  });
+});
