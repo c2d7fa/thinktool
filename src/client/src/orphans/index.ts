@@ -79,10 +79,12 @@ function removeOrphanWithoutRefresh(orphans: OrphansState, id: string): OrphansS
 
 export function handle(app: A.App, event: OrphansEvent): {app: A.App; effects?: A.Effects} {
   function destroy(app: A.App, thing: string): A.App {
-    return A.merge(app, {
-      state: D.remove(app.state, thing),
-      orphans: removeOrphanWithoutRefresh(app.orphans, thing),
-    });
+    return scan(
+      A.merge(app, {
+        state: D.remove(app.state, thing),
+        orphans: removeOrphanWithoutRefresh(app.orphans, thing),
+      }),
+    );
   }
 
   function addParent(app: A.App, thing: string, parent: string): A.App {

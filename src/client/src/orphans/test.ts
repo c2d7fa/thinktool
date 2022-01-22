@@ -178,7 +178,7 @@ describe("after placing the cursor in an existing item, creating a new item", ()
   });
 });
 
-describe.skip("[known bug] when both a parent and its child is in the inbox", () => {
+describe("when both a parent and its child is in the inbox", () => {
   const app = A.after(
     {
       "0": {content: ["Root"]},
@@ -232,12 +232,12 @@ describe.skip("[known bug] when both a parent and its child is in the inbox", ()
       });
     });
 
-    test("it has no other parents", () => {
+    test.skip("[known bug] it has no other parents", () => {
       expect(view.items[0].otherParents).toEqual([]);
     });
   });
 
-  describe("after destroying the parent through the editor", () => {
+  describe.skip("[known bug] after destroying the parent through the editor", () => {
     const appAfter = A.after(app, [
       {type: "focus", id: (A.view(app) as O.OrphansView).items[0].id},
       {type: "action", action: "destroy"},
