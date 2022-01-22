@@ -525,8 +525,12 @@
       "title": "Improved inbox view so items are now represented as fully interactive subtrees, like in the main outline."
     },
     {
-      "date": "2022-01-21",
+      "date": "UNRELEASED",
       "title": "Fixed bug where items would sometimes appear to have wrong content after switching view to outline."
+    },
+    {
+      "date": "UNRELEASED",
+      "title": "Fixed bug where destroying parent item in inbox would appear to remove the children as well."
     }
   ]
 }

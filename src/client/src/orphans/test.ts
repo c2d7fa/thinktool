@@ -215,7 +215,7 @@ describe("when both a parent and its child is in the inbox", () => {
 
   describe("after destroying the parent item with the 'Destroy' button", () => {
     const appAfter = A.after(app, [
-      {type: "orphans", event: {type: "destroy", id: (A.view(app) as O.OrphansView).items[0].id}},
+      (view) => ({type: "orphans", event: {type: "destroy", id: (view as O.OrphansView).items[0].id}}),
     ]);
 
     const view = A.view(appAfter) as O.OrphansView;
@@ -232,7 +232,7 @@ describe("when both a parent and its child is in the inbox", () => {
       });
     });
 
-    test.skip("[known bug] it has no other parents", () => {
+    test("it has no other parents", () => {
       expect(view.items[0].otherParents).toEqual([]);
     });
   });
