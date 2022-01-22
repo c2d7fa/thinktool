@@ -241,6 +241,33 @@ function unreachable(x: never): never {
 
 export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   function handleItemEvent(app: App, event: ItemEvent): {app: App; effects?: Effects} {
+    function handleEditEvent(
+      app: App,
+      item: {id: number; hasFocus: boolean},
+      ev: E.Event,
+    ): {app: App; effects?: Effects} {
+      function updateFocus(app: App, item: {id: number; hasFocus: boolean}, focused: boolean): App {
+        return focused ? focus(app, item.id) : item.hasFocus ? focus(app, null) : app;
+      }
+
+      if (ev.tag === "edit") {
+        return {app: updateFocus(edit(app, item, ev.editor), item, ev.focused)};
+      } else if (ev.tag === "open") {
+        return {app: toggleLink(app, item, ev.link)};
+      } else if (ev.tag === "jump") {
+        return {app: jump(app, ev.link)};
+      } else if (ev.tag === "paste") {
+        return {app: E.pasteParagraphs(app, item, ev.paragraphs)};
+      } else if (ev.tag === "action") {
+        return Ac.handle(app, ev.action);
+      } else if (ev.tag === "openUrl") {
+        return {app: app, effects: {url: ev.url}};
+      } else {
+        const unreachable: never = ev;
+        return unreachable;
+      }
+    }
+
     const item = (event: {id: number}) => ({id: event.id, hasFocus: T.hasFocus(app.tree, {id: event.id})});
 
     if (event.type === "drag") {
@@ -254,7 +281,7 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     } else if (event.type === "toggle-references") {
       return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, item(event))})};
     } else if (event.type === "edit") {
-      return E.handle(app, item(event), event.event);
+      return handleEditEvent(app, item(event), event.event);
     } else if (event.type === "unfold") {
       return {app: unfold(app, item(event))};
     } else {
@@ -304,7 +331,7 @@ export function isDragging(app: App): boolean {
   return R.isActive(app.drag);
 }
 
-export function focus(app: App, id: number | null): App {
+function focus(app: App, id: number | null): App {
   if (id === null) return merge(app, {tree: T.unfocus(app.tree)});
   else return merge(app, {tree: T.focus(app.tree, {id})});
 }

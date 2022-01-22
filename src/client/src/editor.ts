@@ -251,32 +251,6 @@ export function pasteParagraphs(app: A.App, node: T.NodeRef, paragraphs: string[
   return A.merge(app, {state, tree});
 }
 
-function updateFocus(app: A.App, item: {id: number; hasFocus: boolean}, focused: boolean): A.App {
-  return focused ? A.focus(app, item.id) : item.hasFocus ? A.focus(app, null) : app;
-}
-
-export function handle(
-  app: A.App,
-  item: {id: number; hasFocus: boolean},
-  ev: Event,
-): {app: A.App; effects?: A.Effects} {
-  if (ev.tag === "edit") {
-    return {app: updateFocus(A.edit(app, item, ev.editor), item, ev.focused)};
-  } else if (ev.tag === "open") {
-    return {app: A.toggleLink(app, item, ev.link)};
-  } else if (ev.tag === "jump") {
-    return {app: A.jump(app, ev.link)};
-  } else if (ev.tag === "paste") {
-    return {app: pasteParagraphs(app, item, ev.paragraphs)};
-  } else if (ev.tag === "action") {
-    return Ac.handle(app, ev.action);
-  } else if (ev.tag === "openUrl") {
-    return {app: app, effects: {url: ev.url}};
-  } else {
-    throw "unhandled case";
-  }
-}
-
 export function forNode(app: A.App, node: T.NodeRef): {editor: Editor; hasFocus: boolean} {
   function require<T>(x: T | null): T {
     if (x === null) throw "unexpected null";
