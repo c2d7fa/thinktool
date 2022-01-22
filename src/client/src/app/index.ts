@@ -248,17 +248,17 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
       return focused ? focus(app, item.id) : item.hasFocus ? focus(app, null) : app;
     }
 
-    if (ev.tag === "edit") {
+    if (ev.type === "edit") {
       return {app: updateFocus(edit(app, item, ev.editor), item, ev.focused)};
-    } else if (ev.tag === "open") {
+    } else if (ev.type === "open") {
       return {app: toggleLink(app, item, ev.link)};
-    } else if (ev.tag === "jump") {
+    } else if (ev.type === "jump") {
       return {app: jump(app, ev.link)};
-    } else if (ev.tag === "paste") {
+    } else if (ev.type === "paste") {
       return {app: E.pasteParagraphs(app, item, ev.paragraphs)};
-    } else if (ev.tag === "action") {
+    } else if (ev.type === "action") {
       return Ac.handle(app, ev.action);
-    } else if (ev.tag === "openUrl") {
+    } else if (ev.type === "openUrl") {
       return {app: app, effects: {url: ev.url}};
     } else {
       const unreachable: never = ev;

@@ -230,12 +230,12 @@ export function paragraphs(text: string): string[] {
 // #endregion
 
 export type Event =
-  | {tag: "action"; action: Ac.ActionName}
-  | {tag: "open"; link: string}
-  | {tag: "jump"; link: string}
-  | {tag: "edit"; editor: Editor; focused: boolean}
-  | {tag: "paste"; paragraphs: string[]}
-  | {tag: "openUrl"; url: string};
+  | {type: "action"; action: Ac.ActionName}
+  | {type: "open"; link: string}
+  | {type: "jump"; link: string}
+  | {type: "edit"; editor: Editor; focused: boolean}
+  | {type: "paste"; paragraphs: string[]}
+  | {type: "openUrl"; url: string};
 
 export function pasteParagraphs(app: A.App, node: T.NodeRef, paragraphs: string[]): A.App {
   let [state, tree] = [app.state, app.tree];

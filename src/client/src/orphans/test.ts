@@ -73,7 +73,7 @@ test("creating an item and then removing it adds it to the inbox", () => {
     id: A.focusedId(app)!,
     type: "edit",
     event: {
-      tag: "edit",
+      type: "edit",
       focused: true,
       editor: {content: ["Added item"], selection: {from: 0, to: 0}},
     },
@@ -156,7 +156,7 @@ describe("after placing the cursor in an existing item, creating a new item", ()
       (view) => ({
         type: "edit",
         id: (view as A.Outline).root.children[0].id,
-        event: {tag: "edit", focused: true, editor: {content: ["Item"], selection: {from: 0, to: 0}}},
+        event: {type: "edit", focused: true, editor: {content: ["Item"], selection: {from: 0, to: 0}}},
       }),
       {type: "action", action: "new-before"},
     ],
