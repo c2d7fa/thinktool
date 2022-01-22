@@ -372,7 +372,7 @@ function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event):
   return props.view.tab === "orphans" ? (
     <OrphanList view={props.view} send={(event) => props.send({type: "orphans", event})} />
   ) : (
-    <Outline outline={props.view} onItemEvent={(event) => props.send({type: "item", event})} />
+    <Outline outline={props.view} onItemEvent={(event) => props.send(event)} />
   );
 }
 

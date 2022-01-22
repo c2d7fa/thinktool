@@ -99,7 +99,7 @@ export function handle(app: A.App, event: OrphansEvent): {app: A.App; effects?: 
   } else if (event.type === "jump") {
     return {app: A.jump(app, T.thing(app.tree, {id: event.id}))};
   } else if (event.type === "item") {
-    return A.handle(app, event);
+    return A.handle(app, event.event);
   } else {
     const unreachable: never = event;
     return unreachable;

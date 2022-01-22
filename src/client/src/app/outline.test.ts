@@ -50,12 +50,9 @@ describe("in an app with two items", () => {
     describe("after setting the cursor position", () => {
       const focusedItem = afterFocusOutline.root.children.find((c) => c.hasFocus)!;
       const afterCursor = A.update(afterFocus, {
-        type: "item",
-        event: {
-          id: focusedItem.id,
-          type: "edit",
-          event: {tag: "edit", editor: {...focusedItem.editor, selection: {from: 5, to: 5}}, focused: true},
-        },
+        type: "edit",
+        id: focusedItem.id,
+        event: {tag: "edit", editor: {...focusedItem.editor, selection: {from: 5, to: 5}}, focused: true},
       });
 
       test("the cursor position is reflected in the outline", () => {
@@ -68,8 +65,9 @@ describe("in an app with two items", () => {
       describe("after moving the item down", () => {
         const focusedId = (A.view(afterCursor) as A.Outline).root.children.find((c) => c.hasFocus)!.id;
         const afterDown = A.update(afterCursor, {
-          type: "item",
-          event: {id: focusedId, type: "edit", event: {tag: "action", action: "down"}},
+          id: focusedId,
+          type: "edit",
+          event: {tag: "action", action: "down"},
         });
 
         test("the positions of the items are swapped", () => {
@@ -97,19 +95,13 @@ describe("in an app with two items", () => {
   });
 });
 
-function updateEditFocused(
-  app: A.App,
-  ...events: ((A.Event & {type: "item"})["event"] & {type: "edit"})["event"][]
-) {
+function updateEditFocused(app: A.App, ...events: (A.Event & {type: "edit"})["event"][]) {
   return events.reduce(
     (app, event) =>
       A.update(app, {
-        type: "item",
-        event: {
-          id: A.focusedId(app)!,
-          type: "edit",
-          event,
-        },
+        id: A.focusedId(app)!,
+        type: "edit",
+        event,
       }),
     app,
   );

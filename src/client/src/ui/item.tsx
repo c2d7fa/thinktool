@@ -103,7 +103,7 @@ export const Item = React.memo(
           bullet={
             <Bullet
               specialType={item.kind === "child" || item.kind === "root" ? undefined : item.kind}
-              beginDrag={() => onItemEvent({type: "drag", id: item.id})}
+              beginDrag={() => onItemEvent({type: "startDrag", id: item.id})}
               status={item.status}
               toggle={() => onItemEvent({type: "click-bullet", id: item.id, alt: false})}
               onMiddleClick={() => onItemEvent({type: "click-bullet", id: item.id, alt: true})}
