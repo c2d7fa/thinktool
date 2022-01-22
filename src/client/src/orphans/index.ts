@@ -1,6 +1,5 @@
 import * as A from "../app";
 import * as D from "../data";
-import * as P from "../popup";
 import * as T from "../tree";
 import * as Immutable from "immutable";
 
@@ -62,6 +61,14 @@ export function scan(app: A.App): A.App {
     }
   } while (ids.size < previousIds.size);
 
+  // Don't update unless necessary, so user doesn't lose tree state, like
+  // expanded/collapsed items or editor states when scan is called unnecssarily.
+  if (
+    ids.equals(app.orphans[_nodes].keySeq().toSet()) &&
+    app.orphans[_nodes].every((id) => T.exists(app.tree, {id}))
+  )
+    return app;
+
   let nodes = Immutable.Map<string, number>();
 
   let tree = app.tree;
@@ -74,25 +81,15 @@ export function scan(app: A.App): A.App {
   return A.merge(app, {orphans: {[_nodes]: nodes}, tree});
 }
 
-function removeOrphanWithoutRefresh(orphans: OrphansState, id: string): OrphansState {
-  return {[_nodes]: orphans[_nodes].filter((_, thing) => thing !== id)};
-}
-
 export function handle(app: A.App, event: OrphansEvent): {app: A.App; effects?: A.Effects} {
-  function destroy(app: A.App, thing: string): A.App {
-    return A.merge(app, {
-      state: D.remove(app.state, thing),
-      orphans: removeOrphanWithoutRefresh(app.orphans, thing),
-    });
-  }
-
   function addParent(app: A.App, thing: string, parent: string): A.App {
     const state = D.addChild(app.state, parent, thing)[0];
     return scan(A.merge(app, {state}));
   }
 
   if (event.type === "destroy") {
-    return {app: destroy(app, T.thing(app.tree, {id: event.id}))};
+    const [state, tree] = T.removeThing(app.state, app.tree, {id: event.id});
+    return {app: scan(A.merge(app, {state, tree}))};
   } else if (event.type === "addParent") {
     return A.openPopup(app, (app, parent) => addParent(app, T.thing(app.tree, {id: event.id}), parent), {
       icon: "insert",
@@ -100,11 +97,15 @@ export function handle(app: A.App, event: OrphansEvent): {app: A.App; effects?: 
   } else if (event.type === "jump") {
     return {app: A.jump(app, T.thing(app.tree, {id: event.id}))};
   } else if (event.type === "item") {
-    return A.handle(app, event);
+    return A.handle(app, event.event);
   } else {
     const unreachable: never = event;
     return unreachable;
   }
+}
+
+export function orphansMayBeStale(before: A.App, after: A.App): boolean {
+  return before.tab === "orphans" && after.tab === "orphans" && before.state !== after.state;
 }
 
 export function view(app: A.App): OrphansView {

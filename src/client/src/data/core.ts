@@ -242,9 +242,16 @@ function generateShortId(): string {
 
 export function remove(state: State, removedThing: string): State {
   let newState = state;
+
   for (const parent of parents(newState, removedThing)) {
     while (children(newState, parent).includes(removedThing)) {
       newState = removeChild(newState, parent, Misc.indexOfBy(children(newState, parent), removedThing)!);
+    }
+  }
+
+  for (const child of children(newState, removedThing)) {
+    while (parents(newState, child).includes(removedThing)) {
+      newState = removeChild(newState, removedThing, Misc.indexOfBy(parents(newState, child), removedThing)!);
     }
   }
 

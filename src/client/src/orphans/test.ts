@@ -70,8 +70,8 @@ test("creating an item and then removing it adds it to the inbox", () => {
   app = A.update(app, {type: "focus", id: (A.view(app) as A.Outline).root.id});
   app = A.update(app, {type: "action", action: "new-child"});
   app = A.update(app, {
+    id: A.focusedId(app)!,
     type: "edit",
-    tag: "edit",
     focused: true,
     editor: {content: ["Added item"], selection: {from: 0, to: 0}},
   });
@@ -94,7 +94,7 @@ describe("clicking on another parent in the inbox view jumps there", () => {
 
   describe("after expanding the first item in the inbox", () => {
     const id = O.view(before).items[0].id;
-    const afterExpanding = A.update(before, {type: "item", event: {type: "click-bullet", id, alt: false}});
+    const afterExpanding = A.update(before, {type: "click-bullet", id, alt: false});
 
     test("the item at [0][0] has the other parent shown", () => {
       expect(O.view(afterExpanding).items[0].children[0]).toMatchObject({
@@ -104,8 +104,9 @@ describe("clicking on another parent in the inbox view jumps there", () => {
 
     describe("after clicking on the other parent", () => {
       const afterClick = A.update(afterExpanding, {
-        type: "item",
-        event: {type: "click-parent", thing: "1", alt: false},
+        type: "click-parent",
+        thing: "1",
+        alt: false,
       });
 
       test("the outline tab is shown", () => {
@@ -138,4 +139,142 @@ describe("executing 'new' action on an item in the inbox inserts a new child", (
       editor: {content: [], selection: {from: 0, to: 0}},
     });
   });
+});
+
+// Bug: The newly created item would have the wrong content after switching the
+// view back to the outline tab.
+describe("after placing the cursor in an existing item, creating a new item", () => {
+  const app = A.after(
+    {
+      "0": {content: ["Root"], children: ["1"]},
+      "1": {content: ["Item"]},
+    },
+    [
+      (view) => ({
+        type: "edit",
+        id: (view as A.Outline).root.children[0].id,
+        focused: true,
+        editor: {content: ["Item"], selection: {from: 0, to: 0}},
+      }),
+      {type: "action", action: "new-before"},
+    ],
+  );
+
+  const contentBefore = (A.view(app) as A.Outline).root.children[0].editor.content;
+
+  test("the new item is empty", () => {
+    expect(contentBefore).toEqual([]);
+  });
+
+  describe("after switching the view back and forth", () => {
+    const app2 = A.after(app, [
+      {type: "action", action: "view-orphans"},
+      {type: "action", action: "view-outline"},
+    ]);
+
+    test("the new item is still empty", () => {
+      expect((A.view(app2) as A.Outline).root.children[0].editor.content).toEqual([]);
+    });
+  });
+});
+
+describe("when both a parent and its child is in the inbox", () => {
+  const app = A.after(
+    {
+      "0": {content: ["Root"]},
+      "1": {content: ["Inbox 1"], children: ["2"]},
+      "2": {content: ["Inbox 2"]},
+    },
+    [
+      {type: "action", action: "view-orphans"},
+      (view) => ({
+        type: "click-bullet",
+        id: (view as O.OrphansView).items[0].id,
+        alt: false,
+      }),
+    ],
+  );
+
+  test("both the parent and child are shown and neither has any other parents", () => {
+    const view = A.view(app) as O.OrphansView;
+
+    expect(view.items[0]).toMatchObject({
+      kind: "root",
+      status: "expanded",
+      editor: {content: ["Inbox 1"]},
+      otherParents: [],
+    });
+
+    expect(view.items[0].children[0]).toMatchObject({
+      kind: "child",
+      status: "terminal",
+      editor: {content: ["Inbox 2"]},
+      otherParents: [],
+    });
+  });
+
+  describe("after destroying the parent item with the 'Destroy' button", () => {
+    const appAfter = A.after(app, [
+      (view) => ({type: "orphans", event: {type: "destroy", id: (view as O.OrphansView).items[0].id}}),
+    ]);
+
+    const view = A.view(appAfter) as O.OrphansView;
+
+    test("there is only one item in the inbox", () => {
+      expect(view.items.length).toEqual(1);
+    });
+
+    test("the item is the child", () => {
+      expect(view.items[0]).toMatchObject({
+        kind: "root",
+        status: "terminal",
+        editor: {content: ["Inbox 2"]},
+      });
+    });
+
+    test("it has no other parents", () => {
+      expect(view.items[0].otherParents).toEqual([]);
+    });
+  });
+
+  describe("after destroying the parent through the editor", () => {
+    const appAfter = A.after(app, [
+      {type: "focus", id: (A.view(app) as O.OrphansView).items[0].id},
+      {type: "action", action: "destroy"},
+    ]);
+
+    const view = A.view(appAfter) as O.OrphansView;
+
+    test("there is only one item in the inbox", () => {
+      expect(view.items.length).toEqual(1);
+    });
+
+    test("the item is the child", () => {
+      expect(view.items[0]).toMatchObject({
+        kind: "root",
+        status: "terminal",
+        editor: {content: ["Inbox 2"]},
+      });
+    });
+
+    test("it has no other parents", () => {
+      expect(view.items[0].otherParents).toEqual([]);
+    });
+  });
+});
+
+test("with an item in the outline and inbox, switching back and forth doesn't crash", () => {
+  A.after(
+    {
+      "0": {content: ["Root"], children: ["1"]},
+      "1": {content: ["Item"]},
+      "2": {content: ["Inbox"]},
+    },
+    [
+      (view) => ({type: "action", action: "view-orphans"}),
+      (view) => ({type: "action", action: "view-outline"}),
+      (view) => ({type: "action", action: "view-orphans"}),
+      (view) => ({type: "action", action: "view-outline"}),
+    ],
+  );
 });
