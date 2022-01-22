@@ -136,4 +136,4 @@ export type Event =
   | {type: "click-placeholder"}
   | {type: "toggle-references"; id: number}
   | {type: "unfold"; id: number}
-  | {type: "edit"; id: number; event: E.Event};
+  | ({id: number} & E.Event);

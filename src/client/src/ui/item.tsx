@@ -113,7 +113,7 @@ export const Item = React.memo(
             <Editor.Editor
               editor={item.editor}
               hasFocus={item.hasFocus}
-              onEvent={(event) => onItemEvent({type: "edit", id: item.id, event})}
+              onEvent={(event) => onItemEvent({id: item.id, ...event})}
             />
           }
         />
