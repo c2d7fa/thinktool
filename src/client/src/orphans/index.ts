@@ -1,6 +1,5 @@
 import * as A from "../app";
 import * as D from "../data";
-import * as P from "../popup";
 import * as T from "../tree";
 import * as Immutable from "immutable";
 
