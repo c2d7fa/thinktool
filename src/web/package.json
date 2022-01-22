@@ -16,7 +16,7 @@
   "dependencies": {
     "@mdi/js": "^6.5.95",
     "@mdi/react": "^1.5.0",
-    "@thinktool/client": "^4.8.0",
+    "@thinktool/client": "^4.8.1",
     "next": "^12.0.7",
     "prop-types": "^15.8.1",
     "react": "^17.0.2",
