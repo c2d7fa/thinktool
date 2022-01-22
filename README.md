@@ -2,7 +2,7 @@
 
 This repository contains the source code of [**Thinktool**](https://thinktool.io/), an associative note-taking application inspired by TheBrain and Roam Research.
 
-[**Check out the demo in your browser here!**](https://thinktool.io/demo.html)
+[**Check out the demo in your browser here!**](https://thinktool.io/demo)
 
 <blockquote>
 <p align="center">

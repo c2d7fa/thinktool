@@ -344,7 +344,7 @@ app.post("/login", async (req, res) => {
   }
 
   const sessionId = await DB.Session.create(userId);
-  sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
+  sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app`);
 });
 
 app.post("/signup", async (req, res) => {
@@ -380,7 +380,7 @@ app.post("/signup", async (req, res) => {
   }
 
   const sessionId = await DB.Session.create(userId);
-  sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app.html`);
+  sendRedirect(res.header("Set-Cookie", `DiaformSession=${sessionId}`), `${staticUrl}/app`);
 });
 
 app.options("/api/account/everything/:account", async (req, res) => {
@@ -571,9 +571,7 @@ app.post("/recover-account", async (req, res) => {
       .status(401)
       .header("Access-Control-Allow-Origin", staticUrl)
       .header("Access-Control-Allow-Credentials", "true")
-      .send(
-        `Your Reset Key is invalid. If you need support, see ${staticUrl}/index.html for contact information.`,
-      );
+      .send(`Your Reset Key is invalid. If you need support, see ${staticUrl}/ for contact information.`);
   }
 });
 

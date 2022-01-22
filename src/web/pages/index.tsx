@@ -106,13 +106,13 @@ export default function Index(props: {apiHost: string}) {
               </a>
               . It may become a paid service in the future (aiming for &le;$5/mo.), but currently you can use it
               for free.{" "}
-              <a href="/login.html" className="external-link">
+              <a href="/login" className="external-link">
                 <span>Sign up here.</span>
               </a>
             </p>
             <p>
               I'm also working on an offline app for Thinktool. You can{" "}
-              <a href="/download.html" className="external-link">
+              <a href="/download" className="external-link">
                 <span>download a early prototype</span>
               </a>
               .

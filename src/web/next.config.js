@@ -1,8 +1,7 @@
 module.exports = {
-  async rewrites() {
+  async redirects() {
     return [
-      {source: "/:path*.html", "destination": "/:path*/"},
-    ]
-  },
-  trailingSlash: true,
+      {source: "/:path*.html", destination: "/:path*", permanent: false},
+    ];
+  }
 };

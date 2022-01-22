@@ -79,21 +79,21 @@ export default function RecoverAccount() {
           <ul className={styles.posts}>
             <li>
               <NewsletterPostLink
-                href="/blog/newsletter-october-2020.html"
+                href="/blog/newsletter-october-2020"
                 date={new Date("2020-10-30")}
                 description="Quick update about new UI improvements"
               />
             </li>
             <li>
               <NewsletterPostLink
-                href="/blog/newsletter-july-2020.html"
+                href="/blog/newsletter-july-2020"
                 date={new Date("2020-07-13")}
                 description="News about the offline version, and what I'll be working on next"
               />
             </li>
             <li>
               <BlogPostLink
-                href="/blog/zettelkasten-principles.html"
+                href="/blog/zettelkasten-principles"
                 date={new Date("2020-06-08")}
                 title="Taking better notes with principles from the Zettelkasten method"
                 description="Three rules &ndash; inspired by Niklas Luhmann's Zettelkasten &ndash; that you can apply to take better notes"
@@ -101,7 +101,7 @@ export default function RecoverAccount() {
             </li>
             <li>
               <BlogPostLink
-                href="/tutorial.html"
+                href="/tutorial"
                 date={new Date("2020-06-05")}
                 title="How to take notes with Thinktool"
                 description="Tutorial that shows you how to get started with Thinktool, and gives some tips about note-taking
@@ -110,7 +110,7 @@ export default function RecoverAccount() {
             </li>
             <li>
               <NewsletterPostLink
-                href="/blog/newsletter-may-2020.html"
+                href="/blog/newsletter-may-2020"
                 date={new Date("2020-05-17")}
                 description="How I'm working on Thinktool, the upcoming desktop version, and a few new features"
               />

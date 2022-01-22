@@ -21,10 +21,10 @@ export default function StaticPage(props: {children: React.ReactNode}) {
         <nav>
           <NavigationLink href="https://github.com/c2d7fa/thinktool" icon="sourceCode" label="Source" />
           <NavigationLink href="https://reddit.com/r/thinktool" icon="forum" label="Forum" />
-          <NavigationLink icon="blog" href="/blog/" label="Blog" />
-          <NavigationLink icon="download" href="/download.html" label="Download" />
-          <NavigationLink icon="login" href="/login.html" label="Login" />
-          <DemoLinkButton href="/demo.html" />
+          <NavigationLink icon="blog" href="/blog" label="Blog" />
+          <NavigationLink icon="download" href="/download" label="Download" />
+          <NavigationLink icon="login" href="/login" label="Login" />
+          <DemoLinkButton href="/demo" />
         </nav>
       </div>
       {props.children}

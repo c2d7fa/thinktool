@@ -35,7 +35,7 @@ export default function BlogPostNewsletterOctober2020(props: {apiHost: string}) 
         <h2>Thinking should be fun</h2>
 
         <p>
-          <a href="/blog/newsletter-july-2020.html">
+          <a href="/blog/newsletter-july-2020">
             <span>In the last newsletter</span>
           </a>
           , I wrote that I wanted to focus on making Thinktool easier to learn and more pleasant to use. I

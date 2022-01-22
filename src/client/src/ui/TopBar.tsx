@@ -58,7 +58,7 @@ export function TopBar(props: {
       <div className={styles.right}>
         {props.login && (
           <div className={styles.currentUser}>
-            <ExternalLink className={styles.username} href="/user.html">
+            <ExternalLink className={styles.username} href="/user">
               <Icons.IconLabel icon="user">{props.login.username}</Icons.IconLabel>
             </ExternalLink>
             <a href={props.login.logOutUrl}>

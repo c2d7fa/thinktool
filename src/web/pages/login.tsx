@@ -59,7 +59,7 @@ export default function Login(props: {apiHost: string}) {
       fetch(`${props.apiHost}/username`, {credentials: "include"}).then((response) => {
         if (response.status === 200) {
           console.log("Already logged in. Redirecting to app page.");
-          location.assign("/app.html");
+          location.assign("/app");
         }
       });
     }

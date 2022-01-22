@@ -434,7 +434,7 @@ export function App({apiHost}: {apiHost: string}) {
       const username = await server.getUsername();
       if (username === null) {
         console.log("Not logged in. Redirecting to login page.");
-        window.location.href = "/login.html";
+        window.location.href = "/login";
       }
 
       const storage = Storage.server(server);

@@ -80,7 +80,7 @@ function correctRecovery(type: "email address" | "username") {
 
       test("the email contains a link to the recovery page", async () => {
         const {email} = await result;
-        expect(email?.message).toContain(`${staticUrl}/recover-account.html`);
+        expect(email?.message).toContain(`${staticUrl}/recover-account`);
       });
     });
 

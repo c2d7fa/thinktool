@@ -27,7 +27,7 @@ export default function BlogPostNewsletterJuly2020(props: {apiHost: string}) {
         </p>
         <p>
           That's right, you can{" "}
-          <a href="https://thinktool.io/download.html">
+          <a href="https://thinktool.io/download">
             <span>download Thinktool</span>
           </a>
           , and use it offline. Well, kind of. Apparently, turning a web app into an offline desktop app is
