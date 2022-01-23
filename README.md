@@ -137,6 +137,8 @@ Set the following environment variables:
 
 - `DIAFORM_API_HOST` &mdash; API server host, including the protocol, e.g.
   `https://api.thinktool.io`.
+- `THINKTOOL_ASSETS_HOST` &mdash; Host for desktop client, including the protocol, e.g.
+  `https://assets.thinktool.io`.
 
 Then build the web client and other static resources with:
 
