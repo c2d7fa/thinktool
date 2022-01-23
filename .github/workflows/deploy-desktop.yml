@@ -1,0 +1,54 @@
+name: Build and deploy desktop clients
+on:
+  push:
+    branches:
+      - main
+jobs:
+  desktop-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v1
+      - name: Set up Node 17.2.0
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17.2.0'
+      - name: Build desktop client for Linux
+        run: |
+          cd src/desktop
+          yarn install --frozen-lockfile
+          yarn run bundle-linux
+        env:
+          DIAFORM_API_HOST: ${{secrets.api_host}}
+      - name: Deploy to Azure Storage
+        run: |
+          cd src/desktop
+          az upload -s "./dist/Thinktool Desktop Prototype.AppImage" -d '$web' -o table
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
+          AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}
+  desktop-windows:
+    runs-on: windows-2019
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Set up Node 17.2.0
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17.2.0'
+      - name: Build desktop client for Windows
+        run: |
+          cd src/desktop
+          yarn install --frozen-lockfile
+          yarn run bundle-windows
+        shell: bash
+        env:
+          DIAFORM_API_HOST: ${{secrets.api_host}}
+      - name: Deploy to Azure Storage
+        run: |
+          cd src/desktop
+          az upload -s "./dist/Thinktool Desktop Prototype.exe" -d '$web' -o table
+        shell: bash
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
+          AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}

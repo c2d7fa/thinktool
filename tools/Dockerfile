@@ -3,12 +3,12 @@
 FROM node:17.2 as build
 COPY . /work
 WORKDIR /work
-RUN tools/build-server.sh
+RUN cd src/server && yarn run build
 
 # Production
 
 FROM node:17.2
-COPY --from=build /work/dist/server /server
+COPY --from=build /work/src/server/ /server
 WORKDIR /server
 EXPOSE 80
-CMD node server.js
+CMD node dist/server.js
