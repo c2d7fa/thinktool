@@ -23,7 +23,7 @@ jobs:
       - name: Deploy to Azure Storage
         run: |
           cd src/desktop
-          az upload -s "./dist/Thinktool Desktop Prototype.AppImage" -d '$web' -o table
+          az storage blob upload -f "./dist/Thinktool Desktop Prototype.AppImage" -c '$web' -o table
         env:
           AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
           AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}
@@ -47,7 +47,7 @@ jobs:
       - name: Deploy to Azure Storage
         run: |
           cd src/desktop
-          az upload -s "./dist/Thinktool Desktop Prototype.exe" -d '$web' -o table
+          az storage blob upload -f "./dist/Thinktool Desktop Prototype.exe" -c '$web' -o table
         shell: bash
         env:
           AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
