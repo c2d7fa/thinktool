@@ -12,11 +12,7 @@ jobs:
         with:
           node-version: '17.2.0'
       - name: Install dependencies
-        run: |
-          cd src
-          yarn install --frozen-lockfile
-          cd shared && yarn run build && cd ..
-          cd search && yarn run build && cd ..
+        run: cd src/client && yarn install --frozen-lockfile
       - name: Run test suite
         run: cd src/client && yarn run test
   test-server:
@@ -29,8 +25,6 @@ jobs:
         with:
           node-version: '17.2.0'
       - name: Install dependencies
-        run: |
-          cd src
-          yarn install --frozen-lockfile
+        run: cd src/server && yarn install --frozen-lockfile
       - name: Run test suite
         run: cd src/server && yarn run test
