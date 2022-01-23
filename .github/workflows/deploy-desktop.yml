@@ -14,16 +14,19 @@ jobs:
         with:
           node-version: '17.2.0'
       - name: Build desktop client for Linux
-        run: ./tools/build-desktop-linux.sh
+        run: |
+          cd src/desktop
+          yarn install --frozen-lockfile
+          yarn run bundle-linux
         env:
           DIAFORM_API_HOST: ${{secrets.api_host}}
-      - name: Deploy to Azure Storage and purge Cloudflare cache
-        run: ./tools/deploy-static.sh
+      - name: Deploy to Azure Storage
+        run: |
+          cd src/desktop
+          az upload -s "./dist/Thinktool Desktop Prototype.AppImage" -d '$web' -o table
         env:
           AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
           AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}
-          CLOUDFLARE_ZONE: ${{secrets.cloudflare_zone}}
-          CLOUDFLARE_TOKEN: ${{secrets.cloudflare_token}}
   desktop-windows:
     runs-on: windows-2019
     steps:
@@ -34,15 +37,18 @@ jobs:
         with:
           node-version: '17.2.0'
       - name: Build desktop client for Windows
-        run: ./tools/build-desktop-windows.sh
+        run: |
+          cd src/desktop
+          yarn install --frozen-lockfile
+          yarn run bundle-windows
         shell: bash
         env:
           DIAFORM_API_HOST: ${{secrets.api_host}}
-      - name: Deploy to Azure Storage and purge Cloudflare cache
-        run: ./tools/deploy-static.sh
+      - name: Deploy to Azure Storage
+        run: |
+          cd src/desktop
+          az upload -s "./dist/Thinktool Desktop Prototype.exe" -d '$web' -o table
         shell: bash
         env:
           AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
           AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}
-          CLOUDFLARE_ZONE: ${{secrets.cloudflare_zone}}
-          CLOUDFLARE_TOKEN: ${{secrets.cloudflare_token}}
