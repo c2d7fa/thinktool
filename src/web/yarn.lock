@@ -112,10 +112,10 @@
   resolved "https://registry.yarnpkg.com/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-12.0.8.tgz#eae6d4c94dc8aae8ba177e2de02080339d0d4563"
   integrity sha512-tTga6OFfO2JS+Yt5hdryng259c/tzNgSWkdiU2E+RBHiysAIOta57n4PJ8iPahOSqEqjaToPI76wM+o441GaNQ==
 
-"@thinktool/client@^4.8.2":
-  version "4.8.2"
-  resolved "https://registry.yarnpkg.com/@thinktool/client/-/client-4.8.2.tgz#7d6383a0d1cb2078d5e3eefa2f2098354b0a3955"
-  integrity sha512-q7et/B7/Mp5VkUkncvYl4z95btMeGEK1EmvKpH39+uxDUsDYPOIDzuqakC+Lw+aq7hvHvUZeCn6RjLO7kuycmQ==
+"@thinktool/client@^4.8.3":
+  version "4.8.3"
+  resolved "https://registry.yarnpkg.com/@thinktool/client/-/client-4.8.3.tgz#bf0741a920a3025aa6b5135b31eba71359bafb53"
+  integrity sha512-dYud90IAOw8aPdOTM5ecs5XTEhCytZSzZO+vUbR0OaP0+6LlT0T9FAhnzX5Efe50XC77+a9JJdEJEsNg+ErgMg==
   dependencies:
     "@johv/immutable-extras" "^1.1.1"
     "@johv/miscjs" "^1.7.1"

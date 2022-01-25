@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/client",
-  "version": "4.8.2",
+  "version": "4.8.3",
   "description": "Client code for Thinktool, shared between web and desktop client.",
   "license": "UNLICENSED",
   "repository": {
@@ -56,7 +56,7 @@
   },
   "scripts": {
     "build": "webpack",
-    "watch": "webpack --watch --mode=development",
+    "watch": "webpack --watch --config webpack.dev.js",
     "test": "jest --roots tests --roots src",
     "test-watch": "jest --watchAll --roots tests --roots src"
   },
