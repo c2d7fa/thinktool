@@ -14,9 +14,8 @@ describe("when opening popup while text is selected", () => {
       (view) => ({type: "focus", id: (view as A.Outline).root.children[0].id}),
       (view) => ({
         type: "edit",
-        editor: {...(view as A.Outline).root.children[0].editor, selection: {from: 21, to: 33}},
         id: (view as A.Outline).root.children[0].id,
-        focused: true,
+        editor: {selection: {from: 21, to: 33}},
       }),
     ],
   );

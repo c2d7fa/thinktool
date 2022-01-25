@@ -77,8 +77,9 @@ export function editor(app: App, node: T.NodeRef): E.Editor | null {
   return E.load(app, node);
 }
 
-export function edit(app: App, node: T.NodeRef, editor: E.Editor): App {
-  return merge(E.save(app, editor, T.thing(app.tree, node)), {editors: {[node.id]: editor}});
+export function edit(app: App, node: T.NodeRef, newEditor: Partial<E.Editor>): App {
+  const fullNewEditor = {...editor(app, node)!, ...newEditor};
+  return merge(E.save(app, fullNewEditor, T.thing(app.tree, node)), {editors: {[node.id]: fullNewEditor}});
 }
 
 export function editInsertLink(app: App, node: T.NodeRef, link: string): App {
@@ -242,7 +243,7 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   }
 
   if (event.type === "edit") {
-    return {app: updateFocus(edit(app, {id: event.id}, event.editor), event.id, event.focused)};
+    return {app: updateFocus(edit(app, {id: event.id}, event.editor), event.id, event.focused ?? true)};
   } else if (event.type === "open") {
     return {app: toggleLink(app, {id: event.id}, event.link)};
   } else if (event.type === "jump") {
