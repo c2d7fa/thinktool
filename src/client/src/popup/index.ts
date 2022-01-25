@@ -9,7 +9,23 @@ const _activeIndex = Symbol("activeIndex");
 const _select = Symbol("select");
 const _icon = Symbol("icon");
 
-export type Result = {
+export type View =
+  | {icon: "search" | "insert" | "link"; open: false}
+  | {
+      icon: "search" | "insert" | "link";
+      open: true;
+      query: string;
+      isQuerySelected: boolean;
+      results: {
+        thing: string;
+        content: A.Item["editor"]["content"];
+        otherParents: A.Item["otherParents"];
+        status: A.Item["status"];
+        isSelected: boolean;
+      }[];
+    };
+
+type Result = {
   thing: string;
   content: E.EditorContent;
   hasChildren: boolean;
@@ -76,7 +92,7 @@ export function receiveResults(state: State, data: D.State, things: string[]): S
   };
 }
 
-export function results(state: State): Result[] {
+function results(state: State): Result[] {
   if (!isOpen(state)) {
     console.warn("Tried to get results, but popup isn't open.");
     return [];
@@ -84,15 +100,7 @@ export function results(state: State): Result[] {
   return state[_results];
 }
 
-export function query(state: State): string {
-  if (!isOpen(state)) {
-    console.warn("Tried to get query, but popup isn't open.");
-    return "";
-  }
-  return state[_query];
-}
-
-export function isThingActive(state: State, thing: string | null): boolean {
+function isThingActive(state: State, thing: string | null): boolean {
   if (!isOpen(state)) {
     console.warn("Tried to get selection, but poup isn't open.");
     return false;
@@ -164,7 +172,7 @@ export function selectThing(app: A.App, thing: string | null): A.App {
   return result;
 }
 
-export function icon(app: A.App): "search" | "insert" | "link" {
+function icon(app: A.App): "search" | "insert" | "link" {
   if (isOpen(app.popup)) return app.popup[_icon];
 
   const editor = A.focusedEditor(app);
@@ -172,4 +180,26 @@ export function icon(app: A.App): "search" | "insert" | "link" {
   if (editor === null) return "search";
   else if (E.isEmpty(editor)) return "insert";
   else return "link";
+}
+
+export function view(app: A.App): View {
+  const popup = app.popup;
+
+  if (!isOpen(popup)) return {open: false, icon: icon(app)};
+
+  return {
+    open: true,
+    icon: icon(app),
+    query: popup[_query],
+    isQuerySelected: isThingActive(popup, null),
+    results: results(popup).map((result) => {
+      return {
+        content: result.content,
+        isSelected: isThingActive(popup, result.thing),
+        otherParents: result.parents,
+        status: result.hasChildren ? "collapsed" : "terminal",
+        thing: result.thing,
+      };
+    }),
+  };
 }

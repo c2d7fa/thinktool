@@ -285,10 +285,22 @@ export function update(app: App, event: Event): App {
 }
 
 export function after(app: App | ItemGraph, events: (Event | ((view: View) => Event))[]): App {
+  function executeSearch(result: {app: App; effects?: Effects}): App {
+    if (!result?.effects?.search) return result.app;
+    return merge(result.app, {
+      popup: P.receiveResults(
+        result.app.popup,
+        result.app.state,
+        result.effects.search.items
+          .filter((item) => item.content.startsWith(result.effects!.search!.query))
+          .map((r) => r.thing),
+      ),
+    });
+  }
+
   return events.reduce(
     (app_, event) => {
-      if (typeof event === "function") return update(app_, event(view(app_)));
-      else return update(app_, event);
+      return executeSearch(typeof event === "function" ? handle(app_, event(view(app_))) : handle(app_, event));
     },
     _isOnline in app ? (app as App) : of(app as ItemGraph),
   );
@@ -307,9 +319,9 @@ export function focusedId(app: App): number | null {
   return T.focused(app.tree)?.id ?? null;
 }
 
-export type View = ({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView);
+export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView)) & {popup: P.View};
 
 export function view(app: App): View {
-  if (app.tab === "orphans") return {...O.view(app), tab: "orphans"};
-  else return {...Ou.fromApp(app), tab: "outline"};
+  if (app.tab === "orphans") return {...O.view(app), tab: "orphans", popup: P.view(app)};
+  else return {...Ou.fromApp(app), tab: "outline", popup: P.view(app)};
 }

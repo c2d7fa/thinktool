@@ -1,48 +1,51 @@
 /// <reference types="@types/jest" />
 
 import * as A from "../app";
-import * as E from "../editor";
 import * as P from ".";
 
 describe("when opening popup while text is selected", () => {
-  let app = A.of({
-    "0": {content: ["Root item"], children: ["1", "2"]},
-    "1": {content: ["This item references Another item."]},
-    "2": {content: ["Another item"]},
+  const app = A.after(
+    {
+      "0": {content: ["Root item"], children: ["1", "2"]},
+      "1": {content: ["This item references Another item."]},
+      "2": {content: ["Another item"]},
+    },
+    [
+      (view) => ({type: "focus", id: (view as A.Outline).root.children[0].id}),
+      (view) => ({
+        type: "edit",
+        editor: {...(view as A.Outline).root.children[0].editor, selection: {from: 21, to: 33}},
+        id: (view as A.Outline).root.children[0].id,
+        focused: true,
+      }),
+    ],
+  );
+
+  test("the expected text is selected", () => {
+    expect(A.selectedText(app)).toEqual("Another item");
   });
 
-  // Focus item "1"
-  app = A.update(app, {type: "focus", id: (A.view(app) as A.Outline).root.children[0].id});
-  const item = (A.view(app) as A.Outline).root.children[0];
+  describe("after searching for an item", () => {
+    const after = A.after(app, [{type: "action", action: "find"}]);
 
-  // Select the text "Another item":
-  app = A.edit(app, item, E.select(A.editor(app, item)!, {from: 21, to: 33}));
-  expect(A.selectedText(app)).toBe("Another item");
+    function opened(app: A.App): P.View & {open: true} {
+      return A.view(app).popup as P.View & {open: true};
+    }
 
-  // Open a popup:
-  const result = A.openPopup(app, (app) => app);
-  app = result.app;
+    test("the popup has the search icon", () => {
+      expect(opened(after).icon).toEqual("search");
+    });
 
-  // Simulate search:
-  app = A.merge(app, {
-    popup: P.receiveResults(
-      app.popup,
-      app.state,
-      result.effects
-        .search!.items.filter((item) => item.content.startsWith(result.effects.search!.query))
-        .map((r) => r.thing),
-    ),
-  });
+    test("the selected text is inserted as the query in the popup", () => {
+      expect(opened(after)).toMatchObject({query: "Another item"});
+    });
 
-  test("that text is inserted as the query in the popup", () => {
-    expect(P.query(app.popup)).toBe("Another item");
-  });
+    test("results are popuplated", () => {
+      expect(opened(after).results).toMatchObject([{content: ["Another item"]}]);
+    });
 
-  test("results are popuplated", () => {
-    expect(P.results(app.popup).length).toBe(1);
-  });
-
-  test("the first match is selected", () => {
-    expect(P.isThingActive(app.popup, "2")).toBe(true);
+    test("the first match is selected", () => {
+      expect(opened(after).results).toMatchObject([{isSelected: true}]);
+    });
   });
 });
