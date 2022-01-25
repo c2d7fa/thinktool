@@ -5,12 +5,13 @@ windows:
     panes:
       - shell_command:
           - source .env
-          - cd src/web
-          - yarn run dev
-      - shell_command:
-          - source .env
           - cd src/client
-          - yarn run watch
+          - yarn install --frozen-lockfile
+          - yarn watch
+      - shell_command:
+        - source .env
+        - cd src/client
+        - python -m http.server 3000
       - shell_command:
           - source .env
           - cd src/client
@@ -20,6 +21,7 @@ windows:
       - shell_command:
           - source .env
           - cd src/server
+          - docker start thinktool-postgres
           - node dist/server.js
       - shell_command:
           - source .env
@@ -28,10 +30,4 @@ windows:
       - shell_command:
           - source .env
           - cd src/server
-          - yarn run watch
-  - layout: even-vertical
-    panes:
-      - shell_command:
-          - source .env
-          - cd src/search
           - yarn run watch

@@ -56,7 +56,7 @@
   },
   "scripts": {
     "build": "webpack",
-    "watch": "webpack --watch --mode=development",
+    "watch": "webpack --watch --config webpack.dev.js",
     "test": "jest --roots tests --roots src",
     "test-watch": "jest --watchAll --roots tests --roots src"
   },
