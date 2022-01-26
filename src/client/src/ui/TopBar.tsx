@@ -1,36 +1,21 @@
 import * as React from "react";
 
 import {ExternalLink} from "./ExternalLink";
-import {SearchBar, useSearchBarProps} from "../search-bar";
+import {SearchBar} from "../search-bar";
 import {ServerApi} from "../sync/server-api";
-import {App, UpdateApp} from "../app";
 import * as A from "../app";
 
 import * as Icons from "./icons";
 
 const styles = require("./TopBar.module.scss").default;
 
-export function useTopBarProps(args: {
-  app: App;
-  send: (event: A.Event) => void;
-  updateApp: UpdateApp;
-  isToolbarShown: boolean;
-  setIsToolbarShown(b: boolean): void;
-  server?: ServerApi;
-  username?: string;
-}): Parameters<typeof TopBar>[0] {
-  return {
-    isToolbarShown: args.isToolbarShown,
-    login:
-      args.username === undefined || args.server === undefined
-        ? null
-        : {
-            username: args.username,
-            logOutUrl: args.server.logOutUrl,
-          },
-    onToggleToolbar: () => args.setIsToolbarShown(!args.isToolbarShown),
-    searchBar: useSearchBarProps(args.app, args.updateApp, args.send),
-  };
+export function login(args: {server?: ServerApi; username?: string}) {
+  return args.username === undefined || args.server === undefined
+    ? null
+    : {
+        username: args.username,
+        logOutUrl: args.server.logOutUrl,
+      };
 }
 
 export function TopBar(props: {
@@ -39,7 +24,8 @@ export function TopBar(props: {
 
   onToggleToolbar(): void;
 
-  searchBar: Parameters<typeof SearchBar>[0];
+  popup: Parameters<typeof SearchBar>[0]["popup"];
+  send(event: A.Event): void;
 }) {
   return (
     <div className={styles.topBar}>
@@ -52,7 +38,7 @@ export function TopBar(props: {
         </button>
       </div>
       <div className={styles.middle}>
-        <SearchBar {...props.searchBar} />
+        <SearchBar popup={props.popup} send={props.send} />
       </div>
       <div className={styles.right}>
         {props.login && (

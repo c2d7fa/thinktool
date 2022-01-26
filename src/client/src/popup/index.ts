@@ -1,6 +1,8 @@
 import * as A from "../app";
 import * as D from "../data";
 import * as E from "../editor";
+import * as Ac from "../actions";
+import * as Sh from "../shortcuts";
 
 const _isOpen = Symbol("active");
 const _query = Symbol("query");
@@ -10,9 +12,18 @@ const _select = Symbol("select");
 const _icon = Symbol("icon");
 
 export type View =
-  | {icon: "search" | "insert" | "link"; open: false}
   | {
       icon: "search" | "insert" | "link";
+      open: false;
+      description: string;
+      shortcut: string;
+      action: "find" | "replace" | "insert-link";
+    }
+  | {
+      icon: "search" | "insert" | "link";
+      description: string;
+      shortcut: string;
+      action: "find" | "replace" | "insert-link";
       open: true;
       query: string;
       isQuerySelected: boolean;
@@ -221,12 +232,27 @@ export function handle(app: A.App, event: Event): {app: A.App; effects: A.Effect
 export function view(app: A.App): View {
   const popup = app.popup;
 
-  if (!isOpen(popup)) return {open: false, icon: icon(app)};
+  const icon_ = icon(app);
+  const action = icon_ === "search" ? "find" : icon_ === "insert" ? "replace" : "insert-link";
+  const description =
+    icon_ === "search"
+      ? "search"
+      : icon_ === "insert"
+      ? "connect an existing item"
+      : icon_ === "link"
+      ? "insert a link"
+      : "";
+
+  if (!isOpen(popup))
+    return {open: false, icon: icon_, description, shortcut: Sh.format(Ac.shortcut(action)), action};
 
   return {
     open: true,
     icon: icon(app),
     query: popup[_query],
+    action,
+    description,
+    shortcut: Sh.format(Ac.shortcut(action)),
     isQuerySelected: isThingActive(popup, null),
     results: results(popup).map((result) => {
       return {
