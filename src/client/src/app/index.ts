@@ -228,12 +228,17 @@ export type Event =
   | {type: "dragHover"; id: number | null}
   | {type: "dragEnd"; modifier: "move" | "copy"}
   | {type: "action"; action: Ac.ActionName}
-  | {type: "orphans"; event: O.OrphansEvent};
+  | {type: "orphans"; event: O.OrphansEvent}
+  | ({topic: "popup"} & P.Event);
 
-export type Effects = {search?: {items: {thing: string; content: string}[]; query: string}; url?: string};
+export type Effects = {search?: {items?: {thing: string; content: string}[]; query: string}; url?: string};
 
 function unreachable(x: never): never {
   return x;
+}
+
+function isPopupEvent(e: Event): e is {topic: "popup"} & P.Event {
+  return "topic" in e && e.topic === "popup";
 }
 
 export function handle(app: App, event: Event): {app: App; effects?: Effects} {
@@ -276,6 +281,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return {app: R.drop(app, event.modifier)};
   } else if (event.type === "orphans") {
     return O.handle(app, event.event);
+  } else if (isPopupEvent(event)) {
+    return P.handle(app, event);
   } else {
     return unreachable(event);
   }
@@ -292,7 +299,8 @@ export function after(app: App | ItemGraph, events: (Event | ((view: View) => Ev
       popup: P.receiveResults(
         result.app.popup,
         result.app.state,
-        result.effects.search.items
+        D.allThings(result.app.state)
+          .map((thing) => ({thing, content: D.contentText(result.app.state, thing)}))
           .filter((item) => item.content.startsWith(result.effects!.search!.query))
           .map((r) => r.thing),
       ),

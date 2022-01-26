@@ -333,7 +333,6 @@ function App_({
     setIsToolbarShown,
     username,
     server,
-    search: (query) => search.query(query, 25),
   });
 
   const onToolbarButtonPressed = React.useCallback((action) => send({type: "action", action}), [send]);
@@ -390,7 +389,9 @@ function useSendAppEvent({
       const result = A.handle(app, event);
       if (result?.effects?.url) openExternalUrl(result.effects.url);
       if (result?.effects?.search) {
-        search.reset(result.effects.search.items);
+        if (result.effects.search.items) {
+          search.reset(result.effects.search.items);
+        }
         search.query(result.effects.search.query, 25);
       }
       return result.app;

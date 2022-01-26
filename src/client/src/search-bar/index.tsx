@@ -47,7 +47,6 @@ export function useSearchBarProps(
   app: A.App,
   updateApp: A.UpdateApp,
   send: (event: A.Event) => void,
-  search: (query: string) => void,
 ): Parameters<typeof SearchBar>[0] {
   function updatePopup(f: (state: P.State) => P.State): void {
     updateApp((app) => A.merge(app, {popup: f(app.popup)}));
@@ -68,18 +67,14 @@ export function useSearchBarProps(
     shortcut: Sh.format(Ac.shortcut(action)),
     description,
     popup: A.view(app).popup,
+
     onActivate: () => send({type: "action", action}),
-    onQuery(query: string) {
-      updatePopup((popup) => P.setQuery(popup, query));
-      search(query);
-    },
-    onAbort() {
-      updatePopup(P.close);
-    },
-    onUp: () => updatePopup((popup) => P.activatePrevious(popup)),
-    onDown: () => updatePopup((popup) => P.activateNext(popup)),
-    onSelect: (thing) => updateApp((app) => P.selectThing(app, thing)),
-    onSelectActive: () => updateApp((app) => P.selectActive(app)),
+    onQuery: (query: string) => send({topic: "popup", type: "query", query}),
+    onAbort: () => send({topic: "popup", type: "close"}),
+    onUp: () => send({topic: "popup", type: "up"}),
+    onDown: () => send({topic: "popup", type: "down"}),
+    onSelect: (thing) => send({topic: "popup", type: "pick", thing}),
+    onSelectActive: () => send({topic: "popup", type: "select"}),
   };
 }
 

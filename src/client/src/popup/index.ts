@@ -32,6 +32,14 @@ type Result = {
   parents: {id: string; text: string}[];
 };
 
+export type Event =
+  | {type: "up"}
+  | {type: "down"}
+  | {type: "select"}
+  | {type: "close"}
+  | {type: "query"; query: string}
+  | {type: "pick"; thing: string};
+
 export type State =
   | {[_isOpen]: false}
   | {
@@ -60,7 +68,7 @@ export function open(
   };
 }
 
-export function close(state: State): State {
+function close(state: State): State {
   return {[_isOpen]: false};
 }
 
@@ -68,7 +76,7 @@ export function isOpen(state: State): state is State & {[_isOpen]: true} {
   return state[_isOpen];
 }
 
-export function setQuery(state: State, query: string): State {
+function setQuery(state: State, query: string): State {
   if (!isOpen(state)) {
     console.warn("Tried to set query, but popup isn't open.");
     return state;
@@ -109,7 +117,7 @@ function isThingActive(state: State, thing: string | null): boolean {
   return state[_results][state[_activeIndex]!]?.thing === thing;
 }
 
-export function activatePrevious(state: State): State {
+function activatePrevious(state: State): State {
   if (!isOpen(state)) {
     console.warn("Tried to modify selection, but popup isn't open.");
     return state;
@@ -119,7 +127,7 @@ export function activatePrevious(state: State): State {
   else return {...state, [_activeIndex]: state[_activeIndex]! - 1};
 }
 
-export function activateNext(state: State): State {
+function activateNext(state: State): State {
   if (!isOpen(state)) {
     console.warn("Tried to modify selection, but popup isn't open.");
     return state;
@@ -129,7 +137,7 @@ export function activateNext(state: State): State {
   else return {...state, [_activeIndex]: state[_activeIndex]! + 1};
 }
 
-export function selectActive(app: A.App): A.App {
+function selectActive(app: A.App): A.App {
   if (!isOpen(app.popup)) {
     console.warn("Tried to select item, but popup isn't open.");
     return app;
@@ -147,7 +155,7 @@ export function selectActive(app: A.App): A.App {
   }
 }
 
-export function selectThing(app: A.App, thing: string | null): A.App {
+function selectThing(app: A.App, thing: string | null): A.App {
   let result = app;
 
   if (!isOpen(result.popup)) {
@@ -180,6 +188,34 @@ function icon(app: A.App): "search" | "insert" | "link" {
   if (editor === null) return "search";
   else if (E.isEmpty(editor)) return "insert";
   else return "link";
+}
+
+function update(state: State, event: Event & {type: "up" | "down" | "close"}): State {
+  if (event.type === "up") {
+    return activatePrevious(state);
+  } else if (event.type === "down") {
+    return activateNext(state);
+  } else if (event.type === "close") {
+    return close(state);
+  } else {
+    const unreachable: never = event;
+    return unreachable;
+  }
+}
+
+export function handle(app: A.App, event: Event): {app: A.App; effects: A.Effects} {
+  if (event.type === "up" || event.type === "down" || event.type === "close") {
+    return {app: A.merge(app, {popup: update(app.popup, event)}), effects: {}};
+  } else if (event.type === "query") {
+    return {app: A.merge(app, {popup: setQuery(app.popup, event.query)}), effects: {search: {query: event.query}}};
+  } else if (event.type === "pick") {
+    return {app: selectThing(app, event.thing), effects: {}};
+  } else if (event.type === "select") {
+    return {app: selectActive(app), effects: {}};
+  } else {
+    const unreachable: never = event;
+    return unreachable;
+  }
 }
 
 export function view(app: A.App): View {

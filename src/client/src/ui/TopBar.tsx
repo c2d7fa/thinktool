@@ -18,7 +18,6 @@ export function useTopBarProps(args: {
   setIsToolbarShown(b: boolean): void;
   server?: ServerApi;
   username?: string;
-  search(query: string): void;
 }): Parameters<typeof TopBar>[0] {
   return {
     isToolbarShown: args.isToolbarShown,
@@ -30,7 +29,7 @@ export function useTopBarProps(args: {
             logOutUrl: args.server.logOutUrl,
           },
     onToggleToolbar: () => args.setIsToolbarShown(!args.isToolbarShown),
-    searchBar: useSearchBarProps(args.app, args.updateApp, args.send, args.search),
+    searchBar: useSearchBarProps(args.app, args.updateApp, args.send),
   };
 }
 
