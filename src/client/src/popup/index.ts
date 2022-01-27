@@ -3,6 +3,7 @@ import * as D from "../data";
 import * as E from "../editor";
 import * as Ac from "../actions";
 import * as Sh from "../shortcuts";
+import {IconId} from "../ui/icons";
 
 const _isOpen = Symbol("active");
 const _query = Symbol("query");
@@ -13,14 +14,14 @@ const _icon = Symbol("icon");
 
 export type View =
   | {
-      icon: "search" | "insert" | "link";
+      icon: IconId;
       open: false;
       description: string;
       shortcut: string;
       action: "find" | "replace" | "insert-link";
     }
   | {
-      icon: "search" | "insert" | "link";
+      icon: IconId;
       description: string;
       shortcut: string;
       action: "find" | "replace" | "insert-link";
@@ -59,14 +60,14 @@ export type State =
       [_results]: Result[];
       [_activeIndex]: number | null;
       [_select]: (app: A.App, thing: string) => A.App;
-      [_icon]: "search" | "insert" | "link";
+      [_icon]: IconId;
     };
 
 export const initial: State = {[_isOpen]: false};
 
 export function open(
   state: State,
-  args: {query: string; icon: "search" | "insert" | "link"; select(app: A.App, thing: string): A.App},
+  args: {query: string; icon: IconId; select(app: A.App, thing: string): A.App},
 ): State {
   return {
     ...state,
@@ -191,14 +192,14 @@ function selectThing(app: A.App, thing: string | null): A.App {
   return result;
 }
 
-function icon(app: A.App): "search" | "insert" | "link" {
+function icon(app: A.App): IconId {
   if (isOpen(app.popup)) return app.popup[_icon];
 
   const editor = A.focusedEditor(app);
 
-  if (editor === null) return "search";
-  else if (E.isEmpty(editor)) return "insert";
-  else return "link";
+  if (editor === null) return "find";
+  else if (E.isEmpty(editor)) return "insertSibling";
+  else return "insertLink";
 }
 
 function update(state: State, event: Event & {type: "up" | "down" | "close"}): State {
@@ -233,13 +234,13 @@ export function view(app: A.App): View {
   const popup = app.popup;
 
   const icon_ = icon(app);
-  const action = icon_ === "search" ? "find" : icon_ === "insert" ? "replace" : "insert-link";
+  const action = icon_ === "find" ? "find" : icon_ === "insertSibling" ? "replace" : "insert-link";
   const description =
-    icon_ === "search"
+    icon_ === "find"
       ? "search"
-      : icon_ === "insert"
+      : icon_ === "insertSibling"
       ? "connect an existing item"
-      : icon_ === "link"
+      : icon_ === "insertLink"
       ? "insert a link"
       : "";
 

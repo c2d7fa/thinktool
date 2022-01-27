@@ -123,7 +123,7 @@ const updates = {
         const [newState, newTree] = T.insertSiblingAfter(result.state, result.tree, require(target), selection);
         return A.merge(result, {state: newState, tree: newTree});
       },
-      {icon: "insert"},
+      {icon: "insertSibling"},
     );
   },
 
@@ -134,7 +134,7 @@ const updates = {
         const [newState, newTree] = T.insertChild(result.state, result.tree, require(target), selection, 0);
         return A.merge(result, {state: newState, tree: newTree});
       },
-      {icon: "insert"},
+      {icon: "insertChild"},
     );
   },
 
@@ -152,7 +152,7 @@ const updates = {
         });
         return result;
       },
-      {icon: "insert"},
+      {icon: "insertParent"},
     );
   },
 
@@ -166,7 +166,7 @@ const updates = {
       (app, selection) => {
         return A.replace(app, require(target), selection);
       },
-      {icon: "insert"},
+      {icon: "insertSibling"},
     );
   },
 
@@ -295,7 +295,7 @@ const updates = {
         result = applyActionEvent(result, {action: "found", previouslyFocused, thing: selection});
         return result;
       },
-      {icon: "search"},
+      {icon: "find"},
     );
   },
 
@@ -307,7 +307,7 @@ const updates = {
         result = A.editInsertLink(result, require(target), selection);
         return result;
       },
-      {icon: "link"},
+      {icon: "insertLink"},
     );
   },
 

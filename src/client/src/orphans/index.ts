@@ -92,7 +92,7 @@ export function handle(app: A.App, event: OrphansEvent): {app: A.App; effects?: 
     return {app: scan(A.merge(app, {state, tree}))};
   } else if (event.type === "addParent") {
     return A.openPopup(app, (app, parent) => addParent(app, T.thing(app.tree, {id: event.id}), parent), {
-      icon: "insert",
+      icon: "insertParent",
     });
   } else if (event.type === "jump") {
     return {app: A.jump(app, T.thing(app.tree, {id: event.id}))};

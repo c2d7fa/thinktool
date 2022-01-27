@@ -5,8 +5,6 @@ const Style = require("./style.module.scss").default;
 import {classes, choose} from "@johv/miscjs";
 
 import * as A from "../app";
-import * as Sh from "../shortcuts";
-import * as Ac from "../actions";
 import * as P from "../popup";
 
 import {OtherParents} from "../ui/OtherParents";
@@ -75,17 +73,7 @@ export function SearchBar(props: {popup: P.View; send(event: A.Event): void}) {
       }}
     >
       <span className={Style.icon}>
-        <Icon
-          icon={
-            props.popup.icon === "search"
-              ? "find"
-              : props.popup.icon === "insert"
-              ? "insertSibling"
-              : props.popup.icon === "link"
-              ? "insertLink"
-              : "find"
-          }
-        />
+        <Icon icon={props.popup.icon} />
       </span>
       {props.popup.open ? (
         <input

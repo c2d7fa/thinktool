@@ -16,6 +16,7 @@ import {GoalId} from "../goal";
 
 import * as PlaceholderItem from "../ui/PlaceholderItem";
 import * as Ac from "../actions";
+import {IconId} from "../ui/icons";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
@@ -166,7 +167,7 @@ export function switchTab(app: App, tab: "outline" | "orphans"): App {
 export function openPopup(
   app: App,
   useSelection: (app: App, thing: string) => App,
-  args?: {icon: "search" | "insert" | "link"},
+  args?: {icon: IconId},
 ): {app: App; effects: Effects} {
   const items = D.allThings(app.state).map((thing) => ({thing, content: D.contentText(app.state, thing)}));
   const query = selectedText(app);
@@ -175,7 +176,7 @@ export function openPopup(
     popup: P.open(app.popup, {
       query,
       select: useSelection,
-      icon: args?.icon ?? "search",
+      icon: args?.icon ?? "find",
     }),
   });
 

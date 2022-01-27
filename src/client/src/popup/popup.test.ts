@@ -32,7 +32,7 @@ describe("when opening popup while text is selected", () => {
     }
 
     test("the popup has the search icon", () => {
-      expect(opened(after).icon).toEqual("search");
+      expect(opened(after).icon).toEqual("find");
     });
 
     test("the selected text is inserted as the query in the popup", () => {
