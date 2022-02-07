@@ -85,10 +85,10 @@ test("creating an item and then removing it adds it to the inbox", () => {
 
 describe("clicking on another parent in the inbox view jumps there", () => {
   let before = A.of({
-    "0": {content: ["Item 0"]},
-    "1": {children: ["3"], content: ["Item 1"]},
-    "2": {children: ["3"], content: ["Item 2"]},
-    "3": {content: ["Item 3"]},
+    "0": {},
+    "1": {children: ["3"]},
+    "2": {children: ["3"]},
+    "3": {},
   });
   before = A.update(before, {type: "action", action: "view-orphans"});
 
@@ -220,6 +220,10 @@ describe("when both a parent and its child is in the inbox", () => {
 
     const view = A.view(appAfter) as O.OrphansView;
 
+    test("no item has focus", () => {
+      expect(A.focusedId(appAfter)).toBeNull();
+    });
+
     test("there is only one item in the inbox", () => {
       expect(view.items.length).toEqual(1);
     });
@@ -244,6 +248,10 @@ describe("when both a parent and its child is in the inbox", () => {
     ]);
 
     const view = A.view(appAfter) as O.OrphansView;
+
+    test("no item has focus", () => {
+      expect(A.focusedId(appAfter)).toBeNull();
+    });
 
     test("there is only one item in the inbox", () => {
       expect(view.items.length).toEqual(1);

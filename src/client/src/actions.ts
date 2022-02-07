@@ -289,7 +289,7 @@ const updates = {
   "destroy"({app, target}: UpdateArgs) {
     let result = app;
     const [newState, newTree] = T.removeThing(result.state, result.tree, require(target));
-    result = A.merge(result, {state: newState, tree: newTree});
+    result = A.merge(result, {state: newState, tree: T.unfocus(newTree)});
     result = applyActionEvent(result, {action: "destroy"});
     return {app: result, effects: {}};
   },

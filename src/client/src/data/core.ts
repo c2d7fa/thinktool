@@ -39,7 +39,7 @@ export function childConnections(state: State, thing: string): Connection[] {
 export function content(state: State, thing: string): Content {
   const data = state._things[thing];
   if (data === undefined) {
-    console.warn("Getting content of non-existent item %o", thing);
+    console.warn("Getting content of non-existent item %o in %o", thing, state);
     return [];
   }
   return data.content ?? [];
