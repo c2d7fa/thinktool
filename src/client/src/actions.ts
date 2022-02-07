@@ -1,5 +1,4 @@
 import * as T from "./tree";
-import * as P from "./popup";
 import * as Tutorial from "./tutorial";
 import * as S from "./shortcuts";
 import * as Goal from "./goal";
@@ -102,6 +101,16 @@ function require<T>(x: T | null): T {
   return x;
 }
 
+export type ActionPhrase = InitialActionPhrase & {object: string};
+
+export type InitialActionPhrase =
+  | {verb: "insertSibling"; subject: NodeRef}
+  | {verb: "insertChild"; subject: NodeRef}
+  | {verb: "insertParent"; subject: NodeRef}
+  | {verb: "insertLink"; subject: NodeRef}
+  | {verb: "replace"; subject: NodeRef}
+  | {verb: "find"};
+
 function applyActionEvent(app: App, event: Goal.ActionEvent): App {
   return A.merge(app, {tutorialState: Tutorial.action(app.tutorialState, event)});
 }
@@ -111,42 +120,37 @@ type UpdateArgs = {
   target: NodeRef | null;
 };
 
-export function acceptSelection(app: A.App, result: P.PopupSelection): A.App {
-  if (result.action === "insertSibling") {
-    const target = T.focused(app.tree);
-    const [newState, newTree] = T.insertSiblingAfter(app.state, app.tree, require(target), result.thing);
+export function evaluatePhrase(app: A.App, phrase: ActionPhrase): A.App {
+  if (phrase.verb === "insertSibling") {
+    const [newState, newTree] = T.insertSiblingAfter(app.state, app.tree, phrase.subject, phrase.object);
     return A.merge(app, {state: newState, tree: newTree});
-  } else if (result.action === "insertChild") {
-    const target = T.focused(app.tree);
-    const [newState, newTree] = T.insertChild(app.state, app.tree, require(target), result.thing, 0);
+  } else if (phrase.verb === "insertChild") {
+    const [newState, newTree] = T.insertChild(app.state, app.tree, phrase.subject, phrase.object, 0);
     return A.merge(app, {state: newState, tree: newTree});
-  } else if (result.action === "insertParent") {
-    const target = T.focused(app.tree);
+  } else if (phrase.verb === "insertParent") {
     let app_ = app;
-    const [newState, newTree] = T.insertParent(app_.state, app_.tree, require(target), result.thing);
+    const [newState, newTree] = T.insertParent(app_.state, app_.tree, phrase.subject, phrase.object);
     app_ = A.merge(app_, {state: newState, tree: newTree});
     app_ = applyActionEvent(app_, {
       action: "inserted-parent",
-      childNode: require(target),
+      childNode: phrase.subject,
       newState,
       newTree,
     });
     return app_;
-  } else if (result.action === "replace") {
-    const target = T.focused(app.tree);
-    return A.replace(app, require(target), result.thing);
-  } else if (result.action === "find") {
+  } else if (phrase.verb === "replace") {
+    return A.replace(app, phrase.subject, phrase.object);
+  } else if (phrase.verb === "find") {
     const previouslyFocused = T.thing(app.tree, T.root(app.tree));
-    let app_ = A.jump(app, result.thing);
-    app_ = applyActionEvent(app_, {action: "found", previouslyFocused, thing: result.thing});
+    let app_ = A.jump(app, phrase.object);
+    app_ = applyActionEvent(app_, {action: "found", previouslyFocused, thing: phrase.object});
     return app_;
-  } else if (result.action === "insertLink") {
-    const target = T.focused(app.tree);
+  } else if (phrase.verb === "insertLink") {
     let app_ = applyActionEvent(app, {action: "link-inserted"});
-    app_ = A.editInsertLink(app_, require(target), result.thing);
+    app_ = A.editInsertLink(app_, phrase.subject, phrase.object);
     return app_;
   } else {
-    const unreachable: never = result.action;
+    const unreachable: never = phrase;
     return unreachable;
   }
 }
@@ -157,23 +161,31 @@ const updates = {
   },
 
   "insert-sibling"({app}: UpdateArgs) {
-    return A.openPopup(app, "insertSibling", {icon: "insertSibling"});
+    const subject = T.focused(app.tree);
+    if (!subject) return {app, effects: {}};
+    return A.openPopup(app, {verb: "insertSibling", subject, icon: "insertSibling"});
   },
 
   "insert-child"({app}: UpdateArgs) {
-    return A.openPopup(app, "insertChild", {icon: "insertChild"});
+    const subject = T.focused(app.tree);
+    if (!subject) return {app, effects: {}};
+    return A.openPopup(app, {verb: "insertChild", subject, icon: "insertChild"});
   },
 
   "insert-parent"({app}: UpdateArgs) {
-    return A.openPopup(app, "insertParent", {icon: "insertParent"});
+    const subject = T.focused(app.tree);
+    if (!subject) return {app, effects: {}};
+    return A.openPopup(app, {verb: "insertParent", subject, icon: "insertParent"});
   },
 
   "insert-link"({app}: UpdateArgs) {
-    return A.openPopup(app, "insertLink", {icon: "insertLink"});
+    const subject = T.focused(app.tree);
+    if (!subject) return {app, effects: {}};
+    return A.openPopup(app, {verb: "insertLink", subject, icon: "insertLink"});
   },
 
   "find"({app}: UpdateArgs) {
-    return A.openPopup(app, "find", {icon: "find"});
+    return A.openPopup(app, {verb: "find", icon: "find"});
   },
 
   "replace"({app, target}: UpdateArgs) {
@@ -181,7 +193,9 @@ const updates = {
       console.log("Refusing to replace item because it already has content");
       return {app, effects: {}};
     }
-    return A.openPopup(app, "replace", {icon: "insertSibling"});
+    const subject = T.focused(app.tree);
+    if (!subject) return {app, effects: {}};
+    return A.openPopup(app, {verb: "replace", subject, icon: "insertSibling"});
   },
 
   "new"({app, target}: UpdateArgs) {

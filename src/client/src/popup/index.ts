@@ -9,7 +9,7 @@ const _isOpen = Symbol("active");
 const _query = Symbol("query");
 const _results = Symbol("results");
 const _activeIndex = Symbol("activeIndex");
-const _action = Symbol("action");
+const _actionPhrase = Symbol("actionPhrase");
 const _icon = Symbol("icon");
 
 export type View =
@@ -52,9 +52,6 @@ export type Event =
   | {type: "query"; query: string}
   | {type: "pick"; thing: string};
 
-export type PopupAction = "insertSibling" | "insertChild" | "insertParent" | "insertLink" | "replace" | "find";
-export type PopupSelection = {action: PopupAction; thing: string};
-
 export type State =
   | {[_isOpen]: false}
   | {
@@ -62,20 +59,20 @@ export type State =
       [_query]: string;
       [_results]: Result[];
       [_activeIndex]: number | null;
-      [_action]: PopupAction;
+      [_actionPhrase]: Ac.InitialActionPhrase;
       [_icon]: IconId;
     };
 
 export const initial: State = {[_isOpen]: false};
 
-export function open(state: State, args: {query: string; icon: IconId; action: PopupAction}): State {
+export function open(state: State, args: {query: string; icon: IconId} & Ac.InitialActionPhrase): State {
   return {
     ...state,
     [_isOpen]: true,
     [_query]: args.query,
     [_results]: [],
     [_activeIndex]: 0,
-    [_action]: args.action,
+    [_actionPhrase]: {...args},
     [_icon]: args.icon,
   };
 }
@@ -182,9 +179,9 @@ function selectThing(app: A.App, thing: string | null): A.App {
     result = A.merge(result, {state});
 
     if (!isOpen(result.popup)) throw "logic error";
-    result = Ac.acceptSelection(result, {action: result.popup[_action], thing: newItem});
+    result = Ac.evaluatePhrase(result, {...result.popup[_actionPhrase], object: newItem});
   } else {
-    result = Ac.acceptSelection(result, {action: result.popup[_action], thing});
+    result = Ac.evaluatePhrase(result, {...result.popup[_actionPhrase], object: thing});
   }
 
   result = A.merge(result, {popup: close(result.popup)});
