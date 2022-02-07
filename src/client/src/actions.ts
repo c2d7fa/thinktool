@@ -6,6 +6,7 @@ import * as Goal from "./goal";
 import {NodeRef} from "./tree";
 import {App} from "./app";
 import * as A from "./app";
+import {IconId} from "./ui/icons";
 
 export type ActionName =
   | "insert-sibling"
@@ -111,63 +112,77 @@ type UpdateArgs = {
   target: NodeRef | null;
 };
 
+type PopupResultAction = "insertSibling" | "insertChild" | "insertParent" | "insertLink" | "replace" | "find";
+type PopupResult = {action: PopupResultAction; thing: string};
+
+function accept(app: A.App, result: PopupResult): A.App {
+  if (result.action === "insertSibling") {
+    const target = T.focused(app.tree);
+    const [newState, newTree] = T.insertSiblingAfter(app.state, app.tree, require(target), result.thing);
+    return A.merge(app, {state: newState, tree: newTree});
+  } else if (result.action === "insertChild") {
+    const target = T.focused(app.tree);
+    const [newState, newTree] = T.insertChild(app.state, app.tree, require(target), result.thing, 0);
+    return A.merge(app, {state: newState, tree: newTree});
+  } else if (result.action === "insertParent") {
+    const target = T.focused(app.tree);
+    let app_ = app;
+    const [newState, newTree] = T.insertParent(app_.state, app_.tree, require(target), result.thing);
+    app_ = A.merge(app_, {state: newState, tree: newTree});
+    app_ = applyActionEvent(app_, {
+      action: "inserted-parent",
+      childNode: require(target),
+      newState,
+      newTree,
+    });
+    return app_;
+  } else if (result.action === "replace") {
+    const target = T.focused(app.tree);
+    return A.replace(app, require(target), result.thing);
+  } else if (result.action === "find") {
+    const previouslyFocused = T.thing(app.tree, T.root(app.tree));
+    let app_ = A.jump(app, result.thing);
+    app_ = applyActionEvent(app_, {action: "found", previouslyFocused, thing: result.thing});
+    return app_;
+  } else if (result.action === "insertLink") {
+    const target = T.focused(app.tree);
+    let app_ = applyActionEvent(app, {action: "link-inserted"});
+    app_ = A.editInsertLink(app_, require(target), result.thing);
+    return app_;
+  } else {
+    const unreachable: never = result.action;
+    return unreachable;
+  }
+}
+
+function openingPopup({
+  action,
+  icon,
+}: {
+  action: PopupResultAction;
+  icon: IconId;
+}): (args: UpdateArgs) => {app: A.App; effects: A.Effects} {
+  return ({app}: UpdateArgs) => {
+    return A.openPopup(app, (result, selection) => accept(result, {action, thing: selection}), {icon});
+  };
+}
+
 const updates = {
   "unfold"({target, app}: UpdateArgs) {
     return {app: A.unfold(app, require(target)), effects: {}};
   },
 
-  "insert-sibling"({app, target}: UpdateArgs) {
-    return A.openPopup(
-      app,
-      (result, selection) => {
-        const [newState, newTree] = T.insertSiblingAfter(result.state, result.tree, require(target), selection);
-        return A.merge(result, {state: newState, tree: newTree});
-      },
-      {icon: "insertSibling"},
-    );
-  },
-
-  "insert-child"({app, target}: UpdateArgs) {
-    return A.openPopup(
-      app,
-      (result, selection) => {
-        const [newState, newTree] = T.insertChild(result.state, result.tree, require(target), selection, 0);
-        return A.merge(result, {state: newState, tree: newTree});
-      },
-      {icon: "insertChild"},
-    );
-  },
-
-  "insert-parent"({app, target}: UpdateArgs) {
-    return A.openPopup(
-      app,
-      (result, selection) => {
-        const [newState, newTree] = T.insertParent(result.state, result.tree, require(target), selection);
-        result = A.merge(result, {state: newState, tree: newTree});
-        result = applyActionEvent(result, {
-          action: "inserted-parent",
-          childNode: require(target),
-          newState,
-          newTree,
-        });
-        return result;
-      },
-      {icon: "insertParent"},
-    );
-  },
-
+  "insert-sibling": openingPopup({action: "insertSibling", icon: "insertSibling"}),
+  "insert-child": openingPopup({action: "insertChild", icon: "insertChild"}),
+  "insert-parent": openingPopup({action: "insertParent", icon: "insertParent"}),
+  "insert-link": openingPopup({action: "insertLink", icon: "insertLink"}),
+  "find": openingPopup({action: "find", icon: "find"}),
   "replace"({app, target}: UpdateArgs) {
     if (A.editor(app, require(target))!.content.length !== 0) {
       console.log("Refusing to replace item because it already has content");
       return {app, effects: {}};
     }
-    return A.openPopup(
-      app,
-      (app, selection) => {
-        return A.replace(app, require(target), selection);
-      },
-      {icon: "insertSibling"},
-    );
+    return openingPopup({action: "replace", icon: "insertSibling"})({app, target});
   },
 
   "new"({app, target}: UpdateArgs) {
@@ -284,31 +299,6 @@ const updates = {
     result = applyActionEvent(result, {action: "home"});
     result = A.merge(result, {tree: newTree});
     return {app: result, effects: {}};
-  },
-
-  "find"({app}: UpdateArgs) {
-    const previouslyFocused = T.thing(app.tree, T.root(app.tree));
-    return A.openPopup(
-      app,
-      (result, selection) => {
-        result = A.jump(result, selection);
-        result = applyActionEvent(result, {action: "found", previouslyFocused, thing: selection});
-        return result;
-      },
-      {icon: "find"},
-    );
-  },
-
-  "insert-link"({app, target}: UpdateArgs) {
-    return A.openPopup(
-      app,
-      (result, selection) => {
-        result = applyActionEvent(result, {action: "link-inserted"});
-        result = A.editInsertLink(result, require(target), selection);
-        return result;
-      },
-      {icon: "insertLink"},
-    );
   },
 
   "undo"({app}: UpdateArgs) {
