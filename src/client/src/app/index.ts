@@ -164,18 +164,14 @@ export function switchTab(app: App, tab: "outline" | "orphans"): App {
   throw "unknown tab!";
 }
 
-export function openPopup(
-  app: App,
-  useSelection: (app: App, thing: string) => App,
-  args?: {icon: IconId},
-): {app: App; effects: Effects} {
+export function openPopup(app: App, action: P.PopupAction, args?: {icon: IconId}): {app: App; effects: Effects} {
   const items = D.allThings(app.state).map((thing) => ({thing, content: D.contentText(app.state, thing)}));
   const query = selectedText(app);
 
   const app_ = merge(app, {
     popup: P.open(app.popup, {
       query,
-      select: useSelection,
+      action,
       icon: args?.icon ?? "find",
     }),
   });

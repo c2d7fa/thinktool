@@ -6,7 +6,6 @@ import * as Goal from "./goal";
 import {NodeRef} from "./tree";
 import {App} from "./app";
 import * as A from "./app";
-import {IconId} from "./ui/icons";
 
 export type ActionName =
   | "insert-sibling"
@@ -112,10 +111,7 @@ type UpdateArgs = {
   target: NodeRef | null;
 };
 
-type PopupResultAction = "insertSibling" | "insertChild" | "insertParent" | "insertLink" | "replace" | "find";
-type PopupResult = {action: PopupResultAction; thing: string};
-
-function accept(app: A.App, result: PopupResult): A.App {
+export function acceptSelection(app: A.App, result: P.PopupSelection): A.App {
   if (result.action === "insertSibling") {
     const target = T.focused(app.tree);
     const [newState, newTree] = T.insertSiblingAfter(app.state, app.tree, require(target), result.thing);
@@ -155,34 +151,37 @@ function accept(app: A.App, result: PopupResult): A.App {
   }
 }
 
-function openingPopup({
-  action,
-  icon,
-}: {
-  action: PopupResultAction;
-  icon: IconId;
-}): (args: UpdateArgs) => {app: A.App; effects: A.Effects} {
-  return ({app}: UpdateArgs) => {
-    return A.openPopup(app, (result, selection) => accept(result, {action, thing: selection}), {icon});
-  };
-}
-
 const updates = {
   "unfold"({target, app}: UpdateArgs) {
     return {app: A.unfold(app, require(target)), effects: {}};
   },
 
-  "insert-sibling": openingPopup({action: "insertSibling", icon: "insertSibling"}),
-  "insert-child": openingPopup({action: "insertChild", icon: "insertChild"}),
-  "insert-parent": openingPopup({action: "insertParent", icon: "insertParent"}),
-  "insert-link": openingPopup({action: "insertLink", icon: "insertLink"}),
-  "find": openingPopup({action: "find", icon: "find"}),
+  "insert-sibling"({app}: UpdateArgs) {
+    return A.openPopup(app, "insertSibling", {icon: "insertSibling"});
+  },
+
+  "insert-child"({app}: UpdateArgs) {
+    return A.openPopup(app, "insertChild", {icon: "insertChild"});
+  },
+
+  "insert-parent"({app}: UpdateArgs) {
+    return A.openPopup(app, "insertParent", {icon: "insertParent"});
+  },
+
+  "insert-link"({app}: UpdateArgs) {
+    return A.openPopup(app, "insertLink", {icon: "insertLink"});
+  },
+
+  "find"({app}: UpdateArgs) {
+    return A.openPopup(app, "find", {icon: "find"});
+  },
+
   "replace"({app, target}: UpdateArgs) {
     if (A.editor(app, require(target))!.content.length !== 0) {
       console.log("Refusing to replace item because it already has content");
       return {app, effects: {}};
     }
-    return openingPopup({action: "replace", icon: "insertSibling"})({app, target});
+    return A.openPopup(app, "replace", {icon: "insertSibling"});
   },
 
   "new"({app, target}: UpdateArgs) {
