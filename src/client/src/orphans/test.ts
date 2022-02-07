@@ -278,3 +278,49 @@ test("with an item in the outline and inbox, switching back and forth doesn't cr
     ],
   );
 });
+
+describe("connecting item in inbox by adding a parent", () => {
+  const app = A.after(
+    {
+      "0": {content: ["Root"]},
+      "1": {content: ["Inbox 1"]},
+      "2": {content: ["Inbox 2"]},
+    },
+    [{type: "action", action: "view-orphans"}],
+  );
+
+  test("two items are shown in the inbox", () => {
+    expect((A.view(app) as O.OrphansView).items.length).toEqual(2);
+  });
+
+  describe("after clicking the connect button on the first item", () => {
+    const afterConnect = A.after(app, [
+      (view) => ({
+        type: "orphans",
+        event: {
+          type: "addParent",
+          id: (view as O.OrphansView).items[0].id,
+        },
+      }),
+    ]);
+
+    test("the popup is opened", () => {
+      expect(A.view(afterConnect).popup.open).toEqual(true);
+    });
+
+    describe("after selecting the root item", () => {
+      A.after(afterConnect, [
+        {topic: "popup", type: "query", query: "Root"},
+        {topic: "popup", type: "select"},
+      ]);
+
+      test("the popup is closed", () => {
+        expect(A.view(afterConnect).popup.open).toEqual(false);
+      });
+
+      test("the inbox contains only one item", () => {
+        expect((A.view(afterConnect) as O.OrphansView).items.length).toEqual(1);
+      });
+    });
+  });
+});
