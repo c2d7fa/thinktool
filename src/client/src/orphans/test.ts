@@ -309,17 +309,17 @@ describe("connecting item in inbox by adding a parent", () => {
     });
 
     describe("after selecting the root item", () => {
-      A.after(afterConnect, [
+      const afterSelect = A.after(afterConnect, [
         {topic: "popup", type: "query", query: "Root"},
         {topic: "popup", type: "select"},
       ]);
 
       test("the popup is closed", () => {
-        expect(A.view(afterConnect).popup.open).toEqual(false);
+        expect(A.view(afterSelect).popup.open).toEqual(false);
       });
 
       test("the inbox contains only one item", () => {
-        expect((A.view(afterConnect) as O.OrphansView).items.length).toEqual(1);
+        expect((A.view(afterSelect) as O.OrphansView).items.length).toEqual(1);
       });
     });
   });

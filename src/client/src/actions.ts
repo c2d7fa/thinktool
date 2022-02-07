@@ -5,6 +5,7 @@ import * as Goal from "./goal";
 import {NodeRef} from "./tree";
 import {App} from "./app";
 import * as A from "./app";
+import {orphansMayBeStale, scan} from "./orphans";
 
 export type ActionName =
   | "insert-sibling"
@@ -121,38 +122,43 @@ type UpdateArgs = {
 };
 
 export function evaluatePhrase(app: A.App, phrase: ActionPhrase): A.App {
-  if (phrase.verb === "insertSibling") {
-    const [newState, newTree] = T.insertSiblingAfter(app.state, app.tree, phrase.subject, phrase.object);
-    return A.merge(app, {state: newState, tree: newTree});
-  } else if (phrase.verb === "insertChild") {
-    const [newState, newTree] = T.insertChild(app.state, app.tree, phrase.subject, phrase.object, 0);
-    return A.merge(app, {state: newState, tree: newTree});
-  } else if (phrase.verb === "insertParent") {
-    let app_ = app;
-    const [newState, newTree] = T.insertParent(app_.state, app_.tree, phrase.subject, phrase.object);
-    app_ = A.merge(app_, {state: newState, tree: newTree});
-    app_ = applyActionEvent(app_, {
-      action: "inserted-parent",
-      childNode: phrase.subject,
-      newState,
-      newTree,
-    });
-    return app_;
-  } else if (phrase.verb === "replace") {
-    return A.replace(app, phrase.subject, phrase.object);
-  } else if (phrase.verb === "find") {
-    const previouslyFocused = T.thing(app.tree, T.root(app.tree));
-    let app_ = A.jump(app, phrase.object);
-    app_ = applyActionEvent(app_, {action: "found", previouslyFocused, thing: phrase.object});
-    return app_;
-  } else if (phrase.verb === "insertLink") {
-    let app_ = applyActionEvent(app, {action: "link-inserted"});
-    app_ = A.editInsertLink(app_, phrase.subject, phrase.object);
-    return app_;
-  } else {
-    const unreachable: never = phrase;
-    return unreachable;
+  function evaluatePhrase_(app: A.App, phrase: ActionPhrase): A.App {
+    if (phrase.verb === "insertSibling") {
+      const [newState, newTree] = T.insertSiblingAfter(app.state, app.tree, phrase.subject, phrase.object);
+      return A.merge(app, {state: newState, tree: newTree});
+    } else if (phrase.verb === "insertChild") {
+      const [newState, newTree] = T.insertChild(app.state, app.tree, phrase.subject, phrase.object, 0);
+      return A.merge(app, {state: newState, tree: newTree});
+    } else if (phrase.verb === "insertParent") {
+      let app_ = app;
+      const [newState, newTree] = T.insertParent(app_.state, app_.tree, phrase.subject, phrase.object);
+      app_ = A.merge(app_, {state: newState, tree: newTree});
+      app_ = applyActionEvent(app_, {
+        action: "inserted-parent",
+        childNode: phrase.subject,
+        newState,
+        newTree,
+      });
+      return app_;
+    } else if (phrase.verb === "replace") {
+      return A.replace(app, phrase.subject, phrase.object);
+    } else if (phrase.verb === "find") {
+      const previouslyFocused = T.thing(app.tree, T.root(app.tree));
+      let app_ = A.jump(app, phrase.object);
+      app_ = applyActionEvent(app_, {action: "found", previouslyFocused, thing: phrase.object});
+      return app_;
+    } else if (phrase.verb === "insertLink") {
+      let app_ = applyActionEvent(app, {action: "link-inserted"});
+      app_ = A.editInsertLink(app_, phrase.subject, phrase.object);
+      return app_;
+    } else {
+      const unreachable: never = phrase;
+      return unreachable;
+    }
   }
+
+  const result = evaluatePhrase_(app, phrase);
+  return orphansMayBeStale(app, result) ? scan(result) : result;
 }
 
 const updates = {
