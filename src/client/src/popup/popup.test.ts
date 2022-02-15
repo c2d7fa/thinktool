@@ -1,48 +1,112 @@
 /// <reference types="@types/jest" />
 
 import * as A from "../app";
-import * as E from "../editor";
-import * as P from ".";
+import {expectViewToMatch} from "../app/test-utils";
 
 describe("when opening popup while text is selected", () => {
-  let app = A.of({
-    "0": {content: ["Root item"], children: ["1", "2"]},
-    "1": {content: ["This item references Another item."]},
-    "2": {content: ["Another item"]},
+  const app = A.after(
+    {
+      "0": {content: ["Root item"], children: ["1", "2"]},
+      "1": {content: ["This item references Another item."]},
+      "2": {content: ["Another item"]},
+    },
+    [
+      (view) => ({type: "focus", id: (view as A.Outline).root.children[0].id}),
+      (view) => ({
+        type: "edit",
+        id: (view as A.Outline).root.children[0].id,
+        editor: {selection: {from: 21, to: 33}},
+      }),
+    ],
+  );
+
+  test("the expected text is selected", () => {
+    expect(A.selectedText(app)).toEqual("Another item");
   });
 
-  // Focus item "1"
-  app = A.update(app, {type: "focus", id: (A.view(app) as A.Outline).root.children[0].id});
-  const item = (A.view(app) as A.Outline).root.children[0];
+  describe("after searching for an item", () => {
+    const after = A.after(app, [{type: "action", action: "find"}]);
+    test("the popup has the search icon", () => {
+      expectViewToMatch(after, {popup: {icon: "find"}});
+    });
 
-  // Select the text "Another item":
-  app = A.edit(app, item, E.select(A.editor(app, item)!, {from: 21, to: 33}));
-  expect(A.selectedText(app)).toBe("Another item");
+    test("the selected text is inserted as the query in the popup", () => {
+      expectViewToMatch(after, {popup: {query: "Another item"}});
+    });
 
-  // Open a popup:
-  const result = A.openPopup(app, (app) => app);
-  app = result.app;
+    test("results are popuplated", () => {
+      expectViewToMatch(after, {popup: {results: [{content: ["Another item"]}]}});
+    });
 
-  // Simulate search:
-  app = A.merge(app, {
-    popup: P.receiveResults(
-      app.popup,
-      app.state,
-      result.effects
-        .search!.items.filter((item) => item.content.startsWith(result.effects.search!.query))
-        .map((r) => r.thing),
-    ),
+    test("the first match is selected", () => {
+      expectViewToMatch(after, {popup: {results: [{isSelected: true}]}});
+    });
+  });
+});
+
+describe("searching for and selecting an item", () => {
+  const app = A.after(
+    {
+      "0": {content: ["Root item"], children: ["1", "2"]},
+      "1": {content: ["Some item"]},
+      "2": {content: ["Another item"]},
+    },
+    [(view) => ({type: "focus", id: (view as A.Outline).root.children[0].id})],
+  );
+
+  describe("at first", () => {
+    test("the popup is closed", () => {
+      expect(A.view(app).popup).toMatchObject({open: false});
+    });
+
+    test("the root item has two children", () => {
+      expectViewToMatch(app, {
+        root: {children: [{editor: {content: ["Some item"]}}, {editor: {content: ["Another item"]}}]},
+      });
+    });
   });
 
-  test("that text is inserted as the query in the popup", () => {
-    expect(P.query(app.popup)).toBe("Another item");
+  const afterOpeningPopup = A.after(app, [{type: "action", action: "insert-sibling"}]);
+
+  describe("after triggering the 'insert sibling' action", () => {
+    test("the popup is shown", () => {
+      expectViewToMatch(afterOpeningPopup, {popup: {open: true}});
+    });
+
+    test("the query text is empty", () => {
+      expectViewToMatch(afterOpeningPopup, {popup: {query: ""}});
+    });
   });
 
-  test("results are popuplated", () => {
-    expect(P.results(app.popup).length).toBe(1);
+  const afterQuery = A.after(afterOpeningPopup, [{topic: "popup", type: "query", query: "Another item"}]);
+
+  describe("after searching for an item", () => {
+    test("the query text is updated", () => {
+      expectViewToMatch(afterQuery, {popup: {query: "Another item"}});
+    });
+
+    test("the matching item is the first result", () => {
+      expectViewToMatch(afterQuery, {popup: {results: [{content: ["Another item"], isSelected: true}]}});
+    });
   });
 
-  test("the first match is selected", () => {
-    expect(P.isThingActive(app.popup, "2")).toBe(true);
+  const afterSelecting = A.after(afterQuery, [{topic: "popup", type: "select"}]);
+
+  describe("after selecting an item", () => {
+    test("the popup is closed", () => {
+      expectViewToMatch(afterSelecting, {popup: {open: false}});
+    });
+
+    test("the selected item is inserted as a sibling and gains focus", () => {
+      expectViewToMatch(afterSelecting, {
+        root: {
+          children: [
+            {editor: {content: ["Some item"]}, hasFocus: false},
+            {editor: {content: ["Another item"]}, hasFocus: true},
+            {editor: {content: ["Another item"]}, hasFocus: false},
+          ],
+        },
+      });
+    });
   });
 });

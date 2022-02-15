@@ -82,18 +82,11 @@ export function scan(app: A.App): A.App {
 }
 
 export function handle(app: A.App, event: OrphansEvent): {app: A.App; effects?: A.Effects} {
-  function addParent(app: A.App, thing: string, parent: string): A.App {
-    const state = D.addChild(app.state, parent, thing)[0];
-    return scan(A.merge(app, {state}));
-  }
-
   if (event.type === "destroy") {
     const [state, tree] = T.removeThing(app.state, app.tree, {id: event.id});
-    return {app: scan(A.merge(app, {state, tree}))};
+    return {app: scan(A.merge(app, {state, tree: T.unfocus(tree)}))};
   } else if (event.type === "addParent") {
-    return A.openPopup(app, (app, parent) => addParent(app, T.thing(app.tree, {id: event.id}), parent), {
-      icon: "insert",
-    });
+    return A.openPopup(app, {verb: "insertParent", subject: {id: event.id}});
   } else if (event.type === "jump") {
     return {app: A.jump(app, T.thing(app.tree, {id: event.id}))};
   } else if (event.type === "item") {

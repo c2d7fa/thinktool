@@ -85,10 +85,10 @@ test("creating an item and then removing it adds it to the inbox", () => {
 
 describe("clicking on another parent in the inbox view jumps there", () => {
   let before = A.of({
-    "0": {content: ["Item 0"]},
-    "1": {children: ["3"], content: ["Item 1"]},
-    "2": {children: ["3"], content: ["Item 2"]},
-    "3": {content: ["Item 3"]},
+    "0": {},
+    "1": {children: ["3"]},
+    "2": {children: ["3"]},
+    "3": {},
   });
   before = A.update(before, {type: "action", action: "view-orphans"});
 
@@ -220,6 +220,10 @@ describe("when both a parent and its child is in the inbox", () => {
 
     const view = A.view(appAfter) as O.OrphansView;
 
+    test("no item has focus", () => {
+      expect(A.focusedId(appAfter)).toBeNull();
+    });
+
     test("there is only one item in the inbox", () => {
       expect(view.items.length).toEqual(1);
     });
@@ -244,6 +248,10 @@ describe("when both a parent and its child is in the inbox", () => {
     ]);
 
     const view = A.view(appAfter) as O.OrphansView;
+
+    test("no item has focus", () => {
+      expect(A.focusedId(appAfter)).toBeNull();
+    });
 
     test("there is only one item in the inbox", () => {
       expect(view.items.length).toEqual(1);
@@ -277,4 +285,50 @@ test("with an item in the outline and inbox, switching back and forth doesn't cr
       (view) => ({type: "action", action: "view-outline"}),
     ],
   );
+});
+
+describe("connecting item in inbox by adding a parent", () => {
+  const app = A.after(
+    {
+      "0": {content: ["Root"]},
+      "1": {content: ["Inbox 1"]},
+      "2": {content: ["Inbox 2"]},
+    },
+    [{type: "action", action: "view-orphans"}],
+  );
+
+  test("two items are shown in the inbox", () => {
+    expect((A.view(app) as O.OrphansView).items.length).toEqual(2);
+  });
+
+  describe("after clicking the connect button on the first item", () => {
+    const afterConnect = A.after(app, [
+      (view) => ({
+        type: "orphans",
+        event: {
+          type: "addParent",
+          id: (view as O.OrphansView).items[0].id,
+        },
+      }),
+    ]);
+
+    test("the popup is opened", () => {
+      expect(A.view(afterConnect).popup.open).toEqual(true);
+    });
+
+    describe("after selecting the root item", () => {
+      const afterSelect = A.after(afterConnect, [
+        {topic: "popup", type: "query", query: "Root"},
+        {topic: "popup", type: "select"},
+      ]);
+
+      test("the popup is closed", () => {
+        expect(A.view(afterSelect).popup.open).toEqual(false);
+      });
+
+      test("the inbox contains only one item", () => {
+        expect((A.view(afterSelect) as O.OrphansView).items.length).toEqual(1);
+      });
+    });
+  });
 });

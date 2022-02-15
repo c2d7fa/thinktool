@@ -5,8 +5,6 @@ const Style = require("./style.module.scss").default;
 import {classes, choose} from "@johv/miscjs";
 
 import * as A from "../app";
-import * as Sh from "../shortcuts";
-import * as Ac from "../actions";
 import * as P from "../popup";
 
 import {OtherParents} from "../ui/OtherParents";
@@ -16,12 +14,12 @@ import {ItemLayout} from "../ui/item";
 import {Icon} from "../ui/icons";
 
 const Result = React.memo(
-  function (props: {result: P.Result; isSelected: boolean; onSelect(): void}) {
+  function (props: {result: (P.View & {open: true})["results"][number]; onSelect(): void}) {
     // Using onPointerDown instead of onClick to circumvent parent getting blur
     // event before we get our events.
     return (
       <div
-        className={classes({[Style.result]: true, [Style.selected]: props.isSelected})}
+        className={classes({[Style.result]: true, [Style.selected]: props.result.isSelected})}
         onPointerDown={(ev) => {
           ev.stopPropagation();
           ev.preventDefault();
@@ -29,103 +27,35 @@ const Result = React.memo(
         }}
       >
         <ItemLayout
-          otherParents={<OtherParents otherParents={props.result.parents} click={() => {}} altClick={() => {}} />}
+          otherParents={
+            <OtherParents otherParents={props.result.otherParents} click={() => {}} altClick={() => {}} />
+          }
           bullet={
-            <Bullet
-              beginDrag={() => {}}
-              status={props.result.hasChildren ? "collapsed" : "terminal"}
-              toggle={() => {}}
-              onMiddleClick={() => {}}
-            />
+            <Bullet beginDrag={() => {}} status={props.result.status} toggle={() => {}} onMiddleClick={() => {}} />
           }
           editor={<StaticContent content={props.result.content} />}
         />
       </div>
     );
   },
-  (prev, next) =>
-    prev.result.thing === next.result.thing &&
-    prev.isSelected === next.isSelected &&
-    prev.onSelect === next.onSelect,
+  (prev, next) => JSON.stringify(prev.result) === JSON.stringify(next.result),
 );
 
-export function useSearchBarProps(
-  app: A.App,
-  updateApp: A.UpdateApp,
-  send: (event: A.Event) => void,
-  search: (query: string) => void,
-): Parameters<typeof SearchBar>[0] {
-  function updatePopup(f: (state: P.State) => P.State): void {
-    updateApp((app) => A.merge(app, {popup: f(app.popup)}));
-  }
-
-  const icon = P.icon(app);
-  const action = icon === "search" ? "find" : icon === "insert" ? "replace" : "insert-link";
-  const description =
-    icon === "search"
-      ? "search"
-      : icon === "insert"
-      ? "connect an existing item"
-      : icon === "link"
-      ? "insert a link"
-      : "";
-
-  return {
-    shortcut: Sh.format(Ac.shortcut(action)),
-    icon,
-    description,
-    isSearching: P.isOpen(app.popup),
-    results: P.isOpen(app.popup) ? P.results(app.popup) : [],
-    isThingActive: (thing) => P.isThingActive(app.popup, thing),
-    onActivate: () => send({type: "action", action}),
-    query: P.isOpen(app.popup) ? P.query(app.popup) : "",
-    isNewItemActive: P.isOpen(app.popup) && P.isThingActive(app.popup, null),
-    onQuery(query: string) {
-      updatePopup((popup) => P.setQuery(popup, query));
-      search(query);
-    },
-    onAbort() {
-      updatePopup(P.close);
-    },
-    onUp: () => updatePopup((popup) => P.activatePrevious(popup)),
-    onDown: () => updatePopup((popup) => P.activateNext(popup)),
-    onSelect: (thing) => updateApp((app) => P.selectThing(app, thing)),
-    onSelectActive: () => updateApp((app) => P.selectActive(app)),
-  };
-}
-
-export function SearchBar(props: {
-  shortcut: string;
-  description: string;
-  icon: "search" | "link" | "insert";
-  isSearching: boolean;
-  query: string;
-  results: P.Result[];
-  isThingActive(thing: string): boolean;
-  isNewItemActive: boolean;
-
-  onActivate(): void;
-  onAbort(): void;
-  onQuery(query: string): void;
-  onUp(): void;
-  onDown(): void;
-  onSelect(thing: string): void;
-  onSelectActive(): void;
-}) {
+export function SearchBar(props: {popup: P.View; send(event: A.Event): void}) {
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    if (inputRef.current !== null && props.isSearching) {
+    if (inputRef.current !== null && props.popup.open) {
       inputRef.current.focus();
     }
-  }, [inputRef, props.isSearching]);
+  }, [inputRef, props.popup.open]);
 
   function onKeyDown(ev: React.KeyboardEvent<HTMLInputElement>): void {
     const {found} = choose(ev.key, {
-      Enter: props.onSelectActive,
-      Escape: props.onAbort,
-      ArrowDown: props.onDown,
-      ArrowUp: props.onUp,
+      Enter: () => props.send({topic: "popup", type: "select"}),
+      Escape: () => props.send({topic: "popup", type: "close"}),
+      ArrowDown: () => props.send({topic: "popup", type: "down"}),
+      ArrowUp: () => props.send({topic: "popup", type: "up"}),
     });
     if (found) ev.preventDefault();
   }
@@ -134,33 +64,23 @@ export function SearchBar(props: {
     <div
       className={classes({
         [Style["search-bar"]]: true,
-        [Style["showresults"]]: props.isSearching && props.results.length > 0,
-        [Style["new-item-selected"]]: props.isNewItemActive,
+        [Style["showresults"]]: (props.popup.open && props.popup.results.length) > 0,
+        [Style["new-item-selected"]]: props.popup.open && props.popup.isQuerySelected,
       })}
       onPointerDown={(ev) => {
         ev.preventDefault();
-        props.onActivate();
+        props.send({topic: "popup", type: "action", action: props.popup.action});
       }}
     >
       <span className={Style.icon}>
-        <Icon
-          icon={
-            props.icon === "search"
-              ? "find"
-              : props.icon === "insert"
-              ? "insertSibling"
-              : props.icon === "link"
-              ? "insertLink"
-              : "find"
-          }
-        />
+        <Icon icon={props.popup.icon} />
       </span>
-      {props.isSearching ? (
+      {props.popup.open ? (
         <input
           ref={inputRef}
-          value={props.query}
-          onChange={(ev) => props.onQuery((ev.target as HTMLInputElement).value)}
-          onBlur={props.onAbort}
+          value={props.popup.query}
+          onChange={(ev) => props.send({topic: "popup", type: "query", query: ev.target.value})}
+          onBlur={() => props.send({topic: "popup", type: "close"})}
           onKeyDown={onKeyDown}
           onPointerDown={(ev) => {
             // Clicks should just reposition the cursor in the input field.
@@ -169,18 +89,18 @@ export function SearchBar(props: {
         />
       ) : (
         <span className={Style.placeholder}>
-          Press <kbd>{props.shortcut}</kbd> to {props.description}.
+          Press <kbd>{props.popup.shortcut}</kbd> to {props.popup.description}.
         </span>
       )}
       <div className={Style.results}>
-        {props.results.map((result) => (
-          <Result
-            key={result.thing}
-            result={result}
-            isSelected={props.isThingActive(result.thing)}
-            onSelect={() => props.onSelect(result.thing)}
-          />
-        ))}
+        {props.popup.open &&
+          props.popup.results.map((result) => (
+            <Result
+              key={result.thing}
+              result={result}
+              onSelect={() => props.send({topic: "popup", type: "pick", thing: result.thing})}
+            />
+          ))}
       </div>
     </div>
   );

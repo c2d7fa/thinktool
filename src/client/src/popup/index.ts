@@ -1,20 +1,55 @@
 import * as A from "../app";
 import * as D from "../data";
 import * as E from "../editor";
+import * as Ac from "../actions";
+import * as Sh from "../shortcuts";
+import {IconId} from "../ui/icons";
 
 const _isOpen = Symbol("active");
 const _query = Symbol("query");
 const _results = Symbol("results");
 const _activeIndex = Symbol("activeIndex");
-const _select = Symbol("select");
-const _icon = Symbol("icon");
+const _actionPhrase = Symbol("actionPhrase");
 
-export type Result = {
+export type View =
+  | {
+      icon: IconId;
+      open: false;
+      description: string;
+      shortcut: string;
+      action: "find" | "replace" | "insert-link";
+    }
+  | {
+      icon: IconId;
+      description: string;
+      shortcut: string;
+      action: "find" | "replace" | "insert-link";
+      open: true;
+      query: string;
+      isQuerySelected: boolean;
+      results: {
+        thing: string;
+        content: A.Item["editor"]["content"];
+        otherParents: A.Item["otherParents"];
+        status: A.Item["status"];
+        isSelected: boolean;
+      }[];
+    };
+
+type Result = {
   thing: string;
   content: E.EditorContent;
   hasChildren: boolean;
   parents: {id: string; text: string}[];
 };
+
+export type Event =
+  | {type: "up"}
+  | {type: "down"}
+  | {type: "select"}
+  | {type: "close"}
+  | {type: "query"; query: string}
+  | {type: "pick"; thing: string};
 
 export type State =
   | {[_isOpen]: false}
@@ -23,41 +58,24 @@ export type State =
       [_query]: string;
       [_results]: Result[];
       [_activeIndex]: number | null;
-      [_select]: (app: A.App, thing: string) => A.App;
-      [_icon]: "search" | "insert" | "link";
+      [_actionPhrase]: Ac.InitialActionPhrase;
     };
 
 export const initial: State = {[_isOpen]: false};
 
-export function open(
-  state: State,
-  args: {query: string; icon: "search" | "insert" | "link"; select(app: A.App, thing: string): A.App},
-): State {
+export function open(state: State, args: {query: string} & Ac.InitialActionPhrase): State {
   return {
     ...state,
     [_isOpen]: true,
     [_query]: args.query,
     [_results]: [],
     [_activeIndex]: 0,
-    [_select]: args.select,
-    [_icon]: args.icon,
+    [_actionPhrase]: {...args},
   };
-}
-
-export function close(state: State): State {
-  return {[_isOpen]: false};
 }
 
 export function isOpen(state: State): state is State & {[_isOpen]: true} {
   return state[_isOpen];
-}
-
-export function setQuery(state: State, query: string): State {
-  if (!isOpen(state)) {
-    console.warn("Tried to set query, but popup isn't open.");
-    return state;
-  }
-  return {...state, [_query]: query};
 }
 
 export function receiveResults(state: State, data: D.State, things: string[]): State {
@@ -76,32 +94,7 @@ export function receiveResults(state: State, data: D.State, things: string[]): S
   };
 }
 
-export function results(state: State): Result[] {
-  if (!isOpen(state)) {
-    console.warn("Tried to get results, but popup isn't open.");
-    return [];
-  }
-  return state[_results];
-}
-
-export function query(state: State): string {
-  if (!isOpen(state)) {
-    console.warn("Tried to get query, but popup isn't open.");
-    return "";
-  }
-  return state[_query];
-}
-
-export function isThingActive(state: State, thing: string | null): boolean {
-  if (!isOpen(state)) {
-    console.warn("Tried to get selection, but poup isn't open.");
-    return false;
-  }
-  if (state[_activeIndex] === null) return thing === null;
-  return state[_results][state[_activeIndex]!]?.thing === thing;
-}
-
-export function activatePrevious(state: State): State {
+function activatePrevious(state: State): State {
   if (!isOpen(state)) {
     console.warn("Tried to modify selection, but popup isn't open.");
     return state;
@@ -111,7 +104,7 @@ export function activatePrevious(state: State): State {
   else return {...state, [_activeIndex]: state[_activeIndex]! - 1};
 }
 
-export function activateNext(state: State): State {
+function activateNext(state: State): State {
   if (!isOpen(state)) {
     console.warn("Tried to modify selection, but popup isn't open.");
     return state;
@@ -121,55 +114,110 @@ export function activateNext(state: State): State {
   else return {...state, [_activeIndex]: state[_activeIndex]! + 1};
 }
 
-export function selectActive(app: A.App): A.App {
-  if (!isOpen(app.popup)) {
-    console.warn("Tried to select item, but popup isn't open.");
-    return app;
-  }
-
-  if (app.popup[_activeIndex] === null) {
-    return selectThing(app, null);
-  } else {
-    const thing = app.popup[_results][app.popup[_activeIndex]!].thing;
-    if (thing !== undefined) {
-      return selectThing(app, thing);
-    } else {
-      return app;
-    }
-  }
+function selection(popup: State & {[_isOpen]: true}): {query: string} | {thing: string} {
+  if (!isOpen(popup)) return {query: ""};
+  return popup[_activeIndex] === null
+    ? {query: popup[_query]}
+    : {thing: popup[_results][popup[_activeIndex]!].thing};
 }
 
-export function selectThing(app: A.App, thing: string | null): A.App {
-  let result = app;
-
-  if (!isOpen(result.popup)) {
-    console.warn("Tried to select item, but popup isn't open.");
-    return result;
+function execute(app: A.App, selection: {query: string} | {thing: string}, phrase: Ac.InitialActionPhrase): A.App {
+  function createThing(app: A.App, content: E.EditorContent): [A.App, string] {
+    let [state, newItem] = D.create(app.state);
+    state = D.setContent(state, newItem, content);
+    return [A.merge(app, {state}), newItem];
   }
 
-  if (thing === null) {
-    // Create new thing with query as content
-    let [state, newItem] = D.create(result.state);
-    state = D.setContent(state, newItem, [result.popup[_query]]);
-    result = A.merge(result, {state});
-
-    if (!isOpen(result.popup)) throw "logic error";
-    result = result.popup[_select](result, newItem);
-  } else {
-    result = result.popup[_select](result, thing);
-  }
-
-  result = A.merge(result, {popup: close(result.popup)});
-
-  return result;
+  const [app_, object] = "query" in selection ? createThing(app, [selection.query]) : [app, selection.thing];
+  return Ac.evaluatePhrase(app_, {...phrase, object});
 }
 
-export function icon(app: A.App): "search" | "insert" | "link" {
-  if (isOpen(app.popup)) return app.popup[_icon];
+function icon(app: A.App): IconId {
+  if (isOpen(app.popup)) {
+    const verb = app.popup[_actionPhrase].verb;
+    return (
+      {
+        insertLink: "insertLink",
+        insertChild: "insertChild",
+        insertParent: "insertParent",
+        insertSibling: "insertSibling",
+        find: "find",
+        replace: "insertSibling",
+      } as const
+    )[verb];
+  }
 
   const editor = A.focusedEditor(app);
+  if (editor === null) return "find";
+  else if (E.isEmpty(editor)) return "insertSibling";
+  else return "insertLink";
+}
 
-  if (editor === null) return "search";
-  else if (E.isEmpty(editor)) return "insert";
-  else return "link";
+export function handle(app: A.App, event: Event): {app: A.App; effects: A.Effects} {
+  function updatePopup(state: State, event: Event): State {
+    if (!isOpen(state)) return state;
+    if (event.type === "up") {
+      return activatePrevious(state);
+    } else if (event.type === "down") {
+      return activateNext(state);
+    } else if (event.type === "query") {
+      return {...state, [_query]: event.query};
+    } else if (event.type === "close" || event.type === "pick" || event.type === "select") {
+      return {[_isOpen]: false};
+    } else {
+      return state;
+    }
+  }
+
+  function updateApp(app: A.App, event: Event): A.App {
+    if (!isOpen(app.popup)) return app;
+    if (event.type === "pick") return execute(app, {thing: event.thing}, app.popup[_actionPhrase]);
+    if (event.type === "select") return execute(app, selection(app.popup), app.popup[_actionPhrase]);
+    else return app;
+  }
+
+  function effects(app: A.App, event: Event): A.Effects {
+    if (event.type === "query") return {search: {query: event.query}};
+    else return {};
+  }
+
+  return {
+    app: A.merge(updateApp(app, event), {popup: updatePopup(app.popup, event)}),
+    effects: effects(app, event),
+  };
+}
+
+export function view(app: A.App): View {
+  const popup = app.popup;
+
+  const icon_ = icon(app);
+  const action = icon_ === "find" ? "find" : icon_ === "insertSibling" ? "replace" : "insert-link";
+  const description =
+    icon_ === "find"
+      ? "search"
+      : icon_ === "insertSibling"
+      ? "connect an existing item"
+      : icon_ === "insertLink"
+      ? "insert a link"
+      : "";
+
+  if (!isOpen(popup))
+    return {open: false, icon: icon_, description, shortcut: Sh.format(Ac.shortcut(action)), action};
+
+  return {
+    open: true,
+    icon: icon(app),
+    query: popup[_query],
+    action,
+    description,
+    shortcut: Sh.format(Ac.shortcut(action)),
+    isQuerySelected: popup[_activeIndex] === null,
+    results: popup[_results].map((result, index) => ({
+      content: result.content,
+      isSelected: popup[_activeIndex] === index,
+      otherParents: result.parents,
+      status: result.hasChildren ? "collapsed" : "terminal",
+      thing: result.thing,
+    })),
+  };
 }

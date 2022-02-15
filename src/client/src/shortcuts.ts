@@ -9,6 +9,7 @@ export type Shortcut =
 export type Condition = "first-line" | "last-line" | "first-character" | "last-character";
 
 function ifMacOS<T>(x: T, y: T): T {
+  if (typeof navigator === "undefined") return x;
   if (navigator.platform === "MacIntel") {
     return y;
   } else {

@@ -233,7 +233,7 @@ export type Event =
   | {type: "action"; action: Ac.ActionName}
   | {type: "open"; link: string}
   | {type: "jump"; link: string}
-  | {type: "edit"; editor: Editor; focused: boolean}
+  | {type: "edit"; editor: Partial<Editor>; focused?: boolean}
   | {type: "paste"; paragraphs: string[]}
   | {type: "openUrl"; url: string};
 

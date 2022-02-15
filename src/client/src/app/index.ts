@@ -16,6 +16,7 @@ import {GoalId} from "../goal";
 
 import * as PlaceholderItem from "../ui/PlaceholderItem";
 import * as Ac from "../actions";
+import {IconId} from "../ui/icons";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
@@ -77,8 +78,9 @@ export function editor(app: App, node: T.NodeRef): E.Editor | null {
   return E.load(app, node);
 }
 
-export function edit(app: App, node: T.NodeRef, editor: E.Editor): App {
-  return merge(E.save(app, editor, T.thing(app.tree, node)), {editors: {[node.id]: editor}});
+export function edit(app: App, node: T.NodeRef, newEditor: Partial<E.Editor>): App {
+  const fullNewEditor = {...editor(app, node)!, ...newEditor};
+  return merge(E.save(app, fullNewEditor, T.thing(app.tree, node)), {editors: {[node.id]: fullNewEditor}});
 }
 
 export function editInsertLink(app: App, node: T.NodeRef, link: string): App {
@@ -162,20 +164,12 @@ export function switchTab(app: App, tab: "outline" | "orphans"): App {
   throw "unknown tab!";
 }
 
-export function openPopup(
-  app: App,
-  useSelection: (app: App, thing: string) => App,
-  args?: {icon: "search" | "insert" | "link"},
-): {app: App; effects: Effects} {
+export function openPopup(app: App, phrase: Ac.InitialActionPhrase): {app: App; effects: Effects} {
   const items = D.allThings(app.state).map((thing) => ({thing, content: D.contentText(app.state, thing)}));
   const query = selectedText(app);
 
   const app_ = merge(app, {
-    popup: P.open(app.popup, {
-      query,
-      select: useSelection,
-      icon: args?.icon ?? "search",
-    }),
+    popup: P.open(app.popup, {query, ...phrase}),
   });
 
   return {app: app_, effects: {search: {items, query}}};
@@ -227,12 +221,17 @@ export type Event =
   | {type: "dragHover"; id: number | null}
   | {type: "dragEnd"; modifier: "move" | "copy"}
   | {type: "action"; action: Ac.ActionName}
-  | {type: "orphans"; event: O.OrphansEvent};
+  | {type: "orphans"; event: O.OrphansEvent}
+  | ({topic: "popup"} & P.Event);
 
-export type Effects = {search?: {items: {thing: string; content: string}[]; query: string}; url?: string};
+export type Effects = {search?: {items?: {thing: string; content: string}[]; query: string}; url?: string};
 
 function unreachable(x: never): never {
   return x;
+}
+
+function isPopupEvent(e: Event): e is {topic: "popup"} & P.Event {
+  return "topic" in e && e.topic === "popup";
 }
 
 export function handle(app: App, event: Event): {app: App; effects?: Effects} {
@@ -242,7 +241,7 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   }
 
   if (event.type === "edit") {
-    return {app: updateFocus(edit(app, {id: event.id}, event.editor), event.id, event.focused)};
+    return {app: updateFocus(edit(app, {id: event.id}, event.editor), event.id, event.focused ?? true)};
   } else if (event.type === "open") {
     return {app: toggleLink(app, {id: event.id}, event.link)};
   } else if (event.type === "jump") {
@@ -275,6 +274,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return {app: R.drop(app, event.modifier)};
   } else if (event.type === "orphans") {
     return O.handle(app, event.event);
+  } else if (isPopupEvent(event)) {
+    return P.handle(app, event);
   } else {
     return unreachable(event);
   }
@@ -285,10 +286,23 @@ export function update(app: App, event: Event): App {
 }
 
 export function after(app: App | ItemGraph, events: (Event | ((view: View) => Event))[]): App {
+  function executeSearch(result: {app: App; effects?: Effects}): App {
+    if (!result?.effects?.search) return result.app;
+    return merge(result.app, {
+      popup: P.receiveResults(
+        result.app.popup,
+        result.app.state,
+        D.allThings(result.app.state)
+          .map((thing) => ({thing, content: D.contentText(result.app.state, thing)}))
+          .filter((item) => item.content.startsWith(result.effects!.search!.query))
+          .map((r) => r.thing),
+      ),
+    });
+  }
+
   return events.reduce(
     (app_, event) => {
-      if (typeof event === "function") return update(app_, event(view(app_)));
-      else return update(app_, event);
+      return executeSearch(typeof event === "function" ? handle(app_, event(view(app_))) : handle(app_, event));
     },
     _isOnline in app ? (app as App) : of(app as ItemGraph),
   );
@@ -307,9 +321,9 @@ export function focusedId(app: App): number | null {
   return T.focused(app.tree)?.id ?? null;
 }
 
-export type View = ({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView);
+export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView)) & {popup: P.View};
 
 export function view(app: App): View {
-  if (app.tab === "orphans") return {...O.view(app), tab: "orphans"};
-  else return {...Ou.fromApp(app), tab: "outline"};
+  if (app.tab === "orphans") return {...O.view(app), tab: "orphans", popup: P.view(app)};
+  else return {...Ou.fromApp(app), tab: "outline", popup: P.view(app)};
 }

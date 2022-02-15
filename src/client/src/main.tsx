@@ -21,7 +21,7 @@ import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
 import UserPage from "./ui/UserPage";
-import {TopBar, useTopBarProps} from "./ui/TopBar";
+import {login, TopBar} from "./ui/TopBar";
 import {OfflineIndicator} from "./offline-indicator";
 
 import * as React from "react";
@@ -325,17 +325,6 @@ function App_({
     [updateApp],
   );
 
-  const topBarProps = useTopBarProps({
-    app,
-    send,
-    updateApp,
-    isToolbarShown,
-    setIsToolbarShown,
-    username,
-    server,
-    search: (query) => search.query(query, 25),
-  });
-
   const onToolbarButtonPressed = React.useCallback((action) => send({type: "action", action}), [send]);
 
   return (
@@ -346,7 +335,13 @@ function App_({
         onSelect={(option) => updateApp((app) => A.syncDialogSelect(app, option))}
       />
       <div className="app-header">
-        <TopBar {...topBarProps} />
+        <TopBar
+          isToolbarShown={isToolbarShown}
+          login={login({server, username})}
+          onToggleToolbar={() => setIsToolbarShown(!isToolbarShown)}
+          popup={A.view(app).popup}
+          send={send}
+        />
         {isToolbarShown ? (
           <Toolbar.Toolbar onToolbarButtonPressed={onToolbarButtonPressed} toolbar={Toolbar.toolbar(app)} />
         ) : null}
@@ -390,7 +385,9 @@ function useSendAppEvent({
       const result = A.handle(app, event);
       if (result?.effects?.url) openExternalUrl(result.effects.url);
       if (result?.effects?.search) {
-        search.reset(result.effects.search.items);
+        if (result.effects.search.items) {
+          search.reset(result.effects.search.items);
+        }
         search.query(result.effects.search.query, 25);
       }
       return result.app;
