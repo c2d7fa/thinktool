@@ -106,23 +106,6 @@ export function receiveResults(state: State, data: D.State, things: string[]): S
   };
 }
 
-function results(state: State): Result[] {
-  if (!isOpen(state)) {
-    console.warn("Tried to get results, but popup isn't open.");
-    return [];
-  }
-  return state[_results];
-}
-
-function isThingActive(state: State, thing: string | null): boolean {
-  if (!isOpen(state)) {
-    console.warn("Tried to get selection, but poup isn't open.");
-    return false;
-  }
-  if (state[_activeIndex] === null) return thing === null;
-  return state[_results][state[_activeIndex]!]?.thing === thing;
-}
-
 function activatePrevious(state: State): State {
   if (!isOpen(state)) {
     console.warn("Tried to modify selection, but popup isn't open.");
@@ -259,15 +242,13 @@ export function view(app: A.App): View {
     action,
     description,
     shortcut: Sh.format(Ac.shortcut(action)),
-    isQuerySelected: isThingActive(popup, null),
-    results: results(popup).map((result) => {
-      return {
-        content: result.content,
-        isSelected: isThingActive(popup, result.thing),
-        otherParents: result.parents,
-        status: result.hasChildren ? "collapsed" : "terminal",
-        thing: result.thing,
-      };
-    }),
+    isQuerySelected: popup[_activeIndex] === null,
+    results: popup[_results].map((result, index) => ({
+      content: result.content,
+      isSelected: popup[_activeIndex] === index,
+      otherParents: result.parents,
+      status: result.hasChildren ? "collapsed" : "terminal",
+      thing: result.thing,
+    })),
   };
 }
