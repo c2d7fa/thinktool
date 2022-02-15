@@ -10,7 +10,6 @@ const _query = Symbol("query");
 const _results = Symbol("results");
 const _activeIndex = Symbol("activeIndex");
 const _actionPhrase = Symbol("actionPhrase");
-const _icon = Symbol("icon");
 
 export type View =
   | {
@@ -60,12 +59,11 @@ export type State =
       [_results]: Result[];
       [_activeIndex]: number | null;
       [_actionPhrase]: Ac.InitialActionPhrase;
-      [_icon]: IconId;
     };
 
 export const initial: State = {[_isOpen]: false};
 
-export function open(state: State, args: {query: string; icon: IconId} & Ac.InitialActionPhrase): State {
+export function open(state: State, args: {query: string} & Ac.InitialActionPhrase): State {
   return {
     ...state,
     [_isOpen]: true,
@@ -73,7 +71,6 @@ export function open(state: State, args: {query: string; icon: IconId} & Ac.Init
     [_results]: [],
     [_activeIndex]: 0,
     [_actionPhrase]: {...args},
-    [_icon]: args.icon,
   };
 }
 
@@ -190,10 +187,21 @@ function selectThing(app: A.App, thing: string | null): A.App {
 }
 
 function icon(app: A.App): IconId {
-  if (isOpen(app.popup)) return app.popup[_icon];
+  if (isOpen(app.popup)) {
+    const verb = app.popup[_actionPhrase].verb;
+    return (
+      {
+        insertLink: "insertLink",
+        insertChild: "insertChild",
+        insertParent: "insertParent",
+        insertSibling: "insertSibling",
+        find: "find",
+        replace: "insertSibling",
+      } as const
+    )[verb];
+  }
 
   const editor = A.focusedEditor(app);
-
   if (editor === null) return "find";
   else if (E.isEmpty(editor)) return "insertSibling";
   else return "insertLink";

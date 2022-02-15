@@ -86,7 +86,7 @@ export function handle(app: A.App, event: OrphansEvent): {app: A.App; effects?: 
     const [state, tree] = T.removeThing(app.state, app.tree, {id: event.id});
     return {app: scan(A.merge(app, {state, tree: T.unfocus(tree)}))};
   } else if (event.type === "addParent") {
-    return A.openPopup(app, {verb: "insertParent", subject: {id: event.id}, icon: "insertParent"});
+    return A.openPopup(app, {verb: "insertParent", subject: {id: event.id}});
   } else if (event.type === "jump") {
     return {app: A.jump(app, T.thing(app.tree, {id: event.id}))};
   } else if (event.type === "item") {

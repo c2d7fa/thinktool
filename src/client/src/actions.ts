@@ -169,29 +169,29 @@ const updates = {
   "insert-sibling"({app}: UpdateArgs) {
     const subject = T.focused(app.tree);
     if (!subject) return {app, effects: {}};
-    return A.openPopup(app, {verb: "insertSibling", subject, icon: "insertSibling"});
+    return A.openPopup(app, {verb: "insertSibling", subject});
   },
 
   "insert-child"({app}: UpdateArgs) {
     const subject = T.focused(app.tree);
     if (!subject) return {app, effects: {}};
-    return A.openPopup(app, {verb: "insertChild", subject, icon: "insertChild"});
+    return A.openPopup(app, {verb: "insertChild", subject});
   },
 
   "insert-parent"({app}: UpdateArgs) {
     const subject = T.focused(app.tree);
     if (!subject) return {app, effects: {}};
-    return A.openPopup(app, {verb: "insertParent", subject, icon: "insertParent"});
+    return A.openPopup(app, {verb: "insertParent", subject});
   },
 
   "insert-link"({app}: UpdateArgs) {
     const subject = T.focused(app.tree);
     if (!subject) return {app, effects: {}};
-    return A.openPopup(app, {verb: "insertLink", subject, icon: "insertLink"});
+    return A.openPopup(app, {verb: "insertLink", subject});
   },
 
   "find"({app}: UpdateArgs) {
-    return A.openPopup(app, {verb: "find", icon: "find"});
+    return A.openPopup(app, {verb: "find"});
   },
 
   "replace"({app, target}: UpdateArgs) {
@@ -201,7 +201,7 @@ const updates = {
     }
     const subject = T.focused(app.tree);
     if (!subject) return {app, effects: {}};
-    return A.openPopup(app, {verb: "replace", subject, icon: "insertSibling"});
+    return A.openPopup(app, {verb: "replace", subject});
   },
 
   "new"({app, target}: UpdateArgs) {
