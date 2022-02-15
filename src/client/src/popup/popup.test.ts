@@ -1,7 +1,7 @@
 /// <reference types="@types/jest" />
 
 import * as A from "../app";
-import * as P from ".";
+import {expectViewToMatch} from "../app/test-utils";
 
 describe("when opening popup while text is selected", () => {
   const app = A.after(
@@ -26,25 +26,20 @@ describe("when opening popup while text is selected", () => {
 
   describe("after searching for an item", () => {
     const after = A.after(app, [{type: "action", action: "find"}]);
-
-    function opened(app: A.App): P.View & {open: true} {
-      return A.view(app).popup as P.View & {open: true};
-    }
-
     test("the popup has the search icon", () => {
-      expect(opened(after).icon).toEqual("find");
+      expectViewToMatch(after, {popup: {icon: "find"}});
     });
 
     test("the selected text is inserted as the query in the popup", () => {
-      expect(opened(after)).toMatchObject({query: "Another item"});
+      expectViewToMatch(after, {popup: {query: "Another item"}});
     });
 
     test("results are popuplated", () => {
-      expect(opened(after).results).toMatchObject([{content: ["Another item"]}]);
+      expectViewToMatch(after, {popup: {results: [{content: ["Another item"]}]}});
     });
 
     test("the first match is selected", () => {
-      expect(opened(after).results).toMatchObject([{isSelected: true}]);
+      expectViewToMatch(after, {popup: {results: [{isSelected: true}]}});
     });
   });
 });
@@ -65,7 +60,9 @@ describe("searching for and selecting an item", () => {
     });
 
     test("the root item has two children", () => {
-      expect((A.view(app) as A.Outline).root.children).toHaveLength(2);
+      expectViewToMatch(app, {
+        root: {children: [{editor: {content: ["Some item"]}}, {editor: {content: ["Another item"]}}]},
+      });
     });
   });
 
@@ -73,11 +70,11 @@ describe("searching for and selecting an item", () => {
 
   describe("after triggering the 'insert sibling' action", () => {
     test("the popup is shown", () => {
-      expect(A.view(afterOpeningPopup).popup).toMatchObject({open: true});
+      expectViewToMatch(afterOpeningPopup, {popup: {open: true}});
     });
 
     test("the query text is empty", () => {
-      expect(A.view(afterOpeningPopup).popup).toMatchObject({query: ""});
+      expectViewToMatch(afterOpeningPopup, {popup: {query: ""}});
     });
   });
 
@@ -85,11 +82,11 @@ describe("searching for and selecting an item", () => {
 
   describe("after searching for an item", () => {
     test("the query text is updated", () => {
-      expect(A.view(afterQuery).popup).toMatchObject({query: "Another item"});
+      expectViewToMatch(afterQuery, {popup: {query: "Another item"}});
     });
 
     test("the matching item is the first result", () => {
-      expect(A.view(afterQuery).popup).toMatchObject({results: [{content: ["Another item"], isSelected: true}]});
+      expectViewToMatch(afterQuery, {popup: {results: [{content: ["Another item"], isSelected: true}]}});
     });
   });
 
@@ -97,23 +94,19 @@ describe("searching for and selecting an item", () => {
 
   describe("after selecting an item", () => {
     test("the popup is closed", () => {
-      expect(A.view(afterSelecting).popup).toMatchObject({open: false});
+      expectViewToMatch(afterSelecting, {popup: {open: false}});
     });
 
-    test("the selected item is inserted as a sibling", () => {
-      expect((A.view(afterSelecting) as A.Outline).root.children.map((ch) => ch.editor.content)).toEqual([
-        ["Some item"],
-        ["Another item"],
-        ["Another item"],
-      ]);
-    });
-
-    test("the newly inserted item has focus", () => {
-      expect((A.view(afterSelecting) as A.Outline).root.children.map((ch) => ch.hasFocus)).toEqual([
-        false,
-        true,
-        false,
-      ]);
+    test("the selected item is inserted as a sibling and gains focus", () => {
+      expectViewToMatch(afterSelecting, {
+        root: {
+          children: [
+            {editor: {content: ["Some item"]}, hasFocus: false},
+            {editor: {content: ["Another item"]}, hasFocus: true},
+            {editor: {content: ["Another item"]}, hasFocus: false},
+          ],
+        },
+      });
     });
   });
 });
