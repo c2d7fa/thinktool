@@ -13,11 +13,17 @@ This repository contains the source code of [**Thinktool**](https://thinktool.io
 
 ## Project status
 
-Development on Thinktool is quite slow, since I'm only working on it in my free time. However, I use Thinktool for my own note-taking, and I am still actively working on it (as of February 2022).
+Development on Thinktool is quite slow, since I'm only working on it in my free time.
 
-My main areas of focus are general UX and "learnability", experimenting with Zettelkasten-techniques, and improving the desktop client and offline-only support for improved privacy and data security. There is no specific roadmap or time estimates.
+As of May 2022, I'm currently spending most of my time working on another side-project, namely [Nextool](https://nextool.app/) ([source code](https://github.com/c2d7fa/nextool)), but I intend to come back to Thinktool soon.
 
-The website and newsletter haven't been updated in a while. If you want to follow Thinktool's development, watch this repository.
+I'm currently reconsidering the typical approach to implementing "digital Zettelkasten" after watching some of Scott Scheper's really interesting [videos on his Antinet](https://www.youtube.com/watch?v=fRgIX4azYOs). In particular, I've been experimenting (in Obsidian) with a formal system for a note-taking system that consists of two parts: a large, append-only database of immutable notes, and a small, mutable index. My current opinion is that making notes immutable may be important for long-term note-taking systems.
+
+I'm thinking about how I want to implement these ideas in Thinktool, but haven't yet decided on anything concrete. Most likely, the next major update to Thinktool, will have some first-class concenpt of a single "note" (as opposed to just a graph of bullet points), will let you distinguish between different "versions" of a note, and will have at least two different "sections" for mutable vs. immutable notes ("library" vs. "index", for example).
+
+My long-term main areas of focus are general UX and "learnability", and improving the desktop client and offline-only support for improved privacy and data security. There is no specific roadmap or time estimates.
+
+The website and newsletter haven't been updated in a while, although I do intend to come back to them. If you want to follow Thinktool's development, watch this repository.
 
 ## Comparison to other software
 
