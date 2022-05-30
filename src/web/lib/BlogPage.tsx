@@ -42,7 +42,7 @@ export default function BlogPage(props: {apiHost: string; children: React.ReactN
         </a>
         .
       </footer>
-      <script data-goatcounter="https://thinktool.goatcounter.com/count" async src="//gc.zgo.at/count.js" />
+      <script data-goatcounter="https://counter.thinktool.io/count" async src="//counter.thinktool.io/count.js" />
     </>
   );
 }

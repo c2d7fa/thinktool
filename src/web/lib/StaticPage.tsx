@@ -39,7 +39,7 @@ export default function StaticPage(props: {children: React.ReactNode}) {
         </a>
         .
       </footer>
-      <script data-goatcounter="https://thinktool.goatcounter.com/count" async src="//gc.zgo.at/count.js" />
+      <script data-goatcounter="https://counter.thinktool.io/count" async src="//counter.thinktool.io/count.js" />
     </>
   );
 }

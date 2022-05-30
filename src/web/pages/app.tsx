@@ -24,7 +24,7 @@ export default function App(props: {apiHost: string}) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       {mainElement}
-      <script data-goatcounter="https://thinktool.goatcounter.com/count" async src="//gc.zgo.at/count.js" />
+      <script data-goatcounter="https://counter.thinktool.io/count" async src="//counter.thinktool.io/count.js" />
     </>
   );
 }
