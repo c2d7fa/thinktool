@@ -142,7 +142,7 @@ export default function Index(props: {apiHost: string}) {
             <p>
               <a href="https://roamresearch.com/" rel="nofollow" className="external-app-link external-link">
                 <span>Roam Research</span>
-              </a>
+              </a>{" "}
               is another associative note-taking application, and it's much more polished than Thinktool. Roam
               supports bidirectional linking like Thinktool, but it doesn't have support for multiple parents.
             </p>
