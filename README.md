@@ -145,11 +145,15 @@ page.
 ### Releasing new client version
 
 When you are ready to push out a client-side update, run
-`tools/dev/release-client.sh <version>`. This will bump the version number to
-`<version>`, publish the package, and also update the relevant dependency in
+`tools/dev/release-client.sh <client-version>`. This will bump the version number to
+`<client-version>`, publish the package, and also update the relevant dependency in
 the web and desktop clients.
 
-Then commit the changes, tag the commit with a tag of the form `x.y.z` and push
-to GitHub. A workflow should automatically create a GitHub release; manually
+Manually update the version number in the `package.json` for the `desktop`
+package, commit the changes, tag the commit with a tag of the form `x.y.z` and
+push to GitHub. A workflow should automatically create a GitHub release; manually
 update this release with the release notes.
+
+Note that the tag should be the same as the desktop client version, while the
+version number for the client package may be different!
 
