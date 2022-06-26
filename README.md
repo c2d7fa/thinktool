@@ -127,6 +127,12 @@ Once you have the `thinktool` image, run it with the environment variables given
         -p 80:80 \
         thinktool
 
+### Static website
+
+The website is built using [NextJS](https://nextjs.org/) and hosted using
+[Vercel](https://vercel.com/). It is automatically rebuilt from the `src/web`
+directory whenever the `website` branch is pushed.
+
 ## Development
 
 While working on Thinktool, most changes should be made in the `src/client`
