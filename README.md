@@ -149,6 +149,7 @@ When you are ready to push out a client-side update, run
 `<version>`, publish the package, and also update the relevant dependency in
 the web and desktop clients.
 
-Then commit the changes, push to origin, and in the GitHub repository, run the
-action titled "Deploy to Azure Storage".
+Then commit the changes, tag the commit with a tag of the form `x.y.z` and push
+to GitHub. A workflow should automatically create a GitHub release; manually
+update this release with the release notes.
 
