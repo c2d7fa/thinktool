@@ -1,9 +1,14 @@
 name: Build and deploy desktop clients
 on:
   push:
-    branches:
-      - main
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
 jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release
+        uses: softprops/action-gh-release@v1
   desktop-linux:
     runs-on: ubuntu-latest
     steps:
@@ -20,13 +25,10 @@ jobs:
           yarn run bundle-linux
         env:
           DIAFORM_API_HOST: ${{secrets.api_host}}
-      - name: Deploy to Azure Storage
-        run: |
-          cd src/desktop
-          az storage blob upload -f "./dist/Thinktool Desktop Prototype.AppImage" -c '$web' -o table
-        env:
-          AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
-          AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: 'src/desktop/dist/Thinktool*.AppImage'
   desktop-windows:
     runs-on: windows-2019
     steps:
@@ -44,11 +46,8 @@ jobs:
         shell: bash
         env:
           DIAFORM_API_HOST: ${{secrets.api_host}}
-      - name: Deploy to Azure Storage
-        run: |
-          cd src/desktop
-          az storage blob upload -f "./dist/Thinktool Desktop Prototype.exe" -c '$web' -o table
-        shell: bash
-        env:
-          AZURE_STORAGE_ACCOUNT: ${{secrets.azure_storage_account}}
-          AZURE_STORAGE_KEY: ${{secrets.azure_storage_key}}
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: 'src/desktop/dist/Thinktool*.exe'
+
