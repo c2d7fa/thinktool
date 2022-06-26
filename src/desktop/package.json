@@ -1,6 +1,6 @@
 {
   "name": "@thinktool/desktop",
-  "version": "0.0.0-noversion",
+  "version": "1.0.0",
   "description": "The desktop client for Thinktool.",
   "license": "UNLICENSED",
   "repository": {
@@ -28,13 +28,13 @@
     "build-static": "./build-static-and-client-for-desktop.sh",
     "build": "mkdir -p build && tsc && yarn run build-static",
     "start": "electron-builder --dir && ./dist/linux-unpacked/thinktool-desktop-client",
-    "bundle-linux": "yarn run build && electron-builder -l -p never && mv 'dist/Thinktool Desktop Prototype-0.0.0-noversion.AppImage' 'dist/Thinktool Desktop Prototype.AppImage' && echo 'Output in ./dist/'",
-    "bundle-windows": "yarn run build && electron-builder -w -p never && mv 'dist/Thinktool Desktop Prototype 0.0.0-noversion.exe' 'dist/Thinktool Desktop Prototype.exe' && echo 'Output in ./dist/'"
+    "bundle-linux": "yarn run build && electron-builder -l -p never && echo 'Output in ./dist/'",
+    "bundle-windows": "yarn run build && electron-builder -w -p never && echo 'Output in ./dist/'"
   },
   "main": "build/start.js",
   "build": {
-    "appId": "io.thinktool.desktop.prototype",
-    "productName": "Thinktool Desktop Prototype",
+    "appId": "io.thinktool.desktop",
+    "productName": "Thinktool",
     "files": [
       "build/**/*"
     ],

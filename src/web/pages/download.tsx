@@ -13,7 +13,7 @@ export async function getStaticProps() {
   };
 }
 
-function Timestamp(props: {date: Date}) {
+function Timestamp(props: { date: Date }) {
   const year = props.date.getUTCFullYear().toString();
   const monthName = [
     "January",
@@ -38,7 +38,7 @@ function Timestamp(props: {date: Date}) {
   );
 }
 
-export default function Download(props: {apiHost: string; assetsHost: string; generatedTime: number}) {
+export default function Download(props: { apiHost: string; assetsHost: string; generatedTime: number }) {
   return (
     <StaticPage>
       <Head>
@@ -73,24 +73,25 @@ export default function Download(props: {apiHost: string; assetsHost: string; ge
 
         <div className="block box small centered">
           <p>
-            The current version is a <strong>pre-prototype intended purely for testing</strong>. If you use this,
-            you may lose your data. It is not currently possible to synchronize your data in the desktop client to
-            the online version, and it may never be (from the current version, that is)!
+            The current version is a <strong>prototype intended purely for testing</strong>. If you use this, you
+            may lose your data. It is not currently possible to synchronize your data in the desktop client to the
+            online version, and it may never be (from the current version, that is)!
           </p>
           <p>
-            Get it for <strong>Linux</strong> here:{" "}
-            <a href={`${props.assetsHost}/Thinktool Desktop Prototype.AppImage`} download className="external-link">
-              <span>Thinktool Desktop Prototype.AppImage</span>
+            Download it for Linux or Windows from GitHub:{" "}
+            <a href={`https://github.com/c2d7fa/thinktool/releases/latest`} download className="external-link">
+              <span>Latest release</span>
             </a>
-            . Just make it executable with <code>chmod +x &lt;FILENAME&gt;</code> and then run it.
           </p>
           <p>
-            Get it for <strong>Windows</strong> here:{" "}
-            <a href={`${props.assetsHost}/Thinktool Desktop Prototype.exe`} download className="external-link">
-              <span>Thinktool Desktop Prototype .exe</span>
-            </a>
-            . This is a so-called portable executable, so you don't need to install anything &ndash; just run it.
+            For <strong>Linux</strong>, just make the downloaded AppImage executable with{" "}
+            <code>chmod +x &lt;FILENAME&gt;</code> and then run it.
           </p>
+          <p>
+            The <strong>Windows</strong> version is a so-called portable executable, so you don't need to install
+            anything &ndash; just run it.
+          </p>
+          <p>Currently, no macOS version is available</p>
           <p>
             <i>
               Last updated <Timestamp date={new Date(props.generatedTime)} />.
