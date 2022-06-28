@@ -148,7 +148,11 @@ export function from(app: App): Wrapap {
     },
 
     completed(goal: G.GoalId) {
-      return U.isGoalFinished(app.tutorialState, goal);
+      const withTutorialOpen = A.view(app).tutorial.open
+        ? app
+        : A.after(app, [{type: "action", action: "tutorial"}]);
+
+      return (A.view(withTutorialOpen).tutorial as A.View["tutorial"] & {open: true}).goals[goal].completed;
     },
 
     map(f: (app: App) => App) {

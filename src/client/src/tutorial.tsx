@@ -8,6 +8,8 @@ import {IconId, IconLabel} from "./ui/icons";
 
 export type State = {step: string; finished: boolean; goal: G.State};
 
+export type View = {open: false} | {open: true; step: string; goals: {[id in G.GoalId]: {completed: boolean}}};
+
 const initialState = {step: "Getting started", finished: false, goal: G.initialState};
 
 export function initialize(finished: boolean) {
@@ -359,4 +361,15 @@ export function StepHaveFun() {
       </p>
     </>
   );
+}
+
+export function view(state: State): View {
+  if (state.finished) return {open: false};
+  return {
+    open: true,
+    step: state.step,
+    goals: Object.fromEntries(
+      G.allGoalIds.map((goalId) => [goalId, {completed: G.isFinished(state.goal, goalId) ? true : false}]),
+    ) as {[goalId in G.GoalId]: {completed: boolean}},
+  };
 }

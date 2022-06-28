@@ -23,18 +23,21 @@ export type ActionEvent =
   | {action: "link-inserted"}
   | {action: "moved"};
 
-export type GoalId =
-  | "create-item"
-  | "add-parent"
-  | "expand-item"
-  | "remove-item"
-  | "delete-item"
-  | "move-item"
-  | "insert-link"
-  | "expand-link"
-  | "jump-item"
-  | "jump-home"
-  | "find-item";
+export const allGoalIds = [
+  "create-item",
+  "add-parent",
+  "expand-item",
+  "remove-item",
+  "delete-item",
+  "move-item",
+  "insert-link",
+  "expand-link",
+  "jump-item",
+  "jump-home",
+  "find-item",
+] as const;
+
+export type GoalId = typeof allGoalIds[number];
 
 type Goals = Map<GoalId, {title: string; doesComplete: (event: ActionEvent) => boolean}>;
 

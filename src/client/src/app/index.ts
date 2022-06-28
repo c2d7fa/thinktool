@@ -16,7 +16,6 @@ import {GoalId} from "../goal";
 
 import * as PlaceholderItem from "../ui/PlaceholderItem";
 import * as Ac from "../actions";
-import {IconId} from "../ui/icons";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
@@ -322,9 +321,13 @@ export function focusedId(app: App): number | null {
   return T.focused(app.tree)?.id ?? null;
 }
 
-export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView)) & {popup: P.View};
+export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView)) & {
+  popup: P.View;
+  tutorial: Tutorial.View;
+};
 
 export function view(app: App): View {
-  if (app.tab === "orphans") return {...O.view(app), tab: "orphans", popup: P.view(app)};
-  else return {...Ou.fromApp(app), tab: "outline", popup: P.view(app)};
+  if (app.tab === "orphans")
+    return {...O.view(app), tab: "orphans", popup: P.view(app), tutorial: Tutorial.view(app.tutorialState)};
+  else return {...Ou.fromApp(app), tab: "outline", popup: P.view(app), tutorial: Tutorial.view(app.tutorialState)};
 }
