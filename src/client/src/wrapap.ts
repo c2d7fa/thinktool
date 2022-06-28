@@ -14,6 +14,7 @@ export interface Wrapap {
   completed(goal: G.GoalId): boolean;
   map(f: (app: App) => App): Wrapap;
   send(...events: A.Event[]): Wrapap;
+  focused: Node | undefined;
 
   app: App;
   tree: T.Tree;
@@ -35,6 +36,7 @@ export interface Node {
   destroy(): Wrapap;
   edit(editor: E.Editor): Wrapap;
   edit(): Wrapap;
+  content: E.EditorContent;
 }
 
 export function of(items: A.ItemGraph): Wrapap {
@@ -103,6 +105,10 @@ export function from(app: App): Wrapap {
         if (editor) return from(A.edit(app, ref, editor));
         else return from(A.update(app, {type: "edit", id: ref.id, focused: true, editor: {}}));
       },
+
+      get content() {
+        return A.editor(app, ref)?.content ?? [];
+      },
     };
   }
 
@@ -121,6 +127,11 @@ export function from(app: App): Wrapap {
 
     get app() {
       return app;
+    },
+
+    get focused() {
+      const focusedId = A.focusedId(app);
+      return focusedId ? node({id: focusedId}) : undefined;
     },
 
     completed(goal: G.GoalId) {
