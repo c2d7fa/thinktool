@@ -379,7 +379,7 @@ function useSendAppEvent({
   updateApp(f: (app: A.App) => A.App): void;
   openExternalUrl(url: string): void;
   search: Search;
-}) {
+}): A.Send {
   return React.useCallback((event: A.Event) => {
     updateApp((app) => {
       const result = A.handle(app, event);

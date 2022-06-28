@@ -37,6 +37,7 @@ export interface App {
 }
 
 export type UpdateApp = (f: (app: App) => App) => void;
+export type Send = (ev: Event) => void;
 
 export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: boolean}): App {
   return {
@@ -265,7 +266,7 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   } else if (event.type === "toggle-references") {
     return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, {id: event.id})})};
   } else if (event.type === "unfold") {
-    return {app: unfold(app, {id: event.id})};
+    return {app: unfold(app, {id: T.root(app.tree).id})};
   } else if (event.type === "focus") {
     return {app: merge(app, {tree: T.focus(app.tree, {id: event.id})}), effects: {}};
   } else if (event.type === "dragHover") {
