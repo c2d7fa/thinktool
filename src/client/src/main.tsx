@@ -325,8 +325,6 @@ function App_({
     [updateApp],
   );
 
-  const onToolbarButtonPressed = React.useCallback((action) => send({type: "action", action}), [send]);
-
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
       <OfflineIndicator isDisconnected={A.isDisconnected(app)} />
@@ -342,9 +340,7 @@ function App_({
           popup={A.view(app).popup}
           send={send}
         />
-        {isToolbarShown ? (
-          <Toolbar.Toolbar onToolbarButtonPressed={onToolbarButtonPressed} toolbar={Toolbar.toolbar(app)} />
-        ) : null}
+        {isToolbarShown ? <Toolbar.Toolbar send={send} toolbar={Toolbar.toolbar(app)} /> : null}
       </div>
       {!showSplash && (
         <Tutorial.TutorialBox
