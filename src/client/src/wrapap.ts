@@ -15,6 +15,7 @@ export interface Wrapap {
   map(f: (app: App) => App): Wrapap;
   send(...events: A.Event[]): Wrapap;
   focused: Node | undefined;
+  selection: E.Editor["selection"] | undefined;
 
   app: App;
   tree: T.Tree;
@@ -23,6 +24,7 @@ export interface Wrapap {
 
 export interface Node {
   nchildren: number;
+  openedLinks: Node[];
   child(index: number): Node | undefined;
   parent(index: number): Node | undefined;
   references: Node[];
@@ -34,7 +36,7 @@ export interface Node {
   toggleLink(link: string): Wrapap;
   link(index: number): Node;
   destroy(): Wrapap;
-  edit(editor: E.Editor): Wrapap;
+  edit(editor: Partial<E.Editor>): Wrapap;
   edit(): Wrapap;
   content: E.EditorContent;
 }
@@ -44,10 +46,18 @@ export function of(items: A.ItemGraph): Wrapap {
 }
 
 export function from(app: App): Wrapap {
+  function send(...events: A.Event[]) {
+    return from(A.after(app, events));
+  }
+
   function node(ref: T.NodeRef): Node {
     return {
       get nchildren() {
         return T.children(app.tree, ref).length;
+      },
+
+      get openedLinks(): Node[] {
+        return T.openedLinksChildren(app.tree, ref).map((child) => node(child));
       },
 
       child(index: number) {
@@ -89,7 +99,7 @@ export function from(app: App): Wrapap {
       },
 
       toggleLink(link: string) {
-        return from(merge(app, {tree: T.toggleLink(app.state, app.tree, ref, link)}));
+        return send({type: "open", id: ref.id, link});
       },
 
       link(index: number) {
@@ -101,9 +111,8 @@ export function from(app: App): Wrapap {
         return from(merge(app, {state, tree}));
       },
 
-      edit(editor?: E.Editor) {
-        if (editor) return from(A.edit(app, ref, editor));
-        else return from(A.update(app, {type: "edit", id: ref.id, focused: true, editor: {}}));
+      edit(editor?: Partial<E.Editor>) {
+        return from(A.update(app, {type: "edit", id: ref.id, editor: editor ?? {}, focused: true}));
       },
 
       get content() {
@@ -134,6 +143,10 @@ export function from(app: App): Wrapap {
       return focusedId ? node({id: focusedId}) : undefined;
     },
 
+    get selection() {
+      return A.focusedEditor(app)?.selection ?? undefined;
+    },
+
     completed(goal: G.GoalId) {
       return U.isGoalFinished(app.tutorialState, goal);
     },
@@ -142,13 +155,7 @@ export function from(app: App): Wrapap {
       return from(f(app));
     },
 
-    send(...events: A.Event[]) {
-      let result = app;
-      for (const event of events) {
-        result = A.update(result, event);
-      }
-      return from(result);
-    },
+    send,
   };
 
   return wrapap;

@@ -1,9 +1,6 @@
 /// <reference types="@types/jest" />
 
 import * as W from "./wrapap";
-import * as A from "./app";
-import * as T from "./tree";
-import * as E from "./editor";
 
 describe("initializing app from scratch with 'of'", () => {
   const wpp = W.of({
@@ -23,129 +20,97 @@ describe("initializing app from scratch with 'of'", () => {
   });
 });
 
-describe("jumping to an item", () => {
-  const before = A.of({
-    "0": {content: ["Item 0"]},
+describe("after jumping to an item by middle clicking its bullet", () => {
+  const before = W.of({
+    "0": {content: ["Item 0"], children: ["1"]},
     "1": {content: ["Item 1"]},
   });
 
-  const after = A.jump(before, "1");
+  const after = before.send({type: "click-bullet", id: before.root.child(0)!.ref.id, alt: true});
 
-  test("the focused item is updated", () => {
-    expect(T.thing(before.tree, T.root(before.tree))).toBe("0");
-    expect(T.thing(after.tree, T.root(after.tree))).toBe("1");
+  test("the root item is updated", () => {
+    expect(before.root.thing).toBe("0");
+    expect(after.root.thing).toBe("1");
   });
 
   test("the 'jump-item' goal is completed", () => {
-    expect(A.isGoalFinished(before, "jump-item")).toBe(false);
-    expect(A.isGoalFinished(after, "jump-item")).toBe(true);
+    expect(before.completed("jump-item")).toBe(false);
+    expect(after.completed("jump-item")).toBe(true);
   });
 });
 
 describe("when toggling a link", () => {
-  const initial = A.of({
+  const initial = W.of({
     "0": {content: ["This item has a link to ", {link: "1"}, "."]},
     "1": {content: ["Another Item"]},
   });
 
-  const expanded = A.toggleLink(initial, T.root(initial.tree), "1");
+  const expanded = initial.root.toggleLink("1");
 
-  const collapsed = A.toggleLink(expanded, T.root(expanded.tree), "1");
-
-  function openedRoot(tree: T.Tree): string[] {
-    return T.openedLinksChildren(tree, T.root(tree)).map((c) => T.thing(tree, c));
-  }
+  const collapsed = expanded.root.toggleLink("1");
 
   describe("when the link is first toggled", () => {
     test("the linked item is added as an opened link", () => {
-      expect(openedRoot(initial.tree)).toEqual([]);
-      expect(openedRoot(expanded.tree)).toEqual(["1"]);
+      expect(initial.root.openedLinks.length).toBe(0);
+      expect(expanded.root.openedLinks.length).toBe(1);
     });
 
     test("the 'expand-link' goal is completed", () => {
-      expect(A.isGoalFinished(initial, "expand-link")).toBe(false);
-      expect(A.isGoalFinished(expanded, "expand-link")).toBe(true);
+      expect(initial.completed("expand-link")).toBe(false);
+      expect(expanded.completed("expand-link")).toBe(true);
     });
   });
 
   describe("when the link is collapsed", () => {
     test("the linked item is removed", () => {
-      expect(openedRoot(expanded.tree)).toEqual(["1"]);
-      expect(openedRoot(collapsed.tree)).toEqual([]);
+      expect(expanded.root.openedLinks.length).toBe(1);
+      expect(collapsed.root.openedLinks.length).toBe(0);
     });
 
     test("the goal remains completed", () => {
-      expect(A.isGoalFinished(expanded, "expand-link")).toBe(true);
-      expect(A.isGoalFinished(collapsed, "expand-link")).toBe(true);
+      expect(expanded.completed("expand-link")).toBe(true);
+      expect(collapsed.completed("expand-link")).toBe(true);
     });
-  });
-});
-
-describe("reading selected text in focused editor", () => {
-  const base = A.of({
-    "0": {content: ["This is item 0."], children: ["1"]},
-    "1": {content: ["This is item 1."]},
-  });
-
-  test("with text selected returns that text", () => {
-    const focused = A.merge(base, {tree: T.focus(base.tree, T.children(base.tree, T.root(base.tree))[0])});
-    expect(T.thing(focused.tree, T.focused(focused.tree)!)).toBe("1");
-
-    const selected = A.edit(
-      focused,
-      T.focused(focused.tree)!,
-      E.select(A.editor(focused, T.focused(focused.tree)!)!, {from: 8, to: 14}),
-    );
-
-    expect(A.selectedText(selected)).toBe("item 1");
-  });
-
-  test("with nothing focused returns an empty string", () => {
-    expect(A.selectedText(base)).toBe("");
   });
 });
 
 describe("inserting a link in an editor", () => {
-  const before = (() => {
-    let app = A.of({
-      "0": {content: ["This is item 0."]},
-      "1": {content: ["This is item 1."]},
-    });
-    app = A.edit(app, T.root(app.tree), E.select(A.editor(app, T.root(app.tree))!, {from: 8, to: 14}));
-    return app;
-  })();
+  const before = W.of({
+    "0": {content: ["This is item 0."]},
+    "1": {content: ["This is item 1."]},
+  }).root.edit({selection: {from: 8, to: 14}});
 
-  const after = A.editInsertLink(before, T.root(before.tree), "1");
-
-  const editorBefore = A.editor(before, T.root(before.tree))!;
-  const editorAfter = A.editor(after, T.root(after.tree))!;
+  const after = before.send(
+    {type: "action", action: "insert-link"},
+    {topic: "popup", type: "query", query: "This is item 1"},
+    {topic: "popup", type: "select"},
+  );
 
   it("updates the content so the selection is replaced with the link", () => {
-    expect(editorBefore.content).toEqual(["This is item 0."]);
-    expect(editorAfter.content).toEqual(["This is ", {link: "1", title: "This is item 1."}, "."]);
+    expect(before.root.content).toEqual(["This is item 0."]);
+    expect(after.root.content).toEqual(["This is ", {link: "1", title: "This is item 1."}, "."]);
   });
 
   it("sets the selection to be after the inserted link", () => {
-    expect(editorBefore.selection).toEqual({from: 8, to: 14});
-    expect(editorAfter.selection).toEqual({from: 9, to: 9});
+    expect(before.selection).toEqual({from: 8, to: 14});
+    expect(after.selection).toEqual({from: 9, to: 9});
   });
 });
 
 describe("after creating a new child", () => {
-  const before = A.of({
+  const before = W.of({
     "0": {content: ["Item 0"]},
   });
 
-  const after = A.createChild(before, T.root(before.tree));
+  const after = before.root.edit().send({type: "action", action: "new-child"});
 
   test("the parent item gets a new child", () => {
-    expect(T.children(before.tree, T.root(before.tree)).length).toBe(0);
-    expect(T.children(after.tree, T.root(after.tree)).length).toBe(1);
+    expect(before.root.nchildren).toBe(0);
+    expect(after.root.nchildren).toBe(1);
   });
 
   test("the child is focused", () => {
-    const child = W.from(after).root.child(0)!.ref;
-    expect(T.hasFocus(after.tree, child)).toBe(true);
+    expect(after.focused?.thing).toEqual(after.root.child(0)?.thing);
   });
 });
 
