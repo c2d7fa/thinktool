@@ -1,6 +1,7 @@
 import * as A from "./index";
 import * as D from "../data";
 import * as T from "../tree";
+import * as W from "../wrapap";
 
 export type ItemDescription = {
   id?: string;
@@ -33,7 +34,7 @@ export function construct(root: ItemDescription, looseItems?: ItemDescription[])
   return A.from(state, T.fromRoot(state, rootId));
 }
 
-export function expectViewToMatch(app: A.App, expected: any): void {
+export function expectViewToMatch(app: A.App | W.Wrapap, expected: any): void {
   function expectMatch(actual: any, expected: any): void {
     if (expected instanceof Array) {
       expect(actual).toBeInstanceOf(Array);
@@ -51,6 +52,8 @@ export function expectViewToMatch(app: A.App, expected: any): void {
     }
   }
 
-  const view = A.view(app);
+  const app_ = "app" in app ? app.app : app;
+
+  const view = A.view(app_);
   return expectMatch(view, expected);
 }
