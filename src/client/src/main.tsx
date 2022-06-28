@@ -359,9 +359,9 @@ function App_({
 
 function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event): void}) {
   return props.view.tab === "orphans" ? (
-    <OrphanList view={props.view} send={(event) => props.send({type: "orphans", event})} />
+    <OrphanList view={props.view} send={props.send} />
   ) : (
-    <Outline outline={props.view} onItemEvent={(event) => props.send(event)} />
+    <Outline outline={props.view} send={props.send} />
   );
 }
 
