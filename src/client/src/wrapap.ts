@@ -13,6 +13,7 @@ export interface Wrapap {
   root: Node;
   completed(goal: G.GoalId): boolean;
   map(f: (app: App) => App): Wrapap;
+  send(...events: A.Event[]): Wrapap;
 
   app: App;
   tree: T.Tree;
@@ -33,6 +34,7 @@ export interface Node {
   link(index: number): Node;
   destroy(): Wrapap;
   edit(editor: E.Editor): Wrapap;
+  edit(): Wrapap;
 }
 
 export function of(items: A.ItemGraph): Wrapap {
@@ -97,8 +99,9 @@ export function from(app: App): Wrapap {
         return from(merge(app, {state, tree}));
       },
 
-      edit(editor) {
-        return from(A.edit(app, ref, editor));
+      edit(editor?: E.Editor) {
+        if (editor) return from(A.edit(app, ref, editor));
+        else return from(A.update(app, {type: "edit", id: ref.id, focused: true, editor: {}}));
       },
     };
   }
@@ -126,6 +129,14 @@ export function from(app: App): Wrapap {
 
     map(f: (app: App) => App) {
       return from(f(app));
+    },
+
+    send(...events: A.Event[]) {
+      let result = app;
+      for (const event of events) {
+        result = A.update(result, event);
+      }
+      return from(result);
     },
   };
 

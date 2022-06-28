@@ -170,7 +170,7 @@ describe("unfolding an item", () => {
       "0": {content: []},
     });
 
-    const after = before.map((app) => A.unfold(app, before.root.ref));
+    const after = before.root.edit().send({type: "action", action: "unfold"});
 
     it("doesn't add any new children", () => {
       expect(before.root.expanded && before.root.nchildren).toBe(0);
@@ -186,7 +186,7 @@ describe("unfolding an item", () => {
         "2": {content: []},
       });
 
-      const after = before.map((app) => A.unfold(app, before.root.child(0)!.ref));
+      const after = before.root.child(0)!.edit().send({type: "action", action: "unfold"});
 
       expect(before.root.child(0)!.expanded).toBe(false);
       expect(after.root.child(0)!.expanded).toBe(true);
@@ -202,7 +202,7 @@ describe("unfolding an item", () => {
         "5": {content: []},
       });
 
-      const after = before.map((app) => A.unfold(app, before.root.child(0)!.ref));
+      const after = before.root.child(0)!.edit().send({type: "action", action: "unfold"});
 
       const node = after.root.child(0);
 
@@ -222,7 +222,7 @@ describe("unfolding an item", () => {
     });
 
     it("doesn't unfold the past the root", () => {
-      const after = before.map((app) => A.unfold(app, before.root.child(0)!.ref));
+      const after = before.root.child(0)!.edit().send({type: "action", action: "unfold"});
       const node = after.root.child(0);
 
       expect(node!.thing).toBe("1");
