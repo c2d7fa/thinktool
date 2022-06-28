@@ -17,7 +17,7 @@ export const Outline = React.memo(function ({outline, send}: {outline: A.Outline
         <SelectedItem
           onEditEvent={(event) => send({id: outline.root.id, ...event})}
           isFolded={outline.isFolded}
-          unfold={() => send({type: "unfold", id: outline.root.id})}
+          unfold={() => send({type: "unfold"})}
           editor={outline.root.editor}
           hasFocus={outline.root.hasFocus}
         />

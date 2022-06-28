@@ -121,7 +121,7 @@ describe("unfolding an item", () => {
       "0": {content: []},
     });
 
-    const after = before.root.edit().send({type: "action", action: "unfold"});
+    const after = before.send({type: "unfold"});
 
     it("doesn't add any new children", () => {
       expect(before.root.expanded && before.root.nchildren).toBe(0);

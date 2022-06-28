@@ -135,5 +135,5 @@ export type Event =
   | {type: "click-parent"; thing: string; alt: boolean}
   | {type: "click-placeholder"}
   | {type: "toggle-references"; id: number}
-  | {type: "unfold"; id: number}
+  | {type: "unfold"}
   | ({id: number} & E.Event);
