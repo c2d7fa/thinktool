@@ -162,8 +162,8 @@ function title(goal: GoalId): string {
   return title;
 }
 
-export function EmbeddedGoal(props: {id: GoalId; state: State}) {
-  const finished = props.state.finished.has(props.id);
+export function EmbeddedGoal(props: {id: GoalId; goals: {[goalId in GoalId]: {completed: boolean}}}) {
+  const finished = props.goals[props.id].completed;
   return (
     <span className={classes({"goal": true, "goal-finished": finished})}>
       <IconLabel icon="goal">{title(props.id)}</IconLabel>

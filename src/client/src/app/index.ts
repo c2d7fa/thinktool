@@ -222,7 +222,8 @@ export type Event =
   | {type: "dragEnd"; modifier: "move" | "copy"}
   | {type: "action"; action: Ac.ActionName}
   | {type: "orphans"; event: O.OrphansEvent}
-  | ({topic: "popup"} & P.Event);
+  | ({topic: "popup"} & P.Event)
+  | Tutorial.Event;
 
 export type Effects = {search?: {items?: {thing: string; content: string}[]; query: string}; url?: string};
 
@@ -276,6 +277,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return O.handle(app, event.event);
   } else if (isPopupEvent(event)) {
     return P.handle(app, event);
+  } else if (event.topic === "tutorial") {
+    return {app: merge(app, {tutorialState: Tutorial.update(app.tutorialState, event)})};
   } else {
     return unreachable(event);
   }

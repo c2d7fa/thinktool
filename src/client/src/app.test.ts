@@ -282,3 +282,36 @@ describe("the search popup", () => {
     });
   });
 });
+
+describe("the tutorial", () => {
+  test("the steps of the tutorial are correct", () => {
+    const step1 = W.of({"0": {content: ["Root"]}});
+    const step2 = step1.send({topic: "tutorial", type: "next"});
+    const step3 = step2.send({topic: "tutorial", type: "next"});
+    const step4 = step3.send({topic: "tutorial", type: "next"});
+    const step5 = step4.send({topic: "tutorial", type: "next"});
+    const step6 = step5.send({topic: "tutorial", type: "next"});
+
+    expectViewToMatch(step1, {tutorial: {step: "Getting started"}});
+    expectViewToMatch(step2, {tutorial: {step: "Multiple parents"}});
+    expectViewToMatch(step3, {tutorial: {step: "Bidirectional linking"}});
+    expectViewToMatch(step4, {tutorial: {step: "Reorganizing"}});
+    expectViewToMatch(step5, {tutorial: {step: "Navigation"}});
+    expectViewToMatch(step6, {tutorial: {step: "The end"}});
+  });
+
+  test("after stepping through all steps, the tutorial is closed", () => {
+    const step1 = W.of({"0": {content: ["Root"]}});
+    const step7 = step1.send(
+      {topic: "tutorial", type: "next"},
+      {topic: "tutorial", type: "next"},
+      {topic: "tutorial", type: "next"},
+      {topic: "tutorial", type: "next"},
+      {topic: "tutorial", type: "next"},
+      {topic: "tutorial", type: "next"},
+    );
+
+    expectViewToMatch(step1, {tutorial: {open: true}});
+    expectViewToMatch(step7, {tutorial: {open: false}});
+  });
+});

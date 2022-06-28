@@ -1,145 +1,48 @@
 import * as React from "react";
 
-import {ActionName} from "./actions";
-import {ExternalLink} from "./ui/ExternalLink";
+import {ExternalLink} from "./ExternalLink";
+import {IconId, IconLabel} from "./icons";
 
-import * as G from "./goal";
-import {IconId, IconLabel} from "./ui/icons";
+import * as A from "../app";
+import * as U from "../tutorial";
+import * as G from "../goal";
 
-export type State = {step: string; finished: boolean; goal: G.State};
-
-export type View = {open: false} | {open: true; step: string; goals: {[id in G.GoalId]: {completed: boolean}}};
-
-const initialState = {step: "Getting started", finished: false, goal: G.initialState};
-
-export function initialize(finished: boolean) {
-  if (!finished) return initialState;
-  return {step: "Getting started", finished: true, goal: G.initialState};
-}
-
-export function action(state: State, event: G.ActionEvent) {
-  return {...state, goal: G.action(state.goal, event)};
-}
-
-export function isGoalFinished(state: State, goal: G.GoalId) {
-  return G.isFinished(state.goal, goal);
-}
-
-const steps: {name: string; introduces: ActionName[]}[] = [
-  {name: "Getting started", introduces: ["new", "new-child"]},
-  {name: "Multiple parents", introduces: ["insert-child", "insert-sibling", "insert-parent"]},
-  {name: "Bidirectional linking", introduces: ["insert-link"]},
-  {name: "Reorganizing", introduces: ["remove", "destroy", "indent", "unindent", "up", "down"]},
-  {name: "Navigation", introduces: ["find", "zoom", "home"]},
-  {name: "The end", introduces: ["tutorial", "forum"]},
-];
-
-export function isActive(state: State): boolean {
-  return !state.finished;
-}
-
-export function reset(state: State): State {
-  return initialState;
-}
-
-export function isRelevant(state: State, name: ActionName): boolean {
-  if (!isActive(state)) return false;
-
-  let relevant: ActionName[] = [];
-  for (const step of steps) {
-    if (step.name === state.step) relevant = step.introduces;
-  }
-  return relevant.includes(name);
-}
-
-export function isNotIntroduced(state: State, name: ActionName): boolean {
-  if (!isActive(state)) return false;
-
-  let introduced: ActionName[] = [];
-  for (const step of steps) {
-    introduced = [...introduced, ...step.introduces];
-    if (step.name === state.step) break;
-  }
-  return !introduced.includes(name);
-}
-
-function stepIndex(state: State): number {
-  return steps.map((s) => s.name).indexOf(state.step);
-}
-
-function amountSteps(state: State): number {
-  return steps.length;
-}
-
-function hasNextStep(state: State): boolean {
-  return steps.length - 1 > stepIndex(state);
-}
-
-function nextStep(state: State): State {
-  if (!hasNextStep(state)) return state;
-
-  let index = 0;
-  for (const step of steps) {
-    if (step.name === state.step) break;
-    index++;
-  }
-  return {...state, step: steps[index + 1].name};
-}
-
-function hasPreviousStep(state: State): boolean {
-  return stepIndex(state) > 0;
-}
-
-function previousStep(state: State): State {
-  if (!hasPreviousStep(state)) return state;
-
-  let index = 0;
-  for (const step of steps) {
-    if (step.name === state.step) break;
-    index++;
-  }
-  return {...state, step: steps[index - 1].name};
-}
-
-export function NextStep(props: {state: State; setState(state: State): void}) {
-  if (hasNextStep(props.state)) {
-    return <button onClick={() => props.setState(nextStep(props.state))}>Next Step &gt;</button>;
-  } else {
-    return <button onClick={() => props.setState({...props.state, finished: true})}>Close &gt;</button>;
-  }
-}
-
-export function TutorialBox(props: {state: State; setState(state: State): void}) {
-  if (props.state.finished) return null;
+export default function TutorialBox(props: {tutorial: U.View; send: A.Send}) {
+  if (!props.tutorial.open) return null;
 
   return (
     <div className="tutorial">
       <h1>
-        {props.state.step}{" "}
+        {props.tutorial.title}{" "}
         <span className="step">
-          (Step {stepIndex(props.state) + 1} of {amountSteps(props.state)})
+          (Step {props.tutorial.currentStep} of {props.tutorial.totalSteps})
         </span>
       </h1>
-      {props.state.step === "Getting started" ? (
-        <StepGettingStarted goalState={props.state.goal} />
-      ) : props.state.step === "Reorganizing" ? (
-        <StepReorganizing goalState={props.state.goal} />
-      ) : props.state.step === "Multiple parents" ? (
-        <StepFlexibleHierarchy goalState={props.state.goal} />
-      ) : props.state.step === "Bidirectional linking" ? (
-        <StepBidirectionalLinks goalState={props.state.goal} />
-      ) : props.state.step === "Navigation" ? (
-        <StepStayingFocused goalState={props.state.goal} />
-      ) : props.state.step === "The end" ? (
+      {props.tutorial.step === "Getting started" ? (
+        <StepGettingStarted goals={props.tutorial.goals} />
+      ) : props.tutorial.step === "Reorganizing" ? (
+        <StepReorganizing goals={props.tutorial.goals} />
+      ) : props.tutorial.step === "Multiple parents" ? (
+        <StepFlexibleHierarchy goals={props.tutorial.goals} />
+      ) : props.tutorial.step === "Bidirectional linking" ? (
+        <StepBidirectionalLinks goals={props.tutorial.goals} />
+      ) : props.tutorial.step === "Navigation" ? (
+        <StepStayingFocused goals={props.tutorial.goals} />
+      ) : props.tutorial.step === "The end" ? (
         <StepHaveFun />
       ) : (
         <p>An error happened while loading the tutorial!</p>
       )}
       <div className="tutorial-navigation">
-        <button onClick={() => props.setState(previousStep(props.state))} disabled={!hasPreviousStep(props.state)}>
+        <button
+          onClick={() => props.send({topic: "tutorial", type: "previous"})}
+          disabled={props.tutorial.previousStepDisabled}
+        >
           &lt; Back
         </button>
-        <NextStep {...props} />
+        <button onClick={() => props.send({topic: "tutorial", type: "next"})}>
+          {props.tutorial.nextStepLabel}
+        </button>
       </div>
     </div>
   );
@@ -153,7 +56,9 @@ function FakeButton(props: {label: string; icon: IconId}) {
   );
 }
 
-export function StepGettingStarted(props: {goalState: G.State}) {
+type Goals = (U.View & {open: true})["goals"];
+
+function StepGettingStarted(props: {goals: Goals}) {
   return (
     <>
       <p>
@@ -164,14 +69,14 @@ export function StepGettingStarted(props: {goalState: G.State}) {
         <FakeButton icon="newChild" label="New Child" /> on the toolbar to create a some items.
       </p>
       <p>
-        <G.EmbeddedGoal id="create-item" state={props.goalState} />
+        <G.EmbeddedGoal id="create-item" goals={props.goals} />
       </p>
       <p>
         Items that have a filled bullet next to them have hidden children. You can expand an item by clicking on
         its bullet.
       </p>
       <p>
-        <G.EmbeddedGoal id="expand-item" state={props.goalState} />
+        <G.EmbeddedGoal id="expand-item" goals={props.goals} />
       </p>
       <p>
         <i>
@@ -182,7 +87,7 @@ export function StepGettingStarted(props: {goalState: G.State}) {
   );
 }
 
-export function StepReorganizing(props: {goalState: G.State}) {
+function StepReorganizing(props: {goals: Goals}) {
   return (
     <>
       <p>
@@ -196,7 +101,7 @@ export function StepReorganizing(props: {goalState: G.State}) {
         <FakeButton icon="destroy" label="Destroy" />. This deletes the item permanently.
       </p>
       <p>
-        <G.EmbeddedGoal id="delete-item" state={props.goalState} />
+        <G.EmbeddedGoal id="delete-item" goals={props.goals} />
       </p>
       <p>
         You can also remove an item from its parent <em>without</em> deleting it from the database with{" "}
@@ -204,7 +109,7 @@ export function StepReorganizing(props: {goalState: G.State}) {
         there.
       </p>
       <p>
-        <G.EmbeddedGoal id="remove-item" state={props.goalState} />
+        <G.EmbeddedGoal id="remove-item" goals={props.goals} />
       </p>
       <p>
         You can use <FakeButton icon="up" label="Up" />,
@@ -213,7 +118,7 @@ export function StepReorganizing(props: {goalState: G.State}) {
         reorganize items among their neighbours.
       </p>
       <p>
-        <G.EmbeddedGoal id="move-item" state={props.goalState} />
+        <G.EmbeddedGoal id="move-item" goals={props.goals} />
       </p>
       <p>
         <i>
@@ -225,7 +130,7 @@ export function StepReorganizing(props: {goalState: G.State}) {
   );
 }
 
-export function StepFlexibleHierarchy(props: {goalState: G.State}) {
+function StepFlexibleHierarchy(props: {goals: Goals}) {
   return (
     <>
       <p>
@@ -240,7 +145,7 @@ export function StepFlexibleHierarchy(props: {goalState: G.State}) {
         parent.
       </p>
       <p>
-        <G.EmbeddedGoal id="add-parent" state={props.goalState} />
+        <G.EmbeddedGoal id="add-parent" goals={props.goals} />
       </p>
       <p>
         Notice how a little green box showed up above the item? You can click on it to go to the other parent. Just
@@ -258,7 +163,7 @@ export function StepFlexibleHierarchy(props: {goalState: G.State}) {
   );
 }
 
-export function StepBidirectionalLinks(props: {goalState: G.State}) {
+function StepBidirectionalLinks(props: {goals: Goals}) {
   return (
     <>
       <p>
@@ -269,14 +174,14 @@ export function StepBidirectionalLinks(props: {goalState: G.State}) {
         <FakeButton icon="insertLink" label="Link" />, and select the item that you want to link to.
       </p>
       <p>
-        <G.EmbeddedGoal id="insert-link" state={props.goalState} />
+        <G.EmbeddedGoal id="insert-link" goals={props.goals} />
       </p>
       <p>
         After you've inserted a link, you can expand the link by clicking on it. This shows you the linked item
         directly in the outline.
       </p>
       <p>
-        <G.EmbeddedGoal id="expand-link" state={props.goalState} />
+        <G.EmbeddedGoal id="expand-link" goals={props.goals} />
       </p>
       <p>
         <i>
@@ -291,7 +196,7 @@ export function StepBidirectionalLinks(props: {goalState: G.State}) {
   );
 }
 
-export function StepStayingFocused(props: {goalState: G.State}) {
+function StepStayingFocused(props: {goals: Goals}) {
   return (
     <>
       <p>
@@ -306,7 +211,7 @@ export function StepStayingFocused(props: {goalState: G.State}) {
       </p>
       <p>
         <p>
-          <G.EmbeddedGoal id="jump-item" state={props.goalState} />
+          <G.EmbeddedGoal id="jump-item" goals={props.goals} />
         </p>
       </p>
       <p>You can use the back button in your browser to go back.</p>
@@ -321,7 +226,7 @@ export function StepStayingFocused(props: {goalState: G.State}) {
         <FakeButton icon="home" label="Home" />.
       </p>
       <p>
-        <G.EmbeddedGoal id="jump-home" state={props.goalState} />
+        <G.EmbeddedGoal id="jump-home" goals={props.goals} />
       </p>
       <p>
         <i>Tip: Try to organize your items so you can find them again from the home view.</i>
@@ -331,13 +236,13 @@ export function StepStayingFocused(props: {goalState: G.State}) {
         an item by its content and select it to jump there.
       </p>
       <p>
-        <G.EmbeddedGoal id="find-item" state={props.goalState} />
+        <G.EmbeddedGoal id="find-item" goals={props.goals} />
       </p>
     </>
   );
 }
 
-export function StepHaveFun() {
+function StepHaveFun() {
   return (
     <>
       <p>
@@ -361,15 +266,4 @@ export function StepHaveFun() {
       </p>
     </>
   );
-}
-
-export function view(state: State): View {
-  if (state.finished) return {open: false};
-  return {
-    open: true,
-    step: state.step,
-    goals: Object.fromEntries(
-      G.allGoalIds.map((goalId) => [goalId, {completed: G.isFinished(state.goal, goalId) ? true : false}]),
-    ) as {[goalId in G.GoalId]: {completed: boolean}},
-  };
 }

@@ -17,6 +17,7 @@ import * as P from "./popup";
 import * as Sync from "./sync";
 
 import * as Toolbar from "./ui/Toolbar";
+import TutorialBox from "./ui/Tutorial";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
 import {ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
@@ -325,6 +326,8 @@ function App_({
     [updateApp],
   );
 
+  const view_ = A.view(app);
+
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
       <OfflineIndicator isDisconnected={A.isDisconnected(app)} />
@@ -337,23 +340,18 @@ function App_({
           isToolbarShown={isToolbarShown}
           login={login({server, username})}
           onToggleToolbar={() => setIsToolbarShown(!isToolbarShown)}
-          popup={A.view(app).popup}
+          popup={view_.popup}
           send={send}
         />
         {isToolbarShown ? <Toolbar.Toolbar send={send} toolbar={Toolbar.toolbar(app)} /> : null}
       </div>
-      {!showSplash && (
-        <Tutorial.TutorialBox
-          state={app.tutorialState}
-          setState={(tutorialState) => updateApp((app) => A.merge(app, {tutorialState}))}
-        />
-      )}
+      {!showSplash && <TutorialBox tutorial={view_.tutorial} send={send} />}
       <Changelog
         changelog={changelog}
         visible={app.changelogShown}
         hide={() => updateApp((app) => A.merge(app, {changelogShown: false}))}
       />
-      <MainView view={A.view(app)} send={send} />
+      <MainView view={view_} send={send} />
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );
