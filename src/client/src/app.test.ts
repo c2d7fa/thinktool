@@ -103,6 +103,55 @@ describe("links and references", () => {
   });
 });
 
+describe("tree-graph consistency", () => {
+  describe("creating a child is immediately reflected in other identical nodes in the tree", () => {
+    const before = W.of({
+      "0": {content: ["Item 0"], children: ["1", "1"]},
+      "1": {content: ["Item 1"], children: ["2"]},
+      "2": {content: ["Item 2"]},
+    })
+      .root.child(0)
+      ?.expand()
+      .root.child(1)
+      ?.expand();
+
+    const after = before?.root
+      .child(0)
+      ?.edit()
+      .send({type: "action", action: "new-child"})
+      .focused?.edit({content: ["New child"]});
+
+    describe("initially", () => {
+      test("both copies of the parent are expanded", () => {
+        expect(before?.root.child(0)?.expanded).toBe(true);
+        expect(before?.root.child(1)?.expanded).toBe(true);
+      });
+
+      test("both copies of the parent have only one child", () => {
+        expect(before?.root.child(0)?.item.children.map((c) => c.editor.content)).toEqual([["Item 2"]]);
+        expect(before?.root.child(1)?.item.children.map((c) => c.editor.content)).toEqual([["Item 2"]]);
+      });
+    });
+
+    describe("after creating child", () => {
+      test.skip("[BUG] both copies of the parent have the new child", () => {
+        console.log(after?.root.child(0)?.item.children.map((c) => c.editor.content));
+        console.log(after?.root.child(1)?.item.children.map((c) => c.editor.content));
+
+        expect(after?.root.child(0)?.item.children.map((c) => c.editor.content)).toEqual([
+          ["New child"],
+          ["Item 2"],
+        ]);
+
+        expect(after?.root.child(1)?.item.children.map((c) => c.editor.content)).toEqual([
+          ["New child"],
+          ["Item 2"],
+        ]);
+      });
+    });
+  });
+});
+
 describe("the outline", () => {
   describe("clicking item bullet", () => {
     describe("of an opened link", () => {

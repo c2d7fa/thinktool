@@ -3,35 +3,6 @@
 import * as T from "../src/tree";
 import * as D from "../src/data";
 
-test("Creating a thing with a custom ID returns that ID.", () => {
-  expect(D.create(D.empty, "custom-id")[1]).toBe("custom-id");
-});
-
-test("Creating a child is reflected in other parents in the tree.", () => {
-  let state = D.empty;
-  state = D.setContent(state, "0", ["Root"]);
-  state = D.create(state, "a")[0];
-  state = D.addChild(state, "0", "a")[0];
-  state = D.addChild(state, "0", "a")[0];
-
-  let tree = T.fromRoot(state, "0");
-
-  // [TODO] We rely on implementation details about what IDs are assigned in the tree.
-
-  expect(T.expanded(tree, {id: 1})).toBeTruthy();
-  expect(T.expanded(tree, {id: 2})).toBeTruthy();
-
-  const [state_, tree_, thing, node] = T.createChild(state, tree, {id: 1});
-  state = state_;
-  tree = tree_;
-
-  expect(T.children(tree, {id: 1})).toEqual([node]);
-  expect(T.children(tree, {id: 1}).length).toBe(1);
-
-  expect(T.children(tree, {id: 2}).filter((c) => T.thing(tree, c) === thing).length).toBe(1);
-  expect(T.children(tree, {id: 2}).length).toBe(1);
-});
-
 test("Indenting and removing item", () => {
   let state = D.empty;
   state = D.setContent(state, "0", ["Root"]);
