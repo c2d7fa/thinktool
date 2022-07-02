@@ -9,7 +9,6 @@ import type {Editor, EditorContent} from "./editor";
 export interface Wrapap {
   root: Node;
   completed(goal: GoalId): boolean;
-  map(f: (app: App) => App): Wrapap;
   send(...events: A.Event[]): Wrapap;
   focused: Node | undefined;
   selection: Editor["selection"] | undefined;
@@ -151,10 +150,6 @@ export function from(app: App): Wrapap {
         : A.after(app, [{type: "action", action: "tutorial"}]);
 
       return (A.view(withTutorialOpen).tutorial as A.View["tutorial"] & {open: true}).goals[goal].completed;
-    },
-
-    map(f: (app: App) => App) {
-      return from(f(app));
     },
 
     parent(index: number) {
