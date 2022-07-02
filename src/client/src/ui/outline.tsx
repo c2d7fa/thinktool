@@ -9,33 +9,27 @@ import * as Item from "./item";
 import {Editor} from "./editor";
 import {Icon} from "./icons";
 
-export const Outline = React.memo(function ({
-  outline,
-  onItemEvent,
-}: {
-  outline: A.Outline;
-  onItemEvent(event: A.ItemEvent): void;
-}) {
+export const Outline = React.memo(function ({outline, send}: {outline: A.Outline; send: A.Send}) {
   return (
     <div className={style.outer}>
-      <ParentsOutline parents={outline.parents} onItemEvent={onItemEvent} />
+      <ParentsOutline parents={outline.parents} send={send} />
       <div className={style.inner}>
         <SelectedItem
-          onEditEvent={(event) => onItemEvent({id: outline.root.id, ...event})}
+          onEditEvent={(event) => send({id: outline.root.id, ...event})}
           isFolded={outline.isFolded}
-          unfold={() => onItemEvent({type: "unfold", id: outline.root.id})}
+          unfold={() => send({type: "unfold"})}
           editor={outline.root.editor}
           hasFocus={outline.root.hasFocus}
         />
         <div className={style.children}>
-          <Item.Subtree parent={outline.root} onItemEvent={onItemEvent} />
+          <Item.Subtree parent={outline.root} send={send} />
         </div>
       </div>
       {outline.references.state !== "empty" && (
         <>
           <div className={style.references}>
             <h1 className={style.sectionHeader}>References</h1>
-            <ReferencesOutline references={outline.references} onItemEvent={onItemEvent} />
+            <ReferencesOutline references={outline.references} send={send} />
           </div>
         </>
       )}
@@ -60,22 +54,20 @@ const SelectedItem = React.memo(function SelectedItem(props: {
   );
 });
 
-function ReferencesOutline(props: {references: A.Item["references"]; onItemEvent: (event: A.ItemEvent) => void}) {
+function ReferencesOutline(props: {references: A.Item["references"]; send: A.Send}) {
   if (props.references.state === "empty" || props.references.state === "collapsed") return null;
 
   const referenceItems = props.references.items.map((item) => {
-    return <Item.Item key={item.id} item={item} onItemEvent={props.onItemEvent} />;
+    return <Item.Item key={item.id} item={item} send={props.send} />;
   });
 
   return <Item.SubtreeLayout>{referenceItems}</Item.SubtreeLayout>;
 }
 
-function ParentsOutline(props: {parents: A.Item[]; onItemEvent: (event: A.ItemEvent) => void}) {
+function ParentsOutline(props: {parents: A.Item[]; send: A.Send}) {
   if (props.parents.length === 0) return null;
 
-  const parentItems = props.parents.map((item) => (
-    <Item.Item key={item.id} item={item} onItemEvent={props.onItemEvent} />
-  ));
+  const parentItems = props.parents.map((item) => <Item.Item key={item.id} item={item} send={props.send} />);
 
   return (
     <div className={style.parents}>

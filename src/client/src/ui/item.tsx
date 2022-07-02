@@ -11,7 +11,7 @@ import {PlaceholderItem} from "./PlaceholderItem";
 
 const styles = require("./item.module.scss").default;
 
-function References({linkedItem, onItemEvent}: {linkedItem: A.Item; onItemEvent: (event: A.ItemEvent) => void}) {
+function References({linkedItem, send}: {linkedItem: A.Item; send: A.Send}) {
   if (linkedItem.references.state === "empty") return null;
 
   const text = `${linkedItem.references.count} reference${linkedItem.references.count === 1 ? "" : "s"}${
@@ -21,16 +21,14 @@ function References({linkedItem, onItemEvent}: {linkedItem: A.Item; onItemEvent:
   const items =
     linkedItem.references.state !== "expanded"
       ? null
-      : linkedItem.references.items.map((reference) => (
-          <Item key={reference.id} item={reference} onItemEvent={onItemEvent} />
-        ));
+      : linkedItem.references.items.map((reference) => <Item key={reference.id} item={reference} send={send} />);
 
   return (
     <>
       <li>
         <div>
           <button
-            onClick={() => onItemEvent({type: "toggle-references", id: linkedItem.id})}
+            onClick={() => send({type: "toggle-references", id: linkedItem.id})}
             className={styles.backreferencesText}
           >
             {text}
@@ -61,24 +59,22 @@ export function ItemLayout(props: {
   );
 }
 
-export function Subtree({parent, onItemEvent}: {parent: A.Item; onItemEvent: (event: A.ItemEvent) => void}) {
-  const children = parent.children.map((child) => <Item key={child.id} item={child} onItemEvent={onItemEvent} />);
-  const openedLinks = parent.openedLinks.map((link) => (
-    <Item key={link.id} item={link} onItemEvent={onItemEvent} />
-  ));
+export function Subtree({parent, send}: {parent: A.Item; send: A.Send}) {
+  const children = parent.children.map((child) => <Item key={child.id} item={child} send={send} />);
+  const openedLinks = parent.openedLinks.map((link) => <Item key={link.id} item={link} send={send} />);
 
   return (
     <SubtreeLayout>
       {openedLinks}
       {children}
-      {parent.isPlaceholderShown && <PlaceholderItem onCreate={() => onItemEvent({type: "click-placeholder"})} />}
-      <References linkedItem={parent} onItemEvent={onItemEvent} />
+      {parent.isPlaceholderShown && <PlaceholderItem onCreate={() => send({type: "click-placeholder"})} />}
+      <References linkedItem={parent} send={send} />
     </SubtreeLayout>
   );
 }
 
 export const Item = React.memo(
-  function Item({item, onItemEvent}: {item: A.Item; onItemEvent: (event: A.ItemEvent) => void}) {
+  function Item({item, send}: {item: A.Item; send: A.Send}) {
     const className = Misc.classes({
       [styles.item]: true,
       [styles.dropTarget]: item.dragState === "target",
@@ -96,30 +92,30 @@ export const Item = React.memo(
           otherParents={
             <OtherParents
               otherParents={item.otherParents}
-              click={(thing) => onItemEvent({type: "click-parent", thing, alt: false})}
-              altClick={(thing) => onItemEvent({type: "click-parent", thing, alt: true})}
+              click={(thing) => send({type: "click-parent", thing, alt: false})}
+              altClick={(thing) => send({type: "click-parent", thing, alt: true})}
             />
           }
           bullet={
             <Bullet
               specialType={item.kind === "child" || item.kind === "root" ? undefined : item.kind}
-              beginDrag={() => onItemEvent({type: "startDrag", id: item.id})}
+              beginDrag={() => send({type: "startDrag", id: item.id})}
               status={item.status}
-              toggle={() => onItemEvent({type: "click-bullet", id: item.id, alt: false})}
-              onMiddleClick={() => onItemEvent({type: "click-bullet", id: item.id, alt: true})}
+              toggle={() => send({type: "click-bullet", id: item.id, alt: false})}
+              onMiddleClick={() => send({type: "click-bullet", id: item.id, alt: true})}
             />
           }
           editor={
             <Editor.Editor
               editor={item.editor}
               hasFocus={item.hasFocus}
-              onEvent={(event) => onItemEvent({id: item.id, ...event})}
+              onEvent={(event) => send({id: item.id, ...event})}
             />
           }
         />
-        {item.status === "expanded" && <Subtree parent={item} onItemEvent={onItemEvent} />}
+        {item.status === "expanded" && <Subtree parent={item} send={send} />}
       </li>
     );
   },
-  (prev, next) => JSON.stringify(prev.item) === JSON.stringify(next.item) && prev.onItemEvent === next.onItemEvent,
+  (prev, next) => JSON.stringify(prev.item) === JSON.stringify(next.item) && prev.send === next.send,
 );

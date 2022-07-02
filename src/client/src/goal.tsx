@@ -23,18 +23,21 @@ export type ActionEvent =
   | {action: "link-inserted"}
   | {action: "moved"};
 
-export type GoalId =
-  | "create-item"
-  | "add-parent"
-  | "expand-item"
-  | "remove-item"
-  | "delete-item"
-  | "move-item"
-  | "insert-link"
-  | "expand-link"
-  | "jump-item"
-  | "jump-home"
-  | "find-item";
+export const allGoalIds = [
+  "create-item",
+  "add-parent",
+  "expand-item",
+  "remove-item",
+  "delete-item",
+  "move-item",
+  "insert-link",
+  "expand-link",
+  "jump-item",
+  "jump-home",
+  "find-item",
+] as const;
+
+export type GoalId = typeof allGoalIds[number];
 
 type Goals = Map<GoalId, {title: string; doesComplete: (event: ActionEvent) => boolean}>;
 
@@ -159,8 +162,8 @@ function title(goal: GoalId): string {
   return title;
 }
 
-export function EmbeddedGoal(props: {id: GoalId; state: State}) {
-  const finished = props.state.finished.has(props.id);
+export function EmbeddedGoal(props: {id: GoalId; goals: {[goalId in GoalId]: {completed: boolean}}}) {
+  const finished = props.goals[props.id].completed;
   return (
     <span className={classes({"goal": true, "goal-finished": finished})}>
       <IconLabel icon="goal">{title(props.id)}</IconLabel>

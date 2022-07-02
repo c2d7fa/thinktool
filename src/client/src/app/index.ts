@@ -16,7 +16,6 @@ import {GoalId} from "../goal";
 
 import * as PlaceholderItem from "../ui/PlaceholderItem";
 import * as Ac from "../actions";
-import {IconId} from "../ui/icons";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
@@ -37,6 +36,7 @@ export interface App {
 }
 
 export type UpdateApp = (f: (app: App) => App) => void;
+export type Send = (ev: Event) => void;
 
 export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: boolean}): App {
   return {
@@ -222,7 +222,8 @@ export type Event =
   | {type: "dragEnd"; modifier: "move" | "copy"}
   | {type: "action"; action: Ac.ActionName}
   | {type: "orphans"; event: O.OrphansEvent}
-  | ({topic: "popup"} & P.Event);
+  | ({topic: "popup"} & P.Event)
+  | Tutorial.Event;
 
 export type Effects = {search?: {items?: {thing: string; content: string}[]; query: string}; url?: string};
 
@@ -265,7 +266,7 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   } else if (event.type === "toggle-references") {
     return {app: merge(app, {tree: T.toggleBackreferences(app.state, app.tree, {id: event.id})})};
   } else if (event.type === "unfold") {
-    return {app: unfold(app, {id: event.id})};
+    return {app: unfold(app, {id: T.root(app.tree).id})};
   } else if (event.type === "focus") {
     return {app: merge(app, {tree: T.focus(app.tree, {id: event.id})}), effects: {}};
   } else if (event.type === "dragHover") {
@@ -276,6 +277,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return O.handle(app, event.event);
   } else if (isPopupEvent(event)) {
     return P.handle(app, event);
+  } else if (event.topic === "tutorial") {
+    return {app: merge(app, {tutorialState: Tutorial.update(app.tutorialState, event)})};
   } else {
     return unreachable(event);
   }
@@ -321,9 +324,13 @@ export function focusedId(app: App): number | null {
   return T.focused(app.tree)?.id ?? null;
 }
 
-export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView)) & {popup: P.View};
+export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView)) & {
+  popup: P.View;
+  tutorial: Tutorial.View;
+};
 
 export function view(app: App): View {
-  if (app.tab === "orphans") return {...O.view(app), tab: "orphans", popup: P.view(app)};
-  else return {...Ou.fromApp(app), tab: "outline", popup: P.view(app)};
+  if (app.tab === "orphans")
+    return {...O.view(app), tab: "orphans", popup: P.view(app), tutorial: Tutorial.view(app.tutorialState)};
+  else return {...Ou.fromApp(app), tab: "outline", popup: P.view(app), tutorial: Tutorial.view(app.tutorialState)};
 }

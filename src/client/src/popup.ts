@@ -1,9 +1,9 @@
-import * as A from "../app";
-import * as D from "../data";
-import * as E from "../editor";
-import * as Ac from "../actions";
-import * as Sh from "../shortcuts";
-import {IconId} from "../ui/icons";
+import * as A from "./app";
+import * as D from "./data";
+import * as E from "./editor";
+import * as Ac from "./actions";
+import * as Sh from "./shortcuts";
+import {IconId} from "./ui/icons";
 
 const _isOpen = Symbol("active");
 const _query = Symbol("query");

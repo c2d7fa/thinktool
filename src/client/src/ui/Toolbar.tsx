@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import {App} from "../app";
+import * as A from "../app";
 
 import * as Ac from "../actions";
 import * as Sh from "../shortcuts";
@@ -23,10 +24,7 @@ export type State = {
 };
 
 const ToolbarButton = React.memo(
-  function ToolbarButton(props: {
-    onToolbarButtonPressed(action: Ac.ActionName): void;
-    button: State["groups"][number]["actions"][number];
-  }) {
+  function ToolbarButton(props: {send: A.Send; button: State["groups"][number]["actions"][number]}) {
     const shortcut = Sh.format(Ac.shortcut(props.button.action));
 
     return (
@@ -53,12 +51,12 @@ const ToolbarButton = React.memo(
         }}
         onAuxClick={(ev) => {
           console.log("Clicked button %o (aux)", props.button.action);
-          props.onToolbarButtonPressed(props.button.action);
+          props.send({type: "action", action: props.button.action});
           ev.preventDefault();
         }}
         onClick={(ev) => {
           console.log("Clicked button %o", props.button.action);
-          props.onToolbarButtonPressed(props.button.action);
+          props.send({type: "action", action: props.button.action});
           ev.preventDefault();
         }}
         title={props.button.description + (shortcut === "" ? "" : ` [${shortcut}]`)}
@@ -68,34 +66,23 @@ const ToolbarButton = React.memo(
       </button>
     );
   },
-  (prev, next) =>
-    prev.onToolbarButtonPressed === next.onToolbarButtonPressed &&
-    JSON.stringify(prev.button) === JSON.stringify(next.button),
+  (prev, next) => prev.send === next.send && JSON.stringify(prev.button) === JSON.stringify(next.button),
 );
 
 const ToolbarGroup = React.memo(
-  function ToolbarGroup(props: {
-    onToolbarButtonPressed(action: Ac.ActionName): void;
-    group: State["groups"][number];
-  }) {
+  function ToolbarGroup(props: {send: A.Send; group: State["groups"][number]}) {
     return (
       <div className="toolbar-group named-toolbar-group">
         <h6>{props.group.title}</h6>
         <div>
           {props.group.actions.map((button) => (
-            <ToolbarButton
-              key={button.action}
-              onToolbarButtonPressed={props.onToolbarButtonPressed}
-              button={button}
-            />
+            <ToolbarButton key={button.action} send={props.send} button={button} />
           ))}
         </div>
       </div>
     );
   },
-  (prev, next) =>
-    prev.onToolbarButtonPressed === next.onToolbarButtonPressed &&
-    JSON.stringify(prev.group) === JSON.stringify(next.group),
+  (prev, next) => prev.send === next.send && JSON.stringify(prev.group) === JSON.stringify(next.group),
 );
 
 export function toolbar(app: App): State {
@@ -194,16 +181,14 @@ export function toolbar(app: App): State {
 }
 
 export const Toolbar = React.memo(
-  function Toolbar(props: {onToolbarButtonPressed(action: Ac.ActionName): void; toolbar: State}) {
+  function Toolbar(props: {send: A.Send; toolbar: State}) {
     return (
       <div className="toolbar">
         {props.toolbar.groups.map((group) => (
-          <ToolbarGroup key={group.title} onToolbarButtonPressed={props.onToolbarButtonPressed} group={group} />
+          <ToolbarGroup key={group.title} send={props.send} group={group} />
         ))}
       </div>
     );
   },
-  (prev, next) =>
-    prev.onToolbarButtonPressed === next.onToolbarButtonPressed &&
-    JSON.stringify(prev.toolbar) === JSON.stringify(next.toolbar),
+  (prev, next) => prev.send === next.send && JSON.stringify(prev.toolbar) === JSON.stringify(next.toolbar),
 );
