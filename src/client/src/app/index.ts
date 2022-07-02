@@ -230,6 +230,7 @@ export type Event =
   | ({topic: "popup"} & P.Event)
   | {type: "toggleToolbar"}
   | {type: "searchResponse"; things: string[]}
+  | {type: "navigateTo"; thing: string}
   | Tutorial.Event;
 
 export type Effects = {search?: {items?: {thing: string; content: string}[]; query: string}; url?: string};
@@ -288,6 +289,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return {app: merge(app, {popup: P.receiveResults(app.popup, app.state, event.things)})};
   } else if (event.type === "unfocus") {
     return {app: merge(app, {tree: T.unfocus(app.tree)})};
+  } else if (event.type === "navigateTo") {
+    return {app: jump(app, event.thing)};
   } else if (isPopupEvent(event)) {
     return P.handle(app, event);
   } else if (event.topic === "tutorial") {
@@ -338,6 +341,7 @@ export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.Orphans
   toolbar: Toolbar.View;
   popup: P.View;
   tutorial: Tutorial.View;
+  url: {root: string};
 };
 
 export function view(app: App): View {
@@ -345,6 +349,7 @@ export function view(app: App): View {
     popup: P.view(app),
     tutorial: Tutorial.view(app.tutorialState),
     toolbar: app[_toolbarShown] ? Toolbar.viewToolbar(app) : {shown: false},
+    url: {root: T.thing(app.tree, T.root(app.tree))},
     ...(app.tab === "orphans" ? {tab: "orphans", ...O.view(app)} : {tab: "outline", ...Ou.fromApp(app)}),
   };
 }

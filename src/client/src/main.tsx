@@ -6,14 +6,12 @@ import * as ChangelogData from "./changes.json";
 
 import {extractThingFromURL, useThingUrl} from "./url";
 
-import * as T from "./tree";
 import * as Tutorial from "./tutorial";
 import {ServerApi} from "./sync/server-api";
 import * as Storage from "./sync/storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
-import * as P from "./popup";
 import * as Sync from "./sync";
 
 import * as Toolbar from "./ui/Toolbar";
@@ -264,13 +262,6 @@ function App_({
     updateAppWithoutSaving,
   });
 
-  useThingUrl({
-    current: T.thing(app.tree, T.root(app.tree)),
-    jump(thing: string) {
-      updateAppWithoutSaving(A.merge(app, {tree: T.fromRoot(app.state, thing)}));
-    },
-  });
-
   const search = React.useMemo<Search>(() => {
     const search = new Search([]);
     search.on("results", (results) =>
@@ -309,6 +300,13 @@ function App_({
   );
 
   const view_ = A.view(app);
+
+  useThingUrl({
+    current: view_.url.root,
+    jump(thing: string) {
+      updateAppWithoutSaving(A.update(app, {type: "navigateTo", thing}));
+    },
+  });
 
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusBackground} tabIndex={-1} className="app">
