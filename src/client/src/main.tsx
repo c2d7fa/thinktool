@@ -274,15 +274,7 @@ function App_({
   const search = React.useMemo<Search>(() => {
     const search = new Search([]);
     search.on("results", (results) =>
-      updateApp((app) =>
-        A.merge(app, {
-          popup: P.receiveResults(
-            app.popup,
-            app.state,
-            results.map((result) => result.thing),
-          ),
-        }),
-      ),
+      send({type: "searchResponse", things: results.map((result) => result.thing)}),
     );
     return search;
   }, []);

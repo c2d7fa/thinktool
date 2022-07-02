@@ -228,6 +228,7 @@ export type Event =
   | {type: "orphans"; event: O.OrphansEvent}
   | ({topic: "popup"} & P.Event)
   | {type: "toggleToolbar"}
+  | {type: "searchResponse"; things: string[]}
   | Tutorial.Event;
 
 export type Effects = {search?: {items?: {thing: string; content: string}[]; query: string}; url?: string};
@@ -282,6 +283,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return O.handle(app, event.event);
   } else if (event.type === "toggleToolbar") {
     return {app: {...app, [_toolbarShown]: !app[_toolbarShown]}};
+  } else if (event.type === "searchResponse") {
+    return {app: merge(app, {popup: P.receiveResults(app.popup, app.state, event.things)})};
   } else if (isPopupEvent(event)) {
     return P.handle(app, event);
   } else if (event.topic === "tutorial") {
@@ -298,15 +301,12 @@ export function update(app: App, event: Event): App {
 export function after(app: App | ItemGraph, events: (Event | ((view: View) => Event))[]): App {
   function executeSearch(result: {app: App; effects?: Effects}): App {
     if (!result?.effects?.search) return result.app;
-    return merge(result.app, {
-      popup: P.receiveResults(
-        result.app.popup,
-        result.app.state,
-        D.allThings(result.app.state)
-          .map((thing) => ({thing, content: D.contentText(result.app.state, thing)}))
-          .filter((item) => item.content.startsWith(result.effects!.search!.query))
-          .map((r) => r.thing),
-      ),
+    return update(result.app, {
+      type: "searchResponse",
+      things: D.allThings(result.app.state)
+        .map((thing) => ({thing, content: D.contentText(result.app.state, thing)}))
+        .filter((item) => item.content.startsWith(result.effects!.search!.query))
+        .map((r) => r.thing),
     });
   }
 
