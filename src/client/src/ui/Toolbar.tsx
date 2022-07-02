@@ -4,9 +4,10 @@ import * as A from "../app";
 import * as Ic from "./icons";
 
 type View = A.View["toolbar"];
+type ShownView = View & {shown: true};
 
 const ToolbarButton = React.memo(
-  function ToolbarButton(props: {send: A.Send; button: View["groups"][number]["actions"][number]}) {
+  function ToolbarButton(props: {send: A.Send; button: ShownView["groups"][number]["actions"][number]}) {
     return (
       <button
         className={
@@ -50,7 +51,7 @@ const ToolbarButton = React.memo(
 );
 
 const ToolbarGroup = React.memo(
-  function ToolbarGroup(props: {send: A.Send; group: View["groups"][number]}) {
+  function ToolbarGroup(props: {send: A.Send; group: ShownView["groups"][number]}) {
     return (
       <div className="toolbar-group named-toolbar-group">
         <h6>{props.group.title}</h6>
@@ -67,6 +68,7 @@ const ToolbarGroup = React.memo(
 
 export const Toolbar = React.memo(
   function Toolbar(props: {send: A.Send; toolbar: View}) {
+    if (!props.toolbar.shown) return null;
     return (
       <div className="toolbar">
         {props.toolbar.groups.map((group) => (

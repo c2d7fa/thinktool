@@ -5,20 +5,23 @@ import * as Tu from "../tutorial";
 import * as Sh from "../shortcuts";
 import * as Ic from "../ui/icons";
 
-export type View = {
-  groups: {
-    title: string;
-    actions: {
-      action: Ac.ActionName;
-      icon: Ic.IconId;
-      description: string;
-      label: string;
-      isEnabled: boolean;
-      isRelevant: boolean;
-      isIntroduced: boolean;
-    }[];
-  }[];
-};
+export type View =
+  | {
+      shown: true;
+      groups: {
+        title: string;
+        actions: {
+          action: Ac.ActionName;
+          icon: Ic.IconId;
+          description: string;
+          label: string;
+          isEnabled: boolean;
+          isRelevant: boolean;
+          isIntroduced: boolean;
+        }[];
+      }[];
+    }
+  | {shown: false};
 
 export function viewToolbar(app: App): View {
   const knownActions: {[action in Ac.ActionName]?: {description: string; icon: Ic.IconId; label: string}} = {
@@ -83,7 +86,7 @@ export function viewToolbar(app: App): View {
     },
   };
 
-  function lookup(action: keyof typeof knownActions): View["groups"][number]["actions"][number] {
+  function lookup(action: keyof typeof knownActions): (View & {shown: true})["groups"][number]["actions"][number] {
     const known = knownActions[action];
     const shortcut = Sh.format(Ac.shortcut(action));
     if (!known) throw new Error(`Unknown action ${action}`);
@@ -98,6 +101,7 @@ export function viewToolbar(app: App): View {
   }
 
   return {
+    shown: true,
     groups: [
       {title: "Navigate", actions: [lookup("home"), lookup("find"), lookup("zoom"), lookup("unfold")]},
       {title: "Item", actions: [lookup("new"), lookup("new-child"), lookup("remove"), lookup("destroy")]},

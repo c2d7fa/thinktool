@@ -224,6 +224,7 @@ export type Event =
   | {type: "action"; action: Ac.ActionName}
   | {type: "orphans"; event: O.OrphansEvent}
   | ({topic: "popup"} & P.Event)
+  | {type: "toggleToolbar"}
   | Tutorial.Event;
 
 export type Effects = {search?: {items?: {thing: string; content: string}[]; query: string}; url?: string};
@@ -276,6 +277,9 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return {app: R.drop(app, event.modifier)};
   } else if (event.type === "orphans") {
     return O.handle(app, event.event);
+  } else if (event.type === "toggleToolbar") {
+    // TODO
+    return {app};
   } else if (isPopupEvent(event)) {
     return P.handle(app, event);
   } else if (event.topic === "tutorial") {
