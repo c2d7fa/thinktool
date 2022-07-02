@@ -20,6 +20,7 @@ import * as Ac from "../actions";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
+const _toolbarShown = Symbol("toolbarShown");
 
 export interface App {
   state: D.State;
@@ -34,6 +35,7 @@ export interface App {
   orphans: O.OrphansState;
   [_isOnline]: boolean;
   [_syncDialog]: Sy.Dialog.SyncDialog | null;
+  [_toolbarShown]: boolean;
 }
 
 export type UpdateApp = (f: (app: App) => App) => void;
@@ -53,6 +55,7 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     orphans: O.empty,
     [_isOnline]: true,
     [_syncDialog]: null,
+    [_toolbarShown]: true,
   };
 }
 
@@ -278,8 +281,7 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   } else if (event.type === "orphans") {
     return O.handle(app, event.event);
   } else if (event.type === "toggleToolbar") {
-    // TODO
-    return {app};
+    return {app: {...app, [_toolbarShown]: !app[_toolbarShown]}};
   } else if (isPopupEvent(event)) {
     return P.handle(app, event);
   } else if (event.topic === "tutorial") {
@@ -339,7 +341,7 @@ export function view(app: App): View {
   return {
     popup: P.view(app),
     tutorial: Tutorial.view(app.tutorialState),
-    toolbar: Toolbar.viewToolbar(app),
+    toolbar: app[_toolbarShown] ? Toolbar.viewToolbar(app) : {shown: false},
     ...(app.tab === "orphans" ? {tab: "orphans", ...O.view(app)} : {tab: "outline", ...Ou.fromApp(app)}),
   };
 }
