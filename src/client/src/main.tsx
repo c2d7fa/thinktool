@@ -69,7 +69,7 @@ function useServerChanges(server: ServerApi | null, updateApp: (f: (app: A.App) 
   }, []);
 }
 
-function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => void) {
+function useDragAndDrop(app: A.App, send: A.Send) {
   // Register event listeners when drag becomes active, unregister when drag
   // becomes inactive. We do this to avoid performance issues due to constantly
   // listening to mouse movements. Is it necessary? Is there a cleaner solution?
@@ -95,19 +95,19 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
 
     function mousemove(ev: MouseEvent): void {
       const {clientX: x, clientY: y} = ev;
-      updateApp((app) => A.update(app, {type: "dragHover", id: findNodeAt({x, y})?.id ?? null}));
+      send({type: "dragHover", id: findNodeAt({x, y})?.id ?? null});
     }
 
     function touchmove(ev: TouchEvent): void {
       const {clientX: x, clientY: y} = ev.changedTouches[0];
-      updateApp((app) => A.update(app, {type: "dragHover", id: findNodeAt({x, y})?.id ?? null}));
+      send({type: "dragHover", id: findNodeAt({x, y})?.id ?? null});
     }
 
     window.addEventListener("mousemove", mousemove);
     window.addEventListener("touchmove", touchmove);
 
     function mouseup(ev: MouseEvent | TouchEvent): void {
-      updateApp((app) => A.update(app, {type: "dragEnd", modifier: ev.ctrlKey ? "copy" : "move"}));
+      send({type: "dragEnd", modifier: ev.ctrlKey ? "copy" : "move"});
     }
 
     window.addEventListener("mouseup", mouseup);
@@ -121,7 +121,7 @@ function useDragAndDrop(app: A.App, updateApp: (f: (app: A.App) => A.App) => voi
       window.removeEventListener("mouseup", mouseup);
       window.removeEventListener("touchend", mouseup);
     };
-  }, [A.isDragging(app), updateApp]);
+  }, [A.isDragging(app), send]);
 }
 
 function useRepeatedlyCheck(f: () => Promise<"continue" | "stop">, ms: number): {start(): void} {
@@ -284,7 +284,7 @@ function App_({
   useServerChanges(server ?? null, updateAppWithoutSaving);
   useGlobalShortcuts(send);
 
-  useDragAndDrop(app, updateApp);
+  useDragAndDrop(app, send);
 
   React.useEffect(() => {
     server
