@@ -347,3 +347,15 @@ describe("placeholder item", () => {
     });
   });
 });
+
+describe("the toolbar", () => {
+  describe("toggling the toolbar", () => {
+    const step1 = W.of({"0": {content: ["Root"]}});
+    const step2 = step1.send({type: "toggleToolbar"});
+    const step3 = step2.send({type: "toggleToolbar"});
+
+    test("the toolbar is initially shown", () => expectViewToMatch(step1, {toolbar: {shown: true}}));
+    test("the toolbar is hidden after toggling it", () => expectViewToMatch(step2, {toolbar: {shown: false}}));
+    test("the toolbar is shown after toggling it again", () => expectViewToMatch(step3, {toolbar: {shown: true}}));
+  });
+});

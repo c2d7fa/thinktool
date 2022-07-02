@@ -6,6 +6,7 @@ import * as R from "./drag";
 import * as O from "../orphans";
 import * as Sy from "../sync";
 
+import * as Toolbar from "./toolbar";
 import * as Ou from "./outline";
 import * as I from "./item";
 
@@ -19,6 +20,7 @@ import * as Ac from "../actions";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
+const _toolbarShown = Symbol("toolbarShown");
 
 export interface App {
   state: D.State;
@@ -33,6 +35,7 @@ export interface App {
   orphans: O.OrphansState;
   [_isOnline]: boolean;
   [_syncDialog]: Sy.Dialog.SyncDialog | null;
+  [_toolbarShown]: boolean;
 }
 
 export type UpdateApp = (f: (app: App) => App) => void;
@@ -52,6 +55,7 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     orphans: O.empty,
     [_isOnline]: true,
     [_syncDialog]: null,
+    [_toolbarShown]: true,
   };
 }
 
@@ -223,6 +227,7 @@ export type Event =
   | {type: "action"; action: Ac.ActionName}
   | {type: "orphans"; event: O.OrphansEvent}
   | ({topic: "popup"} & P.Event)
+  | {type: "toggleToolbar"}
   | Tutorial.Event;
 
 export type Effects = {search?: {items?: {thing: string; content: string}[]; query: string}; url?: string};
@@ -275,6 +280,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return {app: R.drop(app, event.modifier)};
   } else if (event.type === "orphans") {
     return O.handle(app, event.event);
+  } else if (event.type === "toggleToolbar") {
+    return {app: {...app, [_toolbarShown]: !app[_toolbarShown]}};
   } else if (isPopupEvent(event)) {
     return P.handle(app, event);
   } else if (event.topic === "tutorial") {
@@ -325,12 +332,16 @@ export function focusedId(app: App): number | null {
 }
 
 export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView)) & {
+  toolbar: Toolbar.View;
   popup: P.View;
   tutorial: Tutorial.View;
 };
 
 export function view(app: App): View {
-  if (app.tab === "orphans")
-    return {...O.view(app), tab: "orphans", popup: P.view(app), tutorial: Tutorial.view(app.tutorialState)};
-  else return {...Ou.fromApp(app), tab: "outline", popup: P.view(app), tutorial: Tutorial.view(app.tutorialState)};
+  return {
+    popup: P.view(app),
+    tutorial: Tutorial.view(app.tutorialState),
+    toolbar: app[_toolbarShown] ? Toolbar.viewToolbar(app) : {shown: false},
+    ...(app.tab === "orphans" ? {tab: "orphans", ...O.view(app)} : {tab: "outline", ...Ou.fromApp(app)}),
+  };
 }

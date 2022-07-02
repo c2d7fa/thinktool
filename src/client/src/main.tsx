@@ -294,17 +294,10 @@ function App_({
 
   useDragAndDrop(app, updateApp);
 
-  const [isToolbarShown, setIsToolbarShown_] = React.useState<boolean>(true);
-  function setIsToolbarShown(isToolbarShown: boolean) {
-    setIsToolbarShown_(isToolbarShown);
-    server?.setToolbarState({shown: isToolbarShown}).catch((error) => {
-      console.warn("Error while setting toolbar state: %o", error);
-    });
-  }
   React.useEffect(() => {
     server
       ?.getToolbarState()
-      .then(({shown}) => setIsToolbarShown_(shown))
+      .then(({shown}) => !shown && send({type: "toggleToolbar"}))
       .catch((error) => {
         console.warn("Error while getting toolbar state: %o", error);
       });
@@ -337,13 +330,13 @@ function App_({
       />
       <div className="app-header">
         <TopBar
-          isToolbarShown={isToolbarShown}
+          isToolbarShown={view_.toolbar.shown}
           login={login({server, username})}
-          onToggleToolbar={() => setIsToolbarShown(!isToolbarShown)}
+          onToggleToolbar={() => send({type: "toggleToolbar"})}
           popup={view_.popup}
           send={send}
         />
-        {isToolbarShown ? <Toolbar.Toolbar send={send} toolbar={Toolbar.toolbar(app)} /> : null}
+        <Toolbar.Toolbar send={send} toolbar={view_.toolbar} />
       </div>
       {!showSplash && <TutorialBox tutorial={view_.tutorial} send={send} />}
       <Changelog
