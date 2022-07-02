@@ -315,3 +315,35 @@ describe("the tutorial", () => {
     expectViewToMatch(step7, {tutorial: {open: false}});
   });
 });
+
+describe("placeholder item", () => {
+  test("a placeholder item is shown when the current root item has no children", () => {
+    const app = W.of({"0": {content: ["Root"]}});
+    expectViewToMatch(app, {tab: "outline", root: {isPlaceholderShown: true}});
+  });
+
+  test("a placeholder item isn't shown when the current root item already has children", () => {
+    const app = W.of({"0": {content: ["Root"], children: ["1"]}, "1": {content: ["Child"]}});
+    expectViewToMatch(app, {tab: "outline", root: {isPlaceholderShown: false}});
+  });
+
+  describe("clicking the placeholder item", () => {
+    const before = W.of({"0": {content: ["Root"]}});
+    const after = before.send({type: "click-placeholder"});
+
+    describe("initially", () => {
+      test("the root item has no children", () =>
+        expectViewToMatch(before, {tab: "outline", root: {children: []}}));
+
+      test("nothing is focused", () => expect(before.focused).toBeUndefined());
+    });
+
+    describe("after clicking", () => {
+      test("the root item has one child", () =>
+        expectViewToMatch(after, {tab: "outline", root: {children: [{editor: {content: []}}]}}));
+
+      test("the child item is focused", () =>
+        expectViewToMatch(after, {tab: "outline", root: {children: [{hasFocus: true}]}}));
+    });
+  });
+});
