@@ -343,7 +343,7 @@ function App_({
           popup={view_.popup}
           send={send}
         />
-        {isToolbarShown ? <Toolbar.Toolbar send={send} toolbar={Toolbar.toolbar(app)} /> : null}
+        {isToolbarShown ? <Toolbar.Toolbar send={send} toolbar={view_.toolbar} /> : null}
       </div>
       {!showSplash && <TutorialBox tutorial={view_.tutorial} send={send} />}
       <Changelog

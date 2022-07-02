@@ -6,6 +6,7 @@ import * as R from "./drag";
 import * as O from "../orphans";
 import * as Sy from "../sync";
 
+import * as Toolbar from "./toolbar";
 import * as Ou from "./outline";
 import * as I from "./item";
 
@@ -325,12 +326,26 @@ export function focusedId(app: App): number | null {
 }
 
 export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.OrphansView)) & {
+  toolbar: Toolbar.View;
   popup: P.View;
   tutorial: Tutorial.View;
 };
 
 export function view(app: App): View {
   if (app.tab === "orphans")
-    return {...O.view(app), tab: "orphans", popup: P.view(app), tutorial: Tutorial.view(app.tutorialState)};
-  else return {...Ou.fromApp(app), tab: "outline", popup: P.view(app), tutorial: Tutorial.view(app.tutorialState)};
+    return {
+      ...O.view(app),
+      tab: "orphans",
+      popup: P.view(app),
+      tutorial: Tutorial.view(app.tutorialState),
+      toolbar: Toolbar.viewToolbar(app),
+    };
+  else
+    return {
+      ...Ou.fromApp(app),
+      tab: "outline",
+      popup: P.view(app),
+      tutorial: Tutorial.view(app.tutorialState),
+      toolbar: Toolbar.viewToolbar(app),
+    };
 }
