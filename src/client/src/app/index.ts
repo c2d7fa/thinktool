@@ -332,20 +332,10 @@ export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.Orphans
 };
 
 export function view(app: App): View {
-  if (app.tab === "orphans")
-    return {
-      ...O.view(app),
-      tab: "orphans",
-      popup: P.view(app),
-      tutorial: Tutorial.view(app.tutorialState),
-      toolbar: Toolbar.viewToolbar(app),
-    };
-  else
-    return {
-      ...Ou.fromApp(app),
-      tab: "outline",
-      popup: P.view(app),
-      tutorial: Tutorial.view(app.tutorialState),
-      toolbar: Toolbar.viewToolbar(app),
-    };
+  return {
+    popup: P.view(app),
+    tutorial: Tutorial.view(app.tutorialState),
+    toolbar: Toolbar.viewToolbar(app),
+    ...(app.tab === "orphans" ? {tab: "orphans", ...O.view(app)} : {tab: "outline", ...Ou.fromApp(app)}),
+  };
 }
