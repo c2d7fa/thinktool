@@ -1,17 +1,12 @@
 import * as React from "react";
 
 import * as A from "../app";
-
-import * as Ac from "../actions";
-import * as Sh from "../shortcuts";
 import * as Ic from "./icons";
 
 type View = A.View["toolbar"];
 
 const ToolbarButton = React.memo(
   function ToolbarButton(props: {send: A.Send; button: View["groups"][number]["actions"][number]}) {
-    const shortcut = Sh.format(Ac.shortcut(props.button.action));
-
     return (
       <button
         className={
@@ -44,7 +39,7 @@ const ToolbarButton = React.memo(
           props.send({type: "action", action: props.button.action});
           ev.preventDefault();
         }}
-        title={props.button.description + (shortcut === "" ? "" : ` [${shortcut}]`)}
+        title={props.button.description}
         disabled={!props.button.isEnabled}
       >
         <Ic.IconLabel icon={props.button.icon}>{props.button.label}</Ic.IconLabel>

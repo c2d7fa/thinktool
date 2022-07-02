@@ -2,6 +2,7 @@ import {App} from ".";
 
 import * as Ac from "../actions";
 import * as Tu from "../tutorial";
+import * as Sh from "../shortcuts";
 import * as Ic from "../ui/icons";
 
 export type View = {
@@ -84,9 +85,11 @@ export function viewToolbar(app: App): View {
 
   function lookup(action: keyof typeof knownActions): View["groups"][number]["actions"][number] {
     const known = knownActions[action];
+    const shortcut = Sh.format(Ac.shortcut(action));
     if (!known) throw new Error(`Unknown action ${action}`);
     return {
       ...known,
+      description: known.description + (shortcut === "" ? "" : `[${shortcut}]`),
       action,
       isEnabled: Ac.enabled(app, action),
       isRelevant: Tu.isRelevant(app.tutorialState, action),
