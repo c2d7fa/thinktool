@@ -221,6 +221,7 @@ export type Outline = Ou.Outline;
 
 export type Event =
   | {type: "focus"; id: number}
+  | {type: "unfocus"}
   | ItemEvent
   | {type: "dragHover"; id: number | null}
   | {type: "dragEnd"; modifier: "move" | "copy"}
@@ -285,6 +286,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return {app: {...app, [_toolbarShown]: !app[_toolbarShown]}};
   } else if (event.type === "searchResponse") {
     return {app: merge(app, {popup: P.receiveResults(app.popup, app.state, event.things)})};
+  } else if (event.type === "unfocus") {
+    return {app: merge(app, {tree: T.unfocus(app.tree)})};
   } else if (isPopupEvent(event)) {
     return P.handle(app, event);
   } else if (event.topic === "tutorial") {

@@ -301,20 +301,17 @@ function App_({
     !isDevelopment && Tutorial.isActive(app.tutorialState),
   );
 
-  const onFocusApp = React.useCallback(
+  const onFocusBackground = React.useCallback(
     (ev: React.FocusEvent) => {
-      if (ev.target === appElementRef.current) {
-        console.log("Unfocusing item due to click on background");
-        updateApp((app) => A.merge(app, {tree: T.unfocus(app.tree)}));
-      }
+      if (ev.target === appElementRef.current) send({type: "unfocus"});
     },
-    [updateApp],
+    [send],
   );
 
   const view_ = A.view(app);
 
   return (
-    <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusApp} tabIndex={-1} className="app">
+    <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusBackground} tabIndex={-1} className="app">
       <OfflineIndicator isDisconnected={A.isDisconnected(app)} />
       <Sync.Dialog.SyncDialog
         dialog={A.syncDialog(app)}
