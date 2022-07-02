@@ -5,6 +5,7 @@ import * as A from "./app";
 
 import type {GoalId} from "./goal";
 import type {Editor, EditorContent} from "./editor";
+import {ActionName} from "./actions";
 
 export interface Wrapap {
   root: Node;
@@ -23,6 +24,7 @@ export interface Node {
   nchildren: number;
   openedLinks: Node[];
   child(index: number): Node | undefined;
+  childrenContents: EditorContent[];
   references: Node[];
   reference(index: number): Node | undefined;
   expanded: boolean;
@@ -35,6 +37,7 @@ export interface Node {
   edit(): Wrapap;
   content: EditorContent;
   clickBullet(opts?: {alt: boolean}): Wrapap;
+  action(action: ActionName): Wrapap;
 }
 
 export function of(items: A.ItemGraph): Wrapap {
@@ -68,6 +71,10 @@ export function from(app: App): Wrapap {
 
       child(index: number) {
         return node(item.children[index]);
+      },
+
+      get childrenContents() {
+        return item.children.map((c) => c.editor.content);
       },
 
       get references() {
@@ -110,6 +117,10 @@ export function from(app: App): Wrapap {
 
       get content() {
         return item.editor.content;
+      },
+
+      action(action: ActionName) {
+        return edit().send({type: "action", action});
       },
     };
   }

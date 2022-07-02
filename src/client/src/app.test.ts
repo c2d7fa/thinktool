@@ -104,6 +104,10 @@ describe("links and references", () => {
 });
 
 describe("tree-graph consistency", () => {
+  // Bug: Adding a child would cause all clones to be collapsed.
+  //
+  // Bug: The child would be inserted in a different order in each clone when
+  // using 'new-child'.
   describe("creating a child is immediately reflected in other identical nodes in the tree", () => {
     const before = W.of({
       "0": {content: ["Item 0"], children: ["1", "1"]},
@@ -117,8 +121,7 @@ describe("tree-graph consistency", () => {
 
     const after = before?.root
       .child(0)
-      ?.edit()
-      .send({type: "action", action: "new-child"})
+      ?.action("new-child")
       .focused?.edit({content: ["New child"]});
 
     describe("initially", () => {
@@ -128,26 +131,128 @@ describe("tree-graph consistency", () => {
       });
 
       test("both copies of the parent have only one child", () => {
-        expect(before?.root.child(0)?.item.children.map((c) => c.editor.content)).toEqual([["Item 2"]]);
-        expect(before?.root.child(1)?.item.children.map((c) => c.editor.content)).toEqual([["Item 2"]]);
+        expect(before?.root.child(0)?.childrenContents).toEqual([["Item 2"]]);
+        expect(before?.root.child(1)?.childrenContents).toEqual([["Item 2"]]);
       });
     });
 
     describe("after creating child", () => {
       test.skip("[BUG] both copies of the parent have the new child", () => {
-        console.log(after?.root.child(0)?.item.children.map((c) => c.editor.content));
-        console.log(after?.root.child(1)?.item.children.map((c) => c.editor.content));
+        console.log(after?.root.child(0)?.childrenContents);
+        console.log(after?.root.child(1)?.childrenContents);
 
-        expect(after?.root.child(0)?.item.children.map((c) => c.editor.content)).toEqual([
-          ["New child"],
-          ["Item 2"],
-        ]);
+        expect(after?.root.child(0)?.childrenContents).toEqual([["New child"], ["Item 2"]]);
 
-        expect(after?.root.child(1)?.item.children.map((c) => c.editor.content)).toEqual([
-          ["New child"],
-          ["Item 2"],
-        ]);
+        expect(after?.root.child(1)?.childrenContents).toEqual([["New child"], ["Item 2"]]);
       });
+    });
+  });
+
+  // Bug: Adding a parent would cause all clones to be collapsed.
+  describe("adding a parent is immediately reflected in all identical nodes in the tree", () => {
+    const before = W.of({
+      "0": {content: ["Item 0"], children: ["1", "1"]},
+      "1": {content: ["Item 1"], children: ["2"]},
+      "2": {content: ["Item 2"]},
+      "3": {content: ["Item 3"]},
+    })
+      .root.child(0)
+      ?.expand()
+      .root.child(1)
+      ?.expand();
+
+    const after = before?.root
+      .child(0)
+      ?.action("insert-parent")
+      ?.send({topic: "popup", type: "query", query: "Item 3"})
+      ?.send({topic: "popup", type: "select"});
+
+    describe("initially", () => {
+      test("both copies of the item are expanded", () => {
+        expect(before?.root.child(0)?.expanded).toBe(true);
+        expect(before?.root.child(1)?.expanded).toBe(true);
+      });
+
+      test("neither copy has any other parents", () => {
+        expect(before?.root.child(0)?.item.otherParents).toEqual([]);
+        expect(before?.root.child(1)?.item.otherParents).toEqual([]);
+      });
+    });
+
+    describe("after creating child", () => {
+      test("both copies are still expanded", () => {
+        expect(after?.root.child(0)?.expanded).toBe(true);
+        expect(after?.root.child(1)?.expanded).toBe(true);
+      });
+
+      test("both copies now have the new other parent", () => {
+        expect(after?.root.child(0)?.item.otherParents.map((o) => o.text)).toEqual(["Item 3"]);
+        expect(after?.root.child(1)?.item.otherParents.map((o) => o.text)).toEqual(["Item 3"]);
+      });
+    });
+  });
+
+  describe("indenting and destroying item", () => {
+    const before = W.of({
+      "0": {content: ["Item 0"], children: ["1", "2"]},
+      "1": {content: ["Item 1"]},
+      "2": {content: ["Item 2"]},
+    });
+
+    test("initially, the first item has no children and the root has two children", () => {
+      expect(before?.root.childrenContents).toEqual([["Item 1"], ["Item 2"]]);
+      expect(before?.root.child(0)?.childrenContents).toEqual([]);
+    });
+
+    const afterIndent = before?.root.child(1)?.action("indent");
+
+    test("after indenting, the first item gains the second item as a child", () => {
+      expect(afterIndent?.root.childrenContents).toEqual([["Item 1"]]);
+      expect(afterIndent?.root.child(0)?.childrenContents).toEqual([["Item 2"]]);
+    });
+
+    const afterDestroy = afterIndent?.send({type: "action", action: "destroy"});
+
+    test("after destroying the item, it's removed everywhere", () => {
+      expect(afterDestroy?.root.childrenContents).toEqual([["Item 1"]]);
+      expect(afterDestroy?.root.child(0)?.childrenContents).toEqual([]);
+    });
+  });
+
+  describe("newly created sibling has focus", () => {
+    const before = W.of({
+      "0": {content: ["Item 0"], children: ["1"]},
+      "1": {content: ["Item 1"]},
+    });
+
+    const after = before?.root.child(0)?.action("new");
+
+    test("the new sibling is focused", () => {
+      expect(after?.root.item.children.map((c) => c.hasFocus)).toEqual([false, true]);
+    });
+  });
+
+  // Bug: Creating a child inside a collapsed parent would add that child twice
+  // in the tree.
+  describe("creating a child inside a collapsed parent", () => {
+    const before = W.of({
+      "0": {content: ["Item 0"], children: ["1"]},
+      "1": {content: ["Item 1"], children: ["2"]},
+      "2": {content: ["Item 2"]},
+    });
+
+    const after = before?.root.child(0)?.action("new-child");
+
+    test("the selected item is initially collapsed", () => {
+      expect(before?.root.child(0)?.expanded).toBe(false);
+    });
+
+    test("after adding new child, it becomes expanded", () => {
+      expect(after?.root.child(0)?.expanded).toBe(true);
+    });
+
+    test("it has the correct children", () => {
+      expect(after?.root.child(0)?.childrenContents).toEqual([[], ["Item 2"]]);
     });
   });
 });
