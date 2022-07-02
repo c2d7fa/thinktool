@@ -15,6 +15,7 @@ export interface Wrapap {
   send(...events: A.Event[]): Wrapap;
   focused: Node | undefined;
   selection: E.Editor["selection"] | undefined;
+  parent(index: number): Node | undefined;
   view: A.View;
 
   app: App;
@@ -26,7 +27,6 @@ export interface Node {
   nchildren: number;
   openedLinks: Node[];
   child(index: number): Node | undefined;
-  parent(index: number): Node | undefined;
   references: Node[];
   reference(index: number): Node | undefined;
   expanded: boolean;
@@ -71,12 +71,6 @@ export function from(app: App): Wrapap {
 
       reference(index: number) {
         const referenceRef = T.backreferencesChildren(app.tree, ref)[index];
-        if (referenceRef === undefined) return undefined;
-        return node(referenceRef);
-      },
-
-      parent(index: number) {
-        const referenceRef = T.otherParentsChildren(app.tree, ref)[index];
         if (referenceRef === undefined) return undefined;
         return node(referenceRef);
       },
@@ -156,6 +150,10 @@ export function from(app: App): Wrapap {
 
     map(f: (app: App) => App) {
       return from(f(app));
+    },
+
+    parent(index: number) {
+      return node((A.view(app) as A.Outline).parents[index]);
     },
 
     send,
