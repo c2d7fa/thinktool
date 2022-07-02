@@ -104,22 +104,101 @@ describe("links and references", () => {
 });
 
 describe("the outline", () => {
-  describe("after jumping to an item by middle clicking its bullet", () => {
-    const before = W.of({
-      "0": {content: ["Item 0"], children: ["1"]},
-      "1": {content: ["Item 1"]},
+  describe("clicking item bullet", () => {
+    describe("of an opened link", () => {
+      const step1 = W.of({
+        "0": {content: ["Item 0"], children: ["1"]},
+        "1": {content: ["Item 1 links to ", {link: "2"}]},
+        "2": {content: ["Item 2"]},
+      });
+
+      const step2 = step1.root.child(0)?.toggleLink("2");
+
+      describe("normal click", () => {
+        const step3 = step2?.root.child(0)?.openedLinks[0]?.clickBullet();
+
+        test("initially, the link is shown", () => {
+          expect(step2?.root.child(0)?.openedLinks[0].content).toEqual(["Item 2"]);
+        });
+
+        test("after clicking the bullet, the link is hidden", () => {
+          expect(step3?.root.child(0)?.openedLinks).toEqual([]);
+        });
+      });
+
+      describe("alt click", () => {
+        const step3 = step2?.root.child(0)?.openedLinks[0]?.clickBullet({alt: true});
+
+        test("the root item is updated", () => {
+          expect(step2?.root?.content).toEqual(["Item 0"]);
+          expect(step3?.root?.content).toEqual(["Item 2"]);
+        });
+      });
     });
 
-    const after = before.send({type: "click-bullet", id: before.root.child(0)!.ref.id, alt: true});
+    describe("of a normal child item", () => {
+      const before = W.of({
+        "0": {content: ["Item 0"], children: ["1"]},
+        "1": {content: ["Item 1"], children: ["2"]},
+        "2": {content: ["Item 2"]},
+      });
 
-    test("the root item is updated", () => {
-      expect(before.root.content).toEqual(["Item 0"]);
-      expect(after.root.content).toEqual(["Item 1"]);
+      describe("left click", () => {
+        const after = before.root.child(0)?.clickBullet();
+
+        test("expands the item", () => {
+          expect(before.root.child(0)?.nchildren).toEqual(0);
+          expect(after?.root.child(0)?.nchildren).toEqual(1);
+        });
+
+        test("completes the 'expand-item' goal", () => {
+          expect(before.completed("expand-item")).toBe(false);
+          expect(after?.completed("expand-item")).toBe(true);
+        });
+      });
+
+      describe("alt click", () => {
+        const after = before.root.child(0)?.clickBullet({alt: true});
+
+        test("the root item is updated", () => {
+          expect(before.root.content).toEqual(["Item 0"]);
+          expect(after?.root.content).toEqual(["Item 1"]);
+        });
+
+        test("the 'jump-item' goal is completed", () => {
+          expect(before.completed("jump-item")).toBe(false);
+          expect(after?.completed("jump-item")).toBe(true);
+        });
+      });
     });
 
-    test("the 'jump-item' goal is completed", () => {
-      expect(before.completed("jump-item")).toBe(false);
-      expect(after.completed("jump-item")).toBe(true);
+    describe("of a reference", () => {
+      const before = W.of({
+        "0": {content: ["Item 0"], children: ["1"]},
+        "1": {content: ["Item 1"]},
+        "2": {content: ["Item 2 links to ", {link: "1"}], children: ["3"]},
+        "3": {content: ["Item 3"]},
+      })
+        .root.child(0)
+        ?.clickBullet();
+
+      describe("left click", () => {
+        const after = before?.root.child(0)?.reference(0)?.clickBullet();
+
+        test("expands the item", () => {
+          expect(before?.root.child(0)?.reference(0)?.nchildren).toEqual(0);
+          expect(after?.root.child(0)?.reference(0)?.nchildren).toEqual(1);
+        });
+      });
+
+      describe("alt click", () => {
+        const after = before?.root.child(0)?.reference(0)?.clickBullet({alt: true});
+
+        test("the root item is updated", () => {
+          expect(before?.root.content).toEqual(["Item 0"]);
+          expect(after?.root.content).toEqual(["Item 2 links to ", {link: "1", title: "Item 1"}]);
+        });
+      });
     });
   });
 
@@ -206,6 +285,43 @@ describe("the outline", () => {
         expect(node?.child(0)?.child(0)?.content).toEqual(["0"]);
         expect(node?.child(0)?.child(0)?.child(0)?.content).toEqual(["1"]);
         expect(node!.child(0)!.child(0)!.child(0)!.expanded).toBe(false);
+      });
+    });
+  });
+
+  describe("item status", () => {
+    test("an item with no connections has 'terminal' status", () => {
+      const app = W.of({"0": {content: ["0"], children: ["1"]}, "1": {content: ["1"]}});
+      expect(app.root.child(0)?.item.status).toEqual("terminal");
+    });
+
+    describe("an item that has only other parent connection is also 'terminal'", () => {
+      const app = W.of({
+        "0": {content: ["0"], children: ["1", "2"]},
+        "1": {content: ["1"]},
+        "2": {content: ["2"], children: ["1"]},
+      });
+
+      test("the item has another parent", () =>
+        expect(app.root.child(0)?.item.otherParents.map((p) => p.text)).toEqual(["2"]));
+
+      test("the item has 'terminal' status", () => expect(app.root.child(0)?.item.status).toEqual("terminal"));
+    });
+
+    describe("an item that is referenced from somewhere else", () => {
+      const app = W.of({
+        "0": {content: ["0"], children: ["1", "2"]},
+        "1": {content: ["1"]},
+        "2": {content: ["2, references ", {link: "1"}]},
+      });
+
+      test("starts out collapsed", () => {
+        expect(app.root.child(0)?.item.status).toEqual("collapsed");
+      });
+
+      test("can be expanded", () => {
+        const after = app.root.child(0)?.expand();
+        expect(after?.root.child(0)?.item.status).toEqual("expanded");
       });
     });
   });

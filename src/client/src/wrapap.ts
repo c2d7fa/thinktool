@@ -34,6 +34,7 @@ export interface Node {
   edit(editor: Partial<Editor>): Wrapap;
   edit(): Wrapap;
   content: EditorContent;
+  clickBullet(opts?: {alt: boolean}): Wrapap;
 }
 
 export function of(items: A.ItemGraph): Wrapap {
@@ -99,6 +100,10 @@ export function from(app: App): Wrapap {
 
       destroy() {
         return edit().send({type: "action", action: "destroy"});
+      },
+
+      clickBullet(opts?: {alt: boolean}) {
+        return send({type: "click-bullet", alt: opts?.alt ?? false, id: item.id});
       },
 
       edit,
