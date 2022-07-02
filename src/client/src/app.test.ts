@@ -1,7 +1,7 @@
 /// <reference types="@types/jest" />
 
 import * as W from "./wrapap";
-import {expectViewToMatch} from "./app/test-utils";
+import {$reference, expandPath, expectItemAtToMatch, expectViewToMatch} from "./app/test-utils";
 
 describe("initializing app from scratch with 'of'", () => {
   const wpp = W.of({
@@ -40,61 +40,85 @@ describe("after jumping to an item by middle clicking its bullet", () => {
   });
 });
 
-describe("when toggling a link", () => {
-  const initial = W.of({
-    "0": {content: ["This item has a link to ", {link: "1"}, "."]},
-    "1": {content: ["Another Item"]},
-  });
-
-  const expanded = initial.root.toggleLink("1");
-
-  const collapsed = expanded.root.toggleLink("1");
-
-  describe("when the link is first toggled", () => {
-    test("the linked item is added as an opened link", () => {
-      expect(initial.root.openedLinks.length).toBe(0);
-      expect(expanded.root.openedLinks.length).toBe(1);
+describe("links and references", () => {
+  describe("when one item links to another multiple times, it's shown only once in the references", () => {
+    const app = W.of({
+      "0": {content: ["Root"], children: ["1"]},
+      "1": {content: ["Item 1"]},
+      "2": {content: ["This item links to ", {link: "1"}, " twice: ", {link: "1"}]},
     });
 
-    test("the 'expand-link' goal is completed", () => {
-      expect(initial.completed("expand-link")).toBe(false);
-      expect(expanded.completed("expand-link")).toBe(true);
+    const expanded = expandPath(app, [0, [$reference, 0]]);
+
+    test("the references section has the linking item", () => {
+      expectItemAtToMatch(expanded, [0], {
+        references: {
+          items: [
+            {
+              editor: {content: ["This item links to ", {link: "1", title: "Item 1"}, " twice: ", {link: "1"}]},
+            },
+          ],
+        },
+      });
     });
   });
 
-  describe("when the link is collapsed", () => {
-    test("the linked item is removed", () => {
-      expect(expanded.root.openedLinks.length).toBe(1);
-      expect(collapsed.root.openedLinks.length).toBe(0);
+  describe("when toggling a link", () => {
+    const initial = W.of({
+      "0": {content: ["This item has a link to ", {link: "1"}, "."]},
+      "1": {content: ["Another Item"]},
     });
 
-    test("the goal remains completed", () => {
-      expect(expanded.completed("expand-link")).toBe(true);
-      expect(collapsed.completed("expand-link")).toBe(true);
+    const expanded = initial.root.toggleLink("1");
+
+    const collapsed = expanded.root.toggleLink("1");
+
+    describe("when the link is first toggled", () => {
+      test("the linked item is added as an opened link", () => {
+        expect(initial.root.openedLinks.length).toBe(0);
+        expect(expanded.root.openedLinks.length).toBe(1);
+      });
+
+      test("the 'expand-link' goal is completed", () => {
+        expect(initial.completed("expand-link")).toBe(false);
+        expect(expanded.completed("expand-link")).toBe(true);
+      });
+    });
+
+    describe("when the link is collapsed", () => {
+      test("the linked item is removed", () => {
+        expect(expanded.root.openedLinks.length).toBe(1);
+        expect(collapsed.root.openedLinks.length).toBe(0);
+      });
+
+      test("the goal remains completed", () => {
+        expect(expanded.completed("expand-link")).toBe(true);
+        expect(collapsed.completed("expand-link")).toBe(true);
+      });
     });
   });
-});
 
-describe("inserting a link in an editor", () => {
-  const before = W.of({
-    "0": {content: ["This is item 0."]},
-    "1": {content: ["This is item 1."]},
-  }).root.edit({selection: {from: 8, to: 14}});
+  describe("inserting a link in an editor", () => {
+    const before = W.of({
+      "0": {content: ["This is item 0."]},
+      "1": {content: ["This is item 1."]},
+    }).root.edit({selection: {from: 8, to: 14}});
 
-  const after = before.send(
-    {type: "action", action: "insert-link"},
-    {topic: "popup", type: "query", query: "This is item 1"},
-    {topic: "popup", type: "select"},
-  );
+    const after = before.send(
+      {type: "action", action: "insert-link"},
+      {topic: "popup", type: "query", query: "This is item 1"},
+      {topic: "popup", type: "select"},
+    );
 
-  it("updates the content so the selection is replaced with the link", () => {
-    expect(before.root.content).toEqual(["This is item 0."]);
-    expect(after.root.content).toEqual(["This is ", {link: "1", title: "This is item 1."}, "."]);
-  });
+    it("updates the content so the selection is replaced with the link", () => {
+      expect(before.root.content).toEqual(["This is item 0."]);
+      expect(after.root.content).toEqual(["This is ", {link: "1", title: "This is item 1."}, "."]);
+    });
 
-  it("sets the selection to be after the inserted link", () => {
-    expect(before.selection).toEqual({from: 8, to: 14});
-    expect(after.selection).toEqual({from: 9, to: 9});
+    it("sets the selection to be after the inserted link", () => {
+      expect(before.selection).toEqual({from: 8, to: 14});
+      expect(after.selection).toEqual({from: 9, to: 9});
+    });
   });
 });
 

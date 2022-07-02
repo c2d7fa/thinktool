@@ -34,26 +34,111 @@ export function construct(root: ItemDescription, looseItems?: ItemDescription[])
   return A.from(state, T.fromRoot(state, rootId));
 }
 
+function expectMatch(actual: any, expected: any): void {
+  if (expected instanceof Array) {
+    expect(actual).toBeInstanceOf(Array);
+    expect(actual.length).toBe(expected.length);
+    for (let i = 0; i < expected.length; i++) {
+      expectMatch(actual[i], expected[i]);
+    }
+  } else if (typeof expected === "object") {
+    expect(typeof actual).toBe("object");
+    for (const key of Object.keys(expected)) {
+      expectMatch(actual[key], expected[key]);
+    }
+  } else {
+    expect(actual).toEqual(expected);
+  }
+}
+
 export function expectViewToMatch(app: A.App | W.Wrapap, expected: any): void {
-  function expectMatch(actual: any, expected: any): void {
-    if (expected instanceof Array) {
-      expect(actual).toBeInstanceOf(Array);
-      expect(actual.length).toBe(expected.length);
-      for (let i = 0; i < expected.length; i++) {
-        expectMatch(actual[i], expected[i]);
-      }
-    } else if (typeof expected === "object") {
-      expect(typeof actual).toBe("object");
-      for (const key of Object.keys(expected)) {
-        expectMatch(actual[key], expected[key]);
-      }
+  const app_ = "app" in app ? app.app : app;
+  const view = A.view(app_);
+  return expectMatch(view, expected);
+}
+
+export const $reference = Symbol("reference");
+
+type Path = (number | [typeof $reference, number])[];
+
+export function expandPath(app: W.Wrapap, path: Path): W.Wrapap {
+  function findItemAt(base: A.Item, path: (number | [typeof $reference, number])[]): A.Item | undefined {
+    if (path.length === 0) {
+      return base;
+    } else if (typeof path[0] === "object") {
+      return base.references.state === "expanded"
+        ? findItemAt(base.references.items[path[0][1]], path.slice(1))
+        : undefined;
     } else {
-      expect(actual).toEqual(expected);
+      return findItemAt(base.children[path[0]], path.slice(1));
+    }
+  }
+
+  let expandedApp = app.app;
+  let expandingNode = (A.view(expandedApp) as A.Outline).root;
+
+  for (let i = 0; i < path.length; ++i) {
+    const part = path[i];
+    const pathPrefix = path.slice(0, i);
+
+    if (typeof part === "object") {
+      expandedApp = A.update(expandedApp, {type: "toggle-references", id: findItemAt(expandingNode, [part])!.id});
+    } else {
+      expandedApp = A.update(expandedApp, {
+        type: "click-bullet",
+        alt: false,
+        id: findItemAt(expandingNode, [part])!.id,
+      });
+    }
+
+    expandingNode = findItemAt((A.view(expandedApp) as A.Outline).root, [...pathPrefix, part])!;
+  }
+
+  return W.from(expandedApp);
+}
+
+function itemAt(app: A.App | W.Wrapap, path: (number | [typeof $reference, number])[]): A.Item {
+  function findItemAt(base: A.Item, path: (number | [typeof $reference, number])[]): A.Item | undefined {
+    if (path.length === 0) {
+      return base;
+    } else if (typeof path[0] === "object") {
+      return base.references.state === "expanded"
+        ? findItemAt(base.references.items[path[0][1]], path.slice(1))
+        : undefined;
+    } else {
+      return findItemAt(base.children[path[0]], path.slice(1));
     }
   }
 
   const app_ = "app" in app ? app.app : app;
 
-  const view = A.view(app_);
-  return expectMatch(view, expected);
+  let expandedApp = app_;
+  let expandingNode = (A.view(app_) as A.Outline).root;
+
+  for (let i = 0; i < path.length; ++i) {
+    const part = path[i];
+    const pathPrefix = path.slice(0, i);
+
+    if (typeof part === "object") {
+      expandedApp = A.update(expandedApp, {type: "toggle-references", id: findItemAt(expandingNode, [part])!.id});
+    } else {
+      expandedApp = A.update(expandedApp, {
+        type: "click-bullet",
+        alt: false,
+        id: findItemAt(expandingNode, [part])!.id,
+      });
+    }
+
+    expandingNode = findItemAt((A.view(expandedApp) as A.Outline).root, [...pathPrefix, part])!;
+  }
+
+  return expandingNode;
+}
+
+export function expectItemAtToMatch(
+  app: A.App | W.Wrapap,
+  path: (number | [typeof $reference, number])[],
+  expected: any,
+) {
+  expectMatch(itemAt(app, path), expected);
 }
