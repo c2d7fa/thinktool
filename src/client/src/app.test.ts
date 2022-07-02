@@ -21,25 +21,6 @@ describe("initializing app from scratch with 'of'", () => {
   });
 });
 
-describe("after jumping to an item by middle clicking its bullet", () => {
-  const before = W.of({
-    "0": {content: ["Item 0"], children: ["1"]},
-    "1": {content: ["Item 1"]},
-  });
-
-  const after = before.send({type: "click-bullet", id: before.root.child(0)!.ref.id, alt: true});
-
-  test("the root item is updated", () => {
-    expect(before.root.content).toEqual(["Item 0"]);
-    expect(after.root.content).toEqual(["Item 1"]);
-  });
-
-  test("the 'jump-item' goal is completed", () => {
-    expect(before.completed("jump-item")).toBe(false);
-    expect(after.completed("jump-item")).toBe(true);
-  });
-});
-
 describe("links and references", () => {
   describe("when one item links to another multiple times, it's shown only once in the references", () => {
     const app = W.of({
@@ -122,89 +103,110 @@ describe("links and references", () => {
   });
 });
 
-describe("after creating a new child", () => {
-  const before = W.of({
-    "0": {content: ["Item 0"]},
-  });
-
-  const after = before.root.edit().send({type: "action", action: "new-child"});
-
-  test("the parent item gets a new child", () => {
-    expect(before.root.nchildren).toBe(0);
-    expect(after.root.nchildren).toBe(1);
-  });
-
-  test("the child is focused", () => {
-    expect(after.focused?.content).toEqual(after.root.child(0)?.content);
-  });
-});
-
-describe("unfolding an item", () => {
-  describe("when the item has no children", () => {
+describe("the outline", () => {
+  describe("after jumping to an item by middle clicking its bullet", () => {
     const before = W.of({
-      "0": {content: []},
+      "0": {content: ["Item 0"], children: ["1"]},
+      "1": {content: ["Item 1"]},
     });
 
-    const after = before.send({type: "unfold"});
+    const after = before.send({type: "click-bullet", id: before.root.child(0)!.ref.id, alt: true});
 
-    it("doesn't add any new children", () => {
-      expect(before.root.expanded && before.root.nchildren).toBe(0);
-      expect(after.root.expanded && after.root.nchildren).toBe(0);
+    test("the root item is updated", () => {
+      expect(before.root.content).toEqual(["Item 0"]);
+      expect(after.root.content).toEqual(["Item 1"]);
+    });
+
+    test("the 'jump-item' goal is completed", () => {
+      expect(before.completed("jump-item")).toBe(false);
+      expect(after.completed("jump-item")).toBe(true);
     });
   });
 
-  describe("when the outline is strictly a tree", () => {
-    it("expands the parent", () => {
+  describe("after creating a new child", () => {
+    const before = W.of({
+      "0": {content: ["Item 0"]},
+    });
+
+    const after = before.root.edit().send({type: "action", action: "new-child"});
+
+    test("the parent item gets a new child", () => {
+      expect(before.root.nchildren).toBe(0);
+      expect(after.root.nchildren).toBe(1);
+    });
+
+    test("the child is focused", () => {
+      expect(after.focused?.content).toEqual(after.root.child(0)?.content);
+    });
+  });
+
+  describe("unfolding an item", () => {
+    describe("when the item has no children", () => {
       const before = W.of({
-        "0": {content: [], children: ["1"]},
-        "1": {content: [], children: ["2"]},
-        "2": {content: []},
+        "0": {content: []},
       });
 
-      const after = before.root.child(0)!.edit().send({type: "action", action: "unfold"});
+      const after = before.send({type: "unfold"});
 
-      expect(before.root.child(0)!.expanded).toBe(false);
-      expect(after.root.child(0)!.expanded).toBe(true);
+      it("doesn't add any new children", () => {
+        expect(before.root.expanded && before.root.nchildren).toBe(0);
+        expect(after.root.expanded && after.root.nchildren).toBe(0);
+      });
     });
 
-    it("expands each of the children", () => {
+    describe("when the outline is strictly a tree", () => {
+      it("expands the parent", () => {
+        const before = W.of({
+          "0": {content: [], children: ["1"]},
+          "1": {content: [], children: ["2"]},
+          "2": {content: []},
+        });
+
+        const after = before.root.child(0)!.edit().send({type: "action", action: "unfold"});
+
+        expect(before.root.child(0)!.expanded).toBe(false);
+        expect(after.root.child(0)!.expanded).toBe(true);
+      });
+
+      it("expands each of the children", () => {
+        const before = W.of({
+          "0": {content: ["0"], children: ["1"]},
+          "1": {content: ["1"], children: ["2", "3"]},
+          "2": {content: ["2"], children: ["4"]},
+          "3": {content: ["3"], children: ["5"]},
+          "4": {content: ["4"]},
+          "5": {content: ["5"]},
+        });
+
+        const after = before.root.child(0)!.edit().send({type: "action", action: "unfold"});
+
+        const node = after.root.child(0);
+
+        expect(node?.content).toEqual(["1"]);
+        expect(node?.child(0)?.content).toEqual(["2"]);
+        expect(node?.child(0)?.child(0)?.content).toEqual(["4"]);
+        expect(node?.child(1)?.content).toEqual(["3"]);
+        expect(node?.child(1)?.child(0)?.content).toEqual(["5"]);
+      });
+    });
+
+    describe("when the outline contains loops", () => {
       const before = W.of({
         "0": {content: ["0"], children: ["1"]},
-        "1": {content: ["1"], children: ["2", "3"]},
-        "2": {content: ["2"], children: ["4"]},
-        "3": {content: ["3"], children: ["5"]},
-        "4": {content: ["4"]},
-        "5": {content: ["5"]},
+        "1": {content: ["1"], children: ["2"]},
+        "2": {content: ["2"], children: ["0"]},
       });
 
-      const after = before.root.child(0)!.edit().send({type: "action", action: "unfold"});
+      it("doesn't unfold the past the root", () => {
+        const after = before.root.child(0)!.edit().send({type: "action", action: "unfold"});
+        const node = after.root.child(0);
 
-      const node = after.root.child(0);
-
-      expect(node?.content).toEqual(["1"]);
-      expect(node?.child(0)?.content).toEqual(["2"]);
-      expect(node?.child(0)?.child(0)?.content).toEqual(["4"]);
-      expect(node?.child(1)?.content).toEqual(["3"]);
-      expect(node?.child(1)?.child(0)?.content).toEqual(["5"]);
-    });
-  });
-
-  describe("when the outline contains loops", () => {
-    const before = W.of({
-      "0": {content: ["0"], children: ["1"]},
-      "1": {content: ["1"], children: ["2"]},
-      "2": {content: ["2"], children: ["0"]},
-    });
-
-    it("doesn't unfold the past the root", () => {
-      const after = before.root.child(0)!.edit().send({type: "action", action: "unfold"});
-      const node = after.root.child(0);
-
-      expect(node?.content).toEqual(["1"]);
-      expect(node?.child(0)?.content).toEqual(["2"]);
-      expect(node?.child(0)?.child(0)?.content).toEqual(["0"]);
-      expect(node?.child(0)?.child(0)?.child(0)?.content).toEqual(["1"]);
-      expect(node!.child(0)!.child(0)!.child(0)!.expanded).toBe(false);
+        expect(node?.content).toEqual(["1"]);
+        expect(node?.child(0)?.content).toEqual(["2"]);
+        expect(node?.child(0)?.child(0)?.content).toEqual(["0"]);
+        expect(node?.child(0)?.child(0)?.child(0)?.content).toEqual(["1"]);
+        expect(node!.child(0)!.child(0)!.child(0)!.expanded).toBe(false);
+      });
     });
   });
 });
