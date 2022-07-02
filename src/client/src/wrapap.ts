@@ -6,7 +6,6 @@ import * as A from "./app";
 import * as D from "./data";
 import * as T from "./tree";
 import * as G from "./goal";
-import * as U from "./tutorial";
 import * as E from "./editor";
 
 export interface Wrapap {
@@ -16,6 +15,7 @@ export interface Wrapap {
   send(...events: A.Event[]): Wrapap;
   focused: Node | undefined;
   selection: E.Editor["selection"] | undefined;
+  view: A.View;
 
   app: App;
   tree: T.Tree;
@@ -29,7 +29,6 @@ export interface Node {
   parent(index: number): Node | undefined;
   references: Node[];
   reference(index: number): Node | undefined;
-  thing: string;
   expanded: boolean;
   expand(): Wrapap;
   ref: T.NodeRef;
@@ -86,10 +85,6 @@ export function from(app: App): Wrapap {
         return from(merge(app, {tree: T.expand(app.state, app.tree, ref)}));
       },
 
-      get thing() {
-        return T.thing(app.tree, ref);
-      },
-
       get expanded() {
         return T.expanded(app.tree, ref);
       },
@@ -124,6 +119,10 @@ export function from(app: App): Wrapap {
   const wrapap = {
     get root() {
       return node(T.root(app.tree));
+    },
+
+    get view() {
+      return A.view(app);
     },
 
     get tree() {

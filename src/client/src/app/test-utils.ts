@@ -58,7 +58,6 @@ export function expectViewToMatch(app: A.App | W.Wrapap, expected: any): void {
 }
 
 export const $reference = Symbol("reference");
-
 type Path = (number | [typeof $reference, number])[];
 
 export function expandPath(app: W.Wrapap, path: Path): W.Wrapap {
