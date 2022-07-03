@@ -132,12 +132,8 @@ describe("tree-graph consistency", () => {
     });
 
     describe("after creating child", () => {
-      test.skip("[BUG] both copies of the parent have the new child", () => {
-        console.log(after?.root.child(0)?.childrenContents);
-        console.log(after?.root.child(1)?.childrenContents);
-
+      test("both copies of the parent have the new child", () => {
         expect(after?.root.child(0)?.childrenContents).toEqual([["New child"], ["Item 2"]]);
-
         expect(after?.root.child(1)?.childrenContents).toEqual([["New child"], ["Item 2"]]);
       });
     });

@@ -647,7 +647,7 @@ export function insertChild(
       parent: n,
     });
     newTree = newTree_;
-    newTree = I.updateChildren(newTree, n, (children) => [...children, otherChildNode]);
+    newTree = I.updateChildren(newTree, n, (children) => [otherChildNode, ...children]);
   }
 
   // Refresh list of other parents for all child items
