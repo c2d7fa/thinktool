@@ -751,4 +751,58 @@ describe("the toolbar", () => {
     test("the toolbar is hidden after toggling it", () => expectViewToMatch(step2, {toolbar: {shown: false}}));
     test("the toolbar is shown after toggling it again", () => expectViewToMatch(step3, {toolbar: {shown: true}}));
   });
+
+  describe("when actions are enabled", () => {
+    describe.each(["find", "new"] as const)("an action that is always enabled", (action) => {
+      const app = W.of({"0": {content: ["Root"]}});
+
+      test("is enabled even with nothing selected", () => expect(app.actionEnabled(action)).toBe(true));
+    });
+
+    describe.each(["insert-sibling", "zoom", "indent", "new-child", "remove"] as const)(
+      "an action that requires a target",
+      (action) => {
+        const unselected = W.of({"0": {content: ["Root"]}});
+        const selected = unselected.root.edit();
+
+        test("is disabled when no node is focused", () => expect(unselected.actionEnabled(action)).toBe(false));
+        test("is enabled when a node is focused", () => expect(selected.actionEnabled(action)).toBe(true));
+      },
+    );
+  });
+
+  describe("creating a new sibling using the toolbar button", () => {
+    describe("with nothing selected", () => {
+      const app = W.of({"0": {content: ["Root"]}});
+      const after = app.send({type: "action", action: "new"});
+
+      test("a new item is inserted as a child of the root item", () => expect(after.root.nchildren).toEqual(1));
+    });
+
+    describe("when a node has focus", () => {
+      const before = W.of({
+        "0": {content: ["Root"], children: ["1", "2"]},
+        "1": {content: ["Child 1"]},
+        "2": {content: ["Child 2"]},
+      })
+        .root.child(0)
+        ?.edit();
+
+      const after = before?.send({type: "action", action: "new"});
+
+      test("inserts a new sibling after the selected item", () => {
+        expect(before?.root.childrenContents).toEqual([["Child 1"], ["Child 2"]]);
+        expect(after?.root.childrenContents).toEqual([["Child 1"], [], ["Child 2"]]);
+      });
+
+      test("focuses the newly created item", () => {
+        expect(after?.focused?.content).toEqual([]);
+      });
+
+      test("completes the 'create-item' goal", () => {
+        expect(before?.completed("create-item")).toBe(false);
+        expect(after?.completed("create-item")).toBe(true);
+      });
+    });
+  });
 });

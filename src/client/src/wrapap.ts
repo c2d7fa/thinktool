@@ -16,6 +16,7 @@ export interface Wrapap {
   parent(index: number): Node | undefined;
   parentsContents: EditorContent[];
   view: A.View;
+  actionEnabled(action: ActionName): boolean;
 
   app: App;
 }
@@ -188,6 +189,17 @@ export function from(app: App): Wrapap {
     },
 
     send,
+
+    actionEnabled(action: ActionName) {
+      const toolbar = A.view(app).toolbar;
+      if (!toolbar.shown) return false;
+      for (const group of toolbar.groups) {
+        for (const a of group.actions) {
+          if (a.action === action) return a.isEnabled;
+        }
+      }
+      return false;
+    },
   };
 
   return wrapap;
