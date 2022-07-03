@@ -39,6 +39,8 @@ export interface Node {
   content: EditorContent;
   clickBullet(opts?: {alt: boolean}): Wrapap;
   action(action: ActionName): Wrapap;
+  startDrag(): Wrapap;
+  endDrag(): Wrapap;
 }
 
 export function of(items: A.ItemGraph): Wrapap {
@@ -122,6 +124,14 @@ export function from(app: App): Wrapap {
 
       action(action: ActionName) {
         return edit().send({type: "action", action});
+      },
+
+      startDrag() {
+        return send({type: "startDrag", id: item.id});
+      },
+
+      endDrag() {
+        return send({type: "dragHover", id: item.id}, {type: "dragEnd", modifier: "move"});
       },
     };
   }

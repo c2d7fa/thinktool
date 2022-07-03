@@ -297,6 +297,63 @@ describe("tree-graph consistency", () => {
   });
 });
 
+describe("moving items with drag and drop", () => {
+  describe("moving an item out of a parent with multiple clones visible", () => {
+    const before = W.of({
+      "0": {content: ["Item 0"], children: ["1", "1"]},
+      "1": {content: ["Item 1"], children: ["2"]},
+      "2": {content: ["Item 2"]},
+    })
+      .root.child(0)
+      ?.expand()
+      .root.child(1)
+      ?.expand();
+
+    const after = before?.root.child(0)?.child(0)?.startDrag().root.child(0)?.endDrag();
+
+    test("the item is removed from both subtrees", () => {
+      expect(before?.root.child(0)?.childrenContents).toEqual([["Item 2"]]);
+      expect(before?.root.child(1)?.childrenContents).toEqual([["Item 2"]]);
+
+      expect(after?.root.child(0)?.childrenContents).toEqual([]);
+      expect(after?.root.child(1)?.childrenContents).toEqual([]);
+    });
+
+    test("the item is added to the new parent", () => {
+      expect(before?.root.childrenContents).toEqual([["Item 1"], ["Item 1"]]);
+      expect(after?.root.childrenContents).toEqual([["Item 2"], ["Item 1"], ["Item 1"]]);
+    });
+  });
+
+  describe("moving an item into a parent with multiple clones visible", () => {
+    const before = W.of({
+      "0": {content: ["Item 0"], children: ["1", "1", "3"]},
+      "1": {content: ["Item 1"], children: ["2"]},
+      "2": {content: ["Item 2"]},
+      "3": {content: ["Item 3"]},
+    })
+      .root.child(0)
+      ?.expand()
+      .root.child(1)
+      ?.expand();
+
+    const after = before?.root.child(2)?.startDrag().root.child(1)?.child(0)?.endDrag();
+
+    test("the item is removed from its old parent", () => {
+      expect(before?.root.childrenContents).toEqual([["Item 1"], ["Item 1"], ["Item 3"]]);
+      expect(after?.root.childrenContents).toEqual([["Item 1"], ["Item 1"]]);
+    });
+
+    test("the item is added to both clones of its new parent", () => {
+      expect(before?.root.child(0)?.childrenContents).toEqual([["Item 2"]]);
+      expect(before?.root.child(1)?.childrenContents).toEqual([["Item 2"]]);
+
+      expect(after?.root.child(0)?.childrenContents).toEqual([["Item 3"], ["Item 2"]]);
+      expect(after?.root.child(1)?.childrenContents).toEqual([["Item 3"], ["Item 2"]]);
+    });
+  });
+});
+
 describe("the outline", () => {
   describe("clicking item bullet", () => {
     describe("of an opened link", () => {
