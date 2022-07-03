@@ -575,9 +575,24 @@ export function remove(state: D.State, tree: Tree, node: NodeRef): [D.State, Tre
       thing(tree, node),
       D.children(state, thing(tree, node)).indexOf(thing(tree, parent_)),
     );
-    const newTree = I.updateOtherParentsChildren(tree, parent_, (ch) =>
+
+    let newTree = I.updateOtherParentsChildren(tree, parent_, (ch) =>
       Misc.splice(ch, indexInParent(tree, node)!, 1),
     );
+
+    // (When refactoring this code in the future: Note that this is the opposite
+    // case of the 'else' clause here, since the "parent" is actually the child
+    // and vice-versa.)
+
+    // Remove nodes from tree to match state
+    for (const n of similar(newTree, node)) {
+      newTree = I.updateChildren(newTree, n, (ch) => Misc.splice(ch, indexInParent(tree, node)!, 1));
+    }
+
+    // Refresh list of other parents for all nodes representing the removed child
+    for (const n of similar(newTree, parent_)) {
+      newTree = refreshOtherParentsChildren(newState, newTree, n);
+    }
 
     return [newState, newTree];
   } else if (kind(tree, node) !== "child") {

@@ -289,7 +289,7 @@ describe("tree-graph consistency", () => {
     describe("removing the item from the parent list", () => {
       const step4 = step2?.parent(0)?.action("remove");
 
-      test.skip("[BUG] removes the item in the tree too", () => {
+      test("removes the item in the tree too", () => {
         expect(step4?.root.child(0)?.expanded).toBe(true);
         expect(step4?.root.child(0)?.childrenContents).toEqual([]);
       });
