@@ -57,8 +57,8 @@
   "scripts": {
     "build": "webpack",
     "watch": "webpack --watch --config webpack.dev.js",
-    "test": "jest --roots tests --roots src",
-    "test-watch": "jest --watchAll --roots tests --roots src"
+    "test": "jest --roots src",
+    "test-watch": "jest --watchAll --roots src"
   },
   "jest": {
     "moduleNameMapper": {
