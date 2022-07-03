@@ -1,7 +1,7 @@
 /// <reference types="@types/jest" />
 
 import * as W from "./wrapap";
-import {$reference, expandPath, expectItemAtToMatch, expectViewToMatch} from "./app/test-utils";
+import {expectViewToMatch} from "./app/test-utils";
 
 describe("initializing app from scratch with 'of'", () => {
   const wpp = W.of({
@@ -29,18 +29,13 @@ describe("links and references", () => {
       "2": {content: ["This item links to ", {link: "1"}, " twice: ", {link: "1"}]},
     });
 
-    const expanded = expandPath(app, [0, [$reference, 0]]);
+    const expanded = app.root.child(0)?.expand()!;
+    // .send({type: "toggle-references", id: app.root.child(0)?.item.id!})!;
 
     test("the references section has the linking item", () => {
-      expectItemAtToMatch(expanded, [0], {
-        references: {
-          items: [
-            {
-              editor: {content: ["This item links to ", {link: "1", title: "Item 1"}, " twice: ", {link: "1"}]},
-            },
-          ],
-        },
-      });
+      expect(expanded.root.child(0)?.references.map((r) => r.content)).toEqual([
+        ["This item links to ", {link: "1", title: "Item 1"}, " twice: ", {link: "1", title: "Item 1"}],
+      ]);
     });
   });
 
