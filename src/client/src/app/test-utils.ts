@@ -34,26 +34,25 @@ export function construct(root: ItemDescription, looseItems?: ItemDescription[])
   return A.from(state, T.fromRoot(state, rootId));
 }
 
-export function expectViewToMatch(app: A.App | W.Wrapap, expected: any): void {
-  function expectMatch(actual: any, expected: any): void {
-    if (expected instanceof Array) {
-      expect(actual).toBeInstanceOf(Array);
-      expect(actual.length).toBe(expected.length);
-      for (let i = 0; i < expected.length; i++) {
-        expectMatch(actual[i], expected[i]);
-      }
-    } else if (typeof expected === "object") {
-      expect(typeof actual).toBe("object");
-      for (const key of Object.keys(expected)) {
-        expectMatch(actual[key], expected[key]);
-      }
-    } else {
-      expect(actual).toEqual(expected);
+function expectMatch(actual: any, expected: any): void {
+  if (expected instanceof Array) {
+    expect(actual).toBeInstanceOf(Array);
+    expect(actual.length).toBe(expected.length);
+    for (let i = 0; i < expected.length; i++) {
+      expectMatch(actual[i], expected[i]);
     }
+  } else if (typeof expected === "object") {
+    expect(typeof actual).toBe("object");
+    for (const key of Object.keys(expected)) {
+      expectMatch(actual[key], expected[key]);
+    }
+  } else {
+    expect(actual).toEqual(expected);
   }
+}
 
+export function expectViewToMatch(app: A.App | W.Wrapap, expected: any): void {
   const app_ = "app" in app ? app.app : app;
-
   const view = A.view(app_);
   return expectMatch(view, expected);
 }

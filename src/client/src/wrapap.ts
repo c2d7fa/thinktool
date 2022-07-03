@@ -1,44 +1,47 @@
 // This is a stateful wrapper around an App. We use this for some of our tests.
 
-import {App, merge} from "./app";
+import {App} from "./app";
 import * as A from "./app";
 
-import * as D from "./data";
-import * as T from "./tree";
-import * as G from "./goal";
-import * as U from "./tutorial";
-import * as E from "./editor";
+import type {GoalId} from "./goal";
+import type {Editor, EditorContent} from "./editor";
+import {ActionName} from "./actions";
 
 export interface Wrapap {
   root: Node;
-  completed(goal: G.GoalId): boolean;
-  map(f: (app: App) => App): Wrapap;
+  completed(goal: GoalId): boolean;
   send(...events: A.Event[]): Wrapap;
   focused: Node | undefined;
-  selection: E.Editor["selection"] | undefined;
+  selection: Editor["selection"] | undefined;
+  parent(index: number): Node | undefined;
+  parentsContents: EditorContent[];
+  view: A.View;
+  actionEnabled(action: ActionName): boolean;
 
   app: App;
-  tree: T.Tree;
-  state: D.State;
 }
 
 export interface Node {
+  item: A.Item;
   nchildren: number;
   openedLinks: Node[];
   child(index: number): Node | undefined;
-  parent(index: number): Node | undefined;
+  childrenContents: EditorContent[];
   references: Node[];
   reference(index: number): Node | undefined;
-  thing: string;
   expanded: boolean;
   expand(): Wrapap;
-  ref: T.NodeRef;
+  ref: {id: number};
   toggleLink(link: string): Wrapap;
   link(index: number): Node;
   destroy(): Wrapap;
-  edit(editor: Partial<E.Editor>): Wrapap;
+  edit(editor: Partial<Editor>): Wrapap;
   edit(): Wrapap;
-  content: E.EditorContent;
+  content: EditorContent;
+  clickBullet(opts?: {alt: boolean}): Wrapap;
+  action(action: ActionName): Wrapap;
+  startDrag(): Wrapap;
+  endDrag(): Wrapap;
 }
 
 export function of(items: A.ItemGraph): Wrapap {
@@ -50,88 +53,111 @@ export function from(app: App): Wrapap {
     return from(A.after(app, events));
   }
 
-  function node(ref: T.NodeRef): Node {
+  function node(item: A.Item): Node {
+    const references = item.references.state === "expanded" ? item.references.items.map(node) : [];
+
+    function edit(editor?: Partial<Editor>) {
+      return from(A.update(app, {type: "edit", id: item.id, editor: editor ?? {}, focused: true}));
+    }
+
     return {
+      get item() {
+        return item;
+      },
+
       get nchildren() {
-        return T.children(app.tree, ref).length;
+        return item.children.length;
       },
 
       get openedLinks(): Node[] {
-        return T.openedLinksChildren(app.tree, ref).map((child) => node(child));
+        return item.openedLinks.map(node);
       },
 
       child(index: number) {
-        const childRef = T.children(app.tree, ref)[index];
-        if (childRef === undefined) return undefined;
-        return node(childRef);
+        return node(item.children[index]);
+      },
+
+      get childrenContents() {
+        return item.children.map((c) => c.editor.content);
       },
 
       get references() {
-        return T.backreferencesChildren(app.tree, ref).map(node);
+        return references;
       },
 
       reference(index: number) {
-        const referenceRef = T.backreferencesChildren(app.tree, ref)[index];
-        if (referenceRef === undefined) return undefined;
-        return node(referenceRef);
-      },
-
-      parent(index: number) {
-        const referenceRef = T.otherParentsChildren(app.tree, ref)[index];
-        if (referenceRef === undefined) return undefined;
-        return node(referenceRef);
+        return references[index];
       },
 
       expand() {
-        return from(merge(app, {tree: T.expand(app.state, app.tree, ref)}));
-      },
-
-      get thing() {
-        return T.thing(app.tree, ref);
+        return send({type: "click-bullet", alt: false, id: item.id});
       },
 
       get expanded() {
-        return T.expanded(app.tree, ref);
+        return item.status !== "collapsed";
       },
 
       get ref() {
-        return ref;
+        return {id: item.id};
       },
 
       toggleLink(link: string) {
-        return send({type: "open", id: ref.id, link});
+        return send({type: "open", id: item.id, link});
       },
 
       link(index: number) {
-        return node(T.openedLinksChildren(app.tree, ref)[index]);
+        return node(item.openedLinks[index]);
       },
 
       destroy() {
-        const [state, tree] = T.removeThing(app.state, app.tree, ref);
-        return from(merge(app, {state, tree}));
+        return edit().send({type: "action", action: "destroy"});
       },
 
-      edit(editor?: Partial<E.Editor>) {
-        return from(A.update(app, {type: "edit", id: ref.id, editor: editor ?? {}, focused: true}));
+      clickBullet(opts?: {alt: boolean}) {
+        return send({type: "click-bullet", alt: opts?.alt ?? false, id: item.id});
       },
+
+      edit,
 
       get content() {
-        return A.editor(app, ref)?.content ?? [];
+        return item.editor.content;
+      },
+
+      action(action: ActionName) {
+        return edit().send({type: "action", action});
+      },
+
+      startDrag() {
+        return send({type: "startDrag", id: item.id});
+      },
+
+      endDrag() {
+        return send({type: "dragHover", id: item.id}, {type: "dragEnd", modifier: "move"});
       },
     };
   }
 
+  function focused() {
+    function findFocused(item: A.Item): A.Item | undefined {
+      if (item.hasFocus) return item;
+      for (const child of item.children) {
+        const found = findFocused(child);
+        if (found) return found;
+      }
+      return undefined;
+    }
+
+    const found = findFocused((A.view(app) as A.Outline).root);
+    return found ? node(found) : undefined;
+  }
+
   const wrapap = {
     get root() {
-      return node(T.root(app.tree));
+      return node((A.view(app) as A.Outline).root);
     },
 
-    get tree() {
-      return app.tree;
-    },
-
-    get state() {
-      return app.state;
+    get view() {
+      return A.view(app);
     },
 
     get app() {
@@ -139,15 +165,14 @@ export function from(app: App): Wrapap {
     },
 
     get focused() {
-      const focusedId = A.focusedId(app);
-      return focusedId ? node({id: focusedId}) : undefined;
+      return focused();
     },
 
     get selection() {
-      return A.focusedEditor(app)?.selection ?? undefined;
+      return focused()?.item.editor.selection;
     },
 
-    completed(goal: G.GoalId) {
+    completed(goal: GoalId) {
       const withTutorialOpen = A.view(app).tutorial.open
         ? app
         : A.after(app, [{type: "action", action: "tutorial"}]);
@@ -155,11 +180,26 @@ export function from(app: App): Wrapap {
       return (A.view(withTutorialOpen).tutorial as A.View["tutorial"] & {open: true}).goals[goal].completed;
     },
 
-    map(f: (app: App) => App) {
-      return from(f(app));
+    parent(index: number) {
+      return node((A.view(app) as A.Outline).parents[index]);
+    },
+
+    get parentsContents() {
+      return (A.view(app) as A.Outline).parents.map((p) => p.editor.content);
     },
 
     send,
+
+    actionEnabled(action: ActionName) {
+      const toolbar = A.view(app).toolbar;
+      if (!toolbar.shown) return false;
+      for (const group of toolbar.groups) {
+        for (const a of group.actions) {
+          if (a.action === action) return a.isEnabled;
+        }
+      }
+      return false;
+    },
   };
 
   return wrapap;
