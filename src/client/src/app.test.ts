@@ -255,6 +255,51 @@ describe("tree-graph consistency", () => {
       expect(after?.root.child(0)?.childrenContents).toEqual([[], ["Item 2"]]);
     });
   });
+
+  describe("updates to the root item's parents list", () => {
+    const step1 = W.of({
+      "0": {content: ["Item 0"], children: ["1"]},
+      "1": {content: ["Item 1"], children: []},
+    });
+
+    const step2 = step1?.root
+      .child(0)
+      ?.action("insert-child")
+      .send({topic: "popup", type: "query", query: "Item 0"}, {topic: "popup", type: "select"});
+
+    const step3 = step2?.root.child(0)?.child(0)?.action("remove");
+
+    describe("adding the root item as child of parent item immediately updates list of parents", () => {
+      test("the item is inserted as a child of its parent in the tree", () => {
+        expect(step1?.root.child(0)?.childrenContents).toEqual([]);
+        expect(step2?.root.child(0)?.childrenContents).toEqual([["Item 0"]]);
+      });
+
+      test("the parents list is updated with the new item", () => {
+        expect(step1?.parentsContents).toEqual([]);
+        expect(step2?.parentsContents).toEqual([["Item 1"]]);
+      });
+    });
+
+    describe("removing the item again updates the parent list", () => {
+      test("the item is removed from the tree", () => {
+        expect(step3?.root.child(0)?.childrenContents).toEqual([]);
+      });
+
+      test("the parents list is updated", () => {
+        expect(step3?.parentsContents).toEqual([]);
+      });
+    });
+
+    describe("removing the item from the parent list", () => {
+      const step4 = step2?.parent(0)?.action("remove");
+
+      test.skip("[BUG] removes the item in the tree too", () => {
+        expect(step4?.root.child(0)?.expanded).toBe(true);
+        expect(step4?.root.child(0)?.childrenContents).toEqual([]);
+      });
+    });
+  });
 });
 
 describe("the outline", () => {

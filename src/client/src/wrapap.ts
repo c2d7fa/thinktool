@@ -14,6 +14,7 @@ export interface Wrapap {
   focused: Node | undefined;
   selection: Editor["selection"] | undefined;
   parent(index: number): Node | undefined;
+  parentsContents: EditorContent[];
   view: A.View;
 
   app: App;
@@ -170,6 +171,10 @@ export function from(app: App): Wrapap {
 
     parent(index: number) {
       return node((A.view(app) as A.Outline).parents[index]);
+    },
+
+    get parentsContents() {
+      return (A.view(app) as A.Outline).parents.map((p) => p.editor.content);
     },
 
     send,
