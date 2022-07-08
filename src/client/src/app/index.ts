@@ -222,7 +222,7 @@ function serverDisconnected(app: App): App {
   return {...app, [_isOnline]: false};
 }
 
-export function serverReconnected(app: App, remoteState: Sy.StoredState): App {
+function serverReconnected(app: App, remoteState: Sy.StoredState): App {
   if (!isDisconnected(app)) return app;
   const syncDialog = Sy.Dialog.initialize({local: Sy.storedStateFromApp(app), remote: remoteState});
   return {...app, [_isOnline]: true, [_syncDialog]: syncDialog};

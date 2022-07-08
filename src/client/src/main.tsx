@@ -159,7 +159,7 @@ function useSync({
     try {
       const remoteState = await Sync.loadStoredStateFromStorage(storage);
       console.log("Reconnected successfully.");
-      updateAppWithoutSaving((app) => A.serverReconnected(app, remoteState));
+      updateAppWithoutSaving((app) => A.update(app, {type: "serverPingResponse", result: "success", remoteState}));
       return "stop";
     } catch (e) {
       console.log("Still could not contact server.");
@@ -188,9 +188,7 @@ function useSync({
     window.addEventListener("online", async () => {
       const remoteState = await Sync.loadStoredStateFromStorage(storage);
       setLastSyncedState(remoteState);
-      updateAppWithoutSaving((app) => {
-        return A.serverReconnected(app, remoteState);
-      });
+      updateAppWithoutSaving((app) => A.update(app, {type: "serverPingResponse", result: "success", remoteState}));
     });
   }, []);
 
