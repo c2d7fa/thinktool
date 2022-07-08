@@ -326,11 +326,7 @@ function App_({
         <Toolbar.Toolbar send={send} toolbar={view_.toolbar} />
       </div>
       {!showSplash && <TutorialBox tutorial={view_.tutorial} send={send} />}
-      <Changelog
-        changelog={changelog}
-        visible={app.changelogShown}
-        hide={() => updateApp((app) => A.merge(app, {changelogShown: false}))}
-      />
+      <Changelog changelog={changelog} visible={app.changelogShown} send={send} />
       <MainView view={view_} send={send} />
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>

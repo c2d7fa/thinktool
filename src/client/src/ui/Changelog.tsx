@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import {Communication} from "@thinktool/shared";
+import {Send} from "../app";
 
 function grouped(changelog: Communication.Changelog): {[date: string]: string[]} {
   let result: {[date: string]: string[]} = {};
@@ -20,7 +21,7 @@ function groupedAndSorted(changelog: Communication.Changelog): {date: string; ch
 export default function Changelog(props: {
   changelog: Communication.Changelog | "loading";
   visible: boolean;
-  hide(): void;
+  send: Send;
 }) {
   if (!props.visible) return null;
 
@@ -30,7 +31,7 @@ export default function Changelog(props: {
     const items = groupedAndSorted(props.changelog);
     return (
       <div className="changelog">
-        <button onClick={props.hide}>Close</button>
+        <button onClick={() => props.send({type: "action", action: "changelog"})}>Close</button>
         <ul className="changelog-entries">
           {items.map((item) => {
             return (
