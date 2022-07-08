@@ -232,7 +232,7 @@ export function syncDialog(app: App): Sy.Dialog.SyncDialog | null {
   return app[_syncDialog];
 }
 
-export function syncDialogSelect(app: App, option: "commit" | "abort"): App {
+function syncDialogSelect(app: App, option: "commit" | "abort"): App {
   if (app[_syncDialog] === null) {
     console.error("Tried to select sync dialog option when no dialog was open!");
     return app;
@@ -264,6 +264,7 @@ export type Event =
   | {type: "toggleToolbar"}
   | {type: "searchResponse"; things: string[]}
   | {type: "navigateTo"; thing: string}
+  | {type: "syncDialogSelect"; option: "commit" | "abort"}
   | Tutorial.Event;
 
 export type Effects = {search?: {items?: {thing: string; content: string}[]; query: string}; url?: string};
@@ -324,6 +325,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return {app: merge(app, {tree: T.unfocus(app.tree)})};
   } else if (event.type === "navigateTo") {
     return {app: jump(app, event.thing)};
+  } else if (event.type === "syncDialogSelect") {
+    return {app: syncDialogSelect(app, event.option)};
   } else if (isPopupEvent(event)) {
     return P.handle(app, event);
   } else if (event.topic === "tutorial") {

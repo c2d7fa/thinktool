@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import * as Sync from ".";
+import {Send} from "../app";
 
 import {Animated, useSticky} from "../ui/animation";
 const style = require("./dialog.module.scss").default;
@@ -34,7 +35,7 @@ export function storedStateAfter(dialog: SyncDialog, option: "commit" | "abort")
   return option === "commit" ? dialog[_local] : dialog[_remote];
 }
 
-export function SyncDialog(props: {dialog: SyncDialog | null; onSelect(option: "commit" | "abort"): void}) {
+export function SyncDialog(props: {dialog: SyncDialog | null; send: Send}) {
   const inner = useSticky(() => {
     if (props.dialog === null) return null;
 
@@ -59,17 +60,23 @@ export function SyncDialog(props: {dialog: SyncDialog | null; onSelect(option: "
           </p>
           <hr />
           <div className={style.buttons}>
-            <button className={[style.button, style.cancel].join(" ")} onClick={() => props.onSelect("abort")}>
+            <button
+              className={[style.button, style.cancel].join(" ")}
+              onClick={() => props.send({type: "syncDialogSelect", option: "abort"})}
+            >
               Keep Remote
             </button>
-            <button className={[style.button, style.sync].join(" ")} onClick={() => props.onSelect("commit")}>
+            <button
+              className={[style.button, style.sync].join(" ")}
+              onClick={() => props.send({type: "syncDialogSelect", option: "commit"})}
+            >
               Push Local
             </button>
           </div>
         </div>
       </div>
     );
-  }, [props.dialog, props.onSelect]);
+  }, [props.dialog, props.send]);
 
   return (
     <Animated durationMs={500} isHidden={props.dialog === null} classes={style}>

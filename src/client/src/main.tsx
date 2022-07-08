@@ -311,10 +311,7 @@ function App_({
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusBackground} tabIndex={-1} className="app">
       <OfflineIndicator isDisconnected={A.isDisconnected(app)} />
-      <Sync.Dialog.SyncDialog
-        dialog={A.syncDialog(app)}
-        onSelect={(option) => updateApp((app) => A.syncDialogSelect(app, option))}
-      />
+      <Sync.Dialog.SyncDialog dialog={A.syncDialog(app)} send={send} />
       <div className="app-header">
         <TopBar
           isToolbarShown={view_.toolbar.shown}
