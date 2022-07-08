@@ -4,7 +4,7 @@ import {Communication} from "@thinktool/shared";
 
 import * as ChangelogData from "./changes.json";
 
-import {extractThingFromURL, useThingUrl} from "./url";
+import {useThingUrl} from "./url";
 
 import * as Tutorial from "./tutorial";
 import {ServerApi} from "./sync/server-api";
@@ -248,7 +248,7 @@ function App_({
 
   const [app, updateAppWithoutSaving] = React.useState<A.App>(() => {
     let result = Sync.loadAppFromStoredState(storedState);
-    result = A.jump(result, extractThingFromURL());
+    result = A.update(result, {type: "urlChanged", hash: window.location.hash});
     if (isDevelopment) result = A.merge(result, {tutorialState: Tutorial.initialize(true)});
     return result;
   });
@@ -301,12 +301,7 @@ function App_({
 
   const view_ = A.view(app);
 
-  useThingUrl({
-    current: view_.url.root,
-    jump(thing: string) {
-      updateAppWithoutSaving(A.update(app, {type: "navigateTo", thing}));
-    },
-  });
+  useThingUrl({current: view_.url.root, send});
 
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusBackground} tabIndex={-1} className="app">

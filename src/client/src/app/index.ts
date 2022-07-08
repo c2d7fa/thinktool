@@ -263,7 +263,7 @@ export type Event =
   | ({topic: "popup"} & P.Event)
   | {type: "toggleToolbar"}
   | {type: "searchResponse"; things: string[]}
-  | {type: "navigateTo"; thing: string}
+  | {type: "urlChanged"; hash: string}
   | {type: "syncDialogSelect"; option: "commit" | "abort"}
   | Tutorial.Event;
 
@@ -323,8 +323,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return {app: merge(app, {popup: P.receiveResults(app.popup, app.state, event.things)})};
   } else if (event.type === "unfocus") {
     return {app: merge(app, {tree: T.unfocus(app.tree)})};
-  } else if (event.type === "navigateTo") {
-    return {app: jump(app, event.thing)};
+  } else if (event.type === "urlChanged") {
+    return {app: jump(app, event.hash.slice(1))};
   } else if (event.type === "syncDialogSelect") {
     return {app: syncDialogSelect(app, event.option)};
   } else if (isPopupEvent(event)) {
