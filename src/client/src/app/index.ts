@@ -77,8 +77,36 @@ function itemGraphToFullStateResponse(itemGraph: ItemGraph): FullStateResponse {
 }
 
 export function of(items: ItemGraph): App {
-  const state = D.transformFullStateResponseIntoState(itemGraphToFullStateResponse(items));
-  return from(state, T.fromRoot(state, "0"));
+  return initialize({
+    fullStateResponse: itemGraphToFullStateResponse(items),
+    urlHash: null,
+    tutorialFinished: false,
+    toolbarShown: true,
+  });
+}
+
+export type InitialState = {
+  urlHash: string | null;
+  fullStateResponse: FullStateResponse;
+  tutorialFinished: boolean;
+  toolbarShown: boolean;
+};
+
+export function initialize(data: InitialState): App {
+  function parseThingFromUrlHash(hash: string): string {
+    const thingName = hash.slice(1);
+    if (data.fullStateResponse.things.find((thing) => thing.name === thingName)) {
+      return thingName;
+    } else {
+      return "0";
+    }
+  }
+
+  const state = D.transformFullStateResponseIntoState(data.fullStateResponse);
+  let result = from(state, T.fromRoot(state, "0"), {tutorialFinished: data.tutorialFinished});
+  result = jump(result, parseThingFromUrlHash(data.urlHash ?? "#0"));
+  if (!data.toolbarShown) result = update(result, {type: "toggleToolbar"});
+  return result;
 }
 
 export function editor(app: App, node: T.NodeRef): E.Editor | null {

@@ -1,6 +1,8 @@
 /// <reference types="@types/jest" />
 
+import * as A from "./app";
 import * as W from "./wrapap";
+
 import {expectViewToMatch} from "./app/test-utils";
 
 describe("initializing app from scratch with 'of'", () => {
@@ -799,6 +801,122 @@ describe("the toolbar", () => {
         expect(before?.completed("create-item")).toBe(false);
         expect(after?.completed("create-item")).toBe(true);
       });
+    });
+  });
+});
+
+describe("initializing with state loaded from storage", () => {
+  const fullStateResponse1 = {
+    things: [
+      {name: "0", content: ["Item 0"], children: [{name: "0.1", child: "1"}]},
+      {name: "1", content: ["Item 1"], children: []},
+    ],
+  };
+
+  describe("the state is loaded correctly from the state response", () => {
+    describe("in a simple example with two items", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: true,
+          tutorialFinished: true,
+          urlHash: null,
+        }),
+      );
+
+      test("both of the items are shown", () => {
+        expect(app.root.content).toEqual(["Item 0"]);
+        expect(app.root.childrenContents).toEqual([["Item 1"]]);
+      });
+    });
+  });
+
+  describe("the URL", () => {
+    describe("if the URL is non-null, the relevant item is automatically navigated to", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: true,
+          tutorialFinished: false,
+          urlHash: "#1",
+        }),
+      );
+
+      test("the item is used as the root", () => {
+        expect(app.root.content).toEqual(["Item 1"]);
+        expect(app.parentsContents).toEqual([["Item 0"]]);
+      });
+    });
+
+    describe("if the URL is an invalid item, the normal root is used", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: true,
+          tutorialFinished: false,
+          urlHash: "#3",
+        }),
+      );
+
+      test("the default is used as the root", () => {
+        expect(app.root.content).toEqual(["Item 0"]);
+      });
+    });
+  });
+
+  describe("the toolbar", () => {
+    test("can be shown", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: true,
+          tutorialFinished: false,
+          urlHash: null,
+        }),
+      );
+
+      expect(app.view.toolbar.shown).toBe(true);
+    });
+
+    test("can be hidden", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: false,
+          tutorialFinished: false,
+          urlHash: null,
+        }),
+      );
+
+      expect(app.view.toolbar.shown).toBe(false);
+    });
+  });
+
+  describe("the tutorial", () => {
+    test("can be unfinished", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: true,
+          tutorialFinished: false,
+          urlHash: null,
+        }),
+      );
+
+      expect(app.view.tutorial.open).toBe(true);
+    });
+
+    test("can be finished", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: true,
+          tutorialFinished: true,
+          urlHash: null,
+        }),
+      );
+
+      expect(app.view.tutorial.open).toBe(false);
     });
   });
 });
