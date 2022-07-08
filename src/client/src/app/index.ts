@@ -266,9 +266,17 @@ export type Event =
   | {type: "urlChanged"; hash: string}
   | {type: "syncDialogSelect"; option: "commit" | "abort"}
   | {type: "serverDisconnected"}
+  | (
+      | {type: "serverPingResponse"; result: "failed"}
+      | {type: "serverPingResponse"; result: "success"; remoteState: Sy.StoredState}
+    )
   | Tutorial.Event;
 
-export type Effects = {search?: {items?: {thing: string; content: string}[]; query: string}; url?: string};
+export type Effects = {
+  search?: {items?: {thing: string; content: string}[]; query: string};
+  url?: string;
+  tryReconnect?: boolean;
+};
 
 function unreachable(x: never): never {
   return x;
@@ -331,7 +339,12 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   } else if (isPopupEvent(event)) {
     return P.handle(app, event);
   } else if (event.type === "serverDisconnected") {
-    return {app: serverDisconnected(app)};
+    return {app: serverDisconnected(app), effects: isDisconnected(app) ? {} : {tryReconnect: true}};
+  } else if (event.type === "serverPingResponse") {
+    return {
+      app: event.result === "failed" ? app : serverReconnected(app, event.remoteState),
+      effects: {tryReconnect: event.result === "failed"},
+    };
   } else if (event.topic === "tutorial") {
     return {app: merge(app, {tutorialState: Tutorial.update(app.tutorialState, event)})};
   } else {

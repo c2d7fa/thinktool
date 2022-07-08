@@ -4,6 +4,7 @@ import * as A from "./app";
 import * as W from "./wrapap";
 
 import {expectViewToMatch} from "./app/test-utils";
+import {storedStateFromApp} from "./sync";
 
 describe("initializing app from scratch with 'of'", () => {
   const wpp = W.of({
@@ -917,6 +918,55 @@ describe("initializing with state loaded from storage", () => {
       );
 
       expect(app.view.tutorial.open).toBe(false);
+    });
+  });
+});
+
+describe("server disconnect and reconnect", () => {
+  describe("sending requests to reconnect to server", () => {
+    const step1 = W.of({"0": {content: ["Root"]}});
+
+    const [step2, step2e] = step1.send({type: "serverDisconnected"}).effects();
+
+    test("after disconnecting, we will try to reconnect", () => {
+      expect(step2e.tryReconnect).toBeTruthy();
+    });
+
+    test("the offline indicator is shown", () => {
+      // [TODO] Inspect view instead.
+      expect(A.isDisconnected(step2.app)).toBe(true);
+    });
+
+    const [step3, step3e] = step2.send({type: "serverDisconnected"}).effects();
+
+    test("if we are notified again of disconnection, we don't try again", () => {
+      expect(step3e.tryReconnect).toBeFalsy();
+    });
+
+    const [step4, step4e] = step3.send({type: "serverPingResponse", result: "failed"}).effects();
+
+    test("if the server is still down, we try again", () => {
+      expect(step4e.tryReconnect).toBeTruthy();
+    });
+
+    test("the offline indicator is still shown", () => {
+      // [TODO] Inspect view instead.
+      expect(A.isDisconnected(step4.app)).toBe(true);
+    });
+
+    // [TODO] I don't think we should be constructing stored state here; not
+    // quite sure what to do instead.
+    const [step5, step5e] = step4
+      .send({type: "serverPingResponse", result: "success", remoteState: storedStateFromApp(step4.app)})
+      .effects();
+
+    test("when the server comes back, we stop trying", () => {
+      expect(step5e.tryReconnect).toBeFalsy();
+    });
+
+    test("the offline indicator is no longer shown", () => {
+      // [TODO] Inspect view instead.
+      expect(A.isDisconnected(step5.app)).toBe(false);
     });
   });
 });
