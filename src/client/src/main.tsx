@@ -173,16 +173,16 @@ function useSync({
     server.onError((error) => {
       if (error.error === "disconnected") {
         resyncInterval.start();
-        updateAppWithoutSaving(A.serverDisconnected);
+        updateAppWithoutSaving((app) => A.update(app, {type: "serverDisconnected"}));
       } else if (error.error === "error") {
         // [TODO] Add special handling for this case!
         console.error(error);
-        updateAppWithoutSaving(A.serverDisconnected);
+        updateAppWithoutSaving((app) => A.update(app, {type: "serverDisconnected"}));
       }
     });
 
     window.addEventListener("offline", () => {
-      updateAppWithoutSaving(A.serverDisconnected);
+      updateAppWithoutSaving((app) => A.update(app, {type: "serverDisconnected"}));
     });
 
     window.addEventListener("online", async () => {

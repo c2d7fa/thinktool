@@ -218,7 +218,7 @@ export function replace(app: App, node: T.NodeRef, thing: string): App {
   return edit(app_, newNode, E.placeSelectionAtEnd(editor(app_, newNode)!));
 }
 
-export function serverDisconnected(app: App): App {
+function serverDisconnected(app: App): App {
   return {...app, [_isOnline]: false};
 }
 
@@ -265,6 +265,7 @@ export type Event =
   | {type: "searchResponse"; things: string[]}
   | {type: "urlChanged"; hash: string}
   | {type: "syncDialogSelect"; option: "commit" | "abort"}
+  | {type: "serverDisconnected"}
   | Tutorial.Event;
 
 export type Effects = {search?: {items?: {thing: string; content: string}[]; query: string}; url?: string};
@@ -329,6 +330,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return {app: syncDialogSelect(app, event.option)};
   } else if (isPopupEvent(event)) {
     return P.handle(app, event);
+  } else if (event.type === "serverDisconnected") {
+    return {app: serverDisconnected(app)};
   } else if (event.topic === "tutorial") {
     return {app: merge(app, {tutorialState: Tutorial.update(app.tutorialState, event)})};
   } else {

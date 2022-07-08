@@ -20,7 +20,7 @@ export function receiveChangedThingsFromServer(
   for (const {thing, data} of changedThings) {
     if (data !== null && "error" in data) {
       console.warn("Error while reading changes from server!");
-      return A.serverDisconnected(app);
+      return A.update(app, {type: "serverDisconnected"});
     }
   }
 
