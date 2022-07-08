@@ -17,6 +17,7 @@ import {GoalId} from "../goal";
 
 import * as PlaceholderItem from "../ui/PlaceholderItem";
 import * as Ac from "../actions";
+import {FullStateResponse} from "@thinktool/shared/dist/communication";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
@@ -62,17 +63,21 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
 export {itemFromNode} from "./item";
 
 export type ItemGraph = {[id: string]: {content?: D.Content; children?: string[]}};
+
+function itemGraphToFullStateResponse(itemGraph: ItemGraph): FullStateResponse {
+  let i = 0;
+
+  return {
+    things: Object.keys(itemGraph).map((id) => ({
+      name: id,
+      content: itemGraph[id].content ?? ["Item " + id],
+      children: (itemGraph[id].children ?? []).map((child) => ({name: `${id}.${i++}`, child: child})),
+    })),
+  };
+}
+
 export function of(items: ItemGraph): App {
-  let state = D.empty;
-  for (const id in items) {
-    state = D.create(state, id)[0];
-    state = D.setContent(state, id, items[id].content ?? ["Item " + id]);
-  }
-  for (const id in items) {
-    for (const child of items[id].children ?? []) {
-      state = D.addChild(state, id, child)[0];
-    }
-  }
+  const state = D.transformFullStateResponseIntoState(itemGraphToFullStateResponse(items));
   return from(state, T.fromRoot(state, "0"));
 }
 
