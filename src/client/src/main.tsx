@@ -141,17 +141,21 @@ function useRepeatedlyCheck(f: () => Promise<"continue" | "stop">, ms: number): 
   return {start};
 }
 
-function useSync({
+function useSendWithSync({
   updateAppWithoutSaving,
   server,
   initialState,
   storage,
+  openExternalUrl,
+  search,
 }: {
   updateAppWithoutSaving: (f: (app: A.App) => A.App) => void;
   server: ServerApi | undefined;
   initialState: Sync.StoredState;
   storage: Storage.Storage;
-}): {updateApp: (f: (app: A.App) => A.App) => void} {
+  openExternalUrl(url: string): void;
+  search: Search;
+}): A.Send {
   const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(initialState);
 
   const resyncInterval = useRepeatedlyCheck(async () => {
@@ -226,7 +230,19 @@ function useSync({
     [storage],
   );
 
-  return {updateApp};
+  return React.useCallback((event: A.Event) => {
+    updateApp((app) => {
+      const result = A.handle(app, event);
+      if (result?.effects?.url) openExternalUrl(result.effects.url);
+      if (result?.effects?.search) {
+        if (result.effects.search.items) {
+          search.reset(result.effects.search.items);
+        }
+        search.query(result.effects.search.query, 25);
+      }
+      return result.app;
+    });
+  }, []);
 }
 
 function App_({
@@ -253,13 +269,6 @@ function App_({
 
   const changelog = ChangelogData;
 
-  const {updateApp} = useSync({
-    initialState: storedState,
-    server,
-    storage,
-    updateAppWithoutSaving,
-  });
-
   const search = React.useMemo<Search>(() => {
     const search = new Search([]);
     search.on("results", (results) =>
@@ -268,7 +277,14 @@ function App_({
     return search;
   }, []);
 
-  const send = useSendAppEvent({updateApp, openExternalUrl, search});
+  const send = useSendWithSync({
+    initialState: storedState,
+    server,
+    storage,
+    updateAppWithoutSaving,
+    openExternalUrl,
+    search,
+  });
 
   useServerChanges(server ?? null, updateAppWithoutSaving);
   useGlobalShortcuts(send);
@@ -329,30 +345,6 @@ function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event):
   ) : (
     <Outline outline={props.view} send={props.send} />
   );
-}
-
-function useSendAppEvent({
-  updateApp,
-  openExternalUrl,
-  search,
-}: {
-  updateApp(f: (app: A.App) => A.App): void;
-  openExternalUrl(url: string): void;
-  search: Search;
-}): A.Send {
-  return React.useCallback((event: A.Event) => {
-    updateApp((app) => {
-      const result = A.handle(app, event);
-      if (result?.effects?.url) openExternalUrl(result.effects.url);
-      if (result?.effects?.search) {
-        if (result.effects.search.items) {
-          search.reset(result.effects.search.items);
-        }
-        search.query(result.effects.search.query, 25);
-      }
-      return result.app;
-    });
-  }, []);
 }
 
 // ==
