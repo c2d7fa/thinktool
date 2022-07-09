@@ -922,6 +922,18 @@ describe("initializing with state loaded from storage", () => {
   });
 });
 
+describe("changing the URL", () => {
+  test("when the URL is changed to the empty string, the default root item is used", () => {
+    const before = W.of({"0": {children: ["1"]}, "1": {}})
+      .root.child(0)
+      ?.action("zoom")!;
+    const after = before.send({type: "urlChanged", hash: ""});
+
+    expect(before.root.content).toEqual(["Item 1"]);
+    expect(after.root.content).toEqual(["Item 0"]);
+  });
+});
+
 describe("server disconnect and reconnect", () => {
   describe("sending requests to reconnect to server", () => {
     const step1 = W.of({"0": {content: ["Root"]}});

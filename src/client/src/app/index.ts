@@ -333,7 +333,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   } else if (event.type === "unfocus") {
     return {app: merge(app, {tree: T.unfocus(app.tree)})};
   } else if (event.type === "urlChanged") {
-    return {app: jump(app, event.hash.slice(1))};
+    const thing = event.hash.slice(1);
+    return {app: jump(app, thing === "" ? "0" : thing)};
   } else if (event.type === "syncDialogSelect") {
     return {app: syncDialogSelect(app, event.option)};
   } else if (isPopupEvent(event)) {
