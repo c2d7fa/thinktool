@@ -394,9 +394,15 @@ export function LocalApp(props: {
   );
 }
 
-export function App({apiHost}: {apiHost: string}) {
-  const server = React.useMemo(() => new ApiHostServer({apiHost}), []);
-  return <AppWithRemote remote={server} openExternalUrl={(url) => window.open(url, "_blank")} />;
+type AppArgs = {apiHost: string} | {remote: Storage | Server};
+
+export function App(args: AppArgs) {
+  if ("apiHost" in args) {
+    const server = React.useMemo(() => new ApiHostServer({apiHost: args.apiHost}), []);
+    return <AppWithRemote remote={server} openExternalUrl={(url) => window.open(url, "_blank")} />;
+  } else {
+    return <AppWithRemote remote={args.remote} openExternalUrl={(url) => window.open(url, "_blank")} />;
+  }
 }
 
 export function Demo(props: {data: Communication.FullStateResponse}) {
