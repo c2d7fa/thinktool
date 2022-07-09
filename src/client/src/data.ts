@@ -21,6 +21,7 @@ export {
   remove,
   otherParents,
   transformFullStateResponseIntoState,
+  transformStateIntoFullStateResponse,
   diff,
 } from "./data/core";
 

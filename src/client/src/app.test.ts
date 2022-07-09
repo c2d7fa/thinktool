@@ -964,10 +964,15 @@ describe("server disconnect and reconnect", () => {
       expect(step4.view.offlineIndicator.shown).toBe(true);
     });
 
-    // [TODO] I don't think we should be constructing stored state here; not
-    // quite sure what to do instead.
     const [step5, step5e] = step4
-      .send({type: "serverPingResponse", result: "success", remoteState: storedStateFromApp(step4.app)})
+      .send({
+        type: "serverPingResponse",
+        result: "success",
+        remoteState: {
+          fullStateResponse: {things: [{name: "0", content: ["Root"], children: []}]},
+          tutorialFinished: false,
+        },
+      })
       .effects();
 
     test("when the server comes back, we stop trying", () => {
