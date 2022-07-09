@@ -30,7 +30,7 @@ import {useMemoWarning} from "./react-utils";
 import {OrphanList} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 import {Outline} from "./ui/outline";
-import {Server, Storage} from "./remote-types";
+import {isStorageServer, Server, Storage} from "./remote-types";
 
 function useGlobalShortcuts(send: (event: A.Event) => void) {
   React.useEffect(() => {
@@ -249,16 +249,17 @@ function useSendWithSync({
 function App_({
   storedState,
   username,
-  storage,
-  server,
+  remote,
   openExternalUrl,
 }: {
   storedState: Sync.StoredState;
   username?: string;
-  storage: Storage;
-  server?: Server;
+  remote: Storage | Server;
   openExternalUrl(url: string): void;
 }) {
+  const storage = remote;
+  const server = isStorageServer(remote) ? remote : undefined;
+
   const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
 
   const [app, updateAppWithoutSaving] = React.useState<A.App>(() => {
@@ -363,7 +364,7 @@ export function LocalApp(props: {
         <ExternalLinkProvider value={props.ExternalLink}>
           <App_
             storedState={await Sync.loadStoredStateFromStorage(props.storage)}
-            storage={props.storage}
+            remote={props.storage}
             openExternalUrl={props.openExternalUrl}
           />
         </ExternalLinkProvider>,
@@ -387,14 +388,11 @@ export function App({apiHost}: {apiHost: string}) {
         window.location.href = "/login";
       }
 
-      const storage = Sto.server(server);
-
       setApp(
         <App_
-          storedState={await Sync.loadStoredStateFromStorage(storage)}
+          storedState={await Sync.loadStoredStateFromStorage(server)}
           username={username ?? "<error>"}
-          storage={storage}
-          server={server}
+          remote={server}
           openExternalUrl={(url) => window.open(url, "_blank")}
         />,
       );
@@ -412,7 +410,7 @@ export function Demo(props: {data: Communication.FullStateResponse}) {
       setApp(
         <App_
           storedState={await Sync.loadStoredStateFromStorage(Sto.ignore(props.data))}
-          storage={Sto.ignore()}
+          remote={Sto.ignore()}
           openExternalUrl={(url) => window.open(url, "_blank")}
         />,
       );

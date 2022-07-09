@@ -1,19 +1,8 @@
 import {Communication} from "@thinktool/shared";
 import {Changes} from "./index";
-import {Content, State} from "../data";
+import {Content} from "../data";
 import {FullStateResponse} from "@thinktool/shared/dist/communication";
-import {Server, Storage} from "../remote-types";
-
-export function server(server: Server): Storage {
-  return {
-    getFullState: server.getFullState.bind(server),
-    setContent: server.setContent.bind(server),
-    deleteThing: server.deleteThing.bind(server),
-    updateThings: server.updateThings.bind(server),
-    getTutorialFinished: server.getTutorialFinished.bind(server),
-    setTutorialFinished: server.setTutorialFinished.bind(server),
-  };
-}
+import {Storage} from "../remote-types";
 
 // Don't store anything
 export function ignore(data?: FullStateResponse): Storage {

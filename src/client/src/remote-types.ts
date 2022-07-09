@@ -26,3 +26,7 @@ export interface Server extends Storage {
   getToolbarState(): Promise<{shown: boolean}>;
   logOutUrl: string;
 }
+
+export function isStorageServer(storage: Storage | Server): storage is Server {
+  return (storage as any).onError !== undefined;
+}
