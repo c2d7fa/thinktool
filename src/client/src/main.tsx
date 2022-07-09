@@ -203,7 +203,7 @@ function useSendWithSync({
           setLastSyncedState((lastSyncedState) => {
             const nextAppState = Sync.storedStateFromApp(newApp);
 
-            if (server && A.isDisconnected(newApp)) {
+            if (server && A.view(newApp).offlineIndicator.shown) {
               console.log("Won't try to push changes because we're offline.");
               return lastSyncedState;
             }
@@ -285,7 +285,7 @@ function LoadedApp({
 
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusBackground} tabIndex={-1} className="app">
-      <OfflineIndicator isDisconnected={A.isDisconnected(app)} />
+      <OfflineIndicator isDisconnected={view_.offlineIndicator.shown} />
       <Sync.Dialog.SyncDialog dialog={A.syncDialog(app)} send={send} />
       <div className="app-header">
         <TopBar

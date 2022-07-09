@@ -241,7 +241,7 @@ function syncDialogSelect(app: App, option: "commit" | "abort"): App {
   return Sy.loadAppFromStoredState(Sy.Dialog.storedStateAfter(app[_syncDialog]!, option));
 }
 
-export function isDisconnected(app: App): boolean {
+function isDisconnected(app: App): boolean {
   return !app[_isOnline];
 }
 
@@ -395,6 +395,7 @@ export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.Orphans
   popup: P.View;
   tutorial: Tutorial.View;
   url: {root: string};
+  offlineIndicator: {shown: boolean};
 };
 
 export function view(app: App): View {
@@ -403,6 +404,7 @@ export function view(app: App): View {
     tutorial: Tutorial.view(app.tutorialState),
     toolbar: app[_toolbarShown] ? Toolbar.viewToolbar(app) : {shown: false},
     url: {root: T.thing(app.tree, T.root(app.tree))},
+    offlineIndicator: {shown: isDisconnected(app)},
     ...(app.tab === "orphans" ? {tab: "orphans", ...O.view(app)} : {tab: "outline", ...Ou.fromApp(app)}),
   };
 }

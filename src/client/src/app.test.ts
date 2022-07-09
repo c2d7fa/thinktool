@@ -945,8 +945,7 @@ describe("server disconnect and reconnect", () => {
     });
 
     test("the offline indicator is shown", () => {
-      // [TODO] Inspect view instead.
-      expect(A.isDisconnected(step2.app)).toBe(true);
+      expect(step2.view.offlineIndicator.shown).toBe(true);
     });
 
     const [step3, step3e] = step2.send({type: "serverDisconnected"}).effects();
@@ -962,8 +961,7 @@ describe("server disconnect and reconnect", () => {
     });
 
     test("the offline indicator is still shown", () => {
-      // [TODO] Inspect view instead.
-      expect(A.isDisconnected(step4.app)).toBe(true);
+      expect(step4.view.offlineIndicator.shown).toBe(true);
     });
 
     // [TODO] I don't think we should be constructing stored state here; not
@@ -977,8 +975,7 @@ describe("server disconnect and reconnect", () => {
     });
 
     test("the offline indicator is no longer shown", () => {
-      // [TODO] Inspect view instead.
-      expect(A.isDisconnected(step5.app)).toBe(false);
+      expect(step5.view.offlineIndicator.shown).toBe(false);
     });
   });
 });
