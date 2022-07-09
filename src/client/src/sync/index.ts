@@ -5,7 +5,7 @@ import * as D from "../data";
 import * as T from "../tree";
 import * as Tu from "../tutorial";
 
-import type {Storage} from "./storage";
+import type {Storage} from "../remote-types";
 
 import * as Dialog from "./dialog";
 export {Dialog};

@@ -7,8 +7,8 @@ import * as ChangelogData from "./changes.json";
 import {useThingUrl} from "./url";
 
 import * as Tutorial from "./tutorial";
-import {ServerApi} from "./sync/server-api";
-import * as Storage from "./sync/storage";
+import {ApiHostServer} from "./sync/server-api";
+import * as Sto from "./sync/storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
@@ -30,6 +30,7 @@ import {useMemoWarning} from "./react-utils";
 import {OrphanList} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 import {Outline} from "./ui/outline";
+import {Server, Storage} from "./remote-types";
 
 function useGlobalShortcuts(send: (event: A.Event) => void) {
   React.useEffect(() => {
@@ -50,7 +51,7 @@ function useGlobalShortcuts(send: (event: A.Event) => void) {
   }, [send]);
 }
 
-function useServerChanges(server: ServerApi | null, updateApp: (f: (app: A.App) => A.App) => void) {
+function useServerChanges(server: Server | null, updateApp: (f: (app: A.App) => A.App) => void) {
   React.useEffect(() => {
     if (server === null) return;
 
@@ -150,9 +151,9 @@ function useSendWithSync({
   search,
 }: {
   updateAppWithoutSaving: (f: (app: A.App) => A.App) => void;
-  server: ServerApi | undefined;
+  server: Server | undefined;
   initialState: Sync.StoredState;
-  storage: Storage.Storage;
+  storage: Storage;
   openExternalUrl(url: string): void;
   search: Search;
 }): A.Send {
@@ -198,7 +199,7 @@ function useSendWithSync({
 
   const storageExecutionContext = useMemoWarning(
     "storageExecutionContext",
-    () => new Storage.StorageExecutionContext(storage, window),
+    () => new Sto.StorageExecutionContext(storage, window),
     [storage],
   );
 
@@ -254,8 +255,8 @@ function App_({
 }: {
   storedState: Sync.StoredState;
   username?: string;
-  storage: Storage.Storage;
-  server?: ServerApi;
+  storage: Storage;
+  server?: Server;
   openExternalUrl(url: string): void;
 }) {
   const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
@@ -350,7 +351,7 @@ function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event):
 // ==
 
 export function LocalApp(props: {
-  storage: Storage.Storage;
+  storage: Storage;
   ExternalLink: ExternalLinkType;
   openExternalUrl: (url: string) => void;
 }) {
@@ -374,7 +375,7 @@ export function LocalApp(props: {
 }
 
 export function App({apiHost}: {apiHost: string}) {
-  const server = new ServerApi({apiHost});
+  const server = new ApiHostServer({apiHost});
 
   const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
 
@@ -386,7 +387,7 @@ export function App({apiHost}: {apiHost: string}) {
         window.location.href = "/login";
       }
 
-      const storage = Storage.server(server);
+      const storage = Sto.server(server);
 
       setApp(
         <App_
@@ -410,8 +411,8 @@ export function Demo(props: {data: Communication.FullStateResponse}) {
     (async () => {
       setApp(
         <App_
-          storedState={await Sync.loadStoredStateFromStorage(Storage.ignore(props.data))}
-          storage={Storage.ignore()}
+          storedState={await Sync.loadStoredStateFromStorage(Sto.ignore(props.data))}
+          storage={Sto.ignore()}
           openExternalUrl={(url) => window.open(url, "_blank")}
         />,
       );
@@ -422,7 +423,7 @@ export function Demo(props: {data: Communication.FullStateResponse}) {
 }
 
 export function User(props: {apiHost: string}) {
-  return <UserPage server={new ServerApi({apiHost: props.apiHost})} />;
+  return <UserPage server={new ApiHostServer({apiHost: props.apiHost})} />;
 }
 
 export * as Storage from "./sync/storage";

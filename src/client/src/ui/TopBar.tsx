@@ -2,14 +2,14 @@ import * as React from "react";
 
 import {ExternalLink} from "./ExternalLink";
 import {SearchBar} from "../search-bar";
-import {ServerApi} from "../sync/server-api";
+import {Server} from "../remote-types";
 import * as A from "../app";
 
 import * as Icons from "./icons";
 
 const styles = require("./TopBar.module.scss").default;
 
-export function login(args: {server?: ServerApi; username?: string}) {
+export function login(args: {server?: Server; username?: string}) {
   return args.username === undefined || args.server === undefined
     ? null
     : {

@@ -1,23 +1,10 @@
 import {Communication} from "@thinktool/shared";
-import {ServerApi} from "./server-api";
 import {Changes} from "./index";
 import {Content, State} from "../data";
 import {FullStateResponse} from "@thinktool/shared/dist/communication";
+import {Server, Storage} from "../remote-types";
 
-export interface Storage {
-  getFullState(): Promise<Communication.FullStateResponse>;
-
-  setContent(thing: string, content: Communication.Content): Promise<void>;
-  deleteThing(thing: string): Promise<void>;
-  updateThings(
-    things: {name: string; content: Communication.Content; children: {name: string; child: string}[]}[],
-  ): Promise<void>;
-
-  getTutorialFinished(): Promise<boolean>;
-  setTutorialFinished(): Promise<void>;
-}
-
-export function server(server: ServerApi): Storage {
+export function server(server: Server): Storage {
   return {
     getFullState: server.getFullState.bind(server),
     setContent: server.setContent.bind(server),
