@@ -123,25 +123,6 @@ function useDragAndDrop(app: A.App, send: A.Send) {
   }, [A.isDragging(app), send]);
 }
 
-function useRepeatedlyCheck(f: () => Promise<"continue" | "stop">, ms: number): {start(): void} {
-  const timeoutRef = React.useRef<number | null>(null);
-  const isRunningRef = React.useRef(false);
-
-  const start = React.useCallback(() => {
-    if (isRunningRef.current) return;
-    isRunningRef.current = true;
-    timeoutRef.current = window.setTimeout(async () => {
-      const result = await f();
-      isRunningRef.current = false;
-      if (result === "continue") {
-        start();
-      }
-    }, ms);
-  }, []);
-
-  return {start};
-}
-
 function useSendWithSync({
   updateAppWithoutSaving,
   server,
@@ -157,43 +138,52 @@ function useSendWithSync({
   openExternalUrl(url: string): void;
   search: Search;
 }): A.Send {
-  const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(initialState);
+  const send = React.useCallback((event: A.Event) => {
+    updateApp((app) => {
+      const result = A.handle(app, event);
+      if (result?.effects?.url) openExternalUrl(result.effects.url);
+      if (result?.effects?.search) {
+        if (result.effects.search.items) {
+          search.reset(result.effects.search.items);
+        }
+        search.query(result.effects.search.query, 25);
+      }
+      if (result?.effects?.tryReconnect) {
+        setTimeout(async () => {
+          console.log("Trying to reconnect to server...");
+          try {
+            const remoteState = await Sync.loadStoredStateFromStorage(storage);
+            console.log("Reconnected successfully.");
+            send({type: "serverPingResponse", result: "success", remoteState});
+          } catch (e) {
+            console.log("Still could not contact server.");
+            send({type: "serverPingResponse", result: "failed"});
+          }
+        }, 2000);
+      }
+      return result.app;
+    });
+  }, []);
 
-  const resyncInterval = useRepeatedlyCheck(async () => {
-    if (server === undefined) return "stop";
-    try {
-      const remoteState = await Sync.loadStoredStateFromStorage(storage);
-      console.log("Reconnected successfully.");
-      updateAppWithoutSaving((app) => A.update(app, {type: "serverPingResponse", result: "success", remoteState}));
-      return "stop";
-    } catch (e) {
-      console.log("Still could not contact server.");
-      return "continue";
-    }
-  }, 2000);
+  const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(initialState);
 
   React.useEffect(() => {
     if (server === undefined) return;
 
     server.onError((error) => {
-      if (error.error === "disconnected") {
-        resyncInterval.start();
-        updateAppWithoutSaving((app) => A.update(app, {type: "serverDisconnected"}));
-      } else if (error.error === "error") {
-        // [TODO] Add special handling for this case!
-        console.error(error);
-        updateAppWithoutSaving((app) => A.update(app, {type: "serverDisconnected"}));
-      }
+      if (error.error === "disconnected") console.warn("Disconnected from server.");
+      else console.error(error);
+      send({type: "serverDisconnected"});
     });
 
     window.addEventListener("offline", () => {
-      updateAppWithoutSaving((app) => A.update(app, {type: "serverDisconnected"}));
+      send({type: "serverDisconnected"});
     });
 
     window.addEventListener("online", async () => {
       const remoteState = await Sync.loadStoredStateFromStorage(storage);
       setLastSyncedState(remoteState);
-      updateAppWithoutSaving((app) => A.update(app, {type: "serverPingResponse", result: "success", remoteState}));
+      send({type: "serverPingResponse", result: "success", remoteState});
     });
   }, []);
 
@@ -231,19 +221,7 @@ function useSendWithSync({
     [storage],
   );
 
-  return React.useCallback((event: A.Event) => {
-    updateApp((app) => {
-      const result = A.handle(app, event);
-      if (result?.effects?.url) openExternalUrl(result.effects.url);
-      if (result?.effects?.search) {
-        if (result.effects.search.items) {
-          search.reset(result.effects.search.items);
-        }
-        search.query(result.effects.search.query, 25);
-      }
-      return result.app;
-    });
-  }, []);
+  return send;
 }
 
 function LoadedApp({
