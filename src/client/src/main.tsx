@@ -18,7 +18,7 @@ import * as Toolbar from "./ui/Toolbar";
 import TutorialBox from "./ui/Tutorial";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
-import {ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
+import {DefaultExternalLink, ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
 import UserPage from "./ui/UserPage";
 import {login, TopBar} from "./ui/TopBar";
 import {OfflineIndicator} from "./offline-indicator";
@@ -246,7 +246,7 @@ function useSendWithSync({
   }, []);
 }
 
-function App_({
+function LoadedApp({
   initialState,
   username,
   remote,
@@ -327,6 +327,49 @@ function App_({
   );
 }
 
+function AppWithRemote(props: {
+  remote: Storage | Server;
+  openExternalUrl(url: string): void;
+  ExternalLink?: ExternalLinkType;
+}) {
+  const server = isStorageServer(props.remote) ? props.remote : undefined;
+
+  const [rendered, setRendered] = React.useState<JSX.Element>(<div>Loading...</div>);
+
+  React.useEffect(() => {
+    (async () => {
+      const username = await (async () => {
+        if (!server) return undefined;
+        const username = await server.getUsername();
+        if (username === null) {
+          console.log("Not logged in. Redirecting to login page.");
+          window.location.href = "/login";
+          return undefined;
+        }
+        return username;
+      })();
+
+      setRendered(
+        <ExternalLinkProvider value={props.ExternalLink ?? DefaultExternalLink}>
+          <LoadedApp
+            initialState={{
+              fullStateResponse: await props.remote.getFullState(),
+              toolbarShown: server ? (await server.getToolbarState()).shown : true,
+              tutorialFinished: await props.remote.getTutorialFinished(),
+              urlHash: window?.location?.hash ?? "",
+            }}
+            remote={props.remote}
+            openExternalUrl={props.openExternalUrl}
+            username={username}
+          />
+        </ExternalLinkProvider>,
+      );
+    })();
+  }, []);
+
+  return rendered;
+}
+
 function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event): void}) {
   return props.view.tab === "orphans" ? (
     <OrphanList view={props.view} send={props.send} />
@@ -342,83 +385,22 @@ export function LocalApp(props: {
   ExternalLink: ExternalLinkType;
   openExternalUrl: (url: string) => void;
 }) {
-  const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
-
-  React.useEffect(() => {
-    (async () => {
-      setApp(
-        <ExternalLinkProvider value={props.ExternalLink}>
-          <App_
-            initialState={{
-              fullStateResponse: await props.storage.getFullState(),
-              toolbarShown: true,
-              tutorialFinished: await props.storage.getTutorialFinished(),
-              urlHash: "",
-            }}
-            remote={props.storage}
-            openExternalUrl={props.openExternalUrl}
-          />
-        </ExternalLinkProvider>,
-      );
-    })();
-  }, []);
-
-  return app;
+  return (
+    <AppWithRemote
+      remote={props.storage}
+      openExternalUrl={props.openExternalUrl}
+      ExternalLink={props.ExternalLink}
+    />
+  );
 }
 
 export function App({apiHost}: {apiHost: string}) {
-  const server = new ApiHostServer({apiHost});
-
-  const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
-
-  React.useEffect(() => {
-    (async () => {
-      const username = await server.getUsername();
-      if (username === null) {
-        console.log("Not logged in. Redirecting to login page.");
-        window.location.href = "/login";
-      }
-
-      setApp(
-        <App_
-          initialState={{
-            fullStateResponse: await server.getFullState(),
-            toolbarShown: (await server.getToolbarState()).shown,
-            tutorialFinished: await server.getTutorialFinished(),
-            urlHash: window.location.hash,
-          }}
-          username={username ?? "<error>"}
-          remote={server}
-          openExternalUrl={(url) => window.open(url, "_blank")}
-        />,
-      );
-    })();
-  }, []);
-
-  return app;
+  const server = React.useMemo(() => new ApiHostServer({apiHost}), []);
+  return <AppWithRemote remote={server} openExternalUrl={(url) => window.open(url, "_blank")} />;
 }
 
 export function Demo(props: {data: Communication.FullStateResponse}) {
-  const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
-
-  React.useEffect(() => {
-    (async () => {
-      setApp(
-        <App_
-          initialState={{
-            fullStateResponse: props.data,
-            toolbarShown: true,
-            tutorialFinished: false,
-            urlHash: "",
-          }}
-          remote={Sto.ignore()}
-          openExternalUrl={(url) => window.open(url, "_blank")}
-        />,
-      );
-    })();
-  }, []);
-
-  return app;
+  return <AppWithRemote remote={Sto.ignore(props.data)} openExternalUrl={(url) => window.open(url, "_blank")} />;
 }
 
 export function User(props: {apiHost: string}) {
