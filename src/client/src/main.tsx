@@ -247,12 +247,12 @@ function useSendWithSync({
 }
 
 function App_({
-  storedState,
+  initialState,
   username,
   remote,
   openExternalUrl,
 }: {
-  storedState: Sync.StoredState;
+  initialState: A.InitialState;
   username?: string;
   remote: Storage | Server;
   openExternalUrl(url: string): void;
@@ -262,12 +262,7 @@ function App_({
 
   const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
 
-  const [app, updateAppWithoutSaving] = React.useState<A.App>(() => {
-    let result = Sync.loadAppFromStoredState(storedState);
-    result = A.update(result, {type: "urlChanged", hash: window.location.hash});
-    if (isDevelopment) result = A.merge(result, {tutorialState: Tutorial.initialize(true)});
-    return result;
-  });
+  const [app, updateAppWithoutSaving] = React.useState<A.App>(() => A.initialize(initialState));
 
   const changelog = ChangelogData;
 
@@ -280,7 +275,7 @@ function App_({
   }, []);
 
   const send = useSendWithSync({
-    initialState: storedState,
+    initialState: Sync.storedStateFromApp(app),
     server,
     storage,
     updateAppWithoutSaving,
@@ -292,15 +287,6 @@ function App_({
   useGlobalShortcuts(send);
 
   useDragAndDrop(app, send);
-
-  React.useEffect(() => {
-    server
-      ?.getToolbarState()
-      .then(({shown}) => !shown && send({type: "toggleToolbar"}))
-      .catch((error) => {
-        console.warn("Error while getting toolbar state: %o", error);
-      });
-  }, []);
 
   const appElementRef = React.useRef<HTMLDivElement>(null);
 
@@ -363,7 +349,12 @@ export function LocalApp(props: {
       setApp(
         <ExternalLinkProvider value={props.ExternalLink}>
           <App_
-            storedState={await Sync.loadStoredStateFromStorage(props.storage)}
+            initialState={{
+              fullStateResponse: await props.storage.getFullState(),
+              toolbarShown: true,
+              tutorialFinished: await props.storage.getTutorialFinished(),
+              urlHash: "",
+            }}
             remote={props.storage}
             openExternalUrl={props.openExternalUrl}
           />
@@ -390,7 +381,12 @@ export function App({apiHost}: {apiHost: string}) {
 
       setApp(
         <App_
-          storedState={await Sync.loadStoredStateFromStorage(server)}
+          initialState={{
+            fullStateResponse: await server.getFullState(),
+            toolbarShown: (await server.getToolbarState()).shown,
+            tutorialFinished: await server.getTutorialFinished(),
+            urlHash: window.location.hash,
+          }}
           username={username ?? "<error>"}
           remote={server}
           openExternalUrl={(url) => window.open(url, "_blank")}
@@ -409,7 +405,12 @@ export function Demo(props: {data: Communication.FullStateResponse}) {
     (async () => {
       setApp(
         <App_
-          storedState={await Sync.loadStoredStateFromStorage(Sto.ignore(props.data))}
+          initialState={{
+            fullStateResponse: props.data,
+            toolbarShown: true,
+            tutorialFinished: false,
+            urlHash: "",
+          }}
           remote={Sto.ignore()}
           openExternalUrl={(url) => window.open(url, "_blank")}
         />,
