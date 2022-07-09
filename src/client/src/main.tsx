@@ -30,7 +30,7 @@ import {useMemoWarning} from "./react-utils";
 import {OrphanList} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 import {Outline} from "./ui/outline";
-import {isStorageServer, Server, Storage} from "./remote-types";
+import {isStorageServer, Server, ServerError, Storage} from "./remote-types";
 
 function useGlobalShortcuts(send: (event: A.Event) => void) {
   React.useEffect(() => {
@@ -395,6 +395,10 @@ export function LocalApp(props: {
 }
 
 type AppArgs = {apiHost: string} | {remote: Storage | Server};
+
+export type RemoteStorage = Storage;
+export type RemoteServer = Server;
+export type RemoteServerError = ServerError;
 
 export function App(args: AppArgs) {
   if ("apiHost" in args) {
