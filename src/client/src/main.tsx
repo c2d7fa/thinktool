@@ -286,7 +286,7 @@ function LoadedApp({
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusBackground} tabIndex={-1} className="app">
       <OfflineIndicator isDisconnected={view_.offlineIndicator.shown} />
-      <Sync.Dialog.SyncDialog dialog={A.syncDialog(app)} send={send} />
+      <Sync.Dialog.SyncDialog dialog={view_.syncDialog} send={send} />
       <div className="app-header">
         <TopBar
           isToolbarShown={view_.toolbar.shown}

@@ -35,7 +35,7 @@ export interface App {
   tab: "outline" | "orphans";
   orphans: O.OrphansState;
   [_isOnline]: boolean;
-  [_syncDialog]: Sy.Dialog.SyncDialog | null;
+  [_syncDialog]: Sy.Dialog.State;
   [_toolbarShown]: boolean;
 }
 
@@ -55,7 +55,7 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     tab: "outline",
     orphans: O.empty,
     [_isOnline]: true,
-    [_syncDialog]: null,
+    [_syncDialog]: Sy.Dialog.hidden,
     [_toolbarShown]: true,
   };
 }
@@ -228,17 +228,19 @@ function serverReconnected(app: App, remoteState: Sy.StoredState): App {
   return {...app, [_isOnline]: true, [_syncDialog]: syncDialog};
 }
 
-export function syncDialog(app: App): Sy.Dialog.SyncDialog | null {
+export function syncDialog(app: App): Sy.Dialog.State | null {
   return app[_syncDialog];
 }
 
 function syncDialogSelect(app: App, option: "commit" | "abort"): App {
-  if (app[_syncDialog] === null) {
+  if (!app[_syncDialog].shown) {
     console.error("Tried to select sync dialog option when no dialog was open!");
     return app;
   }
 
-  return Sy.loadAppFromStoredState(Sy.Dialog.storedStateAfter(app[_syncDialog]!, option));
+  return Sy.loadAppFromStoredState(
+    Sy.Dialog.storedStateAfter(app[_syncDialog] as Sy.Dialog.State & {shown: true}, option),
+  );
 }
 
 function isDisconnected(app: App): boolean {
@@ -396,6 +398,7 @@ export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.Orphans
   tutorial: Tutorial.View;
   url: {root: string};
   offlineIndicator: {shown: boolean};
+  syncDialog: Sy.Dialog.View;
 };
 
 export function view(app: App): View {
@@ -405,6 +408,7 @@ export function view(app: App): View {
     toolbar: app[_toolbarShown] ? Toolbar.viewToolbar(app) : {shown: false},
     url: {root: T.thing(app.tree, T.root(app.tree))},
     offlineIndicator: {shown: isDisconnected(app)},
+    syncDialog: Sy.Dialog.view(app[_syncDialog]),
     ...(app.tab === "orphans" ? {tab: "orphans", ...O.view(app)} : {tab: "outline", ...Ou.fromApp(app)}),
   };
 }
