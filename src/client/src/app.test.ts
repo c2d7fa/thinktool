@@ -983,4 +983,53 @@ describe("server disconnect and reconnect", () => {
       expect(step5.view.offlineIndicator.shown).toBe(false);
     });
   });
+
+  describe("the sync dialog", () => {
+    test("isn't shown by default", () => {
+      const app = W.of({"0": {content: ["Root"]}});
+      expect(app.view.syncDialog.shown).toBe(false);
+    });
+
+    describe("when reconnecting after making changes locally", () => {
+      const app = W.of({"0": {content: ["Root"]}})
+        .send({type: "serverDisconnected"})
+        .root.edit({content: ["Edited root"]})
+        .send({
+          type: "serverPingResponse",
+          result: "success",
+          remoteState: {
+            fullStateResponse: {things: [{name: "0", content: ["Root"], children: []}]},
+            tutorialFinished: false,
+          },
+        });
+
+      test("the sync dialog is shown", () => {
+        expect(app.view.syncDialog.shown).toBe(true);
+      });
+
+      test("it shows exactly one item edited", () => {
+        expect((app.view.syncDialog as A.View["syncDialog"] & {shown: true}).summary).toEqual({
+          deleted: 0,
+          updated: 0,
+          edited: 1,
+        });
+      });
+
+      describe("if accepting local changes", () => {
+        const after = app.send({type: "syncDialogSelect", option: "commit"});
+
+        test("the edited item keeps its new value", () => {
+          expect(after.root.content).toEqual(["Edited root"]);
+        });
+      });
+
+      describe("if rejecting local changes", () => {
+        const after = app.send({type: "syncDialogSelect", option: "abort"});
+
+        test("the edited item is reverted to its old value", () => {
+          expect(after.root.content).toEqual(["Root"]);
+        });
+      });
+    });
+  });
 });
