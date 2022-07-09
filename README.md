@@ -138,9 +138,7 @@ directory whenever the `website` branch is pushed.
 While working on Thinktool, most changes should be made in the `src/client`
 directory, since this is the package that's used for both the web client and the
 desktop client. Enter the `src/client` directory and run `yarn install --frozen-lockfile`
-and use `yarn webpack --watch --config webpack.dev.js` to continually rebuild.
-Start a static web server and open `dev.html`  in a browser to see the demo
-page.
+and use `yarn webpack serve --open --config webpack.dev.js` to continually rebuild.
 
 ### Releasing new client version
 
