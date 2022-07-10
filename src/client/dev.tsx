@@ -103,6 +103,7 @@ function fakeServer(clientId: string): Client.RemoteServer {
     },
 
     async setContent(thing: string, content: Client.Communication.Content) {
+      errorIfSimulatingDisconnected();
       await server.setContent(clientId, thing, content);
     },
 

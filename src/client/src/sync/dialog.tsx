@@ -89,7 +89,7 @@ export function SyncDialog(props: {dialog: View; send: Send}) {
   }, [props.dialog, props.send]);
 
   return (
-    <Animated durationMs={500} isHidden={props.dialog === null} classes={style}>
+    <Animated durationMs={500} isHidden={!props.dialog.shown} classes={style}>
       <div className={style.container}>{inner}</div>
     </Animated>
   );
