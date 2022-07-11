@@ -934,6 +934,30 @@ describe("changing the URL", () => {
   });
 });
 
+describe("storage synchronization", () => {
+  describe("example with updates, deletions and edits", () => {
+    const step1 = W.of({
+      "0": {content: ["Root"], children: ["1", "2"]},
+      "1": {content: ["Child 1"]},
+      "2": {content: ["Child 2"]},
+    });
+
+    const [step2, step2e] = step1.root
+      .edit({content: ["Edited root item"]})
+      .send({type: "flushChanges"})
+      .effects();
+
+    test("after editing item content, flushed changes contains the edit", () => {
+      expect(step2e.changes).toEqual({
+        deleted: [],
+        edited: [{thing: "0", content: ["Edited root item"]}],
+        updated: [],
+        tutorialFinished: null,
+      });
+    });
+  });
+});
+
 describe("server disconnect and reconnect", () => {
   describe("sending requests to reconnect to server", () => {
     const step1 = W.of({"0": {content: ["Root"]}});

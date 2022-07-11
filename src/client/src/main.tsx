@@ -139,7 +139,7 @@ function useSendWithSync({
   search: Search;
 }): A.Send {
   const send = React.useCallback((event: A.Event) => {
-    updateApp((app) => {
+    updateAppWithoutSaving((app) => {
       const result = A.handle(app, event);
       if (result?.effects?.url) openExternalUrl(result.effects.url);
       if (result?.effects?.search) {
@@ -161,11 +161,13 @@ function useSendWithSync({
           }
         }, 2000);
       }
+      if (result?.effects?.changes) {
+        console.log("Pushing changes %o", result.effects.changes);
+        storageExecutionContext.pushChanges(result.effects.changes);
+      }
       return result.app;
     });
   }, []);
-
-  const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(initialState);
 
   React.useEffect(() => {
     if (server === undefined) return;
@@ -181,43 +183,21 @@ function useSendWithSync({
     });
 
     window.addEventListener("online", async () => {
-      const remoteState = await Sync.loadStoredStateFromStorage(storage);
-      setLastSyncedState(remoteState);
-      send({type: "serverPingResponse", result: "success", remoteState});
+      send({
+        type: "serverPingResponse",
+        result: "success",
+        remoteState: await Sync.loadStoredStateFromStorage(storage),
+      });
     });
+  }, []);
+
+  React.useEffect(() => {
+    setInterval(() => send({type: "flushChanges"}), 1000);
   }, []);
 
   const storageExecutionContext = useMemoWarning(
     "storageExecutionContext",
     () => new Sto.StorageExecutionContext(storage, window),
-    [storage],
-  );
-
-  const updateApp = useMemoWarning(
-    "updateApp",
-    () => {
-      return (f: (app: A.App) => A.App) => {
-        updateAppWithoutSaving((app) => {
-          const newApp = f(app);
-
-          setLastSyncedState((lastSyncedState) => {
-            const nextAppState = Sync.storedStateFromApp(newApp);
-
-            if (server && A.view(newApp).offlineIndicator.shown) {
-              console.log("Won't try to push changes because we're offline.");
-              return lastSyncedState;
-            }
-
-            const changes = Sync.changes(lastSyncedState, nextAppState);
-            storageExecutionContext.pushChanges(changes);
-
-            return nextAppState;
-          });
-
-          return newApp;
-        });
-      };
-    },
     [storage],
   );
 
