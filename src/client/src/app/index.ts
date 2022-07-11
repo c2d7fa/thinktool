@@ -268,6 +268,7 @@ export type Event =
   | {type: "urlChanged"; hash: string}
   | {type: "syncDialogSelect"; option: "commit" | "abort"}
   | {type: "serverDisconnected"}
+  | {type: "receivedChanges"; changes: {thing: string; data: Communication.ThingData | null}[]}
   | (
       | {type: "serverPingResponse"; result: "failed"}
       | {type: "serverPingResponse"; result: "success"; remoteState: Sy.StoredState}
@@ -343,6 +344,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return P.handle(app, event);
   } else if (event.type === "serverDisconnected") {
     return {app: serverDisconnected(app), effects: isDisconnected(app) ? {} : {tryReconnect: true}};
+  } else if (event.type === "receivedChanges") {
+    return {app: Sy.receiveChangedThingsFromServer(app, event.changes)};
   } else if (event.type === "serverPingResponse") {
     return {
       app: event.result === "failed" ? app : serverReconnected(app, event.remoteState),

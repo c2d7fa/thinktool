@@ -51,7 +51,7 @@ function useGlobalShortcuts(send: (event: A.Event) => void) {
   }, [send]);
 }
 
-function useServerChanges(server: Server | null, updateApp: (f: (app: A.App) => A.App) => void) {
+function useServerChanges(server: Server | null, send: A.Send) {
   React.useEffect(() => {
     if (server === null) return;
 
@@ -63,9 +63,9 @@ function useServerChanges(server: Server | null, updateApp: (f: (app: A.App) => 
         }))(),
       );
       const changedThings = await Promise.all(loadThingDataTasks);
-      updateApp((app) => Sync.receiveChangedThingsFromServer(app, changedThings));
+      send({type: "receivedChanges", changes: changedThings});
     });
-  }, []);
+  }, [send]);
 }
 
 function useDragAndDrop(app: A.App, send: A.Send) {
@@ -261,7 +261,7 @@ function LoadedApp({
     search,
   });
 
-  useServerChanges(server ?? null, updateAppWithoutSaving);
+  useServerChanges(server ?? null, send);
   useGlobalShortcuts(send);
 
   useDragAndDrop(app, send);

@@ -1033,3 +1033,36 @@ describe("server disconnect and reconnect", () => {
     });
   });
 });
+
+describe("receiving live updates from server", () => {
+  describe("receiving an edited item while no changes were made locally", () => {
+    const step1 = W.of({"0": {content: ["Root"]}});
+
+    const step2 = step1.send({
+      type: "receivedChanges",
+      changes: [
+        {
+          thing: "0",
+          data: {
+            isPage: false,
+            content: ["Edited root"],
+            children: [{name: "0.1", child: "1"}],
+          },
+        },
+        {
+          thing: "1",
+          data: {
+            isPage: false,
+            content: ["Child 1"],
+            children: [],
+          },
+        },
+      ],
+    });
+
+    test("resets the local state to reflect the new changes", () => {
+      expect(step2.root.content).toEqual(["Edited root"]);
+      expect(step2.root.childrenContents).toEqual([["Child 1"]]);
+    });
+  });
+});
