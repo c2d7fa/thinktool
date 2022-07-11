@@ -1114,5 +1114,37 @@ describe("receiving live updates from server", () => {
         expect(b2e.changes).toBeUndefined();
       });
     });
+
+    const [a3, a3e] = a2.send({type: "flushChanges"}).effects();
+    const [b3, b3e] = b2
+      .send({
+        type: "receivedChanges",
+        changes: [
+          {
+            thing: "0",
+            data: {
+              isPage: false,
+              content: ["Edited root"],
+              children: [],
+            },
+          },
+        ],
+      })
+      .send({type: "flushChanges"})
+      .effects();
+
+    describe("once the second client receives changes, and both clients flush again", () => {
+      test("the state of the second client is updated", () => {
+        expect(b3.root.content).toEqual(["Edited root"]);
+      });
+
+      test("the first client does not push any changes", () => {
+        expect(a3e.changes).toBeUndefined();
+      });
+
+      test("the second client does not push any changes", () => {
+        expect(b3e.changes).toBeUndefined();
+      });
+    });
   });
 });
