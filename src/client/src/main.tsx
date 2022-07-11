@@ -126,14 +126,12 @@ function useDragAndDrop(app: A.App, send: A.Send) {
 function useSendWithSync({
   updateAppWithoutSaving,
   server,
-  initialState,
   storage,
   openExternalUrl,
   search,
 }: {
   updateAppWithoutSaving: (f: (app: A.App) => A.App) => void;
   server: Server | undefined;
-  initialState: Sync.StoredState;
   storage: Storage;
   openExternalUrl(url: string): void;
   search: Search;
@@ -233,7 +231,6 @@ function LoadedApp({
   }, []);
 
   const send = useSendWithSync({
-    initialState: Sync.storedStateFromApp(app),
     server,
     storage,
     updateAppWithoutSaving,
