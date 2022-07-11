@@ -1089,4 +1089,30 @@ describe("receiving live updates from server", () => {
       expect(step2.root.childrenContents).toEqual([["Child 1"]]);
     });
   });
+
+  describe("example with two clients", () => {
+    const a1 = W.of({"0": {content: ["Root"]}});
+    const b1 = W.of({"0": {content: ["Root"]}});
+
+    const [a2, a2e] = a1.root
+      .edit({content: ["Edited root"]})
+      .send({type: "flushChanges"})
+      .effects();
+    const [b2, b2e] = b1.send({type: "flushChanges"}).effects();
+
+    describe("after editing only the first client state, and then synchronizing changes simultaneously", () => {
+      test("the first client pushes an update with the new content", () => {
+        expect(a2e.changes).toEqual({
+          deleted: [],
+          edited: [{thing: "0", content: ["Edited root"]}],
+          updated: [],
+          tutorialFinished: null,
+        });
+      });
+
+      test("the second client doesn't push any changes", () => {
+        expect(b2e.changes).toBeUndefined();
+      });
+    });
+  });
 });

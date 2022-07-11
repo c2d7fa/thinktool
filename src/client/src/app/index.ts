@@ -354,6 +354,9 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return {app: serverDisconnected(app), effects: isDisconnected(app) ? {} : {tryReconnect: true}};
   } else if (event.type === "receivedChanges") {
     return {app: Sy.receiveChangedThingsFromServer(app, event.changes)};
+    // const app1 = {...Sy.receiveChangedThingsFromServer(app, event.changes)};
+    // const app2 = {...app1, [_lastSyncedState]: Sy.storedStateFromApp(app1)};
+    // return {app: app2};
   } else if (event.type === "serverPingResponse") {
     return {
       app: event.result === "failed" ? app : serverReconnected(app, event.remoteState),
@@ -361,7 +364,15 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     };
   } else if (event.type === "flushChanges") {
     const changes = Sy.changes(app[_lastSyncedState], Sy.storedStateFromApp(app));
-    return {app: merge(app, {[_lastSyncedState]: Sy.storedStateFromApp(app)}), effects: {changes}};
+    const changesNonEmpty =
+      changes.deleted.length > 0 ||
+      changes.updated.length > 0 ||
+      changes.edited.length > 0 ||
+      changes.tutorialFinished !== null;
+    return {
+      app: merge(app, {[_lastSyncedState]: Sy.storedStateFromApp(app)}),
+      effects: changesNonEmpty ? {changes} : {},
+    };
   } else if (event.topic === "tutorial") {
     return {app: merge(app, {tutorialState: Tutorial.update(app.tutorialState, event)})};
   } else {
