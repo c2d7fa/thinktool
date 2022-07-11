@@ -22,6 +22,7 @@ import {FullStateResponse} from "@thinktool/shared/dist/communication";
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
 const _toolbarShown = Symbol("toolbarShown");
+const _lastSyncedState = Symbol("lastSyncedState");
 
 export interface App {
   state: D.State;
@@ -37,6 +38,7 @@ export interface App {
   [_isOnline]: boolean;
   [_syncDialog]: Sy.Dialog.State;
   [_toolbarShown]: boolean;
+  [_lastSyncedState]: Sy.StoredState;
 }
 
 export type UpdateApp = (f: (app: App) => App) => void;
@@ -57,6 +59,10 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     [_isOnline]: true,
     [_syncDialog]: Sy.Dialog.hidden,
     [_toolbarShown]: true,
+    [_lastSyncedState]: {
+      fullStateResponse: D.transformStateIntoFullStateResponse(data),
+      tutorialFinished: options?.tutorialFinished ?? false,
+    },
   };
 }
 
@@ -267,7 +273,9 @@ export type Event =
   | {type: "searchResponse"; things: string[]}
   | {type: "urlChanged"; hash: string}
   | {type: "syncDialogSelect"; option: "commit" | "abort"}
+  | {type: "flushChanges"}
   | {type: "serverDisconnected"}
+  | {type: "receivedChanges"; changes: {thing: string; data: Communication.ThingData | null}[]}
   | (
       | {type: "serverPingResponse"; result: "failed"}
       | {type: "serverPingResponse"; result: "success"; remoteState: Sy.StoredState}
@@ -278,6 +286,7 @@ export type Effects = {
   search?: {items?: {thing: string; content: string}[]; query: string};
   url?: string;
   tryReconnect?: boolean;
+  changes?: Sy.Changes;
 };
 
 function unreachable(x: never): never {
@@ -343,10 +352,25 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return P.handle(app, event);
   } else if (event.type === "serverDisconnected") {
     return {app: serverDisconnected(app), effects: isDisconnected(app) ? {} : {tryReconnect: true}};
+  } else if (event.type === "receivedChanges") {
+    const app1 = {...Sy.receiveChangedThingsFromServer(app, event.changes)};
+    const app2 = {...app1, [_lastSyncedState]: Sy.storedStateFromApp(app1)};
+    return {app: app2};
   } else if (event.type === "serverPingResponse") {
     return {
       app: event.result === "failed" ? app : serverReconnected(app, event.remoteState),
       effects: {tryReconnect: event.result === "failed"},
+    };
+  } else if (event.type === "flushChanges") {
+    const changes = Sy.changes(app[_lastSyncedState], Sy.storedStateFromApp(app));
+    const changesNonEmpty =
+      changes.deleted.length > 0 ||
+      changes.updated.length > 0 ||
+      changes.edited.length > 0 ||
+      changes.tutorialFinished !== null;
+    return {
+      app: {...app, [_lastSyncedState]: Sy.storedStateFromApp(app)},
+      effects: changesNonEmpty ? {changes} : {},
     };
   } else if (event.topic === "tutorial") {
     return {app: merge(app, {tutorialState: Tutorial.update(app.tutorialState, event)})};

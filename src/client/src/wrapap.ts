@@ -53,7 +53,7 @@ export function of(items: A.ItemGraph): Wrapap {
 export function from(app: App, effects?: A.Effects): Wrapap {
   function send(...events: A.Event[]) {
     const result = A.handle(app, events[0]);
-    return from(A.after(app, events), result.effects?.tryReconnect ? {tryReconnect: true} : {});
+    return from(A.after(app, events), result.effects);
   }
 
   function node(item: A.Item): Node {
