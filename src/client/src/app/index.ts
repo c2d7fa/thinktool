@@ -17,10 +17,12 @@ import {GoalId} from "../goal";
 
 import * as PlaceholderItem from "../ui/PlaceholderItem";
 import * as Ac from "../actions";
+import {FullStateResponse} from "@thinktool/shared/dist/communication";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
 const _toolbarShown = Symbol("toolbarShown");
+const _lastSyncedState = Symbol("lastSyncedState");
 
 export interface App {
   state: D.State;
@@ -34,8 +36,9 @@ export interface App {
   tab: "outline" | "orphans";
   orphans: O.OrphansState;
   [_isOnline]: boolean;
-  [_syncDialog]: Sy.Dialog.SyncDialog | null;
+  [_syncDialog]: Sy.Dialog.State;
   [_toolbarShown]: boolean;
+  [_lastSyncedState]: Sy.StoredState;
 }
 
 export type UpdateApp = (f: (app: App) => App) => void;
@@ -54,26 +57,62 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     tab: "outline",
     orphans: O.empty,
     [_isOnline]: true,
-    [_syncDialog]: null,
+    [_syncDialog]: Sy.Dialog.hidden,
     [_toolbarShown]: true,
+    [_lastSyncedState]: {
+      fullStateResponse: D.transformStateIntoFullStateResponse(data),
+      tutorialFinished: options?.tutorialFinished ?? false,
+    },
   };
 }
 
 export {itemFromNode} from "./item";
 
 export type ItemGraph = {[id: string]: {content?: D.Content; children?: string[]}};
+
+function itemGraphToFullStateResponse(itemGraph: ItemGraph): FullStateResponse {
+  let i = 0;
+
+  return {
+    things: Object.keys(itemGraph).map((id) => ({
+      name: id,
+      content: itemGraph[id].content ?? ["Item " + id],
+      children: (itemGraph[id].children ?? []).map((child) => ({name: `${id}.${i++}`, child: child})),
+    })),
+  };
+}
+
 export function of(items: ItemGraph): App {
-  let state = D.empty;
-  for (const id in items) {
-    state = D.create(state, id)[0];
-    state = D.setContent(state, id, items[id].content ?? ["Item " + id]);
-  }
-  for (const id in items) {
-    for (const child of items[id].children ?? []) {
-      state = D.addChild(state, id, child)[0];
+  return initialize({
+    fullStateResponse: itemGraphToFullStateResponse(items),
+    urlHash: null,
+    tutorialFinished: false,
+    toolbarShown: true,
+  });
+}
+
+export type InitialState = {
+  urlHash: string | null;
+  fullStateResponse: FullStateResponse;
+  tutorialFinished: boolean;
+  toolbarShown: boolean;
+};
+
+export function initialize(data: InitialState): App {
+  function parseThingFromUrlHash(hash: string): string {
+    const thingName = hash.slice(1);
+    if (data.fullStateResponse.things.find((thing) => thing.name === thingName)) {
+      return thingName;
+    } else {
+      return "0";
     }
   }
-  return from(state, T.fromRoot(state, "0"));
+
+  const state = D.transformFullStateResponseIntoState(data.fullStateResponse);
+  let result = from(state, T.fromRoot(state, "0"), {tutorialFinished: data.tutorialFinished});
+  result = jump(result, parseThingFromUrlHash(data.urlHash ?? "#0"));
+  if (!data.toolbarShown) result = update(result, {type: "toggleToolbar"});
+  return result;
 }
 
 export function editor(app: App, node: T.NodeRef): E.Editor | null {
@@ -185,30 +224,32 @@ export function replace(app: App, node: T.NodeRef, thing: string): App {
   return edit(app_, newNode, E.placeSelectionAtEnd(editor(app_, newNode)!));
 }
 
-export function serverDisconnected(app: App): App {
+function serverDisconnected(app: App): App {
   return {...app, [_isOnline]: false};
 }
 
-export function serverReconnected(app: App, remoteState: Sy.StoredState): App {
+function serverReconnected(app: App, remoteState: Sy.StoredState): App {
   if (!isDisconnected(app)) return app;
   const syncDialog = Sy.Dialog.initialize({local: Sy.storedStateFromApp(app), remote: remoteState});
   return {...app, [_isOnline]: true, [_syncDialog]: syncDialog};
 }
 
-export function syncDialog(app: App): Sy.Dialog.SyncDialog | null {
+export function syncDialog(app: App): Sy.Dialog.State | null {
   return app[_syncDialog];
 }
 
-export function syncDialogSelect(app: App, option: "commit" | "abort"): App {
-  if (app[_syncDialog] === null) {
+function syncDialogSelect(app: App, option: "commit" | "abort"): App {
+  if (!app[_syncDialog].shown) {
     console.error("Tried to select sync dialog option when no dialog was open!");
     return app;
   }
 
-  return Sy.loadAppFromStoredState(Sy.Dialog.storedStateAfter(app[_syncDialog]!, option));
+  return Sy.loadAppFromStoredState(
+    Sy.Dialog.storedStateAfter(app[_syncDialog] as Sy.Dialog.State & {shown: true}, option),
+  );
 }
 
-export function isDisconnected(app: App): boolean {
+function isDisconnected(app: App): boolean {
   return !app[_isOnline];
 }
 
@@ -230,10 +271,23 @@ export type Event =
   | ({topic: "popup"} & P.Event)
   | {type: "toggleToolbar"}
   | {type: "searchResponse"; things: string[]}
-  | {type: "navigateTo"; thing: string}
+  | {type: "urlChanged"; hash: string}
+  | {type: "syncDialogSelect"; option: "commit" | "abort"}
+  | {type: "flushChanges"}
+  | {type: "serverDisconnected"}
+  | {type: "receivedChanges"; changes: {thing: string; data: Communication.ThingData | null}[]}
+  | (
+      | {type: "serverPingResponse"; result: "failed"}
+      | {type: "serverPingResponse"; result: "success"; remoteState: Sy.StoredState}
+    )
   | Tutorial.Event;
 
-export type Effects = {search?: {items?: {thing: string; content: string}[]; query: string}; url?: string};
+export type Effects = {
+  search?: {items?: {thing: string; content: string}[]; query: string};
+  url?: string;
+  tryReconnect?: boolean;
+  changes?: Sy.Changes;
+};
 
 function unreachable(x: never): never {
   return x;
@@ -289,10 +343,35 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return {app: merge(app, {popup: P.receiveResults(app.popup, app.state, event.things)})};
   } else if (event.type === "unfocus") {
     return {app: merge(app, {tree: T.unfocus(app.tree)})};
-  } else if (event.type === "navigateTo") {
-    return {app: jump(app, event.thing)};
+  } else if (event.type === "urlChanged") {
+    const thing = event.hash.slice(1);
+    return {app: jump(app, thing === "" ? "0" : thing)};
+  } else if (event.type === "syncDialogSelect") {
+    return {app: syncDialogSelect(app, event.option)};
   } else if (isPopupEvent(event)) {
     return P.handle(app, event);
+  } else if (event.type === "serverDisconnected") {
+    return {app: serverDisconnected(app), effects: isDisconnected(app) ? {} : {tryReconnect: true}};
+  } else if (event.type === "receivedChanges") {
+    const app1 = {...Sy.receiveChangedThingsFromServer(app, event.changes)};
+    const app2 = {...app1, [_lastSyncedState]: Sy.storedStateFromApp(app1)};
+    return {app: app2};
+  } else if (event.type === "serverPingResponse") {
+    return {
+      app: event.result === "failed" ? app : serverReconnected(app, event.remoteState),
+      effects: {tryReconnect: event.result === "failed"},
+    };
+  } else if (event.type === "flushChanges") {
+    const changes = Sy.changes(app[_lastSyncedState], Sy.storedStateFromApp(app));
+    const changesNonEmpty =
+      changes.deleted.length > 0 ||
+      changes.updated.length > 0 ||
+      changes.edited.length > 0 ||
+      changes.tutorialFinished !== null;
+    return {
+      app: {...app, [_lastSyncedState]: Sy.storedStateFromApp(app)},
+      effects: changesNonEmpty ? {changes} : {},
+    };
   } else if (event.topic === "tutorial") {
     return {app: merge(app, {tutorialState: Tutorial.update(app.tutorialState, event)})};
   } else {
@@ -342,6 +421,8 @@ export type View = (({tab: "outline"} & Outline) | ({tab: "orphans"} & O.Orphans
   popup: P.View;
   tutorial: Tutorial.View;
   url: {root: string};
+  offlineIndicator: {shown: boolean};
+  syncDialog: Sy.Dialog.View;
 };
 
 export function view(app: App): View {
@@ -350,6 +431,8 @@ export function view(app: App): View {
     tutorial: Tutorial.view(app.tutorialState),
     toolbar: app[_toolbarShown] ? Toolbar.viewToolbar(app) : {shown: false},
     url: {root: T.thing(app.tree, T.root(app.tree))},
+    offlineIndicator: {shown: isDisconnected(app)},
+    syncDialog: Sy.Dialog.view(app[_syncDialog]),
     ...(app.tab === "orphans" ? {tab: "orphans", ...O.view(app)} : {tab: "outline", ...Ou.fromApp(app)}),
   };
 }

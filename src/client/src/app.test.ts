@@ -1,7 +1,10 @@
 /// <reference types="@types/jest" />
 
+import * as A from "./app";
 import * as W from "./wrapap";
+
 import {expectViewToMatch} from "./app/test-utils";
+import {storedStateFromApp} from "./sync";
 
 describe("initializing app from scratch with 'of'", () => {
   const wpp = W.of({
@@ -798,6 +801,349 @@ describe("the toolbar", () => {
       test("completes the 'create-item' goal", () => {
         expect(before?.completed("create-item")).toBe(false);
         expect(after?.completed("create-item")).toBe(true);
+      });
+    });
+  });
+});
+
+describe("initializing with state loaded from storage", () => {
+  const fullStateResponse1 = {
+    things: [
+      {name: "0", content: ["Item 0"], children: [{name: "0.1", child: "1"}]},
+      {name: "1", content: ["Item 1"], children: []},
+    ],
+  };
+
+  describe("the state is loaded correctly from the state response", () => {
+    describe("in a simple example with two items", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: true,
+          tutorialFinished: true,
+          urlHash: null,
+        }),
+      );
+
+      test("both of the items are shown", () => {
+        expect(app.root.content).toEqual(["Item 0"]);
+        expect(app.root.childrenContents).toEqual([["Item 1"]]);
+      });
+    });
+  });
+
+  describe("the URL", () => {
+    describe("if the URL is non-null, the relevant item is automatically navigated to", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: true,
+          tutorialFinished: false,
+          urlHash: "#1",
+        }),
+      );
+
+      test("the item is used as the root", () => {
+        expect(app.root.content).toEqual(["Item 1"]);
+        expect(app.parentsContents).toEqual([["Item 0"]]);
+      });
+    });
+
+    describe("if the URL is an invalid item, the normal root is used", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: true,
+          tutorialFinished: false,
+          urlHash: "#3",
+        }),
+      );
+
+      test("the default is used as the root", () => {
+        expect(app.root.content).toEqual(["Item 0"]);
+      });
+    });
+  });
+
+  describe("the toolbar", () => {
+    test("can be shown", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: true,
+          tutorialFinished: false,
+          urlHash: null,
+        }),
+      );
+
+      expect(app.view.toolbar.shown).toBe(true);
+    });
+
+    test("can be hidden", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: false,
+          tutorialFinished: false,
+          urlHash: null,
+        }),
+      );
+
+      expect(app.view.toolbar.shown).toBe(false);
+    });
+  });
+
+  describe("the tutorial", () => {
+    test("can be unfinished", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: true,
+          tutorialFinished: false,
+          urlHash: null,
+        }),
+      );
+
+      expect(app.view.tutorial.open).toBe(true);
+    });
+
+    test("can be finished", () => {
+      const app = W.from(
+        A.initialize({
+          fullStateResponse: fullStateResponse1,
+          toolbarShown: true,
+          tutorialFinished: true,
+          urlHash: null,
+        }),
+      );
+
+      expect(app.view.tutorial.open).toBe(false);
+    });
+  });
+});
+
+describe("changing the URL", () => {
+  test("when the URL is changed to the empty string, the default root item is used", () => {
+    const before = W.of({"0": {children: ["1"]}, "1": {}})
+      .root.child(0)
+      ?.action("zoom")!;
+    const after = before.send({type: "urlChanged", hash: ""});
+
+    expect(before.root.content).toEqual(["Item 1"]);
+    expect(after.root.content).toEqual(["Item 0"]);
+  });
+});
+
+describe("storage synchronization", () => {
+  describe("example with updates, deletions and edits", () => {
+    const step1 = W.of({
+      "0": {content: ["Root"], children: ["1", "2"]},
+      "1": {content: ["Child 1"]},
+      "2": {content: ["Child 2"]},
+    });
+
+    const [step2, step2e] = step1.root
+      .edit({content: ["Edited root item"]})
+      .send({type: "flushChanges"})
+      .effects();
+
+    test("after editing item content, flushed changes contains the edit", () => {
+      expect(step2e.changes).toEqual({
+        deleted: [],
+        edited: [{thing: "0", content: ["Edited root item"]}],
+        updated: [],
+        tutorialFinished: null,
+      });
+    });
+  });
+});
+
+describe("server disconnect and reconnect", () => {
+  describe("sending requests to reconnect to server", () => {
+    const step1 = W.of({"0": {content: ["Root"]}});
+
+    const [step2, step2e] = step1.send({type: "serverDisconnected"}).effects();
+
+    test("after disconnecting, we will try to reconnect", () => {
+      expect(step2e.tryReconnect).toBeTruthy();
+    });
+
+    test("the offline indicator is shown", () => {
+      expect(step2.view.offlineIndicator.shown).toBe(true);
+    });
+
+    const [step3, step3e] = step2.send({type: "serverDisconnected"}).effects();
+
+    test("if we are notified again of disconnection, we don't try again", () => {
+      expect(step3e.tryReconnect).toBeFalsy();
+    });
+
+    const [step4, step4e] = step3.send({type: "serverPingResponse", result: "failed"}).effects();
+
+    test("if the server is still down, we try again", () => {
+      expect(step4e.tryReconnect).toBeTruthy();
+    });
+
+    test("the offline indicator is still shown", () => {
+      expect(step4.view.offlineIndicator.shown).toBe(true);
+    });
+
+    const [step5, step5e] = step4
+      .send({
+        type: "serverPingResponse",
+        result: "success",
+        remoteState: {
+          fullStateResponse: {things: [{name: "0", content: ["Root"], children: []}]},
+          tutorialFinished: false,
+        },
+      })
+      .effects();
+
+    test("when the server comes back, we stop trying", () => {
+      expect(step5e.tryReconnect).toBeFalsy();
+    });
+
+    test("the offline indicator is no longer shown", () => {
+      expect(step5.view.offlineIndicator.shown).toBe(false);
+    });
+  });
+
+  describe("the sync dialog", () => {
+    test("isn't shown by default", () => {
+      const app = W.of({"0": {content: ["Root"]}});
+      expect(app.view.syncDialog.shown).toBe(false);
+    });
+
+    describe("when reconnecting after making changes locally", () => {
+      const app = W.of({"0": {content: ["Root"]}})
+        .send({type: "serverDisconnected"})
+        .root.edit({content: ["Edited root"]})
+        .send({
+          type: "serverPingResponse",
+          result: "success",
+          remoteState: {
+            fullStateResponse: {things: [{name: "0", content: ["Root"], children: []}]},
+            tutorialFinished: false,
+          },
+        });
+
+      test("the sync dialog is shown", () => {
+        expect(app.view.syncDialog.shown).toBe(true);
+      });
+
+      test("it shows exactly one item edited", () => {
+        expect((app.view.syncDialog as A.View["syncDialog"] & {shown: true}).summary).toEqual({
+          deleted: 0,
+          updated: 0,
+          edited: 1,
+        });
+      });
+
+      describe("if accepting local changes", () => {
+        const after = app.send({type: "syncDialogSelect", option: "commit"});
+
+        test("the edited item keeps its new value", () => {
+          expect(after.root.content).toEqual(["Edited root"]);
+        });
+      });
+
+      describe("if rejecting local changes", () => {
+        const after = app.send({type: "syncDialogSelect", option: "abort"});
+
+        test("the edited item is reverted to its old value", () => {
+          expect(after.root.content).toEqual(["Root"]);
+        });
+      });
+    });
+  });
+});
+
+describe("receiving live updates from server", () => {
+  describe("receiving an edited item while no changes were made locally", () => {
+    const step1 = W.of({"0": {content: ["Root"]}});
+
+    const step2 = step1.send({
+      type: "receivedChanges",
+      changes: [
+        {
+          thing: "0",
+          data: {
+            isPage: false,
+            content: ["Edited root"],
+            children: [{name: "0.1", child: "1"}],
+          },
+        },
+        {
+          thing: "1",
+          data: {
+            isPage: false,
+            content: ["Child 1"],
+            children: [],
+          },
+        },
+      ],
+    });
+
+    test("resets the local state to reflect the new changes", () => {
+      expect(step2.root.content).toEqual(["Edited root"]);
+      expect(step2.root.childrenContents).toEqual([["Child 1"]]);
+    });
+  });
+
+  describe("example with two clients", () => {
+    const a1 = W.of({"0": {content: ["Root"]}});
+    const b1 = W.of({"0": {content: ["Root"]}});
+
+    const [a2, a2e] = a1.root
+      .edit({content: ["Edited root"]})
+      .send({type: "flushChanges"})
+      .effects();
+    const [b2, b2e] = b1.send({type: "flushChanges"}).effects();
+
+    describe("after editing only the first client state, and then synchronizing changes simultaneously", () => {
+      test("the first client pushes an update with the new content", () => {
+        expect(a2e.changes).toEqual({
+          deleted: [],
+          edited: [{thing: "0", content: ["Edited root"]}],
+          updated: [],
+          tutorialFinished: null,
+        });
+      });
+
+      test("the second client doesn't push any changes", () => {
+        expect(b2e.changes).toBeUndefined();
+      });
+    });
+
+    const [a3, a3e] = a2.send({type: "flushChanges"}).effects();
+    const [b3, b3e] = b2
+      .send({
+        type: "receivedChanges",
+        changes: [
+          {
+            thing: "0",
+            data: {
+              isPage: false,
+              content: ["Edited root"],
+              children: [],
+            },
+          },
+        ],
+      })
+      .send({type: "flushChanges"})
+      .effects();
+
+    describe("once the second client receives changes, and both clients flush again", () => {
+      test("the state of the second client is updated", () => {
+        expect(b3.root.content).toEqual(["Edited root"]);
+      });
+
+      test("the first client does not push any changes", () => {
+        expect(a3e.changes).toBeUndefined();
+      });
+
+      test("the second client does not push any changes", () => {
+        expect(b3e.changes).toBeUndefined();
       });
     });
   });

@@ -18,6 +18,8 @@ export interface Wrapap {
   view: A.View;
   actionEnabled(action: ActionName): boolean;
 
+  effects(): [Wrapap, A.Effects];
+
   app: App;
 }
 
@@ -48,9 +50,10 @@ export function of(items: A.ItemGraph): Wrapap {
   return from(A.of(items));
 }
 
-export function from(app: App): Wrapap {
+export function from(app: App, effects?: A.Effects): Wrapap {
   function send(...events: A.Event[]) {
-    return from(A.after(app, events));
+    const result = A.handle(app, events[0]);
+    return from(A.after(app, events), result.effects);
   }
 
   function node(item: A.Item): Node {
@@ -199,6 +202,10 @@ export function from(app: App): Wrapap {
         }
       }
       return false;
+    },
+
+    effects() {
+      return [from(app), effects] as [Wrapap, A.Effects];
     },
   };
 

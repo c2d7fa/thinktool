@@ -5,9 +5,10 @@ import * as D from "../data";
 import * as T from "../tree";
 import * as Tu from "../tutorial";
 
-import type {Storage} from "./storage";
+import type {Storage} from "../remote-types";
 
 import * as Dialog from "./dialog";
+import {FullStateResponse} from "@thinktool/shared/dist/communication";
 export {Dialog};
 
 export function receiveChangedThingsFromServer(
@@ -20,7 +21,7 @@ export function receiveChangedThingsFromServer(
   for (const {thing, data} of changedThings) {
     if (data !== null && "error" in data) {
       console.warn("Error while reading changes from server!");
-      return A.serverDisconnected(app);
+      return A.update(app, {type: "serverDisconnected"});
     }
   }
 
@@ -66,35 +67,33 @@ export type Changes = {
   tutorialFinished: boolean | null;
 };
 
-const _state = Symbol("state");
-const _tutorialFinished = Symbol("tutorialFinished");
-export type StoredState = {[_state]: D.State; [_tutorialFinished]: boolean};
+export type StoredState = {fullStateResponse: FullStateResponse; tutorialFinished: boolean};
 
 export function storedStateFromApp(app: A.App): StoredState {
   return {
-    [_state]: app.state,
-    [_tutorialFinished]: !Tu.isActive(app.tutorialState),
+    fullStateResponse: D.transformStateIntoFullStateResponse(app.state),
+    tutorialFinished: !Tu.isActive(app.tutorialState),
   };
 }
 
 export async function loadStoredStateFromStorage(storage: Storage): Promise<StoredState> {
-  return {
-    [_state]: D.transformFullStateResponseIntoState(await storage.getFullState()),
-    [_tutorialFinished]: await storage.getTutorialFinished(),
-  };
+  return {fullStateResponse: await storage.getFullState(), tutorialFinished: await storage.getTutorialFinished()};
 }
 
 export function loadAppFromStoredState(storedState: StoredState): A.App {
-  return A.from(storedState[_state], T.fromRoot(storedState[_state], "0"), {
-    tutorialFinished: storedState[_tutorialFinished],
+  return A.initialize({
+    fullStateResponse: storedState.fullStateResponse,
+    toolbarShown: true,
+    tutorialFinished: storedState.tutorialFinished,
+    urlHash: "",
   });
 }
 
 // Return changes that must be applied to bring the stored state from 'from' to
 // 'to'.
 export function changes(from: StoredState, to: StoredState): Changes {
-  const fromState = from[_state];
-  const toState = to[_state];
+  const fromState = D.transformFullStateResponseIntoState(from.fullStateResponse);
+  const toState = D.transformFullStateResponseIntoState(to.fullStateResponse);
 
   const diff = D.diff(fromState, toState);
 
@@ -115,7 +114,7 @@ export function changes(from: StoredState, to: StoredState): Changes {
     isPage: false,
   }));
 
-  const tutorialFinished = from[_tutorialFinished] !== to[_tutorialFinished] ? to[_tutorialFinished] : null;
+  const tutorialFinished = from.tutorialFinished !== to.tutorialFinished ? to.tutorialFinished : null;
 
   return {
     deleted,

@@ -2,13 +2,9 @@ import * as React from "react";
 
 const ExternalLinkContext = React.createContext<ExternalLinkType>(DefaultExternalLink);
 
-export type ExternalLinkType = (props: {
-  href: string;
-  children: React.ReactNode;
-  [x: string]: any;
-}) => JSX.Element;
+export type ExternalLinkType = (props: {href: string; children: React.ReactNode; [x: string]: any}) => JSX.Element;
 
-function DefaultExternalLink(props: {
+export function DefaultExternalLink(props: {
   href: string;
   children: React.ReactNode;
   [x: string]: any;
@@ -24,11 +20,7 @@ function DefaultExternalLink(props: {
 
 export const ExternalLinkProvider = ExternalLinkContext.Provider;
 
-export function ExternalLink(props: {
-  href: string;
-  children: React.ReactNode;
-  [x: string]: any;
-}): JSX.Element {
+export function ExternalLink(props: {href: string; children: React.ReactNode; [x: string]: any}): JSX.Element {
   return (
     <ExternalLinkContext.Consumer>
       {(ExternalLinkComponent) => <ExternalLinkComponent {...props} />}

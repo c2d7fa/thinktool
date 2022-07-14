@@ -1,12 +1,12 @@
 import * as React from "react";
 
-import {ServerApi} from "../sync/server-api";
+import {ApiHostServer} from "../sync/server-api";
 import * as ExportRoam from "../export-roam";
 
 import {ExternalLink} from "./ExternalLink";
 import {transformFullStateResponseIntoState} from "../data";
 
-export default function UserPage(props: {server: ServerApi}) {
+export default function UserPage(props: {server: ApiHostServer}) {
   const [username, setUsername] = React.useState<string | null>(null);
   const [emailField, setEmailField] = React.useState<string>("(Loading...)");
   const [passwordField, setPasswordField] = React.useState<string>("");

@@ -1,8 +1,7 @@
 import {Communication} from "@thinktool/shared";
+import {Server, ServerError} from "../remote-types";
 
-export type ServerError = {error: "disconnected"} | {error: "error"; status: number};
-
-export class ServerApi {
+export class ApiHostServer implements Server {
   private clientId: string;
   private apiHost: string;
   private handleError: (error: ServerError) => void;

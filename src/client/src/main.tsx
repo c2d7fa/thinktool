@@ -4,11 +4,11 @@ import {Communication} from "@thinktool/shared";
 
 import * as ChangelogData from "./changes.json";
 
-import {extractThingFromURL, useThingUrl} from "./url";
+import {useThingUrl} from "./url";
 
 import * as Tutorial from "./tutorial";
-import {ServerApi} from "./sync/server-api";
-import * as Storage from "./sync/storage";
+import {ApiHostServer} from "./sync/server-api";
+import * as Sto from "./sync/storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
@@ -18,7 +18,7 @@ import * as Toolbar from "./ui/Toolbar";
 import TutorialBox from "./ui/Tutorial";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
-import {ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
+import {DefaultExternalLink, ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
 import UserPage from "./ui/UserPage";
 import {login, TopBar} from "./ui/TopBar";
 import {OfflineIndicator} from "./offline-indicator";
@@ -30,6 +30,7 @@ import {useMemoWarning} from "./react-utils";
 import {OrphanList} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 import {Outline} from "./ui/outline";
+import {isStorageServer, Server, ServerError, Storage} from "./remote-types";
 
 function useGlobalShortcuts(send: (event: A.Event) => void) {
   React.useEffect(() => {
@@ -50,9 +51,9 @@ function useGlobalShortcuts(send: (event: A.Event) => void) {
   }, [send]);
 }
 
-function useServerChanges(server: ServerApi | null, updateApp: (f: (app: A.App) => A.App) => void) {
+function useServerChanges(server: Server | undefined, send: A.Send) {
   React.useEffect(() => {
-    if (server === null) return;
+    if (server === undefined) return;
 
     return server.onChanges(async (changes) => {
       const loadThingDataTasks = changes.map((thing) =>
@@ -62,9 +63,9 @@ function useServerChanges(server: ServerApi | null, updateApp: (f: (app: A.App) 
         }))(),
       );
       const changedThings = await Promise.all(loadThingDataTasks);
-      updateApp((app) => Sync.receiveChangedThingsFromServer(app, changedThings));
+      send({type: "receivedChanges", changes: changedThings});
     });
-  }, []);
+  }, [send]);
 }
 
 function useDragAndDrop(app: A.App, send: A.Send) {
@@ -122,175 +123,173 @@ function useDragAndDrop(app: A.App, send: A.Send) {
   }, [A.isDragging(app), send]);
 }
 
-function useRepeatedlyCheck(f: () => Promise<"continue" | "stop">, ms: number): {start(): void} {
-  const timeoutRef = React.useRef<number | null>(null);
-  const isRunningRef = React.useRef(false);
-
-  const start = React.useCallback(() => {
-    if (isRunningRef.current) return;
-    isRunningRef.current = true;
-    timeoutRef.current = window.setTimeout(async () => {
-      const result = await f();
-      isRunningRef.current = false;
-      if (result === "continue") {
-        start();
+function executeEffects(
+  effects: A.Effects,
+  deps: {
+    openExternalUrl(url: string): void;
+    send: A.Send;
+    search: Search;
+    remote: Storage;
+  },
+): void {
+  if (effects.url) deps.openExternalUrl(effects.url);
+  if (effects.search) {
+    if (effects.search.items) {
+      deps.search.reset(effects.search.items);
+    }
+    deps.search.query(effects.search.query, 25);
+  }
+  if (effects.tryReconnect) {
+    setTimeout(async () => {
+      console.log("Trying to reconnect to server...");
+      try {
+        const remoteState = await Sync.loadStoredStateFromStorage(deps.remote);
+        console.log("Reconnected successfully.");
+        deps.send({type: "serverPingResponse", result: "success", remoteState});
+      } catch (e) {
+        console.log("Still could not contact server.");
+        deps.send({type: "serverPingResponse", result: "failed"});
       }
-    }, ms);
-  }, []);
-
-  return {start};
+    }, 2000);
+  }
+  if (effects.changes) {
+    console.log("Pushing changes %o", effects.changes);
+    for (const deleted of effects.changes.deleted) {
+      deps.remote.deleteThing(deleted);
+    }
+    if (effects.changes.updated.length > 0) {
+      deps.remote.updateThings(effects.changes.updated);
+    }
+    for (const edited of effects.changes.edited) {
+      deps.remote.setContent(edited.thing, edited.content);
+    }
+    if (effects.changes.tutorialFinished) {
+      deps.remote.setTutorialFinished();
+    }
+  }
 }
 
-function useSync({
-  updateAppWithoutSaving,
-  server,
-  initialState,
-  storage,
+function useSend({
+  updateApp,
+  effectsQueue,
 }: {
-  updateAppWithoutSaving: (f: (app: A.App) => A.App) => void;
-  server: ServerApi | undefined;
-  initialState: Sync.StoredState;
-  storage: Storage.Storage;
-}): {updateApp: (f: (app: A.App) => A.App) => void} {
-  const [lastSyncedState, setLastSyncedState] = React.useState<Sync.StoredState>(initialState);
+  updateApp: (f: (app: A.App) => A.App) => void;
+  effectsQueue: {pushEffects(effects: A.Effects): void};
+}): A.Send {
+  return React.useCallback((event: A.Event) => {
+    updateApp((app) => {
+      const result = A.handle(app, event);
+      if (result?.effects) effectsQueue.pushEffects(result.effects!);
+      return result.app;
+    });
+  }, []);
+}
 
-  const resyncInterval = useRepeatedlyCheck(async () => {
-    if (server === undefined) return "stop";
-    try {
-      const remoteState = await Sync.loadStoredStateFromStorage(storage);
-      console.log("Reconnected successfully.");
-      updateAppWithoutSaving((app) => A.serverReconnected(app, remoteState));
-      return "stop";
-    } catch (e) {
-      console.log("Still could not contact server.");
-      return "continue";
-    }
-  }, 2000);
-
+function useServerReconnect(server: Server | undefined, send: A.Send) {
   React.useEffect(() => {
     if (server === undefined) return;
 
     server.onError((error) => {
-      if (error.error === "disconnected") {
-        resyncInterval.start();
-        updateAppWithoutSaving(A.serverDisconnected);
-      } else if (error.error === "error") {
-        // [TODO] Add special handling for this case!
-        console.error(error);
-        updateAppWithoutSaving(A.serverDisconnected);
-      }
+      if (error.error === "disconnected") console.warn("Disconnected from server.");
+      else console.error(error);
+      send({type: "serverDisconnected"});
     });
 
     window.addEventListener("offline", () => {
-      updateAppWithoutSaving(A.serverDisconnected);
+      send({type: "serverDisconnected"});
     });
 
     window.addEventListener("online", async () => {
-      const remoteState = await Sync.loadStoredStateFromStorage(storage);
-      setLastSyncedState(remoteState);
-      updateAppWithoutSaving((app) => {
-        return A.serverReconnected(app, remoteState);
+      send({
+        type: "serverPingResponse",
+        result: "success",
+        remoteState: await Sync.loadStoredStateFromStorage(server),
       });
     });
   }, []);
-
-  const storageExecutionContext = useMemoWarning(
-    "storageExecutionContext",
-    () => new Storage.StorageExecutionContext(storage, window),
-    [storage],
-  );
-
-  const updateApp = useMemoWarning(
-    "updateApp",
-    () => {
-      return (f: (app: A.App) => A.App) => {
-        updateAppWithoutSaving((app) => {
-          const newApp = f(app);
-
-          setLastSyncedState((lastSyncedState) => {
-            const nextAppState = Sync.storedStateFromApp(newApp);
-
-            if (server && A.isDisconnected(newApp)) {
-              console.log("Won't try to push changes because we're offline.");
-              return lastSyncedState;
-            }
-
-            const changes = Sync.changes(lastSyncedState, nextAppState);
-            storageExecutionContext.pushChanges(changes);
-
-            return nextAppState;
-          });
-
-          return newApp;
-        });
-      };
-    },
-    [storage],
-  );
-
-  return {updateApp};
 }
 
-function App_({
-  storedState,
-  username,
-  storage,
-  server,
-  openExternalUrl,
-}: {
-  storedState: Sync.StoredState;
-  username?: string;
-  storage: Storage.Storage;
-  server?: ServerApi;
-  openExternalUrl(url: string): void;
-}) {
-  const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
-
-  const [app, updateAppWithoutSaving] = React.useState<A.App>(() => {
-    let result = Sync.loadAppFromStoredState(storedState);
-    result = A.jump(result, extractThingFromURL());
-    if (isDevelopment) result = A.merge(result, {tutorialState: Tutorial.initialize(true)});
-    return result;
-  });
-
-  const changelog = ChangelogData;
-
-  const {updateApp} = useSync({
-    initialState: storedState,
-    server,
-    storage,
-    updateAppWithoutSaving,
-  });
-
-  const search = React.useMemo<Search>(() => {
+function useSearch({send}: {send: A.Send}) {
+  return React.useMemo<Search>(() => {
     const search = new Search([]);
     search.on("results", (results) =>
       send({type: "searchResponse", things: results.map((result) => result.thing)}),
     );
     return search;
   }, []);
+}
 
-  const send = useSendAppEvent({updateApp, openExternalUrl, search});
-
-  useServerChanges(server ?? null, updateAppWithoutSaving);
-  useGlobalShortcuts(send);
-
-  useDragAndDrop(app, send);
+function useExecuteEffects(
+  effectsQueue: {pendingEffects: A.Effects[]; clearEffects(): void},
+  deps: {
+    openExternalUrl: (url: string) => void;
+    send: A.Send;
+    remote: Storage;
+  },
+) {
+  const search = useSearch({send: deps.send});
 
   React.useEffect(() => {
-    server
-      ?.getToolbarState()
-      .then(({shown}) => !shown && send({type: "toggleToolbar"}))
-      .catch((error) => {
-        console.warn("Error while getting toolbar state: %o", error);
-      });
+    if (effectsQueue.pendingEffects.length === 0) return;
+    for (const effect of effectsQueue.pendingEffects) {
+      executeEffects(effect, {...deps, search});
+    }
+    effectsQueue.clearEffects();
+  }, [effectsQueue]);
+}
+
+function useEffectsQueue() {
+  const [pendingEffects, setPendingEffects] = React.useState<A.Effects[]>([]);
+
+  const clearEffects = React.useCallback(() => {
+    setPendingEffects([]);
   }, []);
+
+  const pushEffects = React.useCallback((effects: A.Effects) => {
+    setPendingEffects((pendingEffects) => [...pendingEffects, effects]);
+  }, []);
+
+  return {
+    pendingEffects,
+    clearEffects,
+    pushEffects,
+  };
+}
+
+function useFlushChanges({send}: {send: A.Send}) {
+  React.useEffect(() => {
+    setInterval(() => send({type: "flushChanges"}), 1000);
+  }, []);
+}
+
+function LoadedApp({
+  initialState,
+  username,
+  remote,
+  openExternalUrl,
+}: {
+  initialState: A.InitialState;
+  username?: string;
+  remote: Storage | Server;
+  openExternalUrl(url: string): void;
+}) {
+  const [app, updateApp] = React.useState<A.App>(() => A.initialize(initialState));
+  const effectsQueue = useEffectsQueue();
+
+  const send = useSend({updateApp, effectsQueue});
+  useExecuteEffects(effectsQueue, {openExternalUrl, send, remote});
+
+  useGlobalShortcuts(send);
+  useDragAndDrop(app, send);
+  useFlushChanges({send});
+
+  const server = isStorageServer(remote) ? remote : undefined;
+  useServerReconnect(server, send);
+  useServerChanges(server, send);
 
   const appElementRef = React.useRef<HTMLDivElement>(null);
 
-  const [showSplash, setShowSplash] = React.useState<boolean>(
-    !isDevelopment && Tutorial.isActive(app.tutorialState),
-  );
+  const [showSplash, setShowSplash] = React.useState<boolean>(Tutorial.isActive(app.tutorialState));
 
   const onFocusBackground = React.useCallback(
     (ev: React.FocusEvent) => {
@@ -301,20 +300,12 @@ function App_({
 
   const view_ = A.view(app);
 
-  useThingUrl({
-    current: view_.url.root,
-    jump(thing: string) {
-      updateAppWithoutSaving(A.update(app, {type: "navigateTo", thing}));
-    },
-  });
+  useThingUrl({current: view_.url.root, send});
 
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusBackground} tabIndex={-1} className="app">
-      <OfflineIndicator isDisconnected={A.isDisconnected(app)} />
-      <Sync.Dialog.SyncDialog
-        dialog={A.syncDialog(app)}
-        onSelect={(option) => updateApp((app) => A.syncDialogSelect(app, option))}
-      />
+      <OfflineIndicator isDisconnected={view_.offlineIndicator.shown} />
+      <Sync.Dialog.SyncDialog dialog={view_.syncDialog} send={send} />
       <div className="app-header">
         <TopBar
           isToolbarShown={view_.toolbar.shown}
@@ -326,15 +317,54 @@ function App_({
         <Toolbar.Toolbar send={send} toolbar={view_.toolbar} />
       </div>
       {!showSplash && <TutorialBox tutorial={view_.tutorial} send={send} />}
-      <Changelog
-        changelog={changelog}
-        visible={app.changelogShown}
-        hide={() => updateApp((app) => A.merge(app, {changelogShown: false}))}
-      />
+      <Changelog changelog={ChangelogData} visible={app.changelogShown} send={send} />
       <MainView view={view_} send={send} />
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );
+}
+
+function AppWithRemote(props: {
+  remote: Storage | Server;
+  openExternalUrl(url: string): void;
+  ExternalLink?: ExternalLinkType;
+}) {
+  const server = isStorageServer(props.remote) ? props.remote : undefined;
+
+  const [rendered, setRendered] = React.useState<JSX.Element>(<div>Loading...</div>);
+
+  React.useEffect(() => {
+    (async () => {
+      const username = await (async () => {
+        if (!server) return undefined;
+        const username = await server.getUsername();
+        if (username === null) {
+          console.log("Not logged in. Redirecting to login page.");
+          window.location.href = "/login";
+          return undefined;
+        }
+        return username;
+      })();
+
+      setRendered(
+        <ExternalLinkProvider value={props.ExternalLink ?? DefaultExternalLink}>
+          <LoadedApp
+            initialState={{
+              fullStateResponse: await props.remote.getFullState(),
+              toolbarShown: server ? (await server.getToolbarState()).shown : true,
+              tutorialFinished: await props.remote.getTutorialFinished(),
+              urlHash: window?.location?.hash ?? "",
+            }}
+            remote={props.remote}
+            openExternalUrl={props.openExternalUrl}
+            username={username}
+          />
+        </ExternalLinkProvider>,
+      );
+    })();
+  }, []);
+
+  return rendered;
 }
 
 function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event): void}) {
@@ -345,106 +375,43 @@ function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event):
   );
 }
 
-function useSendAppEvent({
-  updateApp,
-  openExternalUrl,
-  search,
-}: {
-  updateApp(f: (app: A.App) => A.App): void;
-  openExternalUrl(url: string): void;
-  search: Search;
-}): A.Send {
-  return React.useCallback((event: A.Event) => {
-    updateApp((app) => {
-      const result = A.handle(app, event);
-      if (result?.effects?.url) openExternalUrl(result.effects.url);
-      if (result?.effects?.search) {
-        if (result.effects.search.items) {
-          search.reset(result.effects.search.items);
-        }
-        search.query(result.effects.search.query, 25);
-      }
-      return result.app;
-    });
-  }, []);
-}
-
 // ==
 
 export function LocalApp(props: {
-  storage: Storage.Storage;
+  storage: Storage;
   ExternalLink: ExternalLinkType;
   openExternalUrl: (url: string) => void;
 }) {
-  const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
-
-  React.useEffect(() => {
-    (async () => {
-      setApp(
-        <ExternalLinkProvider value={props.ExternalLink}>
-          <App_
-            storedState={await Sync.loadStoredStateFromStorage(props.storage)}
-            storage={props.storage}
-            openExternalUrl={props.openExternalUrl}
-          />
-        </ExternalLinkProvider>,
-      );
-    })();
-  }, []);
-
-  return app;
+  return (
+    <AppWithRemote
+      remote={props.storage}
+      openExternalUrl={props.openExternalUrl}
+      ExternalLink={props.ExternalLink}
+    />
+  );
 }
 
-export function App({apiHost}: {apiHost: string}) {
-  const server = new ServerApi({apiHost});
+type AppArgs = {apiHost: string} | {remote: Storage | Server};
 
-  const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
+export type RemoteStorage = Storage;
+export type RemoteServer = Server;
+export type RemoteServerError = ServerError;
 
-  React.useEffect(() => {
-    (async () => {
-      const username = await server.getUsername();
-      if (username === null) {
-        console.log("Not logged in. Redirecting to login page.");
-        window.location.href = "/login";
-      }
-
-      const storage = Storage.server(server);
-
-      setApp(
-        <App_
-          storedState={await Sync.loadStoredStateFromStorage(storage)}
-          username={username ?? "<error>"}
-          storage={storage}
-          server={server}
-          openExternalUrl={(url) => window.open(url, "_blank")}
-        />,
-      );
-    })();
-  }, []);
-
-  return app;
+export function App(args: AppArgs) {
+  if ("apiHost" in args) {
+    const server = React.useMemo(() => new ApiHostServer({apiHost: args.apiHost}), []);
+    return <AppWithRemote remote={server} openExternalUrl={(url) => window.open(url, "_blank")} />;
+  } else {
+    return <AppWithRemote remote={args.remote} openExternalUrl={(url) => window.open(url, "_blank")} />;
+  }
 }
 
 export function Demo(props: {data: Communication.FullStateResponse}) {
-  const [app, setApp] = React.useState<JSX.Element>(<div>Loading...</div>);
-
-  React.useEffect(() => {
-    (async () => {
-      setApp(
-        <App_
-          storedState={await Sync.loadStoredStateFromStorage(Storage.ignore(props.data))}
-          storage={Storage.ignore()}
-          openExternalUrl={(url) => window.open(url, "_blank")}
-        />,
-      );
-    })();
-  }, []);
-
-  return app;
+  return <AppWithRemote remote={Sto.ignore(props.data)} openExternalUrl={(url) => window.open(url, "_blank")} />;
 }
 
 export function User(props: {apiHost: string}) {
-  return <UserPage server={new ServerApi({apiHost: props.apiHost})} />;
+  return <UserPage server={new ApiHostServer({apiHost: props.apiHost})} />;
 }
 
 export * as Storage from "./sync/storage";

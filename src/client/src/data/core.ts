@@ -291,6 +291,24 @@ export function transformFullStateResponseIntoState(response: FullStateResponse)
   return state;
 }
 
+export function transformStateIntoFullStateResponse(state: State): FullStateResponse {
+  const things: FullStateResponse["things"] = [];
+
+  for (const name in state._things) {
+    const thing = state._things[name]!;
+    things.push({
+      name,
+      content: thing.content,
+      children: thing.children.map((c) => ({
+        name: c.connectionId,
+        child: state._connections[c.connectionId]!.child,
+      })),
+    });
+  }
+
+  return {things};
+}
+
 export function diff(
   oldState: State,
   newState: State,
