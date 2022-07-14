@@ -76,8 +76,8 @@ const server = (() => {
   };
 })();
 
-function fakeServer(clientId: string): Client.RemoteServer {
-  let handleErrorCallbacks: ((error: Client.RemoteServerError) => void)[] = [];
+function fakeServer(clientId: string): Client.Server {
+  let handleErrorCallbacks: ((error: Client.ServerError) => void)[] = [];
   let onChangesCallbacks: ((changes: string[]) => void)[] = [];
 
   function errorIfSimulatingDisconnected() {
@@ -126,7 +126,7 @@ function fakeServer(clientId: string): Client.RemoteServer {
       console.log("setTutorialFinished");
     },
 
-    async onError(handleError_: (error: Client.RemoteServerError) => void) {
+    async onError(handleError_: (error: Client.ServerError) => void) {
       handleErrorCallbacks.push(handleError_);
     },
 
