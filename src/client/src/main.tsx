@@ -324,7 +324,15 @@ function LoadedApp({
   );
 }
 
-function AppWithRemote(props: {remote: Storage | Server; openExternalUrl(url: string): void}) {
+function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event): void}) {
+  return props.view.tab === "orphans" ? (
+    <OrphanList view={props.view} send={props.send} />
+  ) : (
+    <Outline outline={props.view} send={props.send} />
+  );
+}
+
+export function App(props: {remote: Storage | Server; openExternalUrl?: (url: string) => void}) {
   const server = isStorageServer(props.remote) ? props.remote : undefined;
 
   const [rendered, setRendered] = React.useState<JSX.Element>(<div>Loading...</div>);
@@ -351,7 +359,7 @@ function AppWithRemote(props: {remote: Storage | Server; openExternalUrl(url: st
             urlHash: window?.location?.hash ?? "",
           }}
           remote={props.remote}
-          openExternalUrl={props.openExternalUrl}
+          openExternalUrl={props.openExternalUrl ?? ((url: string) => window.open(url, "_blank"))}
           username={username}
         />,
       );
@@ -359,26 +367,6 @@ function AppWithRemote(props: {remote: Storage | Server; openExternalUrl(url: st
   }, []);
 
   return rendered;
-}
-
-function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event): void}) {
-  return props.view.tab === "orphans" ? (
-    <OrphanList view={props.view} send={props.send} />
-  ) : (
-    <Outline outline={props.view} send={props.send} />
-  );
-}
-
-// ==
-
-export function LocalApp(props: {storage: Storage; openExternalUrl: (url: string) => void}) {
-  return <AppWithRemote remote={props.storage} openExternalUrl={props.openExternalUrl} />;
-}
-
-type AppArgs = {remote: Storage | Server};
-
-export function App(args: AppArgs) {
-  return <AppWithRemote remote={args.remote} openExternalUrl={(url) => window.open(url, "_blank")} />;
 }
 
 export function User(props: {remote: Server}) {

@@ -30,7 +30,7 @@ function nullStorage(): Thinktool.Storage {
   }
 
   ReactDOM.render(
-    <Thinktool.LocalApp storage={storage} openExternalUrl={openExternalUrl} />,
+    <Thinktool.App remote={storage} openExternalUrl={openExternalUrl} />,
     document.getElementById("app"),
   );
 })();
