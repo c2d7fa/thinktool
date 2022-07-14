@@ -9,7 +9,22 @@ export default function Demo() {
 
   React.useEffect(() => {
     import("@thinktool/client").then((Thinktool) => {
-      setMainElement(<Thinktool.Demo data={DemoData} />);
+      setMainElement(
+        <Thinktool.App
+          remote={{
+            async getFullState() {
+              return DemoData;
+            },
+            async setContent() {},
+            async deleteThing() {},
+            async updateThings() {},
+            async getTutorialFinished() {
+              return false;
+            },
+            async setTutorialFinished() {},
+          }}
+        />,
+      );
     });
   }, []);
 

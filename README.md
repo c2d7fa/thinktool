@@ -138,6 +138,11 @@ The website is built using [NextJS](https://nextjs.org/) and hosted using
 [Vercel](https://vercel.com/). It is automatically rebuilt from the `src/web`
 directory whenever the `website` branch is pushed.
 
+As with the desktop client, there is a hacky solution for using the current
+local client package build while working on the website:
+
+    cp -r ../client/dist/* node_modules/@thinktool/client/dist/ && rm -r .next && yarn dev
+
 ## Development
 
 While working on Thinktool, most changes should be made in the `src/client`

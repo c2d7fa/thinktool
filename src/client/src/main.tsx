@@ -403,29 +403,6 @@ export function App(args: AppArgs) {
   }
 }
 
-export function Demo(props: {data: Communication.FullStateResponse}) {
-  return (
-    <AppWithRemote
-      remote={React.useMemo(
-        () => ({
-          async getFullState() {
-            return props.data;
-          },
-          async setContent() {},
-          async deleteThing() {},
-          async updateThings() {},
-          async getTutorialFinished() {
-            return false;
-          },
-          async setTutorialFinished() {},
-        }),
-        [],
-      )}
-      openExternalUrl={(url) => window.open(url, "_blank")}
-    />
-  );
-}
-
 export function User(props: {apiHost: string}) {
   return <UserPage server={new ApiHostServer({apiHost: props.apiHost})} />;
 }
