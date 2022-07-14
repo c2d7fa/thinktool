@@ -51,9 +51,9 @@ function useGlobalShortcuts(send: (event: A.Event) => void) {
   }, [send]);
 }
 
-function useServerChanges(server: Server | null, send: A.Send) {
+function useServerChanges(server: Server | undefined, send: A.Send) {
   React.useEffect(() => {
-    if (server === null) return;
+    if (server === undefined) return;
 
     return server.onChanges(async (changes) => {
       const loadThingDataTasks = changes.map((thing) =>
@@ -123,50 +123,72 @@ function useDragAndDrop(app: A.App, send: A.Send) {
   }, [A.isDragging(app), send]);
 }
 
-function useSendWithSync({
-  updateAppWithoutSaving,
-  server,
+function executeEffects(
+  effects: A.Effects,
+  deps: {
+    openExternalUrl(url: string): void;
+    send: A.Send;
+    search: Search;
+    storageExecutionContext: Sto.StorageExecutionContext;
+    storage: Storage;
+  },
+): void {
+  if (effects.url) deps.openExternalUrl(effects.url);
+  if (effects.search) {
+    if (effects.search.items) {
+      deps.search.reset(effects.search.items);
+    }
+    deps.search.query(effects.search.query, 25);
+  }
+  if (effects.tryReconnect) {
+    setTimeout(async () => {
+      console.log("Trying to reconnect to server...");
+      try {
+        const remoteState = await Sync.loadStoredStateFromStorage(deps.storage);
+        console.log("Reconnected successfully.");
+        deps.send({type: "serverPingResponse", result: "success", remoteState});
+      } catch (e) {
+        console.log("Still could not contact server.");
+        deps.send({type: "serverPingResponse", result: "failed"});
+      }
+    }, 2000);
+  }
+  if (effects.changes) {
+    console.log("Pushing changes %o", effects.changes);
+    deps.storageExecutionContext.pushChanges(effects.changes);
+  }
+}
+
+function useSend({
+  updateApp,
   storage,
   openExternalUrl,
   search,
 }: {
-  updateAppWithoutSaving: (f: (app: A.App) => A.App) => void;
-  server: Server | undefined;
+  updateApp: (f: (app: A.App) => A.App) => void;
   storage: Storage;
   openExternalUrl(url: string): void;
   search: Search;
 }): A.Send {
+  const storageExecutionContext = useMemoWarning(
+    "storageExecutionContext",
+    () => new Sto.StorageExecutionContext(storage, window),
+    [storage],
+  );
+
   const send = React.useCallback((event: A.Event) => {
-    updateAppWithoutSaving((app) => {
+    updateApp((app) => {
       const result = A.handle(app, event);
-      if (result?.effects?.url) openExternalUrl(result.effects.url);
-      if (result?.effects?.search) {
-        if (result.effects.search.items) {
-          search.reset(result.effects.search.items);
-        }
-        search.query(result.effects.search.query, 25);
-      }
-      if (result?.effects?.tryReconnect) {
-        setTimeout(async () => {
-          console.log("Trying to reconnect to server...");
-          try {
-            const remoteState = await Sync.loadStoredStateFromStorage(storage);
-            console.log("Reconnected successfully.");
-            send({type: "serverPingResponse", result: "success", remoteState});
-          } catch (e) {
-            console.log("Still could not contact server.");
-            send({type: "serverPingResponse", result: "failed"});
-          }
-        }, 2000);
-      }
-      if (result?.effects?.changes) {
-        console.log("Pushing changes %o", result.effects.changes);
-        storageExecutionContext.pushChanges(result.effects.changes);
-      }
+      if (result?.effects)
+        executeEffects(result.effects, {openExternalUrl, send, search, storageExecutionContext, storage});
       return result.app;
     });
   }, []);
 
+  return send;
+}
+
+function useServerReconnect(server: Server | undefined, send: A.Send) {
   React.useEffect(() => {
     if (server === undefined) return;
 
@@ -184,22 +206,10 @@ function useSendWithSync({
       send({
         type: "serverPingResponse",
         result: "success",
-        remoteState: await Sync.loadStoredStateFromStorage(storage),
+        remoteState: await Sync.loadStoredStateFromStorage(server),
       });
     });
   }, []);
-
-  React.useEffect(() => {
-    setInterval(() => send({type: "flushChanges"}), 1000);
-  }, []);
-
-  const storageExecutionContext = useMemoWarning(
-    "storageExecutionContext",
-    () => new Sto.StorageExecutionContext(storage, window),
-    [storage],
-  );
-
-  return send;
 }
 
 function LoadedApp({
@@ -218,7 +228,7 @@ function LoadedApp({
 
   const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
 
-  const [app, updateAppWithoutSaving] = React.useState<A.App>(() => A.initialize(initialState));
+  const [app, updateApp] = React.useState<A.App>(() => A.initialize(initialState));
 
   const changelog = ChangelogData;
 
@@ -230,15 +240,14 @@ function LoadedApp({
     return search;
   }, []);
 
-  const send = useSendWithSync({
-    server,
-    storage,
-    updateAppWithoutSaving,
-    openExternalUrl,
-    search,
-  });
+  const send = useSend({storage, updateApp, openExternalUrl, search});
 
-  useServerChanges(server ?? null, send);
+  React.useEffect(() => {
+    setInterval(() => send({type: "flushChanges"}), 1000);
+  }, []);
+
+  useServerReconnect(server, send);
+  useServerChanges(server, send);
   useGlobalShortcuts(send);
 
   useDragAndDrop(app, send);
