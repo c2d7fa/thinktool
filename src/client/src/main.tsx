@@ -130,7 +130,7 @@ function executeEffects(
     send: A.Send;
     search: Search;
     storageExecutionContext: Sto.StorageExecutionContext;
-    storage: Storage;
+    remote: Storage;
   },
 ): void {
   if (effects.url) deps.openExternalUrl(effects.url);
@@ -144,7 +144,7 @@ function executeEffects(
     setTimeout(async () => {
       console.log("Trying to reconnect to server...");
       try {
-        const remoteState = await Sync.loadStoredStateFromStorage(deps.storage);
+        const remoteState = await Sync.loadStoredStateFromStorage(deps.remote);
         console.log("Reconnected successfully.");
         deps.send({type: "serverPingResponse", result: "success", remoteState});
       } catch (e) {
@@ -161,15 +161,15 @@ function executeEffects(
 
 function useSend({
   updateApp,
-  updatePendingEffects,
+  effectsQueue,
 }: {
   updateApp: (f: (app: A.App) => A.App) => void;
-  updatePendingEffects: (f: (effects: A.Effects[]) => A.Effects[]) => void;
+  effectsQueue: {pushEffects(effects: A.Effects): void};
 }): A.Send {
   return React.useCallback((event: A.Event) => {
     updateApp((app) => {
       const result = A.handle(app, event);
-      if (result?.effects) updatePendingEffects((effects) => [...effects, result.effects!]);
+      if (result?.effects) effectsQueue.pushEffects(result.effects!);
       return result.app;
     });
   }, []);
@@ -199,6 +199,66 @@ function useServerReconnect(server: Server | undefined, send: A.Send) {
   }, []);
 }
 
+function useStorageExecutionContext({remote}: {remote: Storage}): Sto.StorageExecutionContext {
+  return useMemoWarning("storageExecutionContext", () => new Sto.StorageExecutionContext(remote, window), [
+    remote,
+  ]);
+}
+
+function useSearch({send}: {send: A.Send}) {
+  return React.useMemo<Search>(() => {
+    const search = new Search([]);
+    search.on("results", (results) =>
+      send({type: "searchResponse", things: results.map((result) => result.thing)}),
+    );
+    return search;
+  }, []);
+}
+
+function useExecuteEffects(
+  effectsQueue: {pendingEffects: A.Effects[]; clearEffects(): void},
+  deps: {
+    openExternalUrl: (url: string) => void;
+    send: A.Send;
+    remote: Storage;
+  },
+) {
+  const search = useSearch({send: deps.send});
+  const storageExecutionContext = useStorageExecutionContext({remote: deps.remote});
+
+  React.useEffect(() => {
+    if (effectsQueue.pendingEffects.length === 0) return;
+    for (const effect of effectsQueue.pendingEffects) {
+      executeEffects(effect, {...deps, search, storageExecutionContext});
+    }
+    effectsQueue.clearEffects();
+  }, [effectsQueue]);
+}
+
+function useEffectsQueue() {
+  const [pendingEffects, setPendingEffects] = React.useState<A.Effects[]>([]);
+
+  const clearEffects = React.useCallback(() => {
+    setPendingEffects([]);
+  }, []);
+
+  const pushEffects = React.useCallback((effects: A.Effects) => {
+    setPendingEffects((pendingEffects) => [...pendingEffects, effects]);
+  }, []);
+
+  return {
+    pendingEffects,
+    clearEffects,
+    pushEffects,
+  };
+}
+
+function useFlushChanges({send}: {send: A.Send}) {
+  React.useEffect(() => {
+    setInterval(() => send({type: "flushChanges"}), 1000);
+  }, []);
+}
+
 function LoadedApp({
   initialState,
   username,
@@ -210,54 +270,19 @@ function LoadedApp({
   remote: Storage | Server;
   openExternalUrl(url: string): void;
 }) {
-  const storage = remote;
-  const server = isStorageServer(remote) ? remote : undefined;
-
   const [app, updateApp] = React.useState<A.App>(() => A.initialize(initialState));
+  const effectsQueue = useEffectsQueue();
 
-  const [pendingEffects, updatePendingEffects] = React.useState<A.Effects[]>([]);
+  const send = useSend({updateApp, effectsQueue});
+  useExecuteEffects(effectsQueue, {openExternalUrl, send, remote});
 
-  const changelog = ChangelogData;
+  useGlobalShortcuts(send);
+  useDragAndDrop(app, send);
+  useFlushChanges({send});
 
-  const search = React.useMemo<Search>(() => {
-    const search = new Search([]);
-    search.on("results", (results) =>
-      send({type: "searchResponse", things: results.map((result) => result.thing)}),
-    );
-    return search;
-  }, []);
-
-  const send = useSend({updateApp, updatePendingEffects});
-
-  const storageExecutionContext = useMemoWarning(
-    "storageExecutionContext",
-    () => new Sto.StorageExecutionContext(storage, window),
-    [storage],
-  );
-
-  React.useEffect(() => {
-    if (pendingEffects.length === 0) return;
-    for (const effect of pendingEffects) {
-      executeEffects(effect, {
-        openExternalUrl,
-        send,
-        search,
-        storageExecutionContext,
-        storage,
-      });
-    }
-    updatePendingEffects([]);
-  }, [pendingEffects]);
-
-  React.useEffect(() => {
-    setInterval(() => send({type: "flushChanges"}), 1000);
-  }, []);
-
+  const server = isStorageServer(remote) ? remote : undefined;
   useServerReconnect(server, send);
   useServerChanges(server, send);
-  useGlobalShortcuts(send);
-
-  useDragAndDrop(app, send);
 
   const appElementRef = React.useRef<HTMLDivElement>(null);
 
@@ -289,7 +314,7 @@ function LoadedApp({
         <Toolbar.Toolbar send={send} toolbar={view_.toolbar} />
       </div>
       {!showSplash && <TutorialBox tutorial={view_.tutorial} send={send} />}
-      <Changelog changelog={changelog} visible={app.changelogShown} send={send} />
+      <Changelog changelog={ChangelogData} visible={app.changelogShown} send={send} />
       <MainView view={view_} send={send} />
       {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
