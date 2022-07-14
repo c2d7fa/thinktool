@@ -226,8 +226,6 @@ function LoadedApp({
   const storage = remote;
   const server = isStorageServer(remote) ? remote : undefined;
 
-  const isDevelopment = React.useMemo(() => window.location.hostname === "localhost", []);
-
   const [app, updateApp] = React.useState<A.App>(() => A.initialize(initialState));
 
   const changelog = ChangelogData;
@@ -254,9 +252,7 @@ function LoadedApp({
 
   const appElementRef = React.useRef<HTMLDivElement>(null);
 
-  const [showSplash, setShowSplash] = React.useState<boolean>(
-    !isDevelopment && Tutorial.isActive(app.tutorialState),
-  );
+  const [showSplash, setShowSplash] = React.useState<boolean>(Tutorial.isActive(app.tutorialState));
 
   const onFocusBackground = React.useCallback(
     (ev: React.FocusEvent) => {
