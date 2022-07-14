@@ -3,7 +3,7 @@ import {Database as SqliteDriver} from "sqlite3";
 
 import * as Client from "@thinktool/client";
 
-export async function initialize(path: string): Promise<Client.Storage.Storage> {
+export async function initialize(path: string): Promise<Client.Storage> {
   const db = await Sqlite.open({filename: path, driver: SqliteDriver});
 
   let version = -1;
@@ -21,9 +21,7 @@ export async function initialize(path: string): Promise<Client.Storage.Storage> 
     console.log("Initializing database from scratch to version 1");
 
     await db.exec(`CREATE TABLE property (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
-    await db.exec(
-      `INSERT INTO property (key, value) VALUES ('version', '1'), ('tutorial-finished', 'false')`,
-    );
+    await db.exec(`INSERT INTO property (key, value) VALUES ('version', '1'), ('tutorial-finished', 'false')`);
     await db.exec(
       `CREATE TABLE item (name TEXT PRIMARY KEY, content JSON NOT NULL DEFAULT '[]', is_page INTEGER NOT NULL DEFAULT 0)`,
     );

@@ -5,10 +5,25 @@ import * as Thinktool from "@thinktool/client";
 
 import * as SqliteStorage from "./sqlite-storage";
 
+function nullStorage(): Thinktool.Storage {
+  return {
+    async getFullState() {
+      return {things: [{name: "0", content: ["Unsaved File"], children: []}]};
+    },
+    async setContent() {},
+    async deleteThing() {},
+    async updateThings() {},
+    async getTutorialFinished() {
+      return false;
+    },
+    async setTutorialFinished() {},
+  };
+}
+
 (async () => {
   const path = await Electron.ipcRenderer.invoke("open-file");
 
-  const storage = path == undefined ? Thinktool.Storage.ignore() : await SqliteStorage.initialize(path);
+  const storage = path == undefined ? nullStorage() : await SqliteStorage.initialize(path);
 
   function ExternalLink(props: {href: string; children: React.ReactNode; [k: string]: any}) {
     const attrs: object = {...props};

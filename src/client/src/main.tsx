@@ -8,7 +8,6 @@ import {useThingUrl} from "./url";
 
 import * as Tutorial from "./tutorial";
 import {ApiHostServer} from "./sync/server-api";
-import * as Sto from "./sync/storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
@@ -31,6 +30,8 @@ import {OrphanList} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 import {Outline} from "./ui/outline";
 import {isStorageServer, Server, ServerError, Storage} from "./remote-types";
+
+export type {Storage, Server, ServerError};
 
 function useGlobalShortcuts(send: (event: A.Event) => void) {
   React.useEffect(() => {
@@ -393,10 +394,6 @@ export function LocalApp(props: {
 
 type AppArgs = {apiHost: string} | {remote: Storage | Server};
 
-export type RemoteStorage = Storage;
-export type RemoteServer = Server;
-export type RemoteServerError = ServerError;
-
 export function App(args: AppArgs) {
   if ("apiHost" in args) {
     const server = React.useMemo(() => new ApiHostServer({apiHost: args.apiHost}), []);
@@ -407,12 +404,30 @@ export function App(args: AppArgs) {
 }
 
 export function Demo(props: {data: Communication.FullStateResponse}) {
-  return <AppWithRemote remote={Sto.ignore(props.data)} openExternalUrl={(url) => window.open(url, "_blank")} />;
+  return (
+    <AppWithRemote
+      remote={React.useMemo(
+        () => ({
+          async getFullState() {
+            return props.data;
+          },
+          async setContent() {},
+          async deleteThing() {},
+          async updateThings() {},
+          async getTutorialFinished() {
+            return false;
+          },
+          async setTutorialFinished() {},
+        }),
+        [],
+      )}
+      openExternalUrl={(url) => window.open(url, "_blank")}
+    />
+  );
 }
 
 export function User(props: {apiHost: string}) {
   return <UserPage server={new ApiHostServer({apiHost: props.apiHost})} />;
 }
 
-export * as Storage from "./sync/storage";
 export {Communication} from "@thinktool/shared";

@@ -91,6 +91,11 @@ Then enter the `src/desktop` directory and run `yarn install --frozen-lockfile`.
 Build the Linux client with `yarn bundle-linux` or the Windows client with
 `yarn bundle-windows`.
 
+When developing the desktop client, you can use this command to somewhat hackily
+use the local build of the client package:
+
+    cp -r ../client/dist/* node_modules/@thinktool/client/dist/ && yarn bundle-linux
+
 ### Server
 
 The server uses a PostgreSQL database. Set the following environment variables
