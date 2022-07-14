@@ -1,5 +1,5 @@
 import {Communication} from "@thinktool/shared";
-import {Server, ServerError} from "../remote-types";
+import {Server, ServerError} from "@thinktool/client";
 
 export class ApiHostServer implements Server {
   private clientId: string;

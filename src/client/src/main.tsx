@@ -5,7 +5,6 @@ import * as ChangelogData from "./changes.json";
 import {useThingUrl} from "./url";
 
 import * as Tutorial from "./tutorial";
-import {ApiHostServer} from "./sync/server-api";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
@@ -393,19 +392,14 @@ export function LocalApp(props: {
   );
 }
 
-type AppArgs = {apiHost: string} | {remote: Storage | Server};
+type AppArgs = {remote: Storage | Server};
 
 export function App(args: AppArgs) {
-  if ("apiHost" in args) {
-    const server = React.useMemo(() => new ApiHostServer({apiHost: args.apiHost}), []);
-    return <AppWithRemote remote={server} openExternalUrl={(url) => window.open(url, "_blank")} />;
-  } else {
-    return <AppWithRemote remote={args.remote} openExternalUrl={(url) => window.open(url, "_blank")} />;
-  }
+  return <AppWithRemote remote={args.remote} openExternalUrl={(url) => window.open(url, "_blank")} />;
 }
 
-export function User(props: {apiHost: string}) {
-  return <UserPage server={new ApiHostServer({apiHost: props.apiHost})} />;
+export function User(props: {remote: Server}) {
+  return <UserPage server={props.remote} />;
 }
 
 export {Communication} from "@thinktool/shared";
