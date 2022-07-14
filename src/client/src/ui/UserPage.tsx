@@ -61,8 +61,7 @@ export default function UserPage(props: {server: Server}) {
       <div>
         <h1>Export to Roam</h1>
         <p>
-          Click the button below to download a file that can be imported into{" "}
-          <ExternalLink href="https://roamresearch.com/">Roam Research</ExternalLink>. To import it, select{" "}
+          Click the button below to download a file that can be imported into RoamResearch. To import it, select{" "}
           <b>Import Files</b> in the top-right menu inside Roam.
         </p>
         <p>

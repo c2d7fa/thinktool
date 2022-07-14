@@ -13,7 +13,6 @@ import * as Toolbar from "./ui/Toolbar";
 import TutorialBox from "./ui/Tutorial";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
-import {DefaultExternalLink, ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
 import UserPage from "./ui/UserPage";
 import {login, TopBar} from "./ui/TopBar";
 import {OfflineIndicator} from "./offline-indicator";
@@ -325,11 +324,7 @@ function LoadedApp({
   );
 }
 
-function AppWithRemote(props: {
-  remote: Storage | Server;
-  openExternalUrl(url: string): void;
-  ExternalLink?: ExternalLinkType;
-}) {
+function AppWithRemote(props: {remote: Storage | Server; openExternalUrl(url: string): void}) {
   const server = isStorageServer(props.remote) ? props.remote : undefined;
 
   const [rendered, setRendered] = React.useState<JSX.Element>(<div>Loading...</div>);
@@ -348,19 +343,17 @@ function AppWithRemote(props: {
       })();
 
       setRendered(
-        <ExternalLinkProvider value={props.ExternalLink ?? DefaultExternalLink}>
-          <LoadedApp
-            initialState={{
-              fullStateResponse: await props.remote.getFullState(),
-              toolbarShown: server ? (await server.getToolbarState()).shown : true,
-              tutorialFinished: await props.remote.getTutorialFinished(),
-              urlHash: window?.location?.hash ?? "",
-            }}
-            remote={props.remote}
-            openExternalUrl={props.openExternalUrl}
-            username={username}
-          />
-        </ExternalLinkProvider>,
+        <LoadedApp
+          initialState={{
+            fullStateResponse: await props.remote.getFullState(),
+            toolbarShown: server ? (await server.getToolbarState()).shown : true,
+            tutorialFinished: await props.remote.getTutorialFinished(),
+            urlHash: window?.location?.hash ?? "",
+          }}
+          remote={props.remote}
+          openExternalUrl={props.openExternalUrl}
+          username={username}
+        />,
       );
     })();
   }, []);
@@ -378,18 +371,8 @@ function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event):
 
 // ==
 
-export function LocalApp(props: {
-  storage: Storage;
-  ExternalLink: ExternalLinkType;
-  openExternalUrl: (url: string) => void;
-}) {
-  return (
-    <AppWithRemote
-      remote={props.storage}
-      openExternalUrl={props.openExternalUrl}
-      ExternalLink={props.ExternalLink}
-    />
-  );
+export function LocalApp(props: {storage: Storage; openExternalUrl: (url: string) => void}) {
+  return <AppWithRemote remote={props.storage} openExternalUrl={props.openExternalUrl} />;
 }
 
 type AppArgs = {remote: Storage | Server};

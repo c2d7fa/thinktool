@@ -277,6 +277,7 @@ export type Event =
   | {type: "syncDialogSelect"; option: "commit" | "abort"}
   | {type: "flushChanges"}
   | {type: "serverDisconnected"}
+  | {type: "followExternalLink"; href: string}
   | {type: "receivedChanges"; changes: {thing: string; data: Communication.ThingData | null}[]}
   | (
       | {type: "serverPingResponse"; result: "failed"}
@@ -374,6 +375,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
       app: {...app, [_lastSyncedState]: Sy.storedStateFromApp(app)},
       effects: changesNonEmpty ? {changes} : {},
     };
+  } else if (event.type === "followExternalLink") {
+    return {app, effects: {url: event.href}};
   } else if (event.topic === "tutorial") {
     return {app: merge(app, {tutorialState: Tutorial.update(app.tutorialState, event)})};
   } else {

@@ -4,7 +4,6 @@ import * as A from "./app";
 import * as W from "./wrapap";
 
 import {expectViewToMatch} from "./app/test-utils";
-import {storedStateFromApp} from "./sync";
 
 describe("initializing app from scratch with 'of'", () => {
   const wpp = W.of({

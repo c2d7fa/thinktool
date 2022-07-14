@@ -1,29 +1,23 @@
 import * as React from "react";
+import {Send} from "../app";
 
-const ExternalLinkContext = React.createContext<ExternalLinkType>(DefaultExternalLink);
-
-export type ExternalLinkType = (props: {href: string; children: React.ReactNode; [x: string]: any}) => JSX.Element;
-
-export function DefaultExternalLink(props: {
+export function ExternalLink(props: {
+  send: Send;
   href: string;
   children: React.ReactNode;
-  [x: string]: any;
+  [prop: string]: any;
 }): JSX.Element {
   const attrs: any = {...props};
   delete attrs.href;
   return (
-    <a {...attrs} href={props.href} target="_blank" rel="nofollow">
+    <a
+      {...attrs}
+      href="#"
+      onClick={() => {
+        props.send({type: "followExternalLink", href: props.href});
+      }}
+    >
       {props.children}
     </a>
-  );
-}
-
-export const ExternalLinkProvider = ExternalLinkContext.Provider;
-
-export function ExternalLink(props: {href: string; children: React.ReactNode; [x: string]: any}): JSX.Element {
-  return (
-    <ExternalLinkContext.Consumer>
-      {(ExternalLinkComponent) => <ExternalLinkComponent {...props} />}
-    </ExternalLinkContext.Consumer>
   );
 }
