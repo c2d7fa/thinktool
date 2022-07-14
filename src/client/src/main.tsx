@@ -161,31 +161,18 @@ function executeEffects(
 
 function useSend({
   updateApp,
-  storage,
-  openExternalUrl,
-  search,
+  updatePendingEffects,
 }: {
   updateApp: (f: (app: A.App) => A.App) => void;
-  storage: Storage;
-  openExternalUrl(url: string): void;
-  search: Search;
+  updatePendingEffects: (f: (effects: A.Effects[]) => A.Effects[]) => void;
 }): A.Send {
-  const storageExecutionContext = useMemoWarning(
-    "storageExecutionContext",
-    () => new Sto.StorageExecutionContext(storage, window),
-    [storage],
-  );
-
-  const send = React.useCallback((event: A.Event) => {
+  return React.useCallback((event: A.Event) => {
     updateApp((app) => {
       const result = A.handle(app, event);
-      if (result?.effects)
-        executeEffects(result.effects, {openExternalUrl, send, search, storageExecutionContext, storage});
+      if (result?.effects) updatePendingEffects((effects) => [...effects, result.effects!]);
       return result.app;
     });
   }, []);
-
-  return send;
 }
 
 function useServerReconnect(server: Server | undefined, send: A.Send) {
@@ -228,6 +215,8 @@ function LoadedApp({
 
   const [app, updateApp] = React.useState<A.App>(() => A.initialize(initialState));
 
+  const [pendingEffects, updatePendingEffects] = React.useState<A.Effects[]>([]);
+
   const changelog = ChangelogData;
 
   const search = React.useMemo<Search>(() => {
@@ -238,7 +227,27 @@ function LoadedApp({
     return search;
   }, []);
 
-  const send = useSend({storage, updateApp, openExternalUrl, search});
+  const send = useSend({updateApp, updatePendingEffects});
+
+  const storageExecutionContext = useMemoWarning(
+    "storageExecutionContext",
+    () => new Sto.StorageExecutionContext(storage, window),
+    [storage],
+  );
+
+  React.useEffect(() => {
+    if (pendingEffects.length === 0) return;
+    for (const effect of pendingEffects) {
+      executeEffects(effect, {
+        openExternalUrl,
+        send,
+        search,
+        storageExecutionContext,
+        storage,
+      });
+    }
+    updatePendingEffects([]);
+  }, [pendingEffects]);
 
   React.useEffect(() => {
     setInterval(() => send({type: "flushChanges"}), 1000);
