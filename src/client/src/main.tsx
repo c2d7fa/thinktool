@@ -1,7 +1,5 @@
 import "../app.scss";
 
-import {Communication} from "@thinktool/shared";
-
 import * as ChangelogData from "./changes.json";
 
 import {useThingUrl} from "./url";
@@ -11,7 +9,6 @@ import {ApiHostServer} from "./sync/server-api";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
-import * as Sync from "./sync";
 
 import * as Toolbar from "./ui/Toolbar";
 import TutorialBox from "./ui/Tutorial";
@@ -21,11 +18,11 @@ import {DefaultExternalLink, ExternalLinkProvider, ExternalLinkType} from "./ui/
 import UserPage from "./ui/UserPage";
 import {login, TopBar} from "./ui/TopBar";
 import {OfflineIndicator} from "./offline-indicator";
+import {SyncDialog} from "./sync/dialog";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import {useMemoWarning} from "./react-utils";
 import {OrphanList} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 import {Outline} from "./ui/outline";
@@ -144,7 +141,7 @@ function executeEffects(
     setTimeout(async () => {
       console.log("Trying to reconnect to server...");
       try {
-        const remoteState = await Sync.loadStoredStateFromStorage(deps.remote);
+        const remoteState = await loadStoredStateFromStorage(deps.remote);
         console.log("Reconnected successfully.");
         deps.send({type: "serverPingResponse", result: "success", remoteState});
       } catch (e) {
@@ -186,6 +183,10 @@ function useSend({
   }, []);
 }
 
+async function loadStoredStateFromStorage(storage: Storage): Promise<A.StoredState> {
+  return {fullStateResponse: await storage.getFullState(), tutorialFinished: await storage.getTutorialFinished()};
+}
+
 function useServerReconnect(server: Server | undefined, send: A.Send) {
   React.useEffect(() => {
     if (server === undefined) return;
@@ -204,7 +205,7 @@ function useServerReconnect(server: Server | undefined, send: A.Send) {
       send({
         type: "serverPingResponse",
         result: "success",
-        remoteState: await Sync.loadStoredStateFromStorage(server),
+        remoteState: await loadStoredStateFromStorage(server),
       });
     });
   }, []);
@@ -306,7 +307,7 @@ function LoadedApp({
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusBackground} tabIndex={-1} className="app">
       <OfflineIndicator isDisconnected={view_.offlineIndicator.shown} />
-      <Sync.Dialog.SyncDialog dialog={view_.syncDialog} send={send} />
+      <SyncDialog dialog={view_.syncDialog} send={send} />
       <div className="app-header">
         <TopBar
           isToolbarShown={view_.toolbar.shown}
