@@ -129,7 +129,6 @@ function executeEffects(
     openExternalUrl(url: string): void;
     send: A.Send;
     search: Search;
-    storageExecutionContext: Sto.StorageExecutionContext;
     remote: Storage;
   },
 ): void {
@@ -155,7 +154,18 @@ function executeEffects(
   }
   if (effects.changes) {
     console.log("Pushing changes %o", effects.changes);
-    deps.storageExecutionContext.pushChanges(effects.changes);
+    for (const deleted of effects.changes.deleted) {
+      deps.remote.deleteThing(deleted);
+    }
+    if (effects.changes.updated.length > 0) {
+      deps.remote.updateThings(effects.changes.updated);
+    }
+    for (const edited of effects.changes.edited) {
+      deps.remote.setContent(edited.thing, edited.content);
+    }
+    if (effects.changes.tutorialFinished) {
+      deps.remote.setTutorialFinished();
+    }
   }
 }
 
@@ -199,12 +209,6 @@ function useServerReconnect(server: Server | undefined, send: A.Send) {
   }, []);
 }
 
-function useStorageExecutionContext({remote}: {remote: Storage}): Sto.StorageExecutionContext {
-  return useMemoWarning("storageExecutionContext", () => new Sto.StorageExecutionContext(remote, window), [
-    remote,
-  ]);
-}
-
 function useSearch({send}: {send: A.Send}) {
   return React.useMemo<Search>(() => {
     const search = new Search([]);
@@ -224,12 +228,11 @@ function useExecuteEffects(
   },
 ) {
   const search = useSearch({send: deps.send});
-  const storageExecutionContext = useStorageExecutionContext({remote: deps.remote});
 
   React.useEffect(() => {
     if (effectsQueue.pendingEffects.length === 0) return;
     for (const effect of effectsQueue.pendingEffects) {
-      executeEffects(effect, {...deps, search, storageExecutionContext});
+      executeEffects(effect, {...deps, search});
     }
     effectsQueue.clearEffects();
   }, [effectsQueue]);
