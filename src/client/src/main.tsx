@@ -1,36 +1,32 @@
 import "../app.scss";
 
-import {Communication} from "@thinktool/shared";
-
 import * as ChangelogData from "./changes.json";
 
 import {useThingUrl} from "./url";
 
 import * as Tutorial from "./tutorial";
-import {ApiHostServer} from "./sync/server-api";
-import * as Sto from "./sync/storage";
 import * as Actions from "./actions";
 import * as Sh from "./shortcuts";
 import * as A from "./app";
-import * as Sync from "./sync";
 
 import * as Toolbar from "./ui/Toolbar";
 import TutorialBox from "./ui/Tutorial";
 import Changelog from "./ui/Changelog";
 import Splash from "./ui/Splash";
-import {DefaultExternalLink, ExternalLinkProvider, ExternalLinkType} from "./ui/ExternalLink";
 import UserPage from "./ui/UserPage";
 import {login, TopBar} from "./ui/TopBar";
 import {OfflineIndicator} from "./offline-indicator";
+import {SyncDialog} from "./sync/dialog";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import {useMemoWarning} from "./react-utils";
 import {OrphanList} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 import {Outline} from "./ui/outline";
 import {isStorageServer, Server, ServerError, Storage} from "./remote-types";
+
+export type {Storage, Server, ServerError};
 
 function useGlobalShortcuts(send: (event: A.Event) => void) {
   React.useEffect(() => {
@@ -143,7 +139,7 @@ function executeEffects(
     setTimeout(async () => {
       console.log("Trying to reconnect to server...");
       try {
-        const remoteState = await Sync.loadStoredStateFromStorage(deps.remote);
+        const remoteState = await loadStoredStateFromStorage(deps.remote);
         console.log("Reconnected successfully.");
         deps.send({type: "serverPingResponse", result: "success", remoteState});
       } catch (e) {
@@ -185,6 +181,10 @@ function useSend({
   }, []);
 }
 
+async function loadStoredStateFromStorage(storage: Storage): Promise<A.StoredState> {
+  return {fullStateResponse: await storage.getFullState(), tutorialFinished: await storage.getTutorialFinished()};
+}
+
 function useServerReconnect(server: Server | undefined, send: A.Send) {
   React.useEffect(() => {
     if (server === undefined) return;
@@ -203,7 +203,7 @@ function useServerReconnect(server: Server | undefined, send: A.Send) {
       send({
         type: "serverPingResponse",
         result: "success",
-        remoteState: await Sync.loadStoredStateFromStorage(server),
+        remoteState: await loadStoredStateFromStorage(server),
       });
     });
   }, []);
@@ -305,7 +305,7 @@ function LoadedApp({
   return (
     <div ref={appElementRef} id="app" spellCheck={false} onFocus={onFocusBackground} tabIndex={-1} className="app">
       <OfflineIndicator isDisconnected={view_.offlineIndicator.shown} />
-      <Sync.Dialog.SyncDialog dialog={view_.syncDialog} send={send} />
+      <SyncDialog dialog={view_.syncDialog} send={send} />
       <div className="app-header">
         <TopBar
           isToolbarShown={view_.toolbar.shown}
@@ -324,11 +324,15 @@ function LoadedApp({
   );
 }
 
-function AppWithRemote(props: {
-  remote: Storage | Server;
-  openExternalUrl(url: string): void;
-  ExternalLink?: ExternalLinkType;
-}) {
+function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event): void}) {
+  return props.view.tab === "orphans" ? (
+    <OrphanList view={props.view} send={props.send} />
+  ) : (
+    <Outline outline={props.view} send={props.send} />
+  );
+}
+
+export function App(props: {remote: Storage | Server; openExternalUrl?: (url: string) => void}) {
   const server = isStorageServer(props.remote) ? props.remote : undefined;
 
   const [rendered, setRendered] = React.useState<JSX.Element>(<div>Loading...</div>);
@@ -347,19 +351,17 @@ function AppWithRemote(props: {
       })();
 
       setRendered(
-        <ExternalLinkProvider value={props.ExternalLink ?? DefaultExternalLink}>
-          <LoadedApp
-            initialState={{
-              fullStateResponse: await props.remote.getFullState(),
-              toolbarShown: server ? (await server.getToolbarState()).shown : true,
-              tutorialFinished: await props.remote.getTutorialFinished(),
-              urlHash: window?.location?.hash ?? "",
-            }}
-            remote={props.remote}
-            openExternalUrl={props.openExternalUrl}
-            username={username}
-          />
-        </ExternalLinkProvider>,
+        <LoadedApp
+          initialState={{
+            fullStateResponse: await props.remote.getFullState(),
+            toolbarShown: server ? (await server.getToolbarState()).shown : true,
+            tutorialFinished: await props.remote.getTutorialFinished(),
+            urlHash: window?.location?.hash ?? "",
+          }}
+          remote={props.remote}
+          openExternalUrl={props.openExternalUrl ?? ((url: string) => window.open(url, "_blank"))}
+          username={username}
+        />,
       );
     })();
   }, []);
@@ -367,52 +369,8 @@ function AppWithRemote(props: {
   return rendered;
 }
 
-function MainView(props: {view: ReturnType<typeof A.view>; send(event: A.Event): void}) {
-  return props.view.tab === "orphans" ? (
-    <OrphanList view={props.view} send={props.send} />
-  ) : (
-    <Outline outline={props.view} send={props.send} />
-  );
+export function User(props: {remote: Server}) {
+  return <UserPage server={props.remote} />;
 }
 
-// ==
-
-export function LocalApp(props: {
-  storage: Storage;
-  ExternalLink: ExternalLinkType;
-  openExternalUrl: (url: string) => void;
-}) {
-  return (
-    <AppWithRemote
-      remote={props.storage}
-      openExternalUrl={props.openExternalUrl}
-      ExternalLink={props.ExternalLink}
-    />
-  );
-}
-
-type AppArgs = {apiHost: string} | {remote: Storage | Server};
-
-export type RemoteStorage = Storage;
-export type RemoteServer = Server;
-export type RemoteServerError = ServerError;
-
-export function App(args: AppArgs) {
-  if ("apiHost" in args) {
-    const server = React.useMemo(() => new ApiHostServer({apiHost: args.apiHost}), []);
-    return <AppWithRemote remote={server} openExternalUrl={(url) => window.open(url, "_blank")} />;
-  } else {
-    return <AppWithRemote remote={args.remote} openExternalUrl={(url) => window.open(url, "_blank")} />;
-  }
-}
-
-export function Demo(props: {data: Communication.FullStateResponse}) {
-  return <AppWithRemote remote={Sto.ignore(props.data)} openExternalUrl={(url) => window.open(url, "_blank")} />;
-}
-
-export function User(props: {apiHost: string}) {
-  return <UserPage server={new ApiHostServer({apiHost: props.apiHost})} />;
-}
-
-export * as Storage from "./sync/storage";
 export {Communication} from "@thinktool/shared";

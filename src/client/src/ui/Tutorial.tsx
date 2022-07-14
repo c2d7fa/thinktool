@@ -29,7 +29,7 @@ export default function TutorialBox(props: {tutorial: U.View; send: A.Send}) {
       ) : props.tutorial.step === "Navigation" ? (
         <StepStayingFocused goals={props.tutorial.goals} />
       ) : props.tutorial.step === "The end" ? (
-        <StepHaveFun />
+        <StepHaveFun send={props.send} />
       ) : (
         <p>An error happened while loading the tutorial!</p>
       )}
@@ -242,7 +242,7 @@ function StepStayingFocused(props: {goals: Goals}) {
   );
 }
 
-function StepHaveFun() {
+function StepHaveFun(props: {send: A.Send}) {
   return (
     <>
       <p>
@@ -254,12 +254,17 @@ function StepHaveFun() {
       </p>
       <p>
         If you have any questions, feedback or other comments, post them to{" "}
-        <ExternalLink href="https://old.reddit.com/r/thinktool/">the subreddit</ExternalLink>, which you can always
-        get to by pressing <FakeButton icon="forum" label="Forum" />.
+        <ExternalLink send={props.send} href="https://old.reddit.com/r/thinktool/">
+          the subreddit
+        </ExternalLink>
+        , which you can always get to by pressing <FakeButton icon="forum" label="Forum" />.
       </p>
       <p>
         If you prefer, you are also welcome to email me directly at{" "}
-        <ExternalLink href="mailto:jonas@thinktool.io">jonas@thinktool.io</ExternalLink>.
+        <ExternalLink send={props.send} href="mailto:jonas@thinktool.io">
+          jonas@thinktool.io
+        </ExternalLink>
+        .
       </p>
       <p>
         <i>Thanks for trying out Thinktool!</i>

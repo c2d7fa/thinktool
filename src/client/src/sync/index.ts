@@ -76,10 +76,6 @@ export function storedStateFromApp(app: A.App): StoredState {
   };
 }
 
-export async function loadStoredStateFromStorage(storage: Storage): Promise<StoredState> {
-  return {fullStateResponse: await storage.getFullState(), tutorialFinished: await storage.getTutorialFinished()};
-}
-
 export function loadAppFromStoredState(storedState: StoredState): A.App {
   return A.initialize({
     fullStateResponse: storedState.fullStateResponse,

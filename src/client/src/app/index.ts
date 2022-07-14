@@ -24,6 +24,8 @@ const _syncDialog = Symbol("syncDialog");
 const _toolbarShown = Symbol("toolbarShown");
 const _lastSyncedState = Symbol("lastSyncedState");
 
+export type StoredState = Sy.StoredState;
+
 export interface App {
   state: D.State;
   tutorialState: Tutorial.State;
@@ -38,7 +40,7 @@ export interface App {
   [_isOnline]: boolean;
   [_syncDialog]: Sy.Dialog.State;
   [_toolbarShown]: boolean;
-  [_lastSyncedState]: Sy.StoredState;
+  [_lastSyncedState]: StoredState;
 }
 
 export type UpdateApp = (f: (app: App) => App) => void;
@@ -228,7 +230,7 @@ function serverDisconnected(app: App): App {
   return {...app, [_isOnline]: false};
 }
 
-function serverReconnected(app: App, remoteState: Sy.StoredState): App {
+function serverReconnected(app: App, remoteState: StoredState): App {
   if (!isDisconnected(app)) return app;
   const syncDialog = Sy.Dialog.initialize({local: Sy.storedStateFromApp(app), remote: remoteState});
   return {...app, [_isOnline]: true, [_syncDialog]: syncDialog};
@@ -275,10 +277,11 @@ export type Event =
   | {type: "syncDialogSelect"; option: "commit" | "abort"}
   | {type: "flushChanges"}
   | {type: "serverDisconnected"}
+  | {type: "followExternalLink"; href: string}
   | {type: "receivedChanges"; changes: {thing: string; data: Communication.ThingData | null}[]}
   | (
       | {type: "serverPingResponse"; result: "failed"}
-      | {type: "serverPingResponse"; result: "success"; remoteState: Sy.StoredState}
+      | {type: "serverPingResponse"; result: "success"; remoteState: StoredState}
     )
   | Tutorial.Event;
 
@@ -372,6 +375,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
       app: {...app, [_lastSyncedState]: Sy.storedStateFromApp(app)},
       effects: changesNonEmpty ? {changes} : {},
     };
+  } else if (event.type === "followExternalLink") {
+    return {app, effects: {url: event.href}};
   } else if (event.topic === "tutorial") {
     return {app: merge(app, {tutorialState: Tutorial.update(app.tutorialState, event)})};
   } else {

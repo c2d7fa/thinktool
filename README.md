@@ -91,6 +91,11 @@ Then enter the `src/desktop` directory and run `yarn install --frozen-lockfile`.
 Build the Linux client with `yarn bundle-linux` or the Windows client with
 `yarn bundle-windows`.
 
+When developing the desktop client, you can use this command to somewhat hackily
+use the local build of the client package:
+
+    cp -r ../client/dist/* node_modules/@thinktool/client/dist/ && yarn bundle-linux
+
 ### Server
 
 The server uses a PostgreSQL database. Set the following environment variables
@@ -132,6 +137,11 @@ Once you have the `thinktool` image, run it with the environment variables given
 The website is built using [NextJS](https://nextjs.org/) and hosted using
 [Vercel](https://vercel.com/). It is automatically rebuilt from the `src/web`
 directory whenever the `website` branch is pushed.
+
+As with the desktop client, there is a hacky solution for using the current
+local client package build while working on the website:
+
+    cp -r ../client/dist/* node_modules/@thinktool/client/dist/ && rm -r .next && yarn dev
 
 ## Development
 

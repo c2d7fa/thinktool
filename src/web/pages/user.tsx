@@ -2,6 +2,8 @@ import Head from "next/head";
 
 import * as React from "react";
 
+import {ApiHostServer} from "../lib/server-api";
+
 export async function getStaticProps() {
   return {props: {apiHost: process.env.DIAFORM_API_HOST}};
 }
@@ -11,7 +13,7 @@ export default function User(props: {apiHost: string}) {
 
   React.useEffect(() => {
     import("@thinktool/client").then((Thinktool) => {
-      setMainElement(<Thinktool.User apiHost={props.apiHost} />);
+      setMainElement(<Thinktool.User remote={new ApiHostServer({apiHost: props.apiHost})} />);
     });
   }, []);
 

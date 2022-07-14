@@ -30,7 +30,7 @@ export function TopBar(props: {
   return (
     <div className={styles.topBar}>
       <div className={styles.left}>
-        <ExternalLink className={styles.logo} href="/">
+        <ExternalLink send={props.send} className={styles.logo} href="/">
           Thinktool
         </ExternalLink>
         <button onClick={() => props.onToggleToolbar()}>
@@ -43,7 +43,7 @@ export function TopBar(props: {
       <div className={styles.right}>
         {props.login && (
           <div className={styles.currentUser}>
-            <ExternalLink className={styles.username} href="/user">
+            <ExternalLink send={props.send} className={styles.username} href="/user">
               <Icons.IconLabel icon="user">{props.login.username}</Icons.IconLabel>
             </ExternalLink>
             <a href={props.login.logOutUrl}>
