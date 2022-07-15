@@ -22,7 +22,6 @@ export {
   otherParents,
   transformFullStateResponseIntoState,
   transformStateIntoFullStateResponse,
-  diff,
 } from "./data/core";
 
 export {Content, references, backreferences, contentText, contentEq} from "./data/content";

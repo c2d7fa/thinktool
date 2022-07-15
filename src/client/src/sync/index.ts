@@ -88,27 +88,35 @@ export function loadAppFromStoredState(storedState: StoredState): A.App {
 // Return changes that must be applied to bring the stored state from 'from' to
 // 'to'.
 export function changes(from: StoredState, to: StoredState): Changes {
-  const fromState = D.transformFullStateResponseIntoState(from.fullStateResponse);
-  const toState = D.transformFullStateResponseIntoState(to.fullStateResponse);
+  let allThings = new Set<string>();
+  const fromMap = new Map<string, StoredState["fullStateResponse"]["things"][number]>();
+  const toMap = new Map<string, StoredState["fullStateResponse"]["things"][number]>();
 
-  const diff = D.diff(fromState, toState);
+  for (const thing of from.fullStateResponse.things) {
+    fromMap.set(thing.name, thing);
+    allThings.add(thing.name);
+  }
 
-  const deleted = diff.deleted;
+  for (const thing of to.fullStateResponse.things) {
+    toMap.set(thing.name, thing);
+    allThings.add(thing.name);
+  }
 
-  const edited = diff.changedContent.map((thing) => ({
-    thing,
-    content: D.content(toState, thing),
-  }));
+  let deleted: string[] = [];
+  let edited: Changes["edited"] = [];
+  let updated: Changes["updated"] = [];
 
-  let updated = [...diff.added, ...diff.changed].map((thing) => ({
-    name: thing,
-    content: D.content(toState, thing),
-    children: D.childConnections(toState, thing).map((c) => ({
-      name: c.connectionId,
-      child: D.connectionChild(toState, c)!,
-    })),
-    isPage: false,
-  }));
+  for (const name of allThings) {
+    const fromThing = fromMap.get(name);
+    const toThing = toMap.get(name);
+
+    if (fromThing === undefined) updated.push(toThing!);
+    else if (toThing === undefined) deleted.push(name);
+    else if (JSON.stringify(fromThing) === JSON.stringify(toThing)) continue;
+    else if (JSON.stringify(fromThing?.children) === JSON.stringify(toThing?.children))
+      edited.push({thing: name, content: toThing!.content});
+    else updated.push(toThing!);
+  }
 
   const tutorialFinished = from.tutorialFinished !== to.tutorialFinished ? to.tutorialFinished : null;
 
