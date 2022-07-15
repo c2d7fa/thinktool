@@ -91,10 +91,10 @@
   dependencies:
     defer-to-connect "^1.0.1"
 
-"@thinktool/client@^5.0.0":
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/@thinktool/client/-/client-5.0.0.tgz#a546ba38d1e1b5086074dd2bbb2835591be4f99a"
-  integrity sha512-hYQLprhn+dfQpA5MRfYwcKC3r1y3FzhKEHmMFiD5qX0NqN08emIJCh19m6LkSaMsrsvTPYiUWW0Hhk8872FDkg==
+"@thinktool/client@^5.0.1":
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/@thinktool/client/-/client-5.0.1.tgz#40d8f6a0ab3d58f312682a276e7153fef8847217"
+  integrity sha512-kWBXn1RAwx1PQi4uRwMWaouc+vO8YnNb1Duxm4gZYNRzTRWvK+/rOeoy3DVP84M72sHqDba+i6zFoXYUGeO9DA==
   dependencies:
     "@johv/immutable-extras" "^1.1.1"
     "@johv/miscjs" "^1.7.1"
