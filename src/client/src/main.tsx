@@ -12,7 +12,6 @@ import * as A from "./app";
 import * as Toolbar from "./ui/Toolbar";
 import TutorialBox from "./ui/Tutorial";
 import Changelog from "./ui/Changelog";
-import Splash from "./ui/Splash";
 import UserPage from "./ui/UserPage";
 import {login, TopBar} from "./ui/TopBar";
 import {OfflineIndicator} from "./offline-indicator";
@@ -289,8 +288,6 @@ function LoadedApp({
 
   const appElementRef = React.useRef<HTMLDivElement>(null);
 
-  const [showSplash, setShowSplash] = React.useState<boolean>(Tutorial.isActive(app.tutorialState));
-
   const onFocusBackground = React.useCallback(
     (ev: React.FocusEvent) => {
       if (ev.target === appElementRef.current) send({type: "unfocus"});
@@ -316,10 +313,9 @@ function LoadedApp({
         />
         <Toolbar.Toolbar send={send} toolbar={view_.toolbar} />
       </div>
-      {!showSplash && <TutorialBox tutorial={view_.tutorial} send={send} />}
+      <TutorialBox tutorial={view_.tutorial} send={send} />
       <Changelog changelog={ChangelogData} visible={app.changelogShown} send={send} />
       <MainView view={view_} send={send} />
-      {showSplash && ReactDOM.createPortal(<Splash splashCompleted={() => setShowSplash(false)} />, document.body)}
     </div>
   );
 }
