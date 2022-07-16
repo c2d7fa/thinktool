@@ -210,9 +210,7 @@ function StepStayingFocused(props: {goals: Goals}) {
         show you just that item and all its parents, children and references.
       </p>
       <p>
-        <p>
-          <G.EmbeddedGoal id="jump-item" goals={props.goals} />
-        </p>
+        <G.EmbeddedGoal id="jump-item" goals={props.goals} />
       </p>
       <p>You can use the back button in your browser to go back.</p>
       <p>

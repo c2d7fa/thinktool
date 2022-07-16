@@ -9,6 +9,7 @@ export function ExternalLink(props: {
 }): JSX.Element {
   const attrs: any = {...props};
   delete attrs.href;
+  delete attrs.send;
   return (
     <a
       {...attrs}
