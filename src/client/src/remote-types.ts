@@ -1,5 +1,19 @@
 import {Communication} from "@thinktool/shared";
 
+export type SerializableGraphState = {
+  content: {[itemId: string]: {content: Communication.Content}};
+  child: {[connectionId: string]: {parent: string; child: string}};
+  itemDeleted: {[itemId: string]: {deleted: boolean}};
+  connectionDeleted: {[connectionId: string]: {deleted: boolean}};
+};
+
+export type SerializableAppState = SerializableGraphState & {
+  tutorialFinished: boolean;
+  toolbarShown: boolean;
+};
+
+export type SerializableAppUpdate = Partial<SerializableAppState>;
+
 export type ServerError = {error: "disconnected"} | {error: "error"; status: number};
 
 export interface Storage {
