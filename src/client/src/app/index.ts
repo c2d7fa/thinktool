@@ -29,8 +29,6 @@ const _syncDialog = Symbol("syncDialog");
 const _toolbarShown = Symbol("toolbarShown");
 const _lastSyncedState = Symbol("lastSyncedState");
 
-export type StoredState = Sy.StoredState;
-
 export interface App {
   state: D.State;
   tutorialState: Tutorial.State;
@@ -230,10 +228,8 @@ function serverDisconnected(app: App): App {
   return {...app, [_isOnline]: false};
 }
 
-function serverReconnected(app: App, remoteState: StoredState): App {
-  if (!isDisconnected(app)) return app;
-  const syncDialog = Sy.Dialog.initialize({local: Sy.storedStateFromApp(app), remote: remoteState});
-  return {...app, [_isOnline]: true, [_syncDialog]: syncDialog};
+function serverReconnected(app: App, remoteState: SerializableAppState): App {
+  return app;
 }
 
 export function syncDialog(app: App): Sy.Dialog.State | null {
@@ -246,9 +242,7 @@ function syncDialogSelect(app: App, option: "commit" | "abort"): App {
     return app;
   }
 
-  return Sy.loadAppFromStoredState(
-    Sy.Dialog.storedStateAfter(app[_syncDialog] as Sy.Dialog.State & {shown: true}, option),
-  );
+  return app;
 }
 
 function isDisconnected(app: App): boolean {
@@ -281,7 +275,7 @@ export type Event =
   | {type: "receivedUpdates"; update: SerializableAppUpdate}
   | (
       | {type: "serverPingResponse"; result: "failed"}
-      | {type: "serverPingResponse"; result: "success"; remoteState: StoredState}
+      | {type: "serverPingResponse"; result: "success"; remoteState: SerializableAppState}
     )
   | Tutorial.Event;
 
