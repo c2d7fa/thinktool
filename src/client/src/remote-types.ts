@@ -14,31 +14,29 @@ export type SerializableAppState = SerializableGraphState & {
 
 export type SerializableAppUpdate = Partial<SerializableAppState>;
 
+export type SerializableAccountState = {
+  username: boolean;
+  logOutUrl: string;
+  email: string;
+};
+
+export type SerializableAccountUpdate = {
+  email?: string;
+  password?: string;
+  deleteAccount?: {account: string};
+};
+
 export type ServerError = {error: "disconnected"} | {error: "error"; status: number};
 
 export interface Storage {
-  getFullState(): Promise<Communication.FullStateResponse>;
-  setContent(thing: string, content: Communication.Content): Promise<void>;
-  deleteThing(thing: string): Promise<void>;
-  updateThings(
-    things: {name: string; content: Communication.Content; children: {name: string; child: string}[]}[],
-  ): Promise<void>;
-  getTutorialFinished(): Promise<boolean>;
-  setTutorialFinished(): Promise<void>;
+  load(): Promise<SerializableAppState | null>;
+  push(update: SerializableAppUpdate): Promise<null | ServerError>;
 }
 
 export interface Server extends Storage {
-  onError(handleError: (error: ServerError) => void): Promise<void>;
-  getUsername(): Promise<string | null>;
-  onChanges(callback: (changes: string[]) => void): () => void;
-  getThingData(thing: string): Promise<Communication.ThingData | null>;
-  deleteAccount(account: string): Promise<void>;
-  getEmail(): Promise<string>;
-  setEmail(email: string): Promise<void>;
-  setPassword(password: string): Promise<void>;
-  setToolbarState({shown}: {shown: boolean}): Promise<void>;
-  getToolbarState(): Promise<{shown: boolean}>;
-  logOutUrl: string;
+  loadAccount(): Promise<SerializableAccountState | null>;
+  pushAccount(update: SerializableAccountUpdate): Promise<ServerError | null>;
+  subscribe(callback: (update: SerializableAppUpdate) => void): () => void;
 }
 
 export function isStorageServer(storage: Storage | Server): storage is Server {
