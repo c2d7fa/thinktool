@@ -934,7 +934,7 @@ describe("changing the URL", () => {
 });
 
 describe("storage synchronization", () => {
-  describe("example with updates, deletions and edits", () => {
+  describe("example with edits", () => {
     const step1 = W.of({
       "0": {content: ["Root"], children: ["1", "2"]},
       "1": {content: ["Child 1"]},
@@ -952,6 +952,58 @@ describe("storage synchronization", () => {
         edited: [{thing: "0", content: ["Edited root item"]}],
         updated: [],
         tutorialFinished: null,
+      });
+    });
+  });
+
+  describe("when indenting item, the connection ID remains stable", () => {
+    const step1 = W.from(
+      A.initialize({
+        fullStateResponse: {
+          things: [
+            {
+              name: "0",
+              content: ["Item 0"],
+              children: [
+                {name: "c1", child: "1"},
+                {name: "c2", child: "2"},
+              ],
+            },
+            {name: "1", content: ["Item 1"], children: []},
+            {name: "2", content: ["Item 2"], children: []},
+          ],
+        },
+        toolbarShown: true,
+        tutorialFinished: true,
+        urlHash: "",
+      }),
+    );
+
+    const step2 = step1.root.child(1)?.action("indent")!;
+
+    test("indenting item had the expected effect locally", () => {
+      expect(step1.root.childrenContents).toEqual([["Item 1"], ["Item 2"]]);
+
+      expect(step2.root.childrenContents).toEqual([["Item 1"]]);
+      expect(step2.root.child(0)?.childrenContents).toEqual([["Item 2"]]);
+    });
+
+    const [step3, step3e] = step2.send({type: "flushChanges"}).effects();
+
+    describe("the changes that are pushed to the server", () => {
+      const changes = step3e.changes!;
+
+      test("no items are deleted or edited", () => {
+        expect(changes.deleted).toEqual([]);
+        expect(changes.edited).toEqual([]);
+      });
+
+      test("there are two updates, one for the root and one for the new parent", () => {
+        expect(changes.updated.map((c) => c.name)).toEqual(["0", "1"]);
+      });
+
+      test.skip("the new parent has a child connection with the original connection ID", () => {
+        expect(changes.updated[1].children).toEqual([{name: "c1", child: "2"}]);
       });
     });
   });
