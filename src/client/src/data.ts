@@ -93,7 +93,7 @@ export function allThings(state: State): string[] {
   return Object.keys(state._things);
 }
 
-export function connectionParent(state: State, connection: Connection): string | undefined {
+function connectionParent(state: State, connection: Connection): string | undefined {
   return state._connections[connection.connectionId]?.parent;
 }
 
@@ -271,7 +271,7 @@ export function create(state: State, customId?: string): [State, string] {
   return [{...state, _things: {...state._things, [newId]: {content: [], children: [], parents: []}}}, newId];
 }
 
-export function forget(state: State, thing: string): State {
+function forget(state: State, thing: string): State {
   // It should not be possible to permanently remove the root item.
   if (thing === "0") return state;
 
