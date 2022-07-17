@@ -58,7 +58,7 @@ function useServerChanges(server: Server | undefined, send: A.Send) {
         }))(),
       );
       const changedThings = await Promise.all(loadThingDataTasks);
-      send({type: "receivedChanges", changes: changedThings});
+      send({type: "receivedChanges", update: changedThings});
     });
   }, [send]);
 }
@@ -147,18 +147,18 @@ function executeEffects(
       }
     }, 2000);
   }
-  if (effects.changes) {
-    console.log("Pushing changes %o", effects.changes);
-    for (const deleted of effects.changes.deleted) {
+  if (effects.update) {
+    console.log("Pushing changes %o", effects.update);
+    for (const deleted of effects.update.deleted) {
       deps.remote.deleteThing(deleted);
     }
-    if (effects.changes.updated.length > 0) {
-      deps.remote.updateThings(effects.changes.updated);
+    if (effects.update.updated.length > 0) {
+      deps.remote.updateThings(effects.update.updated);
     }
-    for (const edited of effects.changes.edited) {
+    for (const edited of effects.update.edited) {
       deps.remote.setContent(edited.thing, edited.content);
     }
-    if (effects.changes.tutorialFinished) {
+    if (effects.update.tutorialFinished) {
       deps.remote.setTutorialFinished();
     }
   }

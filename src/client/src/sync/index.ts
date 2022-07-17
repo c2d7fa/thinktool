@@ -5,67 +5,25 @@ import * as D from "../data";
 import * as T from "../tree";
 import * as Tu from "../tutorial";
 
-import type {Storage} from "../remote-types";
-
 import * as Dialog from "./dialog";
 import {FullStateResponse} from "@thinktool/shared/dist/communication";
+import {SerializableAppState, SerializableAppUpdate} from "../remote-types";
 export {Dialog};
 
-export function receiveChangedThingsFromServer(
-  app: A.App,
-  changedThings: {thing: string; data: Communication.ThingData | null | {error: unknown}}[],
-): A.App {
-  let state = app.state;
-
-  // First check for any errors.
-  for (const {thing, data} of changedThings) {
-    if (data !== null && "error" in data) {
-      console.warn("Error while reading changes from server!");
-      return A.update(app, {type: "serverDisconnected"});
-    }
-  }
-
-  // There were no errors, continue as normal:
-
-  for (const {thing, data} of changedThings) {
-    if (data === null) {
-      // Thing was deleted
-      state = D.remove(state, thing);
-      continue;
-    }
-
-    if (!D.exists(state, thing)) {
-      // A new item was created
-      state = D.create(state, thing)[0];
-    }
-
-    if ("error" in data) throw "invalid state"; // We already checked for this!
-
-    state = D.setContent(state, thing, data.content);
-
-    const nChildren = D.children(state, thing).length;
-    for (let i = 0; i < nChildren; ++i) {
-      state = D.removeChild(state, thing, 0);
-    }
-    for (const childConnection of data.children) {
-      state = D.addChild(state, thing, childConnection.child, childConnection.name)[0];
-    }
-  }
-
-  const tree = T.refresh(app.tree, state);
-  return A.merge(app, {state, tree});
+export function mergeUpdateIntoSerializable(
+  state: SerializableAppState,
+  update: SerializableAppUpdate,
+): SerializableAppState {
+  return state;
 }
 
-export type Changes = {
-  deleted: string[];
-  edited: {thing: string; content: Communication.Content}[];
-  updated: {
-    name: string;
-    content: Communication.Content;
-    children: {name: string; child: string}[];
-  }[];
-  tutorialFinished: boolean | null;
-};
+export function mergeUpdateIntoApp(app: A.App, update: SerializableAppUpdate): A.App {
+  return app;
+}
+
+export function updatesSince(lastSTate: SerializableAppState, currentApp: A.App): SerializableAppUpdate {
+  return {};
+}
 
 export type StoredState = {fullStateResponse: FullStateResponse; tutorialFinished: boolean};
 

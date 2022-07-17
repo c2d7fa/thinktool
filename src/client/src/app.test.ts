@@ -947,7 +947,7 @@ describe("storage synchronization", () => {
       .effects();
 
     test("after editing item content, flushed changes contains the edit", () => {
-      expect(step2e.changes).toEqual({
+      expect(step2e.update).toEqual({
         deleted: [],
         edited: [{thing: "0", content: ["Edited root item"]}],
         updated: [],
@@ -991,7 +991,7 @@ describe("storage synchronization", () => {
     const [step3, step3e] = step2.send({type: "flushChanges"}).effects();
 
     describe("the changes that are pushed to the server", () => {
-      const changes = step3e.changes!;
+      const changes = step3e.update!;
 
       test("no items are deleted or edited", () => {
         expect(changes.deleted).toEqual([]);
@@ -1115,7 +1115,7 @@ describe("receiving live updates from server", () => {
 
     const step2 = step1.send({
       type: "receivedChanges",
-      changes: [
+      update: [
         {
           thing: "0",
           data: {
@@ -1153,7 +1153,7 @@ describe("receiving live updates from server", () => {
 
     describe("after editing only the first client state, and then synchronizing changes simultaneously", () => {
       test("the first client pushes an update with the new content", () => {
-        expect(a2e.changes).toEqual({
+        expect(a2e.update).toEqual({
           deleted: [],
           edited: [{thing: "0", content: ["Edited root"]}],
           updated: [],
@@ -1162,7 +1162,7 @@ describe("receiving live updates from server", () => {
       });
 
       test("the second client doesn't push any changes", () => {
-        expect(b2e.changes).toBeUndefined();
+        expect(b2e.update).toBeUndefined();
       });
     });
 
@@ -1170,7 +1170,7 @@ describe("receiving live updates from server", () => {
     const [b3, b3e] = b2
       .send({
         type: "receivedChanges",
-        changes: [
+        update: [
           {
             thing: "0",
             data: {
@@ -1190,11 +1190,11 @@ describe("receiving live updates from server", () => {
       });
 
       test("the first client does not push any changes", () => {
-        expect(a3e.changes).toBeUndefined();
+        expect(a3e.update).toBeUndefined();
       });
 
       test("the second client does not push any changes", () => {
-        expect(b3e.changes).toBeUndefined();
+        expect(b3e.update).toBeUndefined();
       });
     });
   });

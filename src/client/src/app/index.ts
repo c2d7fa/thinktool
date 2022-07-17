@@ -17,7 +17,12 @@ import {GoalId} from "../goal";
 
 import * as PlaceholderItem from "../ui/PlaceholderItem";
 import * as Ac from "../actions";
-import {FullStateResponse} from "@thinktool/shared/dist/communication";
+import {
+  SerializableAccountUpdate,
+  SerializableAppState,
+  SerializableAppUpdate,
+  SerializableGraphState,
+} from "../remote-types";
 
 const _isOnline = Symbol("isOnline");
 const _syncDialog = Symbol("syncDialog");
@@ -40,7 +45,7 @@ export interface App {
   [_isOnline]: boolean;
   [_syncDialog]: Sy.Dialog.State;
   [_toolbarShown]: boolean;
-  [_lastSyncedState]: StoredState;
+  [_lastSyncedState]: SerializableAppState;
 }
 
 export type UpdateApp = (f: (app: App) => App) => void;
@@ -62,8 +67,9 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     [_syncDialog]: Sy.Dialog.hidden,
     [_toolbarShown]: true,
     [_lastSyncedState]: {
-      fullStateResponse: D.transformStateIntoFullStateResponse(data),
+      ...D.serializeGraph(data),
       tutorialFinished: options?.tutorialFinished ?? false,
+      toolbarShown: true,
     },
   };
 }
@@ -72,45 +78,39 @@ export {itemFromNode} from "./item";
 
 export type ItemGraph = {[id: string]: {content?: D.Content; children?: string[]}};
 
-function itemGraphToFullStateResponse(itemGraph: ItemGraph): FullStateResponse {
-  let i = 0;
-
+function itemGraphToSerializableGraph(itemGraph: ItemGraph): SerializableGraphState {
   return {
-    things: Object.keys(itemGraph).map((id) => ({
-      name: id,
-      content: itemGraph[id].content ?? ["Item " + id],
-      children: (itemGraph[id].children ?? []).map((child) => ({name: `${id}.${i++}`, child: child})),
-    })),
+    child: {},
+    connectionDeleted: {},
+    content: {},
+    itemDeleted: {},
   };
 }
 
 export function of(items: ItemGraph): App {
   return initialize({
-    fullStateResponse: itemGraphToFullStateResponse(items),
+    ...itemGraphToSerializableGraph(items),
     urlHash: null,
     tutorialFinished: false,
     toolbarShown: true,
   });
 }
 
-export type InitialState = {
+export type InitialState = SerializableAppState & {
   urlHash: string | null;
-  fullStateResponse: FullStateResponse;
-  tutorialFinished: boolean;
-  toolbarShown: boolean;
 };
 
 export function initialize(data: InitialState): App {
   function parseThingFromUrlHash(hash: string): string {
     const thingName = hash.slice(1);
-    if (data.fullStateResponse.things.find((thing) => thing.name === thingName)) {
+    if (data.content[thingName] !== undefined) {
       return thingName;
     } else {
       return "0";
     }
   }
 
-  const state = D.transformFullStateResponseIntoState(data.fullStateResponse);
+  const state = D.deserializeGraph(data);
   let result = from(state, T.fromRoot(state, "0"), {tutorialFinished: data.tutorialFinished});
   result = jump(result, parseThingFromUrlHash(data.urlHash ?? "#0"));
   if (!data.toolbarShown) result = update(result, {type: "toggleToolbar"});
@@ -275,10 +275,10 @@ export type Event =
   | {type: "searchResponse"; things: string[]}
   | {type: "urlChanged"; hash: string}
   | {type: "syncDialogSelect"; option: "commit" | "abort"}
-  | {type: "flushChanges"}
+  | {type: "flushUpdates"}
   | {type: "serverDisconnected"}
   | {type: "followExternalLink"; href: string}
-  | {type: "receivedChanges"; changes: {thing: string; data: Communication.ThingData | null}[]}
+  | {type: "receivedUpdates"; update: SerializableAppUpdate}
   | (
       | {type: "serverPingResponse"; result: "failed"}
       | {type: "serverPingResponse"; result: "success"; remoteState: StoredState}
@@ -289,7 +289,7 @@ export type Effects = {
   search?: {items?: {thing: string; content: string}[]; query: string};
   url?: string;
   tryReconnect?: boolean;
-  changes?: Sy.Changes;
+  update?: SerializableAppUpdate;
 };
 
 function unreachable(x: never): never {
@@ -355,25 +355,24 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
     return P.handle(app, event);
   } else if (event.type === "serverDisconnected") {
     return {app: serverDisconnected(app), effects: isDisconnected(app) ? {} : {tryReconnect: true}};
-  } else if (event.type === "receivedChanges") {
-    const app1 = {...Sy.receiveChangedThingsFromServer(app, event.changes)};
-    const app2 = {...app1, [_lastSyncedState]: Sy.storedStateFromApp(app1)};
+  } else if (event.type === "receivedUpdates") {
+    const app1 = {...Sy.mergeUpdateIntoApp(app, event.update)};
+    const app2 = {
+      ...app1,
+      [_lastSyncedState]: Sy.mergeUpdateIntoSerializable(app1[_lastSyncedState], event.update),
+    };
     return {app: app2};
   } else if (event.type === "serverPingResponse") {
     return {
       app: event.result === "failed" ? app : serverReconnected(app, event.remoteState),
       effects: {tryReconnect: event.result === "failed"},
     };
-  } else if (event.type === "flushChanges") {
-    const changes = Sy.changes(app[_lastSyncedState], Sy.storedStateFromApp(app));
-    const changesNonEmpty =
-      changes.deleted.length > 0 ||
-      changes.updated.length > 0 ||
-      changes.edited.length > 0 ||
-      changes.tutorialFinished !== null;
+  } else if (event.type === "flushUpdates") {
+    const updates = Sy.updatesSince(app[_lastSyncedState], app);
+    const changesNonEmpty = Object.keys(updates).length > 0;
     return {
-      app: {...app, [_lastSyncedState]: Sy.storedStateFromApp(app)},
-      effects: changesNonEmpty ? {changes} : {},
+      app: {...app, [_lastSyncedState]: Sy.mergeUpdateIntoSerializable(app[_lastSyncedState], updates)},
+      effects: changesNonEmpty ? {update: updates} : {},
     };
   } else if (event.type === "followExternalLink") {
     return {app, effects: {url: event.href}};
