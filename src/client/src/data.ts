@@ -3,7 +3,7 @@ import * as Immutable from "immutable";
 import {BinaryRelation} from "@johv/immutable-extras";
 
 import * as Shared from "@thinktool/shared";
-type FullStateResponse = Shared.Communication.FullStateResponse;
+import {SerializableGraphState} from "./remote-types";
 
 export type Connection = {connectionId: string};
 
@@ -352,51 +352,21 @@ export function otherParents(state: State, child: string, parent?: string): stri
   return parents(state, child).filter((p) => p !== parent);
 }
 
-export function transformFullStateResponseIntoState(response: FullStateResponse): State {
-  if (response.things.length === 0) return empty;
-
-  // Re-initializing empty state so we can mutate it in this function for
-  // performance reasons.
-  let state: State = {
+export function deserializeGraph(serialized: SerializableGraphState): State {
+  return {
     _things: {"0": {content: [""], children: [], parents: []}},
     _connections: {},
     _links: BinaryRelation<string, string>(),
   };
-
-  for (const thing of response.things) {
-    if (!state._things[thing.name]) state._things[thing.name] = {children: [], content: [], parents: []};
-    state._things[thing.name]!.content = [];
-    state = setContent(state, thing.name, thing.content);
-    for (const connection of thing.children) {
-      state._connections[connection.name] = {parent: thing.name, child: connection.child};
-      if (!state._things[connection.child])
-        state._things[connection.child] = {children: [], content: [], parents: []};
-      if (!state._things[connection.child]!.parents.map((p) => p.connectionId).includes(connection.name))
-        state._things[connection.child]!.parents.push({connectionId: connection.name});
-      if (!state._things[thing.name]!.children.map((p) => p.connectionId).includes(connection.name))
-        state._things[thing.name]!.children.push({connectionId: connection.name});
-    }
-  }
-
-  return state;
 }
 
-export function transformStateIntoFullStateResponse(state: State): FullStateResponse {
-  const things: FullStateResponse["things"] = [];
-
-  for (const name in state._things) {
-    const thing = state._things[name]!;
-    things.push({
-      name,
-      content: thing.content,
-      children: thing.children.map((c) => ({
-        name: c.connectionId,
-        child: state._connections[c.connectionId]!.child,
-      })),
-    });
-  }
-
-  return {things};
+export function serializeGraph(state: State): SerializableGraphState {
+  return {
+    child: {},
+    connectionDeleted: {},
+    content: {},
+    itemDeleted: {},
+  };
 }
 
 export function root(state: State): string {
