@@ -1002,8 +1002,8 @@ describe("storage synchronization", () => {
         expect(changes.updated.map((c) => c.name)).toEqual(["0", "1"]);
       });
 
-      test.skip("the new parent has a child connection with the original connection ID", () => {
-        expect(changes.updated[1].children).toEqual([{name: "c1", child: "2"}]);
+      test("the new parent has a child connection with the original connection ID", () => {
+        expect(changes.updated[1].children).toEqual([{name: "c2", child: "2"}]);
       });
     });
   });

@@ -411,12 +411,13 @@ export function move(state: D.State, tree: Tree, node: NodeRef, destination: Des
     newTree = expand(newState, newTree, destination.parent);
   }
 
-  newState = D.removeChild(newState, thing(tree, parent_), indexInParent(tree, node)!);
-  const [newState_, newConnection] = D.insertChild(
+  const [newState_, newConnection] = D.moveChild(
     newState,
-    thing(tree, destination.parent),
-    thing(tree, node),
-    destination.index,
+    {parent: thing(tree, parent_), index: indexInParent(tree, node)!},
+    {
+      parent: thing(newTree, destination.parent),
+      index: destination.index,
+    },
   );
   newState = newState_;
 

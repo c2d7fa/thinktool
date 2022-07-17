@@ -248,6 +248,24 @@ export function removeChild(state: State, parent: string, index: number): State 
   return result;
 }
 
+export function moveChild(
+  state: State,
+  from: {parent: string; index: number},
+  to: {parent: string; index: number},
+): [State, Connection] {
+  const removedConnection = childConnections(state, from.parent)[from.index];
+
+  const state1 = removeChild(state, from.parent, from.index);
+  const [state2, connection] = insertChild(
+    state1,
+    to.parent,
+    connectionChild(state, removedConnection)!,
+    to.index,
+    removedConnection.connectionId,
+  );
+  return [state2, connection];
+}
+
 export function create(state: State, customId?: string): [State, string] {
   const newId = customId ?? generateShortId();
   return [{...state, _things: {...state._things, [newId]: {content: [], children: [], parents: []}}}, newId];
