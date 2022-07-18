@@ -353,9 +353,8 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   } else if (event.type === "serverDisconnected") {
     return {app: serverDisconnected(app), effects: isDisconnected(app) ? {} : {tryReconnect: true}};
   } else if (event.type === "receivedChanges") {
-    const app1 = {...Sy.receiveChangedThingsFromServer(app, event.changes)};
-    const app2 = {...app1, [_lastSyncedState]: Sy.storedStateFromApp(app1)};
-    return {app: app2};
+    const newStoredState = Sy.applyChanges(Sy.storedStateFromApp(app), Sy.translateServerChanges(event.changes));
+    return {app: {...Sy.loadAppFromStoredState(newStoredState), [_lastSyncedState]: newStoredState}};
   } else if (event.type === "serverPingResponse") {
     return {
       app: event.result === "failed" ? app : serverReconnected(app, event.remoteState),

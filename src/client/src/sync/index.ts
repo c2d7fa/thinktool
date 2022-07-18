@@ -2,57 +2,11 @@ import {Communication} from "@thinktool/shared";
 
 import * as A from "../app";
 import * as D from "../data";
-import * as T from "../tree";
 import * as Tu from "../tutorial";
 
 import * as Dialog from "./dialog";
 import {FullStateResponse} from "@thinktool/shared/dist/communication";
 export {Dialog};
-
-export function receiveChangedThingsFromServer(
-  app: A.App,
-  changedThings: {thing: string; data: Communication.ThingData | null | {error: unknown}}[],
-): A.App {
-  let state = app.state;
-
-  // First check for any errors.
-  for (const {thing, data} of changedThings) {
-    if (data !== null && "error" in data) {
-      console.warn("Error while reading changes from server!");
-      return A.update(app, {type: "serverDisconnected"});
-    }
-  }
-
-  // There were no errors, continue as normal:
-
-  for (const {thing, data} of changedThings) {
-    if (data === null) {
-      // Thing was deleted
-      state = D.remove(state, thing);
-      continue;
-    }
-
-    if (!D.exists(state, thing)) {
-      // A new item was created
-      state = D.create(state, thing)[0];
-    }
-
-    if ("error" in data) throw "invalid state"; // We already checked for this!
-
-    state = D.setContent(state, thing, data.content);
-
-    const nChildren = D.children(state, thing).length;
-    for (let i = 0; i < nChildren; ++i) {
-      state = D.removeChild(state, thing, 0);
-    }
-    for (const childConnection of data.children) {
-      state = D.addChild(state, thing, childConnection.child, childConnection.name)[0];
-    }
-  }
-
-  const tree = T.refresh(app.tree, state);
-  return A.merge(app, {state, tree});
-}
 
 export type Changes = {
   deleted: string[];
@@ -107,19 +61,51 @@ export function applyChanges(state: StoredState, changes: Changes): StoredState 
   }
 
   for (const thing of changes.deleted) {
-    result.fullStateResponse.things = result.fullStateResponse.things.filter((thing_) => thing_.name !== thing);
+    result = {
+      ...result,
+      fullStateResponse: {
+        things: {
+          ...result.fullStateResponse.things.filter((thing_) => thing_.name !== thing),
+        },
+      },
+    };
   }
 
   for (const {thing, content} of changes.edited) {
-    result.fullStateResponse.things = result.fullStateResponse.things.map((thing_) =>
-      thing_.name === thing ? {...thing_, content} : thing_,
-    );
+    result = {
+      ...result,
+      fullStateResponse: {
+        things: result.fullStateResponse.things.map((thing_) =>
+          thing_.name === thing ? {...thing_, content} : thing_,
+        ),
+      },
+    };
   }
 
   for (const {name, content, children} of changes.updated) {
-    result.fullStateResponse.things = result.fullStateResponse.things.map((thing_) =>
-      thing_.name === name ? {name, content, children} : thing_,
-    );
+    let found = false;
+    result = {
+      ...result,
+      fullStateResponse: {
+        things: result.fullStateResponse.things.map((thing_) => {
+          if (thing_.name === name) {
+            found = true;
+            return {...thing_, content, children};
+          } else {
+            return thing_;
+          }
+        }),
+      },
+    };
+
+    if (!found) {
+      result = {
+        ...result,
+        fullStateResponse: {
+          things: [...result.fullStateResponse.things, {name, content, children}],
+        },
+      };
+    }
   }
 
   return result;
@@ -166,4 +152,27 @@ export function changes(from: StoredState, to: StoredState): Changes {
     updated,
     tutorialFinished,
   };
+}
+
+export function translateServerChanges(
+  changedThings: {thing: string; data: Communication.ThingData | null | {error: unknown}}[],
+): Changes {
+  const deleted: string[] = [];
+  const updated: Changes["updated"] = [];
+
+  for (const {thing, data} of changedThings) {
+    if (data === null) {
+      deleted.push(thing);
+      continue;
+    }
+
+    if ("error" in data) {
+      console.error("Error while reading changes from server!");
+      break;
+    }
+
+    updated.push({name: thing, content: data.content, children: data.children});
+  }
+
+  return {deleted, edited: [], updated, tutorialFinished: null};
 }
