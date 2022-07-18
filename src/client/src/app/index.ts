@@ -20,7 +20,7 @@ import * as Ac from "../actions";
 import {FullStateResponse} from "@thinktool/shared/dist/communication";
 
 const _isOnline = Symbol("isOnline");
-const _syncDialog = Symbol("syncDialog");
+const _pendingChanges = Symbol("pendingChanges");
 const _toolbarShown = Symbol("toolbarShown");
 const _lastSyncedState = Symbol("lastSyncedState");
 
@@ -38,7 +38,7 @@ export interface App {
   tab: "outline" | "orphans";
   orphans: O.OrphansState;
   [_isOnline]: boolean;
-  [_syncDialog]: Sy.Dialog.State;
+  [_pendingChanges]: Sy.Changes;
   [_toolbarShown]: boolean;
   [_lastSyncedState]: StoredState;
 }
@@ -59,7 +59,7 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     tab: "outline",
     orphans: O.empty,
     [_isOnline]: true,
-    [_syncDialog]: Sy.Dialog.hidden,
+    [_pendingChanges]: Sy.emptyChanges,
     [_toolbarShown]: true,
     [_lastSyncedState]: {
       fullStateResponse: D.transformStateIntoFullStateResponse(data),
@@ -232,23 +232,20 @@ function serverDisconnected(app: App): App {
 
 function serverReconnected(app: App, remoteState: StoredState): App {
   if (!isDisconnected(app)) return app;
-  const syncDialog = Sy.Dialog.initialize({local: Sy.storedStateFromApp(app), remote: remoteState});
-  return {...app, [_isOnline]: true, [_syncDialog]: syncDialog};
-}
-
-export function syncDialog(app: App): Sy.Dialog.State | null {
-  return app[_syncDialog];
+  return {...app, [_isOnline]: true, [_pendingChanges]: Sy.changes(Sy.storedStateFromApp(app), remoteState)};
 }
 
 function syncDialogSelect(app: App, option: "commit" | "abort"): App {
-  if (!app[_syncDialog].shown) {
+  if (!app[_pendingChanges]) {
     console.error("Tried to select sync dialog option when no dialog was open!");
     return app;
   }
 
-  return Sy.loadAppFromStoredState(
-    Sy.Dialog.storedStateAfter(app[_syncDialog] as Sy.Dialog.State & {shown: true}, option),
-  );
+  if (option === "commit") {
+    return app;
+  } else {
+    return Sy.loadAppFromStoredState(Sy.applyChanges(Sy.storedStateFromApp(app), app[_pendingChanges]));
+  }
 }
 
 function isDisconnected(app: App): boolean {
@@ -437,7 +434,7 @@ export function view(app: App): View {
     toolbar: app[_toolbarShown] ? Toolbar.viewToolbar(app) : {shown: false},
     url: {root: T.thing(app.tree, T.root(app.tree))},
     offlineIndicator: {shown: isDisconnected(app)},
-    syncDialog: Sy.Dialog.view(app[_syncDialog]),
+    syncDialog: Sy.Dialog.view(app[_pendingChanges]),
     ...(app.tab === "orphans" ? {tab: "orphans", ...O.view(app)} : {tab: "outline", ...Ou.fromApp(app)}),
   };
 }

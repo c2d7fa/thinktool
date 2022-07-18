@@ -5,8 +5,6 @@ import * as D from "../data";
 import * as T from "../tree";
 import * as Tu from "../tutorial";
 
-import type {Storage} from "../remote-types";
-
 import * as Dialog from "./dialog";
 import {FullStateResponse} from "@thinktool/shared/dist/communication";
 export {Dialog};
@@ -67,6 +65,22 @@ export type Changes = {
   tutorialFinished: boolean | null;
 };
 
+export const emptyChanges = {
+  deleted: [],
+  edited: [],
+  updated: [],
+  tutorialFinished: null,
+};
+
+export function noChanges(changes: Changes): boolean {
+  return (
+    changes.deleted.length === 0 &&
+    changes.edited.length === 0 &&
+    changes.updated.length === 0 &&
+    changes.tutorialFinished === null
+  );
+}
+
 export type StoredState = {fullStateResponse: FullStateResponse; tutorialFinished: boolean};
 
 export function storedStateFromApp(app: A.App): StoredState {
@@ -83,6 +97,32 @@ export function loadAppFromStoredState(storedState: StoredState): A.App {
     tutorialFinished: storedState.tutorialFinished,
     urlHash: "",
   });
+}
+
+export function applyChanges(state: StoredState, changes: Changes): StoredState {
+  let result = state;
+
+  if (changes.tutorialFinished !== null) {
+    result = {...result, tutorialFinished: changes.tutorialFinished};
+  }
+
+  for (const thing of changes.deleted) {
+    result.fullStateResponse.things = result.fullStateResponse.things.filter((thing_) => thing_.name !== thing);
+  }
+
+  for (const {thing, content} of changes.edited) {
+    result.fullStateResponse.things = result.fullStateResponse.things.map((thing_) =>
+      thing_.name === thing ? {...thing_, content} : thing_,
+    );
+  }
+
+  for (const {name, content, children} of changes.updated) {
+    result.fullStateResponse.things = result.fullStateResponse.things.map((thing_) =>
+      thing_.name === name ? {name, content, children} : thing_,
+    );
+  }
+
+  return result;
 }
 
 // Return changes that must be applied to bring the stored state from 'from' to
