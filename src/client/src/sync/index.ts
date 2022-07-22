@@ -6,6 +6,7 @@ import * as Tu from "../tutorial";
 
 import * as Dialog from "./dialog";
 import {FullStateResponse} from "@thinktool/shared/dist/communication";
+import {App} from "../main";
 export {Dialog};
 
 export type Changes = {
@@ -37,14 +38,14 @@ export function noChanges(changes: Changes): boolean {
 
 export type StoredState = {fullStateResponse: FullStateResponse; tutorialFinished: boolean};
 
-export function storedStateFromApp(app: A.App): StoredState {
+function storedStateFromApp(app: A.App): StoredState {
   return {
     fullStateResponse: D.transformStateIntoFullStateResponse(app.state),
     tutorialFinished: !Tu.isActive(app.tutorialState),
   };
 }
 
-export function loadAppFromStoredState(storedState: StoredState): A.App {
+function loadAppFromStoredState(storedState: StoredState): A.App {
   return A.initialize({
     fullStateResponse: storedState.fullStateResponse,
     toolbarShown: true,
@@ -53,7 +54,7 @@ export function loadAppFromStoredState(storedState: StoredState): A.App {
   });
 }
 
-export function applyChanges(state: StoredState, changes: Changes): StoredState {
+function applyChanges(state: StoredState, changes: Changes): StoredState {
   let result = state;
 
   if (changes.tutorialFinished !== null) {
@@ -113,7 +114,7 @@ export function applyChanges(state: StoredState, changes: Changes): StoredState 
 
 // Return changes that must be applied to bring the stored state from 'from' to
 // 'to'.
-export function changes(from: StoredState, to: StoredState): Changes {
+function changes(from: StoredState, to: StoredState): Changes {
   let allThings = new Set<string>();
   const fromMap = new Map<string, StoredState["fullStateResponse"]["things"][number]>();
   const toMap = new Map<string, StoredState["fullStateResponse"]["things"][number]>();
@@ -154,7 +155,7 @@ export function changes(from: StoredState, to: StoredState): Changes {
   };
 }
 
-export function translateServerChanges(
+function translateServerChanges(
   changedThings: {thing: string; data: Communication.ThingData | null | {error: unknown}}[],
 ): Changes {
   const deleted: string[] = [];
@@ -175,4 +176,28 @@ export function translateServerChanges(
   }
 
   return {deleted, edited: [], updated, tutorialFinished: null};
+}
+
+export function pendingChangesAfterReconnect(app: A.App, remoteState: StoredState): Changes {
+  return changes(storedStateFromApp(app), remoteState);
+}
+
+export function pickConflict(app: A.App, pendingChanges: Changes, choice: "commit" | "abort"): A.App {
+  if (choice === "commit") {
+    return app;
+  } else {
+    return loadAppFromStoredState(applyChanges(storedStateFromApp(app), pendingChanges));
+  }
+}
+
+export function receiveChanges(
+  app: A.App,
+  changedThings: {thing: string; data: Communication.ThingData | null | {error: unknown}}[],
+): {app: A.App; remoteState: StoredState} {
+  const remoteState = applyChanges(storedStateFromApp(app), translateServerChanges(changedThings));
+  return {app: loadAppFromStoredState(remoteState), remoteState};
+}
+
+export function pushedSync(remote: StoredState, current: A.App): {changes: Changes; remoteState: StoredState} {
+  return {changes: changes(remote, storedStateFromApp(current)), remoteState: storedStateFromApp(current)};
 }

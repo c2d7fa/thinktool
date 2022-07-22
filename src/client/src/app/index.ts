@@ -232,7 +232,7 @@ function serverDisconnected(app: App): App {
 
 function serverReconnected(app: App, remoteState: StoredState): App {
   if (!isDisconnected(app)) return app;
-  return {...app, [_isOnline]: true, [_pendingChanges]: Sy.changes(Sy.storedStateFromApp(app), remoteState)};
+  return {...app, [_isOnline]: true, [_pendingChanges]: Sy.pendingChangesAfterReconnect(app, remoteState)};
 }
 
 function syncDialogSelect(app: App, option: "commit" | "abort"): App {
@@ -241,11 +241,7 @@ function syncDialogSelect(app: App, option: "commit" | "abort"): App {
     return app;
   }
 
-  if (option === "commit") {
-    return app;
-  } else {
-    return Sy.loadAppFromStoredState(Sy.applyChanges(Sy.storedStateFromApp(app), app[_pendingChanges]));
-  }
+  return Sy.pickConflict(app, app[_pendingChanges], option);
 }
 
 function isDisconnected(app: App): boolean {
@@ -353,23 +349,19 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   } else if (event.type === "serverDisconnected") {
     return {app: serverDisconnected(app), effects: isDisconnected(app) ? {} : {tryReconnect: true}};
   } else if (event.type === "receivedChanges") {
-    const newStoredState = Sy.applyChanges(Sy.storedStateFromApp(app), Sy.translateServerChanges(event.changes));
-    return {app: {...Sy.loadAppFromStoredState(newStoredState), [_lastSyncedState]: newStoredState}};
+    const {app: app_, remoteState} = Sy.receiveChanges(app, event.changes);
+    return {app: {...app_, [_lastSyncedState]: remoteState}};
   } else if (event.type === "serverPingResponse") {
     return {
       app: event.result === "failed" ? app : serverReconnected(app, event.remoteState),
       effects: {tryReconnect: event.result === "failed"},
     };
   } else if (event.type === "flushChanges") {
-    const changes = Sy.changes(app[_lastSyncedState], Sy.storedStateFromApp(app));
-    const changesNonEmpty =
-      changes.deleted.length > 0 ||
-      changes.updated.length > 0 ||
-      changes.edited.length > 0 ||
-      changes.tutorialFinished !== null;
+    const sync = Sy.pushedSync(app[_lastSyncedState], app);
+    const changesNonEmpty = !Sy.noChanges(sync.changes);
     return {
-      app: {...app, [_lastSyncedState]: Sy.storedStateFromApp(app)},
-      effects: changesNonEmpty ? {changes} : {},
+      app: {...app, [_lastSyncedState]: sync.remoteState},
+      effects: changesNonEmpty ? {changes: sync.changes} : {},
     };
   } else if (event.type === "followExternalLink") {
     return {app, effects: {url: event.href}};
