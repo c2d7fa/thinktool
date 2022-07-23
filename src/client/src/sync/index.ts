@@ -2,59 +2,20 @@ import {Communication} from "@thinktool/shared";
 
 import * as A from "../app";
 import * as D from "../data";
-import * as T from "../tree";
 import * as Tu from "../tutorial";
-
-import type {Storage} from "../remote-types";
 
 import * as Dialog from "./dialog";
 import {FullStateResponse} from "@thinktool/shared/dist/communication";
+import {App} from "../main";
 export {Dialog};
 
-export function receiveChangedThingsFromServer(
-  app: A.App,
-  changedThings: {thing: string; data: Communication.ThingData | null | {error: unknown}}[],
-): A.App {
-  let state = app.state;
+const _pendingChanges = Symbol("pendingChanges");
+const _lastSyncedState = Symbol("lastSyncedState");
 
-  // First check for any errors.
-  for (const {thing, data} of changedThings) {
-    if (data !== null && "error" in data) {
-      console.warn("Error while reading changes from server!");
-      return A.update(app, {type: "serverDisconnected"});
-    }
-  }
-
-  // There were no errors, continue as normal:
-
-  for (const {thing, data} of changedThings) {
-    if (data === null) {
-      // Thing was deleted
-      state = D.remove(state, thing);
-      continue;
-    }
-
-    if (!D.exists(state, thing)) {
-      // A new item was created
-      state = D.create(state, thing)[0];
-    }
-
-    if ("error" in data) throw "invalid state"; // We already checked for this!
-
-    state = D.setContent(state, thing, data.content);
-
-    const nChildren = D.children(state, thing).length;
-    for (let i = 0; i < nChildren; ++i) {
-      state = D.removeChild(state, thing, 0);
-    }
-    for (const childConnection of data.children) {
-      state = D.addChild(state, thing, childConnection.child, childConnection.name)[0];
-    }
-  }
-
-  const tree = T.refresh(app.tree, state);
-  return A.merge(app, {state, tree});
-}
+export type State = {
+  [_pendingChanges]: Changes;
+  [_lastSyncedState]: StoredState;
+};
 
 export type Changes = {
   deleted: string[];
@@ -67,16 +28,35 @@ export type Changes = {
   tutorialFinished: boolean | null;
 };
 
+export function initialize(data: D.State, options: {tutorialFinished: boolean}) {
+  return {
+    [_pendingChanges]: {deleted: [], edited: [], updated: [], tutorialFinished: null},
+    [_lastSyncedState]: {
+      fullStateResponse: D.transformStateIntoFullStateResponse(data),
+      tutorialFinished: options.tutorialFinished,
+    },
+  };
+}
+
+export function noChanges(changes: Changes): boolean {
+  return (
+    changes.deleted.length === 0 &&
+    changes.edited.length === 0 &&
+    changes.updated.length === 0 &&
+    changes.tutorialFinished === null
+  );
+}
+
 export type StoredState = {fullStateResponse: FullStateResponse; tutorialFinished: boolean};
 
-export function storedStateFromApp(app: A.App): StoredState {
+function storedStateFromApp(app: A.App): StoredState {
   return {
     fullStateResponse: D.transformStateIntoFullStateResponse(app.state),
     tutorialFinished: !Tu.isActive(app.tutorialState),
   };
 }
 
-export function loadAppFromStoredState(storedState: StoredState): A.App {
+function loadAppFromStoredState(storedState: StoredState): A.App {
   return A.initialize({
     fullStateResponse: storedState.fullStateResponse,
     toolbarShown: true,
@@ -85,9 +65,67 @@ export function loadAppFromStoredState(storedState: StoredState): A.App {
   });
 }
 
+function applyChanges(state: StoredState, changes: Changes): StoredState {
+  let result = state;
+
+  if (changes.tutorialFinished !== null) {
+    result = {...result, tutorialFinished: changes.tutorialFinished};
+  }
+
+  for (const thing of changes.deleted) {
+    result = {
+      ...result,
+      fullStateResponse: {
+        things: {
+          ...result.fullStateResponse.things.filter((thing_) => thing_.name !== thing),
+        },
+      },
+    };
+  }
+
+  for (const {thing, content} of changes.edited) {
+    result = {
+      ...result,
+      fullStateResponse: {
+        things: result.fullStateResponse.things.map((thing_) =>
+          thing_.name === thing ? {...thing_, content} : thing_,
+        ),
+      },
+    };
+  }
+
+  for (const {name, content, children} of changes.updated) {
+    let found = false;
+    result = {
+      ...result,
+      fullStateResponse: {
+        things: result.fullStateResponse.things.map((thing_) => {
+          if (thing_.name === name) {
+            found = true;
+            return {...thing_, content, children};
+          } else {
+            return thing_;
+          }
+        }),
+      },
+    };
+
+    if (!found) {
+      result = {
+        ...result,
+        fullStateResponse: {
+          things: [...result.fullStateResponse.things, {name, content, children}],
+        },
+      };
+    }
+  }
+
+  return result;
+}
+
 // Return changes that must be applied to bring the stored state from 'from' to
 // 'to'.
-export function changes(from: StoredState, to: StoredState): Changes {
+function changes(from: StoredState, to: StoredState): Changes {
   let allThings = new Set<string>();
   const fromMap = new Map<string, StoredState["fullStateResponse"]["things"][number]>();
   const toMap = new Map<string, StoredState["fullStateResponse"]["things"][number]>();
@@ -126,4 +164,61 @@ export function changes(from: StoredState, to: StoredState): Changes {
     updated,
     tutorialFinished,
   };
+}
+
+function translateServerChanges(
+  changedThings: {thing: string; data: Communication.ThingData | null | {error: unknown}}[],
+): Changes {
+  const deleted: string[] = [];
+  const updated: Changes["updated"] = [];
+
+  for (const {thing, data} of changedThings) {
+    if (data === null) {
+      deleted.push(thing);
+      continue;
+    }
+
+    if ("error" in data) {
+      console.error("Error while reading changes from server!");
+      break;
+    }
+
+    updated.push({name: thing, content: data.content, children: data.children});
+  }
+
+  return {deleted, edited: [], updated, tutorialFinished: null};
+}
+
+export function reconnect(app: A.App, state: State, remoteState: StoredState): State {
+  return {
+    ...state,
+    [_pendingChanges]: changes(storedStateFromApp(app), remoteState),
+  };
+}
+
+export function pickConflict(app: A.App, state: State, choice: "commit" | "abort"): A.App {
+  if (choice === "commit") {
+    return app;
+  } else {
+    return loadAppFromStoredState(applyChanges(storedStateFromApp(app), state[_pendingChanges]));
+  }
+}
+
+export function receiveChanges(
+  app: A.App,
+  state: State,
+  changedThings: {thing: string; data: Communication.ThingData | null | {error: unknown}}[],
+): [A.App, State] {
+  const remoteState = applyChanges(storedStateFromApp(app), translateServerChanges(changedThings));
+  return [loadAppFromStoredState(remoteState), {...state, [_lastSyncedState]: remoteState}];
+}
+
+export function pushChanges(app: A.App, state: State): [State, Changes] {
+  const changes_ = changes(state[_lastSyncedState], storedStateFromApp(app));
+  const state_ = {...state, [_lastSyncedState]: storedStateFromApp(app)};
+  return [state_, changes_];
+}
+
+export function viewSyncDialog(state: State): Dialog.View {
+  return Dialog.view(state[_pendingChanges]);
 }

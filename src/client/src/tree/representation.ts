@@ -8,7 +8,7 @@ import * as D from "../data";
 // may not be accessed outside the 'tree' modules.
 
 export interface Node {
-  _connection?: D.Connection; // undefined for root item (and other non-applicable items). // [TODO] Is this comment correct?
+  _connection?: D.Connection; // undefined for root item and other non-applicable items, such as opened links
   _expanded: boolean;
   _source: Source;
   _children: NodeRef[];

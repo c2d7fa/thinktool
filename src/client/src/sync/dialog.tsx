@@ -6,30 +6,10 @@ import {Send} from "../app";
 import {Animated, useSticky} from "../ui/animation";
 const style = require("./dialog.module.scss").default;
 
-const _local = Symbol("local");
-const _remote = Symbol("remote");
-
-export type State = {shown: false} | {shown: true; [_local]: Sync.StoredState; [_remote]: Sync.StoredState};
-
 export type View = {shown: false} | {shown: true; summary: {deleted: number; updated: number; edited: number}};
 
-export const hidden: State = {shown: false};
-
-export function initialize({local, remote}: {local: Sync.StoredState; remote: Sync.StoredState}): State {
-  return {
-    shown: true,
-    [_local]: local,
-    [_remote]: remote,
-  };
-}
-
-export function view(dialog: State): View {
-  if (!dialog.shown) return {shown: false};
-
-  const local = dialog[_local];
-  const remote = dialog[_remote];
-
-  const changes = Sync.changes(remote, local);
+export function view(changes: Sync.Changes): View {
+  if (Sync.noChanges(changes)) return {shown: false};
 
   return {
     shown: true,
@@ -39,10 +19,6 @@ export function view(dialog: State): View {
       edited: changes.edited.length,
     },
   };
-}
-
-export function storedStateAfter(dialog: State & {shown: true}, option: "commit" | "abort"): Sync.StoredState {
-  return option === "commit" ? dialog[_local] : dialog[_remote];
 }
 
 export function SyncDialog(props: {dialog: View; send: Send}) {
