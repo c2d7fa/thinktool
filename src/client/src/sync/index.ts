@@ -222,6 +222,8 @@ export function receiveChanges(
 }
 
 export function pushChanges(app: A.App, state: State): [State, Changes] {
+  if (!noChanges(state[_pendingChanges]))
+    return [state, {deleted: [], edited: [], updated: [], tutorialFinished: null}];
   const changes_ = changes(state[_lastSyncedState], storedStateFromApp(app));
   const state_ = {...state, [_lastSyncedState]: storedStateFromApp(app)};
   return [state_, changes_];

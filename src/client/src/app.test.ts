@@ -1090,6 +1090,11 @@ describe("server disconnect and reconnect", () => {
         });
       });
 
+      test("changes aren't flushed until after the dialog is closed", () => {
+        const [step2, step2e] = app.send({type: "flushChanges"}).effects();
+        expect(step2e.changes?.edited).toBeUndefined();
+      });
+
       describe("if accepting local changes", () => {
         const [after, aftere] = app
           .send({type: "syncDialogSelect", option: "commit"})
