@@ -20,9 +20,8 @@ import * as Ac from "../actions";
 import {FullStateResponse} from "@thinktool/shared/dist/communication";
 
 const _isOnline = Symbol("isOnline");
-const _pendingChanges = Symbol("pendingChanges");
+const _sync = Symbol("sync");
 const _toolbarShown = Symbol("toolbarShown");
-const _lastSyncedState = Symbol("lastSyncedState");
 
 export type StoredState = Sy.StoredState;
 
@@ -38,9 +37,8 @@ export interface App {
   tab: "outline" | "orphans";
   orphans: O.OrphansState;
   [_isOnline]: boolean;
-  [_pendingChanges]: Sy.Changes;
+  [_sync]: Sy.State;
   [_toolbarShown]: boolean;
-  [_lastSyncedState]: StoredState;
 }
 
 export type UpdateApp = (f: (app: App) => App) => void;
@@ -59,12 +57,8 @@ export function from(data: D.State, tree: T.Tree, options?: {tutorialFinished: b
     tab: "outline",
     orphans: O.empty,
     [_isOnline]: true,
-    [_pendingChanges]: Sy.emptyChanges,
     [_toolbarShown]: true,
-    [_lastSyncedState]: {
-      fullStateResponse: D.transformStateIntoFullStateResponse(data),
-      tutorialFinished: options?.tutorialFinished ?? false,
-    },
+    [_sync]: Sy.initialize(data, {tutorialFinished: options?.tutorialFinished ?? false}),
   };
 }
 
@@ -232,16 +226,11 @@ function serverDisconnected(app: App): App {
 
 function serverReconnected(app: App, remoteState: StoredState): App {
   if (!isDisconnected(app)) return app;
-  return {...app, [_isOnline]: true, [_pendingChanges]: Sy.pendingChangesAfterReconnect(app, remoteState)};
+  return {...app, [_isOnline]: true, [_sync]: Sy.reconnect(app, app[_sync], remoteState)};
 }
 
 function syncDialogSelect(app: App, option: "commit" | "abort"): App {
-  if (!app[_pendingChanges]) {
-    console.error("Tried to select sync dialog option when no dialog was open!");
-    return app;
-  }
-
-  return Sy.pickConflict(app, app[_pendingChanges], option);
+  return Sy.pickConflict(app, app[_sync], option);
 }
 
 function isDisconnected(app: App): boolean {
@@ -349,20 +338,17 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
   } else if (event.type === "serverDisconnected") {
     return {app: serverDisconnected(app), effects: isDisconnected(app) ? {} : {tryReconnect: true}};
   } else if (event.type === "receivedChanges") {
-    const {app: app_, remoteState} = Sy.receiveChanges(app, event.changes);
-    return {app: {...app_, [_lastSyncedState]: remoteState}};
+    const [app_, sync] = Sy.receiveChanges(app, app[_sync], event.changes);
+    return {app: {...app_, [_sync]: sync}};
   } else if (event.type === "serverPingResponse") {
     return {
       app: event.result === "failed" ? app : serverReconnected(app, event.remoteState),
       effects: {tryReconnect: event.result === "failed"},
     };
   } else if (event.type === "flushChanges") {
-    const sync = Sy.pushedSync(app[_lastSyncedState], app);
-    const changesNonEmpty = !Sy.noChanges(sync.changes);
-    return {
-      app: {...app, [_lastSyncedState]: sync.remoteState},
-      effects: changesNonEmpty ? {changes: sync.changes} : {},
-    };
+    const [sync_, changes] = Sy.pushChanges(app, app[_sync]);
+    const effects = Sy.noChanges(changes) ? {} : {changes};
+    return {app: {...app, [_sync]: sync_}, effects};
   } else if (event.type === "followExternalLink") {
     return {app, effects: {url: event.href}};
   } else if (event.topic === "tutorial") {
@@ -425,7 +411,7 @@ export function view(app: App): View {
     toolbar: app[_toolbarShown] ? Toolbar.viewToolbar(app) : {shown: false},
     url: {root: T.thing(app.tree, T.root(app.tree))},
     offlineIndicator: {shown: isDisconnected(app)},
-    syncDialog: Sy.Dialog.view(app[_pendingChanges]),
+    syncDialog: Sy.viewSyncDialog(app[_sync]),
     ...(app.tab === "orphans" ? {tab: "orphans", ...O.view(app)} : {tab: "outline", ...Ou.fromApp(app)}),
   };
 }

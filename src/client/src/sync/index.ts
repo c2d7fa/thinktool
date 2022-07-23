@@ -9,6 +9,14 @@ import {FullStateResponse} from "@thinktool/shared/dist/communication";
 import {App} from "../main";
 export {Dialog};
 
+const _pendingChanges = Symbol("pendingChanges");
+const _lastSyncedState = Symbol("lastSyncedState");
+
+export type State = {
+  [_pendingChanges]: Changes;
+  [_lastSyncedState]: StoredState;
+};
+
 export type Changes = {
   deleted: string[];
   edited: {thing: string; content: Communication.Content}[];
@@ -20,12 +28,15 @@ export type Changes = {
   tutorialFinished: boolean | null;
 };
 
-export const emptyChanges = {
-  deleted: [],
-  edited: [],
-  updated: [],
-  tutorialFinished: null,
-};
+export function initialize(data: D.State, options: {tutorialFinished: boolean}) {
+  return {
+    [_pendingChanges]: {deleted: [], edited: [], updated: [], tutorialFinished: null},
+    [_lastSyncedState]: {
+      fullStateResponse: D.transformStateIntoFullStateResponse(data),
+      tutorialFinished: options.tutorialFinished,
+    },
+  };
+}
 
 export function noChanges(changes: Changes): boolean {
   return (
@@ -178,26 +189,36 @@ function translateServerChanges(
   return {deleted, edited: [], updated, tutorialFinished: null};
 }
 
-export function pendingChangesAfterReconnect(app: A.App, remoteState: StoredState): Changes {
-  return changes(storedStateFromApp(app), remoteState);
+export function reconnect(app: A.App, state: State, remoteState: StoredState): State {
+  return {
+    ...state,
+    [_pendingChanges]: changes(storedStateFromApp(app), remoteState),
+  };
 }
 
-export function pickConflict(app: A.App, pendingChanges: Changes, choice: "commit" | "abort"): A.App {
+export function pickConflict(app: A.App, state: State, choice: "commit" | "abort"): A.App {
   if (choice === "commit") {
     return app;
   } else {
-    return loadAppFromStoredState(applyChanges(storedStateFromApp(app), pendingChanges));
+    return loadAppFromStoredState(applyChanges(storedStateFromApp(app), state[_pendingChanges]));
   }
 }
 
 export function receiveChanges(
   app: A.App,
+  state: State,
   changedThings: {thing: string; data: Communication.ThingData | null | {error: unknown}}[],
-): {app: A.App; remoteState: StoredState} {
+): [A.App, State] {
   const remoteState = applyChanges(storedStateFromApp(app), translateServerChanges(changedThings));
-  return {app: loadAppFromStoredState(remoteState), remoteState};
+  return [loadAppFromStoredState(remoteState), {...state, [_lastSyncedState]: remoteState}];
 }
 
-export function pushedSync(remote: StoredState, current: A.App): {changes: Changes; remoteState: StoredState} {
-  return {changes: changes(remote, storedStateFromApp(current)), remoteState: storedStateFromApp(current)};
+export function pushChanges(app: A.App, state: State): [State, Changes] {
+  const changes_ = changes(state[_lastSyncedState], storedStateFromApp(app));
+  const state_ = {...state, [_lastSyncedState]: storedStateFromApp(app)};
+  return [state_, changes_];
+}
+
+export function viewSyncDialog(state: State): Dialog.View {
+  return Dialog.view(state[_pendingChanges]);
 }
