@@ -196,11 +196,19 @@ export function reconnect(app: A.App, state: State, remoteState: StoredState): S
   };
 }
 
-export function pickConflict(app: A.App, state: State, choice: "commit" | "abort"): A.App {
+export function pickConflict(app: A.App, state: State, choice: "commit" | "abort"): [A.App, State] {
   if (choice === "commit") {
-    return app;
+    return [app, {...state, [_pendingChanges]: {deleted: [], edited: [], updated: [], tutorialFinished: null}}];
   } else {
-    return loadAppFromStoredState(applyChanges(storedStateFromApp(app), state[_pendingChanges]));
+    const newStoredState = applyChanges(storedStateFromApp(app), state[_pendingChanges]);
+    return [
+      loadAppFromStoredState(newStoredState),
+      {
+        ...state,
+        [_pendingChanges]: {deleted: [], edited: [], updated: [], tutorialFinished: null},
+        [_lastSyncedState]: newStoredState,
+      },
+    ];
   }
 }
 

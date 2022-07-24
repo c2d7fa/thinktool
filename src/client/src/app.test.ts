@@ -1091,18 +1091,40 @@ describe("server disconnect and reconnect", () => {
       });
 
       describe("if accepting local changes", () => {
-        const after = app.send({type: "syncDialogSelect", option: "commit"});
+        const [after, aftere] = app
+          .send({type: "syncDialogSelect", option: "commit"})
+          .send({type: "flushChanges"})
+          .effects();
 
         test("the edited item keeps its new value", () => {
           expect(after.root.content).toEqual(["Edited root"]);
         });
+
+        test("the sync dialog is closed", () => {
+          expect(after.view.syncDialog.shown).toBe(false);
+        });
+
+        test("an update is sent to the server", () => {
+          expect(aftere.changes?.edited).toEqual([{thing: "0", content: ["Edited root"]}]);
+        });
       });
 
       describe("if rejecting local changes", () => {
-        const after = app.send({type: "syncDialogSelect", option: "abort"});
+        const [after, aftere] = app
+          .send({type: "syncDialogSelect", option: "abort"})
+          .send({type: "flushChanges"})
+          .effects();
 
         test("the edited item is reverted to its old value", () => {
           expect(after.root.content).toEqual(["Root"]);
+        });
+
+        test("the sync dialog is closed", () => {
+          expect(after.view.syncDialog.shown).toBe(false);
+        });
+
+        test("no update is sent to the server", () => {
+          expect(aftere.changes).toBeUndefined();
         });
       });
     });

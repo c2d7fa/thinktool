@@ -230,7 +230,8 @@ function serverReconnected(app: App, remoteState: StoredState): App {
 }
 
 function syncDialogSelect(app: App, option: "commit" | "abort"): App {
-  return Sy.pickConflict(app, app[_sync], option);
+  const [app_, sync_] = Sy.pickConflict(app, app[_sync], option);
+  return {...app_, [_sync]: sync_};
 }
 
 function isDisconnected(app: App): boolean {
