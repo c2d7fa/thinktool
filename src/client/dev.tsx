@@ -4,8 +4,32 @@ import * as Client from "./src/main";
 import * as DemoData from "../web/lib/demo-data.json";
 
 document.body.style.display = "grid";
-document.body.style.gridTemplateColumns = "50vw 50vw";
+document.body.style.gridTemplate = "2em / 45vw 45vw";
 document.body.style.height = "100vh";
+
+let simulatingDisconnected = false;
+
+(window as any).simulateDisconnected = () => {
+  simulatingDisconnected = true;
+};
+
+(window as any).simulateReconnected = () => {
+  simulatingDisconnected = false;
+};
+
+const disconnectButton = document.createElement("button");
+disconnectButton.textContent = "Disconnect";
+disconnectButton.addEventListener("click", () => {
+  simulatingDisconnected = true;
+});
+document.body.appendChild(disconnectButton);
+
+const reconnect = document.createElement("button");
+reconnect.textContent = "Reconnect";
+reconnect.addEventListener("click", () => {
+  simulatingDisconnected = false;
+});
+document.body.appendChild(reconnect);
 
 const iframe1 = document.createElement("iframe");
 iframe1.src = "about:blank";
@@ -26,16 +50,6 @@ iframe1.contentDocument?.body.appendChild(appElement1);
 const appElement2 = iframe2.contentDocument!.createElement("div")!;
 appElement2.id = "app";
 iframe2.contentDocument?.body.appendChild(appElement2);
-
-let simulatingDisconnected = false;
-
-(window as any).simulateDisconnected = () => {
-  simulatingDisconnected = true;
-};
-
-(window as any).simulateReconnected = () => {
-  simulatingDisconnected = false;
-};
 
 const server = (() => {
   let things = DemoData.things;
