@@ -1134,6 +1134,39 @@ describe("server disconnect and reconnect", () => {
       });
     });
   });
+
+  describe("changes aren't flushed while disconnected", () => {
+    const [s1, e1] = W.of({"0": {content: ["Root"]}})
+      .send({type: "serverDisconnected"})
+      .root.edit({content: ["Edited root"]})
+      .send({type: "flushChanges"})
+      .effects();
+
+    const [s2, e2] = s1
+      .send({
+        type: "serverPingResponse",
+        result: "success",
+        remoteState: {
+          tutorialFinished: false,
+          fullStateResponse: {things: [{name: "0", content: ["Root"], children: []}]},
+        },
+      })
+      .send({type: "flushChanges"})
+      .effects();
+
+    test("no changes are sent to the server while disconnected", () => {
+      expect(e1.changes).toBeUndefined();
+    });
+
+    test("the sync dialog is shown after reconnecting, showing the edited item", () => {
+      expect(s2.view.syncDialog.shown).toBe(true);
+      expect((s2.view.syncDialog as A.View["syncDialog"] & {shown: true}).summary).toEqual({
+        deleted: 0,
+        updated: 0,
+        edited: 1,
+      });
+    });
+  });
 });
 
 describe("receiving live updates from server", () => {

@@ -347,6 +347,7 @@ export function handle(app: App, event: Event): {app: App; effects?: Effects} {
       effects: {tryReconnect: event.result === "failed"},
     };
   } else if (event.type === "flushChanges") {
+    if (isDisconnected(app)) return {app, effects: {}};
     const [sync_, changes] = Sy.pushChanges(app, app[_sync]);
     const effects = Sy.noChanges(changes) ? {} : {changes};
     return {app: {...app, [_sync]: sync_}, effects};
