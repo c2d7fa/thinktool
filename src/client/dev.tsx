@@ -38,54 +38,32 @@ let simulatingDisconnected = false;
 };
 
 const server = (() => {
-  let data = DemoData;
+  let things = DemoData.things;
 
   let subscribers: [string, (changes: string[]) => void][] = [];
 
   return {
-    async fetchData() {
-      return data;
+    fetchData() {
+      return {things};
     },
 
-    async updateThings(
+    updateThings(
       clientId: string,
-      things: {name: string; content: Client.Communication.Content; children: {name: string; child: string}[]}[],
+      updates: {name: string; content: Client.Communication.Content; children: {name: string; child: string}[]}[],
     ) {
-      const updated: string[] = [];
+      for (const update of updates) things = [update, ...things];
 
-      for (const update of things) {
-        data.things = data.things.map((t) => {
-          if (t.name === update.name) {
-            updated.push(update.name);
-            return update;
-          }
-          return t;
-        });
-      }
-
-      for (const [clientId_, callback] of subscribers) {
-        if (clientId_ !== clientId) {
-          callback(updated);
-        }
-      }
+      for (const [clientId_, callback] of subscribers)
+        if (clientId_ !== clientId) callback(updates.map((t) => t.name));
     },
 
-    async setContent(clientId: string, thing: string, content: Client.Communication.Content) {
-      data.things = data.things.map((t) => {
-        if (t.name === thing) {
-          t.content = content;
-        }
-        return t;
-      });
+    setContent(clientId: string, thing: string, content: Client.Communication.Content) {
+      things = [{...things.find((t) => t.name === thing)!, content}, ...things];
 
-      for (const [clientId_, callback] of subscribers) {
-        if (clientId_ !== clientId) {
-          callback([thing]);
-        }
-      }
+      for (const [clientId_, callback] of subscribers) if (clientId_ !== clientId) callback([thing]);
     },
 
-    async subscribe(clientId: string, callback: (changes: string[]) => void) {
+    subscribe(clientId: string, callback: (changes: string[]) => void) {
       subscribers.push([clientId, callback]);
     },
   };
@@ -112,19 +90,15 @@ function fakeServer(clientId: string): Client.Server {
 
   return {
     async getFullState() {
-      return withSimulatingDisconnected(() => {
-        return server.fetchData();
-      });
+      return withSimulatingDisconnected(() => server.fetchData());
     },
 
     async setContent(thing: string, content: Client.Communication.Content) {
-      return await withSimulatingDisconnected(async () => {
-        return await server.setContent(clientId, thing, content);
-      });
+      return withSimulatingDisconnected(() => server.setContent(clientId, thing, content));
     },
 
     async deleteThing(thing: string) {
-      return await withSimulatingDisconnected(async () => {
+      return withSimulatingDisconnected(() => {
         console.log("deleteThing", thing);
       });
     },
@@ -132,21 +106,15 @@ function fakeServer(clientId: string): Client.Server {
     async updateThings(
       things: {name: string; content: Client.Communication.Content; children: {name: string; child: string}[]}[],
     ) {
-      return await withSimulatingDisconnected(async () => {
-        return await server.updateThings(clientId, things);
-      });
+      return withSimulatingDisconnected(() => server.updateThings(clientId, things));
     },
 
     async getTutorialFinished() {
-      return await withSimulatingDisconnected(async () => {
-        return true;
-      });
+      return withSimulatingDisconnected(() => true);
     },
 
     async setTutorialFinished() {
-      return await withSimulatingDisconnected(async () => {
-        console.log("setTutorialFinished");
-      });
+      return withSimulatingDisconnected(() => console.log("setTutorialFinished"));
     },
 
     async onError(handleError_: (error: Client.ServerError) => void) {
@@ -163,8 +131,8 @@ function fakeServer(clientId: string): Client.Server {
     },
 
     async getThingData(thing: string) {
-      return await withSimulatingDisconnected(async () => {
-        const result = (await server.fetchData()).things.find((t) => t.name === thing);
+      return withSimulatingDisconnected(() => {
+        const result = server.fetchData().things.find((t) => t.name === thing);
         if (!result) return null;
         return {
           isPage: false,
