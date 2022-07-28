@@ -148,12 +148,12 @@ function changes(from: StoredState, to: StoredState): Changes {
     const fromThing = fromMap.get(name);
     const toThing = toMap.get(name);
 
-    if (fromThing === undefined) updated.push(toThing!);
-    else if (toThing === undefined) deleted.push(name);
+    if (toThing === undefined) deleted.push(name);
+    else if (fromThing === undefined) updated.push(toThing);
     else if (JSON.stringify(fromThing) === JSON.stringify(toThing)) continue;
     else if (JSON.stringify(fromThing?.children) === JSON.stringify(toThing?.children))
-      edited.push({thing: name, content: toThing!.content});
-    else updated.push(toThing!);
+      edited.push({thing: name, content: toThing.content});
+    else updated.push(toThing);
   }
 
   const tutorialFinished = from.tutorialFinished !== to.tutorialFinished ? to.tutorialFinished : null;

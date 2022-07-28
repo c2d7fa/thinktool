@@ -1163,7 +1163,7 @@ describe("receiving live updates from server", () => {
     });
   });
 
-  describe("example with two clients", () => {
+  describe("example with two clients, editing item", () => {
     const a1 = W.of({"0": {content: ["Root"]}});
     const b1 = W.of({"0": {content: ["Root"]}});
 
@@ -1209,6 +1209,74 @@ describe("receiving live updates from server", () => {
     describe("once the second client receives changes, and both clients flush again", () => {
       test("the state of the second client is updated", () => {
         expect(b3.root.content).toEqual(["Edited root"]);
+      });
+
+      test("the first client does not push any changes", () => {
+        expect(a3e.changes).toBeUndefined();
+      });
+
+      test("the second client does not push any changes", () => {
+        expect(b3e.changes).toBeUndefined();
+      });
+    });
+  });
+
+  describe("example with two clients, inserting new item", () => {
+    const a1 = W.of({"0": {content: ["Root"]}});
+    const b1 = W.of({"0": {content: ["Root"]}});
+
+    const [a2, a2e] = a1.root.action("new-child").send({type: "flushChanges"}).effects();
+    const [b2, b2e] = b1.send({type: "flushChanges"}).effects();
+
+    const child = a2e.changes?.updated?.[0]?.children[0];
+
+    describe("after inserting item only on the first client, and then synchronizing changes simultaneously", () => {
+      test("the first client pushes an update", () => {
+        expect(a2e.changes).toEqual({
+          deleted: [],
+          edited: [],
+          updated: [
+            {name: "0", content: ["Root"], children: [child]},
+            {name: child?.child, content: [], children: []},
+          ],
+          tutorialFinished: null,
+        });
+      });
+
+      test("the second client doesn't push any changes", () => {
+        expect(b2e.changes).toBeUndefined();
+      });
+    });
+
+    const [a3, a3e] = a2.send({type: "flushChanges"}).effects();
+    const [b3, b3e] = b2
+      .send({
+        type: "receivedChanges",
+        changes: [
+          {
+            thing: "0",
+            data: {
+              isPage: false,
+              content: ["Root"],
+              children: [child!],
+            },
+          },
+          {
+            thing: child?.child!,
+            data: {
+              isPage: false,
+              content: [],
+              children: [],
+            },
+          },
+        ],
+      })
+      .send({type: "flushChanges"})
+      .effects();
+
+    describe("once the second client receives changes, and both clients flush again", () => {
+      test("the state of the second client is updated", () => {
+        expect(b3.root.childrenContents).toEqual([[]]);
       });
 
       test("the first client does not push any changes", () => {
