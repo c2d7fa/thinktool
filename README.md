@@ -132,6 +132,32 @@ Once you have the `thinktool` image, run it with the environment variables given
         -p 80:80 \
         thinktool
 
+#### Web client development
+
+To develop the web client against the current client package, run:
+
+    $ yarn webpack --watch --config webpack.config.js
+
+inside the `client/` subdirectiory, and then from the `web/` directory, run:
+
+    $ yarn install --immutable
+    $ yarn build
+
+Now, to manually rebulid after each change (see under *Desktop* above for why this is necessary), run:
+
+    $ rm -r .next; cp -r ../client/dist/* node_modules/@thinktool/client/dist/ && yarn dev
+
+Make sure the environment variables described above are set correctly, and that the server is running, for example with:
+
+    $ docker run -ti --rm -p 9000:9000 \
+        -e DIAFORM_POSTGRES_HOST \
+        -e DIAFORM_POSTGRES_POST=5432 \
+        -e DIAFORM_POSTGRES_USERNAME=postgres \
+        -e DIAFORM_POSTGRES_PASSWORD \
+        -e DIAFORM_STATIC_HOST=http://localhost:3000 \
+        -e DIAFORM_PORT=9000 \
+        c2d7fa/thinktool:latest 
+
 ### Static website
 
 The website is built using [NextJS](https://nextjs.org/) and hosted using
