@@ -155,19 +155,26 @@ function executeEffects(
     }, 2000);
   }
   if (effects.changes) {
-    console.log("Pushing changes %o", effects.changes);
-    for (const deleted of effects.changes.deleted) {
-      deps.remote.deleteThing(deleted);
-    }
-    if (effects.changes.updated.length > 0) {
-      deps.remote.updateThings(effects.changes.updated);
-    }
-    for (const edited of effects.changes.edited) {
-      deps.remote.setContent(edited.thing, edited.content);
-    }
-    if (effects.changes.tutorialFinished) {
-      deps.remote.setTutorialFinished();
-    }
+    const changes = effects.changes;
+    (async () => {
+      console.log("Pushing changes %o", effects.changes);
+      for (const deleted of changes.deleted) {
+        const result = await deps.remote.deleteThing(deleted);
+        if (result !== "ok") deps.send({type: "serverDisconnected"});
+      }
+      if (changes.updated.length > 0) {
+        const result = await deps.remote.updateThings(changes.updated);
+        if (result !== "ok") deps.send({type: "serverDisconnected"});
+      }
+      for (const edited of changes.edited) {
+        const result = await deps.remote.setContent(edited.thing, edited.content);
+        if (result !== "ok") deps.send({type: "serverDisconnected"});
+      }
+      if (changes.tutorialFinished) {
+        const result = await deps.remote.setTutorialFinished();
+        if (result !== "ok") deps.send({type: "serverDisconnected"});
+      }
+    })();
   }
 }
 
