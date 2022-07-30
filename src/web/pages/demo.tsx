@@ -15,13 +15,21 @@ export default function Demo() {
             async getFullState() {
               return DemoData;
             },
-            async setContent() {},
-            async deleteThing() {},
-            async updateThings() {},
+            async setContent() {
+              return "ok";
+            },
+            async deleteThing() {
+              return "ok";
+            },
+            async updateThings() {
+              return "ok";
+            },
             async getTutorialFinished() {
               return false;
             },
-            async setTutorialFinished() {},
+            async setTutorialFinished() {
+              return "ok";
+            },
           }}
         />,
       );
