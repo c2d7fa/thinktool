@@ -23,7 +23,7 @@ import * as ReactDOM from "react-dom";
 import {OrphanList} from "./orphans/ui";
 import {Search} from "@thinktool/search";
 import {Outline} from "./ui/outline";
-import {isStorageServer, Server, ServerError, Storage} from "./remote-types";
+import {isError, isStorageServer, Server, ServerError, Storage} from "./remote-types";
 
 export type {Storage, Server, ServerError};
 
@@ -58,7 +58,14 @@ function useServerChanges(server: Server | undefined, send: A.Send) {
         }))(),
       );
       const changedThings = await Promise.all(loadThingDataTasks);
-      send({type: "receivedChanges", changes: changedThings});
+      if (changedThings.some(isError)) {
+        console.error("Error while loading changed things", changedThings);
+      } else {
+        send({
+          type: "receivedChanges",
+          changes: changedThings as any, // [TODO] Better type checking
+        });
+      }
     });
   }, [send]);
 }
@@ -137,13 +144,13 @@ function executeEffects(
   if (effects.tryReconnect) {
     setTimeout(async () => {
       console.log("Trying to reconnect to server...");
-      try {
-        const remoteState = await loadStoredStateFromStorage(deps.remote);
-        console.log("Reconnected successfully.");
-        deps.send({type: "serverPingResponse", result: "success", remoteState});
-      } catch (e) {
+      const remoteState = await loadStoredStateFromStorage(deps.remote);
+      if (isError(remoteState)) {
         console.log("Still could not contact server.");
         deps.send({type: "serverPingResponse", result: "failed"});
+      } else {
+        console.log("Reconnected successfully.");
+        deps.send({type: "serverPingResponse", result: "success", remoteState});
       }
     }, 2000);
   }
@@ -180,29 +187,29 @@ function useSend({
   }, []);
 }
 
-async function loadStoredStateFromStorage(storage: Storage): Promise<A.StoredState> {
-  return {fullStateResponse: await storage.getFullState(), tutorialFinished: await storage.getTutorialFinished()};
+async function loadStoredStateFromStorage(storage: Storage): Promise<A.StoredState | ServerError> {
+  const fullStateResponse = await storage.getFullState();
+  const tutorialFinished = await storage.getTutorialFinished();
+  if (isError(fullStateResponse)) return fullStateResponse;
+  if (isError(tutorialFinished)) return tutorialFinished;
+  return {fullStateResponse, tutorialFinished};
 }
 
 function useServerReconnect(server: Server | undefined, send: A.Send) {
   React.useEffect(() => {
     if (server === undefined) return;
 
-    server.onError((error) => {
-      if (error.error === "disconnected") console.warn("Disconnected from server.");
-      else console.error(error);
-      send({type: "serverDisconnected"});
-    });
-
     window.addEventListener("offline", () => {
       send({type: "serverDisconnected"});
     });
 
     window.addEventListener("online", async () => {
+      const remoteState = await loadStoredStateFromStorage(server);
+      if (isError(remoteState)) return;
       send({
         type: "serverPingResponse",
         result: "success",
-        remoteState: await loadStoredStateFromStorage(server),
+        remoteState,
       });
     });
   }, []);
@@ -338,7 +345,7 @@ export function App(props: {remote: Storage | Server; openExternalUrl?: (url: st
       const username = await (async () => {
         if (!server) return undefined;
         const username = await server.getUsername();
-        if (username === null) {
+        if (username === null || isError(username)) {
           console.log("Not logged in. Redirecting to login page.");
           window.location.href = "/login";
           return undefined;
@@ -346,12 +353,20 @@ export function App(props: {remote: Storage | Server; openExternalUrl?: (url: st
         return username;
       })();
 
+      const fullStateResponse = await props.remote.getFullState();
+      const toolbarState = server ? await server.getToolbarState() : {shown: true};
+      const tutorialFinished = await props.remote.getTutorialFinished();
+
+      if (isError(fullStateResponse)) throw "unable to connect to server";
+      if (isError(toolbarState)) throw "unable to connect to server";
+      if (isError(tutorialFinished)) throw "unable to connect to server";
+
       setRendered(
         <LoadedApp
           initialState={{
-            fullStateResponse: await props.remote.getFullState(),
-            toolbarShown: server ? (await server.getToolbarState()).shown : true,
-            tutorialFinished: await props.remote.getTutorialFinished(),
+            fullStateResponse,
+            toolbarShown: toolbarState.shown,
+            tutorialFinished,
             urlHash: window?.location?.hash ?? "",
           }}
           remote={props.remote}

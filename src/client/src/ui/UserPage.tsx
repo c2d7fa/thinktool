@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import {Server} from "../remote-types";
+import {isError, Server} from "../remote-types";
 import * as ExportRoam from "../export-roam";
 
 import {ExternalLink} from "./ExternalLink";
@@ -12,8 +12,8 @@ export default function UserPage(props: {server: Server}) {
   const [passwordField, setPasswordField] = React.useState<string>("");
 
   React.useEffect(() => {
-    props.server.getUsername().then((username) => setUsername(username));
-    props.server.getEmail().then((email) => setEmailField(email));
+    props.server.getUsername().then((username) => !isError(username) && setUsername(username));
+    props.server.getEmail().then((email) => !isError(email) && setEmailField(email));
   }, []);
 
   return (
@@ -83,7 +83,9 @@ export default function UserPage(props: {server: Server}) {
               document.body.removeChild(element);
             }
 
-            const state = transformFullStateResponseIntoState(await props.server.getFullState());
+            const fullState = await props.server.getFullState();
+            if (isError(fullState)) throw "unable to connect to server";
+            const state = transformFullStateResponseIntoState(fullState);
             download("thinktool-export-for-roam.json", ExportRoam.exportString(state));
           }}
         >

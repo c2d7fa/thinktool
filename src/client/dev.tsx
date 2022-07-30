@@ -84,18 +84,10 @@ const server = (() => {
 })();
 
 function fakeServer(clientId: string): Client.Server {
-  let handleErrorCallbacks: ((error: Client.ServerError) => void)[] = [];
   let onChangesCallbacks: ((changes: string[]) => void)[] = [];
 
-  function withSimulatingDisconnected<T>(f: () => T): T {
-    if (simulatingDisconnected) {
-      for (const callback of handleErrorCallbacks) {
-        callback({error: "disconnected"});
-      }
-      throw "disconnected";
-    } else {
-      return f();
-    }
+  function withSimulatingDisconnected<T>(f: () => T): T | Client.ServerError {
+    return simulatingDisconnected ? {error: "disconnected"} : f();
   }
 
   server.subscribe(clientId, (change) => {
@@ -108,19 +100,21 @@ function fakeServer(clientId: string): Client.Server {
     },
 
     async setContent(thing: string, content: Client.Communication.Content) {
-      return withSimulatingDisconnected(() => server.setContent(clientId, thing, content));
+      return withSimulatingDisconnected(() => server.setContent(clientId, thing, content)) ?? "ok";
     },
 
     async deleteThing(thing: string) {
-      return withSimulatingDisconnected(() => {
-        console.log("deleteThing", thing);
-      });
+      return (
+        withSimulatingDisconnected(() => {
+          console.log("deleteThing", thing);
+        }) ?? "ok"
+      );
     },
 
     async updateThings(
       things: {name: string; content: Client.Communication.Content; children: {name: string; child: string}[]}[],
     ) {
-      return withSimulatingDisconnected(() => server.updateThings(clientId, things));
+      return withSimulatingDisconnected(() => server.updateThings(clientId, things)) ?? "ok";
     },
 
     async getTutorialFinished() {
@@ -128,11 +122,7 @@ function fakeServer(clientId: string): Client.Server {
     },
 
     async setTutorialFinished() {
-      return withSimulatingDisconnected(() => console.log("setTutorialFinished"));
-    },
-
-    async onError(handleError_: (error: Client.ServerError) => void) {
-      handleErrorCallbacks.push(handleError_);
+      return withSimulatingDisconnected(() => console.log("setTutorialFinished")) ?? "ok";
     },
 
     async getUsername() {
@@ -158,6 +148,7 @@ function fakeServer(clientId: string): Client.Server {
 
     async deleteAccount(account: string) {
       console.log("deleteAccount", account);
+      return "ok";
     },
 
     async getEmail() {
@@ -166,14 +157,17 @@ function fakeServer(clientId: string): Client.Server {
 
     async setEmail(email: string) {
       console.log("setEmail", email);
+      return "ok";
     },
 
     async setPassword(password: string) {
       console.log("setPassword", password);
+      return "ok";
     },
 
     async setToolbarState({shown}: {shown: boolean}) {
       console.log("setToolbarState", shown);
+      return "ok";
     },
 
     async getToolbarState() {
