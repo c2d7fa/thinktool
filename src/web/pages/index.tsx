@@ -76,22 +76,6 @@ export default function Index(props: {apiHost: string}) {
           </div>
         </div>
 
-        <div className="block edge newsletter-outer">
-          <div className="small centered newsletter">
-            <div>
-              <h1>Stay updated.</h1>
-              <p>
-                Receive occasional news about major updates by subscribing to the newsletter below. You can
-                unsubscribe at any time.
-              </p>
-            </div>
-            <form action={`${props.apiHost}/newsletter/subscribe`} method="POST">
-              <input type="email" name="email" required placeholder="you@example.com" />
-              <input type="submit" value="Subscribe" />
-            </form>
-          </div>
-        </div>
-
         <div className="block horizontal flip-900">
           <div className="box small">
             <h1 className="bullet">About Thinktool</h1>
