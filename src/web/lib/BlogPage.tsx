@@ -18,19 +18,6 @@ export default function BlogPage(props: {apiHost: string; children: React.ReactN
         </a>
       </div>
       {props.children}
-      <div className="newsletter-outer">
-        <div className="newsletter">
-          <div>
-            <h1>Thanks for reading. </h1>
-            <p>This is the blog for Thinktool, an associative note-taking app that I'm currently building.</p>
-            <p>Subscribe to the newsletter below if you want to receive occasional news about major updates.</p>
-          </div>
-          <form action={`${props.apiHost}/newsletter/subscribe`} method="POST">
-            <input type="email" name="email" required placeholder="you@example.com" />
-            <input type="submit" value="Subscribe" />
-          </form>
-        </div>
-      </div>
       <footer>
         Made by{" "}
         <a href="https://johv.dk/">
