@@ -26,10 +26,14 @@ don't actually intend to use it. I also recommend some alternative software
 on that page.
 
 Because I'm now using zt as my primary note-taking system, I guess I won't be
-spending much time on Thinktool. It's still open source, and I currently have no
-intentions of actually shutting it down, but you should not expect to see much
-progress being made. I might make some sort of official announcement about this
-on the newsletter at some point in the future.
+spending much time on Thinktool.
+
+You are welcome to use the offline desktop version. However, I highly recommend using the
+hosted web version. To the best of my knowledge, no one is using this, and I'm planning
+on taking it down soon. If you need to export your data, log in as normal and then go to
+[https://api.thinktool.io/state](https://api.thinktool.io/state). Alternatively,
+write to me at [mailto:jonas@thinktool.io](jonas@thinktool.io), and I'll do it for you.
+This is just a JSON export – it's up to you to turn it into something useful.
 
 ## Comparison to other software
 
