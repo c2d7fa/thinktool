@@ -28,9 +28,9 @@ on that page.
 Because I'm now using zt as my primary note-taking system, I guess I won't be
 spending much time on Thinktool.
 
-You are welcome to use the offline desktop version. However, I highly recommend against using the
+You are welcome to use the offline desktop version. **However, I highly recommend against using the
 hosted web version. To the best of my knowledge, no one is using this, and I'm planning
-on taking it down soon. If you need to export your data, log in as normal and then go to
+on taking it down soon.** If you need to export your data, log in as normal and then go to
 [https://api.thinktool.io/state](https://api.thinktool.io/state). Alternatively,
 write to me at [jonas@thinktool.io](mailto:jonas@thinktool.io), and I'll do it for you.
 This is just a JSON export – it's up to you to turn it into something useful.
